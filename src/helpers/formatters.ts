@@ -1,3 +1,9 @@
+import dayjs from "dayjs";
+
+export const dayjsFormat = (date: string, format?: string) => {
+  return dayjs(date).format(format || "DD/MM/YYYY");
+};
+
 export const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString('vi-VN', {
     year: 'numeric',

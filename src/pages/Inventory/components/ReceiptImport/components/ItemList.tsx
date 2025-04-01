@@ -63,7 +63,7 @@ const ItemList: React.FC<ItemListProps> = ({
   note,
 }) => {
   return (
-    <IonItem lines="full" className="py-2" routerLink={`/item/${id}`}>
+    <IonItem lines="full" className="py-2" routerLink={`/tabs/receipt-import/${id}`}>
       <IonLabel className="ml-4">
         <div className="md:flex md:items-center">
           <span className="font-semibold text-lg">

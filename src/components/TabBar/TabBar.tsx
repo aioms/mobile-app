@@ -12,25 +12,25 @@ import {
   cashOutline,
   cubeOutline,
   bagHandleOutline,
-  // statsChartOutline,
-  // cartOutline,
-  // storefrontOutline,
 } from "ionicons/icons";
 import { Redirect, Route } from "react-router-dom";
 
 /* Screens */
 import MenuLayout from "../Layout/MenuLayout";
-import HomeScreen from "../../pages/Home/Home";
-import InventoryScreen from "../../pages/Inventory/Inventory";
-import ProductListScreen from "../../pages/Product/ProductList/ProductList";
-import ProductDetailScreen from "../../pages/Product/ProductDetail/ProductDetail";
+
+import HomeScreen from "@/pages/Home/Home";
+import InventoryScreen from "@/pages/Inventory/Inventory";
+import ProductListScreen from "@/pages/Product/ProductList/ProductList";
+import ProductDetailScreen from "@/pages/Product/ProductDetail/ProductDetail";
 import TransactionScreen from "@/pages/Transaction/TransactionList";
+import ReceiptImportCreateScreen from "@/pages/Receipt/ReceiptImport/ReceiptImportCreate";
+import ReceiptCheckDetailScreen from "@/pages/Receipt/ReceiptCheck/ReceiptCheckDetail";
 
 /* Hooks */
 // import { useAuth } from "../../hooks";
 
 import "./TabBar.css";
-import CreateReceiptImportScreen from "@/pages/Receipt/CreateReceiptImport";
+import NotFound from "@/pages/Error/NotFound";
 
 const tabs = [
   { icon: home, label: "Trang chủ", path: "/tabs/home" },
@@ -41,23 +41,32 @@ const tabs = [
 ];
 
 const TabBar: React.FC = () => {
-  // const { isAuthenticated } = useAuth();
-
   return (
     <IonTabs>
       <IonRouterOutlet>
         <Route
           exact
           path="/tabs/home"
-          children={<MenuLayout component={<HomeScreen />} isHeaderDefault title="Trang chủ" />}
+          children={
+            <MenuLayout
+              component={<HomeScreen />}
+              isHeaderDefault
+              title="Trang chủ"
+            />
+          }
         />
-
 
         {/* Transaction Screens */}
         <Route
           exact
           path="/tabs/transaction"
-          children={<MenuLayout component={<TransactionScreen />} isHeaderDefault title="Giao dịch" />}
+          children={
+            <MenuLayout
+              component={<TransactionScreen />}
+              isHeaderDefault
+              title="Giao dịch"
+            />
+          }
         />
 
         {/* Inventory Screens */}
@@ -71,16 +80,29 @@ const TabBar: React.FC = () => {
         <Route
           exact
           path="/tabs/receipt-import/create"
-          children={<MenuLayout component={<CreateReceiptImportScreen />} />}
+          children={<MenuLayout component={<ReceiptImportCreateScreen />} />}
+        />
+        <Route
+          exact
+          path="/tabs/receipt-check/:id"
+          component={ReceiptCheckDetailScreen}
         />
 
         {/* Product Screens */}
         <Route
           exact
           path="/tabs/product"
-          children={<MenuLayout component={<ProductListScreen />} isHeaderDefault title="Danh sách sản phẩm" />}
+          children={
+            <MenuLayout
+              component={<ProductListScreen />}
+              isHeaderDefault
+              title="Danh sách sản phẩm"
+            />
+          }
         />
         <Route exact path="/tabs/product/:id" component={ProductDetailScreen} />
+
+        <Route component={NotFound} />
 
         <Route exact path="/tabs">
           <Redirect to="/tabs/home" />

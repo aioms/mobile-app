@@ -23,6 +23,7 @@ import {
   close,
   chevronForward,
 } from "ionicons/icons";
+import { useHistory } from "react-router-dom";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination } from "swiper/modules";
@@ -32,13 +33,13 @@ import "swiper/css/pagination";
 import ProductCard from "./components/ProductCard";
 import CategoriesModal from "./components/CategoriesModal";
 import FilterModal, { FilterValues } from "./components/FilterModal";
-import {
-  formatCurrency,
-  formatCurrencyWithoutSymbol,
-} from "@/helpers/formatters";
+
+import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
 import useProduct from "@/hooks/apis/useProduct";
+import { useBarcodeScanner, useLoading } from "@/hooks";
 
 import "./ProductList.css";
+import ContentSkeleton from "@/components/Loading/ContentSkeleton";
 
 interface Product {
   id: string;
@@ -70,13 +71,15 @@ interface LowStockProduct {
 const LIMIT = 10;
 
 const ProductListScreen: React.FC = () => {
+  const history = useHistory();
+  const { isLoading, withLoading } = useLoading();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [dataTotal, setDataTotal] = useState<Total>({
     totalProduct: 0,
     totalInventory: 0,
   });
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -92,40 +95,77 @@ const ProductListScreen: React.FC = () => {
   const [lowStockPage, setLowStockPage] = useState(1);
   const [lowStockLoading, setLowStockLoading] = useState(false);
   const [hasMoreLowStock, setHasMoreLowStock] = useState(true);
-  const { getList, getTotalProductAndInventory } = useProduct();
+  const { getList, getDetail, getTotalProductAndInventory } = useProduct();
 
-  const fetchProducts = async (
-    pageNumber: number = 1,
-    isLoadMore: boolean = false
-  ) => {
+  const handleBarcodeScanned = async (value: string) => {
     try {
-      setLoading(true);
-      const response = await getList(filters, pageNumber, LIMIT);
+      stopScan();
+      const product = await getDetail(value);
 
-      if (!response.length) {
-        setProducts([]);
-        setHasMore(false);
-
-        if (!isLoadMore) {
-          await Toast.show({
-            text: "Không tìm thấy kết quả",
-            duration: "short",
-            position: "top",
-          });
-        }
-      } else {
-        setProducts((prev) => (isLoadMore ? [...prev, ...response] : response));
-        setHasMore(response.length === LIMIT);
+      if (!product || !product.id) {
+        await Toast.show({
+          text: "Không tìm thấy sản phẩm với mã vạch này",
+          duration: "short",
+          position: "center",
+        });
+        return;
       }
+
+      // Navigate to product detail page
+      history.push(`/tabs/product/${product.id}`);
     } catch (error) {
       await Toast.show({
         text: (error as Error).message,
         duration: "short",
         position: "top",
       });
-    } finally {
-      setLoading(false);
     }
+  };
+
+  const { startScan, stopScan } = useBarcodeScanner({
+    onBarcodeScanned: handleBarcodeScanned,
+    onError: async (error: Error) => {
+      await Toast.show({
+        text: error.message,
+        duration: "long",
+        position: "top",
+      });
+    },
+  });
+
+  const fetchProducts = async (
+    pageNumber: number = 1,
+    isLoadMore: boolean = false
+  ) => {
+    await withLoading(async () => {
+      try {
+        const response = await getList(filters, pageNumber, LIMIT);
+
+        if (!response.length) {
+          setProducts([]);
+          setHasMore(false);
+
+          if (!isLoadMore) {
+            await Toast.show({
+              text: "Không tìm thấy kết quả",
+              duration: "short",
+              position: "top",
+            });
+          }
+        } else {
+          setProducts((prev) =>
+            isLoadMore ? [...prev, ...response] : response
+          );
+          setHasMore(response.length === LIMIT);
+        }
+      } catch (error) {
+        await Toast.show({
+          text: (error as Error).message,
+          duration: "short",
+          position: "top",
+        });
+      }
+    });
   };
 
   const fetchTotalProductAndInventory = async () => {
@@ -162,11 +202,7 @@ const ProductListScreen: React.FC = () => {
   ) => {
     try {
       setLowStockLoading(true);
-      const response = await getList(
-        { maxInventory: 1 },
-        pageNumber,
-        5 // Limit per page
-      );
+      const response = await getList({ maxInventory: 1 }, pageNumber, 5);
 
       if (!response.length) {
         setHasMoreLowStock(false);
@@ -262,7 +298,7 @@ const ProductListScreen: React.FC = () => {
             <IonButton fill="clear" color="primary" onClick={openFilterModal}>
               <IonIcon icon={filterOutline} size="icon-only" />
             </IonButton>
-            <IonButton color="primary">
+            <IonButton color="primary" onClick={startScan}>
               <IonIcon icon={scanOutline} slot="icon-only" />
             </IonButton>
           </IonButtons>
@@ -339,6 +375,10 @@ const ProductListScreen: React.FC = () => {
               <ProductCard key={product.id} product={product} />
             ))
           ) : (
+            <ContentSkeleton lines={3} />
+          )}
+
+          {!hasMore && products.length === 0 && (
             <div className="text-center text-gray-500">
               <i className="text-sm"> Không tìm thấy sản phẩm nào</i>
             </div>
@@ -347,8 +387,8 @@ const ProductListScreen: React.FC = () => {
         {/* Load More Button */}
         {hasMore && (
           <div className="flex justify-center mb-6">
-            <IonButton fill="clear" onClick={handleLoadMore} disabled={loading}>
-              {loading ? <IonSpinner name="crescent" /> : "Xem thêm"}
+            <IonButton fill="clear" onClick={handleLoadMore} disabled={isLoading}>
+              {isLoading ? <IonSpinner name="crescent" /> : "Xem thêm"}
             </IonButton>
           </div>
         )}

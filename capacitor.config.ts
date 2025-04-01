@@ -5,8 +5,12 @@ const config: CapacitorConfig = {
   appName: 'aios-mobile',
   webDir: 'dist',
   server: {
-    androidScheme: 'https'
-  }
+    androidScheme: 'https',
+    cleartext: true,
+    hostname: 'localhost',
+    iosScheme: 'ionic',
+    allowNavigation: ['*'],
+  },
 };
 
 export default config;

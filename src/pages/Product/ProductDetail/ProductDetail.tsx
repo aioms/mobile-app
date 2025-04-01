@@ -138,7 +138,6 @@ const ProductDetail: React.FC = () => {
           status: receipt.status,
         };
       });
-      console.log({ data });
 
       setHistory((prev) => ({
         ...prev,

@@ -1,3 +1,5 @@
+declare module "quagga";
+
 export interface IHttpRequestConfig {
   server: {
     api: string;

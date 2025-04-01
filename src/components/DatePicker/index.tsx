@@ -4,18 +4,20 @@ import { FC, HTMLAttributes } from 'react';
 type Props = {
   value?: string;
   onChange?: (e: any) => void;
+  presentation?: 'date' | 'time' | 'date-time' | 'time-date' | 'month-year' | 'year' | 'month';
   attrs: HTMLAttributes<HTMLIonDatetimeElement>;
+  extraClassName?: string;
 }
 
-const DatePicker: FC<Props> = ({ value, onChange, attrs }) =>  {
+const DatePicker: FC<Props> = ({ value, onChange, presentation = 'date-time', attrs, extraClassName }) =>  {
   return (
     <>
-      <IonDatetimeButton datetime={attrs.id}></IonDatetimeButton>
+      <IonDatetimeButton className={extraClassName} datetime={attrs.id}></IonDatetimeButton>
 
       <IonModal keepContentsMounted={true}>
         <IonDatetime
           id={attrs.id}
-          presentation="date-time"
+          presentation={presentation}
           value={value || new Date().toISOString()}
           onIonChange={onChange}
           formatOptions={{

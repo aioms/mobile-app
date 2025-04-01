@@ -1,16 +1,11 @@
 import React, { useEffect, useState } from "react";
-import {
-  IonList,
-  IonRefresher,
-  IonRefresherContent,
-  RefresherEventDetail,
-} from "@ionic/react";
+import { IonList, RefresherEventDetail } from "@ionic/react";
 import { Toast } from "@capacitor/toast";
-import { chevronDownCircleOutline } from "ionicons/icons";
 
 import useReceiptImport from "@/hooks/apis/useReceiptImport";
 import ItemListItem from "./components/ItemList";
 import { ReceiptListSkeleton } from "./components/ReceiptListSkeleton";
+import { Refresher } from "@/components/Refresher/Refresher";
 
 interface ItemList {
   id: string;
@@ -71,14 +66,7 @@ const ReceiptImportList: React.FC<Props> = ({ keyword }) => {
 
   return (
     <>
-      <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-        <IonRefresherContent
-          pullingIcon={chevronDownCircleOutline}
-          pullingText="Kéo xuống để tải lại..."
-          refreshingSpinner="circles"
-          refreshingText="Đang tải lại..."
-        ></IonRefresherContent>
-      </IonRefresher>
+      <Refresher onRefresh={handleRefresh} />
 
       <IonList>
         {!!receiptImports.length ? (

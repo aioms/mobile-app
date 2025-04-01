@@ -14,7 +14,8 @@
     "build": "ionic build",
     "build:ios": "ionic build --platform=ios",
     "build:android": "ionic build --platform=android",
-    "start:ios": "ionic cap run ios -l --external --target=00008110-000E358C0E07801E"
+    "start:ios": "ionic cap run ios -l --external --host=0.0.0.0",
+    "clean": "xcodebuild clean -project ios/App/App.xcodeproj"
   },
   "dependencies": {
     "@capacitor-mlkit/barcode-scanning": "^6.2.0",
@@ -22,6 +23,7 @@
     "@capacitor/app": "6.0.2",
     "@capacitor/camera": "^6.1.2",
     "@capacitor/core": "6.2.0",
+    "@capacitor/dialog": "^6.0.2",
     "@capacitor/haptics": "6.0.2",
     "@capacitor/ios": "6.2.0",
     "@capacitor/keyboard": "6.0.3",
@@ -42,6 +44,8 @@
     "ionicons": "^7.0.0",
     "localforage-cordovasqlitedriver": "^1.8.0",
     "lucide-react": "^0.469.0",
+    "posthog-js": "^1.230.4",
+    "quagga": "^0.12.1",
     "react": "^18.2.0",
     "react-barcode": "^1.5.3",
     "react-dom": "^18.2.0",

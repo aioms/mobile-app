@@ -1,0 +1,17 @@
+.item-sliding-active-slide {
+  .item {
+    transition: transform 200ms ease-out;
+  }
+}
+
+.item-sliding-active-options-end .item {
+  transform: translateX(-120px);
+}
+
+.item-options-end {
+  transition: opacity 200ms ease-out;
+}
+
+.item-sliding-active-options-end .item-options-end {
+  opacity: 1;
+}

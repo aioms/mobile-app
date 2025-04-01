@@ -21,31 +21,34 @@ export const RECEIPT_CHECK_STATUS = {
   BALANCED: "balanced",
 } as const;
 
-type ReceiptImportStatus =
+export type ReceiptImportStatus =
   (typeof RECEIPT_IMPORT_STATUS)[keyof typeof RECEIPT_IMPORT_STATUS];
 
-type ReceiptReturnStatus =
+export type ReceiptReturnStatus =
   (typeof RECEIPT_RETURN_STATUS)[keyof typeof RECEIPT_RETURN_STATUS];
 
-type ReceiptCheckStatus =
+export type ReceiptCheckStatus =
   (typeof RECEIPT_CHECK_STATUS)[keyof typeof RECEIPT_CHECK_STATUS];
 
 export type ReceiptStatus =
   | ReceiptImportStatus
   | ReceiptReturnStatus
-  | ReceiptCheckStatus;
+  | ReceiptCheckStatus
+  | "unknown";
 
 export const getStatusColor = (status: ReceiptStatus): string => {
   switch (status) {
-    // Import & Return Status Colors
     case RECEIPT_IMPORT_STATUS.DRAFT:
     case RECEIPT_RETURN_STATUS.DRAFT:
       return "medium";
 
+    case RECEIPT_CHECK_STATUS.PENDING:
+      return "warning";
+
     case RECEIPT_IMPORT_STATUS.PROCESSING:
     case RECEIPT_RETURN_STATUS.PROCESSING:
     case RECEIPT_CHECK_STATUS.PROCESSING:
-      return "warning";
+      return "tertiary";
 
     case RECEIPT_IMPORT_STATUS.COMPLETED:
     case RECEIPT_RETURN_STATUS.COMPLETED:
@@ -54,18 +57,12 @@ export const getStatusColor = (status: ReceiptStatus): string => {
 
     case RECEIPT_IMPORT_STATUS.CANCELLED:
     case RECEIPT_RETURN_STATUS.CANCELLED:
+    case RECEIPT_CHECK_STATUS.BALANCING_REQUIRED:
       return "danger";
 
     case RECEIPT_IMPORT_STATUS.SHORT_RECEIVED:
     case RECEIPT_IMPORT_STATUS.OVER_RECEIVED:
       return "dark";
-
-    // Check Status Colors
-    case RECEIPT_CHECK_STATUS.PENDING:
-      return "medium";
-
-    case RECEIPT_CHECK_STATUS.BALANCING_REQUIRED:
-      return "warning";
 
     default:
       return "medium";
@@ -74,7 +71,6 @@ export const getStatusColor = (status: ReceiptStatus): string => {
 
 export const getStatusLabel = (status: ReceiptStatus): string => {
   switch (status) {
-    // Import & Return Status Labels
     case RECEIPT_IMPORT_STATUS.DRAFT:
     case RECEIPT_RETURN_STATUS.DRAFT:
       return "Nháp";
@@ -108,6 +104,6 @@ export const getStatusLabel = (status: ReceiptStatus): string => {
       return "Đã cân bằng";
 
     default:
-      return "Không xác định";
+      return "Unknown";
   }
 };
