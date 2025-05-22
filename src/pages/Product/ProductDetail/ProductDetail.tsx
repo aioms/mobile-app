@@ -36,8 +36,9 @@ import "./ProductDetail.css";
 
 interface Product {
   id: string;
-  productName: string;
+  code: string;
   productCode: string;
+  productName: string;
   costPrice: number;
   sellingPrice: number;
   status: string;
@@ -277,7 +278,7 @@ const ProductDetail: React.FC = () => {
             <div className="mb-4">
               <IonLabel className="text-xs text-gray-500">Mã sản phẩm</IonLabel>
               <IonText>
-                <p className="text-sm">{product?.productCode}</p>
+                <p className="text-sm">{product?.code}</p>
               </IonText>
             </div>
 
@@ -331,7 +332,7 @@ const ProductDetail: React.FC = () => {
           isOpen={showBarcodeModal}
           onDidDismiss={() => setShowBarcodeModal(false)}
           productName={product?.productName}
-          productCode={product?.productCode}
+          productCode={product?.code}
         />
 
         {/* Action Sheet */}

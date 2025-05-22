@@ -54,7 +54,7 @@ const MenuBar: React.FC = () => {
 
   const handleLogout = async () => {
     await logout();
-    history.push("/login?logout=true");;
+    history.replace("/login");
   };
 
   return (

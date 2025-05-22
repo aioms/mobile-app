@@ -43,8 +43,9 @@ import ContentSkeleton from "@/components/Loading/ContentSkeleton";
 
 interface Product {
   id: string;
-  productName: string;
+  code: string;
   productCode: string;
+  productName: string;
   inventory: number;
   unit: string;
   status: string;
@@ -60,8 +61,9 @@ interface Total {
 
 interface LowStockProduct {
   id: string;
-  productName: string;
+  code: string;
   productCode: string;
+  productName: string;
   costPrice: number;
   sellingPrice: number;
   inventory: number;
@@ -438,7 +440,7 @@ const ProductListScreen: React.FC = () => {
                     <div className="flex-1">
                       <h4 className="font-medium">{product.productName}</h4>
                       <p className="text-sm text-gray-500">
-                        {product.productCode}
+                        {product.code}
                       </p>
                       <div className="flex gap-2 mt-1">
                         <p className="text-sm">

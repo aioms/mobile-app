@@ -27,6 +27,9 @@ interface ReceiptItem {
   id: string;
   productName: string;
   inventory: number;
+  systemInventory: number;
+  actualInventory: number;
+  costPrice: number;
 }
 
 interface Receipt {
@@ -224,9 +227,15 @@ const ReceiptCheckScreen = () => {
           </IonLabel>
         </IonListHeader>
 
-        {receipts.map((receipt) => (
-          <ItemList key={receipt.id} receipt={receipt} />
-        ))}
+        {isLoading ? (
+          <div className="flex justify-center p-4">
+            <IonSpinner name="crescent" />
+          </div>
+        ) : (
+          receipts.map((receipt) => (
+            <ItemList key={receipt.id} receipt={receipt} />
+          ))
+        )}
 
         {receipts.length === 0 && !isLoading && (
           <div className="text-center text-gray-500 py-4">

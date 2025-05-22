@@ -23,7 +23,7 @@ import {
   getStatusColor,
   getStatusLabel,
   RECEIPT_CHECK_STATUS,
-  ReceiptCheckStatus,
+  TReceiptCheckStatus,
 } from "@/common/constants/receipt";
 import { dayjsFormat, formatCurrency } from "@/helpers/formatters";
 
@@ -56,7 +56,7 @@ interface ReceiptCheck {
   warehouseLocation: string;
   activityLog: ActivityLog[];
   date: string;
-  status: ReceiptCheckStatus;
+  status: TReceiptCheckStatus;
 }
 
 const reasons = [

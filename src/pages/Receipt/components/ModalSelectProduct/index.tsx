@@ -1,15 +1,10 @@
+import { useEffect, useState } from "react";
+import { Toast } from "@capacitor/toast";
+import { IonSearchbar, IonList } from "@ionic/react";
+
+import { PRODUCT_STATUS } from "@/common/constants/product";
 import ModalBase from "@/components/Modal/ModalBase";
 import useProduct from "@/hooks/apis/useProduct";
-import { Toast } from "@capacitor/toast";
-import {
-  IonSearchbar,
-  IonButtons,
-  IonButton,
-  IonIcon,
-  IonList,
-} from "@ionic/react";
-import { filterOutline } from "ionicons/icons";
-import { useEffect, useState } from "react";
 import ProductItem from "./components/ProductItem";
 
 type Props = {
@@ -27,7 +22,7 @@ const ModalSelectProduct: React.FC<Props> = ({ dismiss }) => {
       const response = await getListProducts(
         {
           keyword,
-          status: 'active',
+          status: PRODUCT_STATUS.ACTIVE,
         },
         1,
         10
@@ -58,11 +53,11 @@ const ModalSelectProduct: React.FC<Props> = ({ dismiss }) => {
   const handleSearch = (e: any) => {
     const keyword = e.detail.value || "";
     setKeyword(keyword);
-  }
+  };
 
   const handleClickItem = (data: any) => {
     dismiss(data, "confirm");
-  }
+  };
 
   return (
     <ModalBase title="Thêm sản phẩm" hasConfirmButton={false} dismiss={dismiss}>
@@ -87,7 +82,6 @@ const ModalSelectProduct: React.FC<Props> = ({ dismiss }) => {
             <ProductItem key={item.id} onClick={handleClickItem} {...item} />
           ))}
       </IonList>
-
     </ModalBase>
   );
 };

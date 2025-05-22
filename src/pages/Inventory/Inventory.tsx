@@ -16,18 +16,20 @@ import {
 } from "@ionic/react";
 import { Toast } from "@capacitor/toast";
 import { scanOutline, add } from "ionicons/icons";
-import posthog from "posthog-js";
+import { useHistory } from "react-router";
 
-import useInventory from "@/hooks/apis/useInventory";
 import { useBarcodeScanner } from "@/hooks/useBarcodeScanner";
+import useReceiptImport from "@/hooks/apis/useReceiptImport";
 
 import ReceiptImportList from "./components/ReceiptImport/ReceiptImportList";
 import ReceiptCheckList from "./components/ReceiptCheck/ReceiptCheckList";
 
 const InventoryScreen = () => {
+  const history = useHistory();
   const [selectedSegment, setSelectedSegment] = useState("receipt-import");
   const [keyword, setKeyword] = useState("");
-  const { updateInventoryOfReceiptImport } = useInventory();
+
+  const { importQuick } = useReceiptImport();
 
   const handleSearch = (e: any) => setKeyword(e.detail.value || "");
 
@@ -41,10 +43,16 @@ const InventoryScreen = () => {
         });
       }
 
-      const response = await updateInventoryOfReceiptImport(receiptNumber);
+      const response = await importQuick({ code: receiptNumber });
+      const receiptId = response?.id;
 
+      if (!receiptId) {
+        throw new Error("Cập nhật thất bại");
+      }
+
+      history.push(`/tabs/receipt-import/detail/${receiptId}`);
       await Toast.show({
-        text: response.message,
+        text: 'Cập nhật thành công',
         duration: "short",
         position: "top",
       });
@@ -58,7 +66,6 @@ const InventoryScreen = () => {
   };
 
   const handleBarcodeScanned = async (value: string) => {
-    posthog?.capture("Update inventory", { property: value });
     stopScan();
     updateInventory(value);
   };

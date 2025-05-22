@@ -19,3 +19,7 @@ export const convertObjectToQueryString = (params: Record<string, any>) => {
     .map((key) => key + "=" + params[key])
     .join("&");
 };
+
+export const isHasProperty = (obj: Record<string, unknown>) => {
+  return Object.keys(obj).length;
+}

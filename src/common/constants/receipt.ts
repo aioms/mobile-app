@@ -1,5 +1,6 @@
 export const RECEIPT_IMPORT_STATUS = {
   DRAFT: "draft",
+  WAITING: "waiting",
   PROCESSING: "processing",
   COMPLETED: "completed",
   CANCELLED: "cancelled",
@@ -21,19 +22,19 @@ export const RECEIPT_CHECK_STATUS = {
   BALANCED: "balanced",
 } as const;
 
-export type ReceiptImportStatus =
+export type TReceiptImportStatus =
   (typeof RECEIPT_IMPORT_STATUS)[keyof typeof RECEIPT_IMPORT_STATUS];
 
-export type ReceiptReturnStatus =
+export type TReceiptReturnStatus =
   (typeof RECEIPT_RETURN_STATUS)[keyof typeof RECEIPT_RETURN_STATUS];
 
-export type ReceiptCheckStatus =
+export type TReceiptCheckStatus =
   (typeof RECEIPT_CHECK_STATUS)[keyof typeof RECEIPT_CHECK_STATUS];
 
 export type ReceiptStatus =
-  | ReceiptImportStatus
-  | ReceiptReturnStatus
-  | ReceiptCheckStatus
+  | TReceiptImportStatus
+  | TReceiptReturnStatus
+  | TReceiptCheckStatus
   | "unknown";
 
 export const getStatusColor = (status: ReceiptStatus): string => {
@@ -43,6 +44,7 @@ export const getStatusColor = (status: ReceiptStatus): string => {
       return "medium";
 
     case RECEIPT_CHECK_STATUS.PENDING:
+    case RECEIPT_IMPORT_STATUS.WAITING:
       return "warning";
 
     case RECEIPT_IMPORT_STATUS.PROCESSING:
@@ -75,10 +77,16 @@ export const getStatusLabel = (status: ReceiptStatus): string => {
     case RECEIPT_RETURN_STATUS.DRAFT:
       return "Nháp";
 
+    case RECEIPT_CHECK_STATUS.PENDING:
+      return "Chờ xử lý";
+
     case RECEIPT_IMPORT_STATUS.PROCESSING:
     case RECEIPT_RETURN_STATUS.PROCESSING:
     case RECEIPT_CHECK_STATUS.PROCESSING:
       return "Đang xử lý";
+
+    case RECEIPT_IMPORT_STATUS.WAITING:
+      return "Đang chờ duyệt";
 
     case RECEIPT_IMPORT_STATUS.COMPLETED:
     case RECEIPT_RETURN_STATUS.COMPLETED:
@@ -93,9 +101,6 @@ export const getStatusLabel = (status: ReceiptStatus): string => {
 
     case RECEIPT_IMPORT_STATUS.OVER_RECEIVED:
       return "Giao dư";
-
-    case RECEIPT_CHECK_STATUS.PENDING:
-      return "Chờ xử lý";
 
     case RECEIPT_CHECK_STATUS.BALANCING_REQUIRED:
       return "Cần cân bằng";

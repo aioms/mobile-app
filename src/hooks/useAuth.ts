@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
-import { stringifySafe } from "../helpers/common";
-import { useStorage } from './useStorage';
-import { IHttpResponse, User } from '../types';
-import { request } from '../helpers/axios';
+import { useEffect, useState } from "react";
+import { Toast } from "@capacitor/toast";
+
+import { parseSafe, stringifySafe } from "../helpers/common";
+import { request } from "../helpers/axios";
+
+import { IHttpResponse, User } from "../types";
+import { useStorage } from "./useStorage";
 
 export const useAuth = () => {
   const storage = useStorage();
@@ -17,7 +20,7 @@ export const useAuth = () => {
       setIsAuthenticated(!!token);
 
       if (token) {
-        const user = await storage.get("user");
+        const user = parseSafe(await storage.get("user"));
         setUser(user);
       }
     };
@@ -50,19 +53,26 @@ export const useAuth = () => {
     } catch (error: any) {
       return error;
     }
-  }
+  };
 
   const logout = async () => {
     setIsAuthenticated(false);
     setUser(null);
 
-    if (storage) {
-      await Promise.all([
-        storage.remove("token"),
-        storage.remove("user"),
-      ]);
+    try {
+      await request.post(`/auth/logout`);
+
+      if (storage) {
+        await Promise.all([storage.remove("token"), storage.remove("user")]);
+      }
+    } catch (error) {
+      await Toast.show({
+        text: (error as Error).message,
+        duration: "short",
+        position: "center",
+      });
     }
-  }
+  };
 
   return { login, logout, isAuthenticated, user };
 };

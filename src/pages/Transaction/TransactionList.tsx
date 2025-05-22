@@ -15,7 +15,7 @@ const TransactionScreen: React.FC = () => {
     {
       id: 1,
       receiptNumber: "RCP-2024-001",
-      expectedImportDate: "2024-03-25",
+      importDate: "2024-03-25",
       quantity: 150,
       status: "Pending",
       totalAmount: 4500.0,
@@ -23,7 +23,7 @@ const TransactionScreen: React.FC = () => {
     {
       id: 2,
       receiptNumber: "RCP-2024-002",
-      expectedImportDate: "2024-03-20",
+      importDate: "2024-03-20",
       quantity: 75,
       status: "In Transit",
       totalAmount: 2250.0,
@@ -31,7 +31,7 @@ const TransactionScreen: React.FC = () => {
     {
       id: 3,
       receiptNumber: "RCP-2024-003",
-      expectedImportDate: "2024-03-15",
+      importDate: "2024-03-15",
       quantity: 200,
       status: "Delivered",
       totalAmount: 6000.0,
@@ -39,7 +39,7 @@ const TransactionScreen: React.FC = () => {
     {
       id: 4,
       receiptNumber: "RCP-2024-004",
-      expectedImportDate: "2024-03-10",
+      importDate: "2024-03-10",
       quantity: 50,
       status: "Cancelled",
       totalAmount: 1500.0,

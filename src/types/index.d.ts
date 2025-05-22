@@ -1,3 +1,5 @@
+import { UserRole } from "@/common/enums/user";
+
 declare module "quagga";
 
 export interface IHttpRequestConfig {
@@ -25,7 +27,9 @@ export interface IHttpResponse<T = any> {
 export interface User {
   id: string;
   username: string;
-  role: string;
+  fullname: string;
+  role: UserRole;
+  storeCode: string;
 }
 
 export interface IBaseItem {

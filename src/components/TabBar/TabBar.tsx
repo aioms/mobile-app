@@ -17,6 +17,7 @@ import { Redirect, Route } from "react-router-dom";
 
 /* Screens */
 import MenuLayout from "../Layout/MenuLayout";
+import NotFound from "@/pages/Error/NotFound";
 
 import HomeScreen from "@/pages/Home/Home";
 import InventoryScreen from "@/pages/Inventory/Inventory";
@@ -24,13 +25,13 @@ import ProductListScreen from "@/pages/Product/ProductList/ProductList";
 import ProductDetailScreen from "@/pages/Product/ProductDetail/ProductDetail";
 import TransactionScreen from "@/pages/Transaction/TransactionList";
 import ReceiptImportCreateScreen from "@/pages/Receipt/ReceiptImport/ReceiptImportCreate";
+import ReceiptImportDetailScreen from "@/pages/Receipt/ReceiptImport/ReceiptImportDetail";
 import ReceiptCheckDetailScreen from "@/pages/Receipt/ReceiptCheck/ReceiptCheckDetail";
 
 /* Hooks */
 // import { useAuth } from "../../hooks";
 
 import "./TabBar.css";
-import NotFound from "@/pages/Error/NotFound";
 
 const tabs = [
   { icon: home, label: "Trang chủ", path: "/tabs/home" },
@@ -81,6 +82,11 @@ const TabBar: React.FC = () => {
           exact
           path="/tabs/receipt-import/create"
           children={<MenuLayout component={<ReceiptImportCreateScreen />} />}
+        />
+        <Route
+          exact
+          path="/tabs/receipt-import/detail/:id"
+          component={ReceiptImportDetailScreen}
         />
         <Route
           exact

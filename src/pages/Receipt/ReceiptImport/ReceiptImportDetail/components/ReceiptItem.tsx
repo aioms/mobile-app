@@ -1,49 +1,38 @@
-import { formatCurrency } from "@/helpers/formatters";
-import {
-  IonButton,
-  IonFabButton,
-  IonIcon,
-  IonInput,
-  IonItem,
-  IonLabel,
-} from "@ionic/react";
-import { add, remove, trash } from "ionicons/icons";
-import { FC, useEffect, useState } from "react";
+import { FC, memo, useEffect, useMemo, useState } from "react";
+import { IonInput, IonItem, IonLabel } from "@ionic/react";
+
+import { formatCurrency, parseCurrencyInput } from "@/helpers/formatters";
 
 type Props = {
   id: string;
   productName: string;
   productCode: number;
   code: string;
+  quantity: number;
   inventory: number;
+  actualInventory: number;
   costPrice: number;
   discount: number;
   onRowChange?: (data: any) => void;
-  onRemoveItem?: (id: string) => void;
 };
 
-const ReceiptItem: FC<Props> = ({
+const ReceiptItem: FC<Props> = memo(({
   id,
   productCode,
   productName,
   code,
+  quantity,
   inventory,
+  actualInventory,
   costPrice,
   discount,
   onRowChange,
-  onRemoveItem,
 }) => {
-  const [quantity, setQuantity] = useState(1);
   const [formattedCostPrice, setformattedCostPrice] = useState<string>(
     formatCurrency(costPrice)
   );
   const [newCostPrice, setNewCostPrice] = useState<number>(costPrice);
-  const [newDiscount, setNewDiscount] = useState<number>(discount);
-
-  const parseCurrencyInput = (value: string): number => {
-    // Remove all non-digit characters and parse to number
-    return parseInt(value.replace(/\D/g, "")) || 0;
-  };
+  const [newDiscount, setNewDiscount] = useState<number>(discount || 0);
 
   const handleCostPriceChange = (value: string | null | undefined) => {
     if (value !== null && value !== undefined) {
@@ -61,22 +50,23 @@ const ReceiptItem: FC<Props> = ({
     }
   };
 
-  const handleQuantityChange = (newQuantity: number) => {
-    if (newQuantity >= 0) {
-      setQuantity(newQuantity);
+  const totalPrice = useMemo(() => {
+    if (typeof quantity === "number" && typeof newCostPrice === "number") {
+      return quantity * newCostPrice * (1 - newDiscount / 100);
     }
-  };
+    return 0;
+  }, [quantity, newCostPrice, newDiscount]);
 
   useEffect(() => {
     if (typeof newCostPrice === "number" && typeof newDiscount === "number") {
       if (typeof quantity === "number") {
-        const totalPrice = quantity * newCostPrice * (1 - newDiscount / 100);
         onRowChange?.({
           id,
           productCode,
           productName,
           code,
           inventory,
+          actualInventory,
           quantity,
           costPrice: newCostPrice,
           discount: newDiscount,
@@ -100,7 +90,7 @@ const ReceiptItem: FC<Props> = ({
                   {costPrice.toLocaleString("vi-VN")}
                 </div>
               </div>
-              <IonFabButton
+              {/* <IonFabButton
                 size="small"
                 color="danger"
                 onClick={() => {
@@ -108,7 +98,7 @@ const ReceiptItem: FC<Props> = ({
                 }}
               >
                 <IonIcon icon={trash} size="small"></IonIcon>
-              </IonFabButton>
+              </IonFabButton> */}
             </div>
           </div>
         </div>
@@ -146,39 +136,14 @@ const ReceiptItem: FC<Props> = ({
 
         {/* Quantity Controls */}
         <div className="flex items-center justify-between mt-4">
-          <div className="flex items-center space-x-2 border rounded-full p-1">
-            <IonButton
-              fill="clear"
-              onClick={() => handleQuantityChange(quantity - 1)}
-            >
-              <IonIcon icon={remove} />
-            </IonButton>
-            <IonInput
-              aria-label="Counter"
-              className="w-8 text-center"
-              type="number"
-              value={quantity}
-              onChange={(e) => {
-                const value = e.currentTarget.value
-                  ? parseInt(e.currentTarget.value.toString())
-                  : 0;
-                handleQuantityChange(value);
-              }}
-            ></IonInput>
-            <IonButton
-              fill="clear"
-              onClick={() => handleQuantityChange(quantity + 1)}
-            >
-              <IonIcon icon={add} />
-            </IonButton>
-          </div>
+          <span className="text-sm">SL: {quantity}</span>
           <div className="text-lg font-medium">
-            {formatCurrency(quantity * newCostPrice * (1 - newDiscount / 100))}
+            {formatCurrency(totalPrice)}
           </div>
         </div>
       </div>
     </IonItem>
   );
-};
+});
 
 export default ReceiptItem;

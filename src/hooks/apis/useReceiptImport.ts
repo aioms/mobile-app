@@ -19,6 +19,11 @@ const useReceiptImport = () => {
     return response.data;
   };
 
+  const importQuick = async (data: any) => {
+    const response = await request.post(`/receipt-imports/quick`, data);
+    return response.data;
+  };
+
   const create = async (data: any) => {
     const response = await request.post(`/receipt-imports`, data);
     return response.data;
@@ -34,12 +39,22 @@ const useReceiptImport = () => {
     return response.data;
   };
 
+  const getTotalImportsByDateRange = async (params?: Record<string, string>) => {
+    const query = new URLSearchParams(params);
+    const response = await request.get(
+      `/receipt-imports/total?${query.toString()}`
+    );
+    return response.data;
+  };
+
   return {
     getList,
     getDetail,
+    importQuick,
     create,
     update,
     remove,
+    getTotalImportsByDateRange,
   };
 };
 
