@@ -33,23 +33,8 @@ import BarcodeModal from "./components/BarcodeModal";
 import InventoryHistory from "./components/InventoryHistory";
 
 import "./ProductDetail.css";
-
-interface Product {
-  id: string;
-  productName: string;
-  productCode: string;
-  costPrice: number;
-  sellingPrice: number;
-  status: string;
-  category: string;
-  inventory: number;
-  unit: string;
-  additionalDescription: string;
-  supplier: {
-    id: string;
-    name: string;
-  };
-}
+import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
+import type { IProduct } from "@/types/product.type";
 
 interface HistoryItem {
   receiptNumber: string;
@@ -66,7 +51,7 @@ interface HistoryData {
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<IProduct | null>(null);
 
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [selectedTab, setSelectedTab] = useState("import");
@@ -254,8 +239,8 @@ const ProductDetail: React.FC = () => {
           <IonCardContent className="p-4">
             {/* Product Name */}
             <div className="mb-4">
-              <div className="flex justify-between items-center mb-1">
-                <IonLabel className="text-xs text-gray-500">
+              <div className="flex justify-between items-center">
+                <IonLabel className="text-sm text-gray-500">
                   Tên sản phẩm
                 </IonLabel>
                 <IonButton
@@ -269,50 +254,96 @@ const ProductDetail: React.FC = () => {
                 </IonButton>
               </div>
               <IonText>
-                <h3 className="font-medium text-lg">{product?.productName}</h3>
+                <p className="text-sm">{product?.productName}</p>
+                {/* <h3 className="font-medium text-lg">{product?.productName}</h3> */}
               </IonText>
             </div>
 
             {/* Product Code */}
             <div className="mb-4">
-              <IonLabel className="text-xs text-gray-500">Mã sản phẩm</IonLabel>
+              <IonLabel className="text-sm text-gray-500">Mã sản phẩm</IonLabel>
               <IonText>
-                <p className="text-sm">{product?.productCode}</p>
+                <p className="text-sm">{product?.code}</p>
               </IonText>
             </div>
 
             {/* Categories */}
             <div className="mb-4">
-              <IonLabel className="text-xs text-gray-500 block mb-2">
+              <IonLabel className="text-sm text-gray-500 block mb-2">
                 Nhóm hàng
               </IonLabel>
               <div className="flex flex-wrap gap-2">
                 <IonChip className="bg-blue-50 text-blue-600">
-                  {product?.category}
+                  {product?.category || "--"}
                 </IonChip>
               </div>
             </div>
 
-            {/* Supplier */}
+            {/* Suppliers */}
             <div className="mb-4">
-              <IonLabel className="text-xs text-gray-500 block mb-2">
+              <IonLabel className="text-sm text-gray-500 block mb-2">
                 Nhà cung cấp
               </IonLabel>
+              <div className="flex flex-wrap gap-2">
+                {product?.suppliers.map((supplier) => (
+                  <IonChip
+                    key={supplier.id}
+                    className="bg-blue-50 text-blue-600"
+                  >
+                    {supplier.name}
+                  </IonChip>
+                )) || (
+                  <IonChip className="bg-blue-50 text-blue-600">--</IonChip>
+                )}
+              </div>
+            </div>
+
+            {/* Inventory */}
+            <div className="flex justify-between items-center mb-2">
+              <IonLabel className="text-sm text-gray-500 block mb-2">
+                Tồn kho
+              </IonLabel>
               <IonText>
-                <p className="text-sm">{product?.supplier?.name}</p>
+                <p className="text-sm">{product?.inventory || "--"}</p>
+              </IonText>
+            </div>
+
+            {/* Prices */}
+            {/* <div className="flex justify-between items-center mb-2">
+              <IonLabel className="text-sm text-gray-500 block mb-2">
+                Giá vốn
+              </IonLabel>
+              <IonText>
+                <p className="text-sm">
+                  {product?.costPrice
+                    ? formatCurrencyWithoutSymbol(product?.costPrice)
+                    : "--"}
+                </p>
+              </IonText>
+            </div> */}
+            <div className="flex justify-between items-center mb-2">
+              <IonLabel className="text-sm text-gray-500 block mb-2">
+                Giá bán
+              </IonLabel>
+              <IonText>
+                <p className="text-sm">
+                  {product?.sellingPrice
+                    ? formatCurrencyWithoutSymbol(product?.sellingPrice)
+                    : "--"}
+                </p>
               </IonText>
             </div>
 
             {/* Notes */}
             <div>
-              <IonLabel className="text-xs text-gray-500 block mb-2">
+              <IonLabel className="text-sm text-gray-500 block mb-2">
                 Ghi chú
               </IonLabel>
               <IonTextarea
                 placeholder="Nhập ghi chú..."
                 rows={3}
                 className="border rounded-lg px-2"
-                value={product?.additionalDescription}
+                value={product?.description}
               />
             </div>
           </IonCardContent>
@@ -331,7 +362,7 @@ const ProductDetail: React.FC = () => {
           isOpen={showBarcodeModal}
           onDidDismiss={() => setShowBarcodeModal(false)}
           productName={product?.productName}
-          productCode={product?.productCode}
+          productCode={product?.code}
         />
 
         {/* Action Sheet */}

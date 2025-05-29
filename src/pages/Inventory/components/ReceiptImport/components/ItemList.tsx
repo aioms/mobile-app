@@ -1,95 +1,119 @@
 import React from "react";
-import { IonItem, IonLabel, IonChip, IonIcon } from "@ionic/react";
-import { calendar, cube } from "ionicons/icons";
+import {
+  IonItem,
+  IonLabel,
+  IonChip,
+  IonIcon,
+  IonItemSliding,
+  IonItemOptions,
+  IonItemOption,
+} from "@ionic/react";
+import {
+  calendar,
+  cube,
+  checkmarkOutline,
+  arrowUpOutline,
+} from "ionicons/icons";
 import { formatDate } from "@/helpers/formatters";
+import { useAuth } from "@/hooks/useAuth";
+import { UserRole } from "@/common/enums/user";
+import { ReceiptImportStatus } from "@/common/enums/receipt";
+import { getStatusColor, getStatusLabel, TReceiptImportStatus } from "@/common/constants/receipt";
 
 interface ItemListProps {
   id: string;
   receiptNumber: string;
-  expectedImportDate: string;
+  importDate: string;
   quantity: number;
   status: string;
-  warehouseLocation: string;
+  warehouse: string;
   note: string;
+  userCreated: string;
+  createdAt: string;
+  onRequestApproval?: (id: string) => void;
+  onComplete?: (id: string) => void;
 }
-
-export const getStatusColor = (status: string) => {
-  switch (status) {
-    case "draft":
-      return {
-        label: "Nháp",
-        color: "medium",
-      };
-    case "processing":
-      return {
-        label: "Đang xử lý",
-        color: "warning",
-      };
-    case "cancelled":
-      return {
-        label: "Đã hủy",
-        color: "danger",
-      };
-    case "completed":
-      return {
-        label: "Hoàn thành",
-        color: "success",
-      };
-    case "short_received":
-      return {
-        label: "Giao thiếu",
-        color: "dark",
-      };
-    case "over_received":
-      return {
-        label: "Giao dư",
-        color: "dark",
-      };
-    default:
-      return {
-        label: "Không có trạng thái",
-        color: "light",
-      };
-  }
-};
 
 const ItemList: React.FC<ItemListProps> = ({
   id,
   receiptNumber,
-  expectedImportDate,
+  importDate,
   quantity,
   status,
-  warehouseLocation,
-  note,
+  warehouse,
+  userCreated,
+  createdAt,
+  onRequestApproval,
+  onComplete,
 }) => {
+  const { user } = useAuth();
+  const userRole = user?.role || "";
+
+  const isUserCreated = user?.id === userCreated;
+  const isEmployee = userRole === UserRole.EMPLOYEE;
+  const canApprove = (
+    [UserRole.ADMIN, UserRole.MANAGER, UserRole.DEVELOPER] as string[]
+  ).includes(userRole);
+
+  const showRequestApproval =
+    status === ReceiptImportStatus.PROCESSING && isEmployee && isUserCreated;
+  const showComplete = status === ReceiptImportStatus.WAITING && canApprove;
+
   return (
-    <IonItem lines="full" className="py-2" routerLink={`/tabs/receipt-import/${id}`}>
-      <IonLabel className="ml-4">
-        <div className="md:flex md:items-center">
-          <span className="font-semibold text-lg">
-            Mã phiếu: {receiptNumber}
-          </span>
-        </div>
-        <p className="text-gray-500 text-sm">
-          Trạng thái:
-          <IonChip color={getStatusColor(status).color} className="ml-2">
-            <span className="text-sm">{getStatusColor(status).label}</span>
-          </IonChip>
-        </p>
-        <p className="text-gray-500 text-sm">Cửa hàng: {warehouseLocation}</p>
-        {/* {note && <p className="text-gray-500 text-sm">Ghi chú: {note}</p>} */}
-        <div className="flex justify-start items-center mt-5">
-          <div className="flex items-center text-gray-600 mr-3">
-            <IonIcon icon={calendar} className="mr-2" />
-            <span className="text-sm">{formatDate(expectedImportDate)}</span>
+    <IonItemSliding>
+      <IonItem
+        lines="full"
+        className="py-2"
+        routerLink={`/tabs/receipt-import/detail/${id}`}
+      >
+        <IonLabel className="ml-4">
+          <div className="md:flex md:items-center">
+            <span className="font-semibold text-lg">
+              Mã phiếu: {receiptNumber}
+            </span>
           </div>
-          <div className="flex items-center text-gray-600">
-            <IonIcon icon={cube} className="mr-2" />
-            <span className="text-sm">Số lượng: {quantity}</span>
+          <p className="text-gray-500 text-sm">
+            Trạng thái:
+            <IonChip color={getStatusColor(status as TReceiptImportStatus)} className="ml-2">
+              <span className="text-sm">{getStatusLabel(status as TReceiptImportStatus)}</span>
+            </IonChip>
+          </p>
+          <p className="text-gray-500 text-sm">Cửa hàng: {warehouse || "--"}</p>
+          <div className="flex justify-start items-center mt-5">
+            <div className="flex items-center text-gray-600 mr-3">
+              <IonIcon icon={calendar} className="mr-2" />
+              <span className="text-sm">{formatDate(createdAt)}</span>
+            </div>
+            <div className="flex items-center text-gray-600">
+              <IonIcon icon={cube} className="mr-2" />
+              <span className="text-sm">Số lượng: {quantity}</span>
+            </div>
           </div>
-        </div>
-      </IonLabel>
-    </IonItem>
+        </IonLabel>
+      </IonItem>
+
+      <IonItemOptions side="end">
+        {showRequestApproval && (
+          <IonItemOption
+            color="tertiary"
+            onClick={() => onRequestApproval?.(id)}
+          >
+            Yêu cầu duyệt
+            <IonIcon slot="icon-only" icon={arrowUpOutline}></IonIcon>
+          </IonItemOption>
+        )}
+        {showComplete && (
+          <IonItemOption
+            color="success"
+            style={{ color: "white" }}
+            onClick={() => onComplete?.(id)}
+          >
+            <IonIcon slot="icon-only" icon={checkmarkOutline}></IonIcon>
+            Hoàn thành
+          </IonItemOption>
+        )}
+      </IonItemOptions>
+    </IonItemSliding>
   );
 };
 

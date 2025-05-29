@@ -1,5 +1,5 @@
 export enum SUPPLIER_STATUS {
-  COLLABORATING = "COLLABORATING",
-  PAUSED = "PAUSED",
-  STOPPED_COLLABORATING = "STOPPED_COLLABORATING",
+  COLLABORATING = "collaborating",
+  PAUSED = "paused",
+  STOPPED_COLLABORATING = "stopped_collaborating",
 }

@@ -36,9 +36,9 @@ import { formatCurrency } from "@/helpers/formatters";
 import useReceiptImport from "@/hooks/apis/useReceiptImport";
 
 import DatePicker from "@/components/DatePicker";
-import ModalSelectProduct from "../components/ModalSelectProduct";
-import ReceiptItem from "../components/ReceiptItem";
-import ModalSelectSupplier from "../components/ModalSelectSupplier";
+import ModalSelectProduct from "../../components/ModalSelectProduct";
+import ReceiptItem from "../../components/ReceiptItem";
+import ModalSelectSupplier from "../../components/ModalSelectSupplier";
 
 import "./ReceiptImportCreate.css";
 
@@ -48,7 +48,7 @@ const initialDefaultItem = {
   paymentDate: getDate(new Date()).format(),
   quantity: 0,
   supplier: "",
-  warehouseLocation: "Kho KS1",
+  warehouse: "Kho KS1",
   totalAmount: 0,
   totalProduct: 0,
   items: [],
@@ -165,7 +165,7 @@ const ReceiptImportCreate: React.FC = () => {
   const validateForm = async (values: Record<string, any>) => {
     const newErrors: Record<string, string> = {
       quantity: "",
-      expectedImportDate: "",
+      importDate: "",
       paymentDate: "",
       supplier: "",
     };
@@ -174,8 +174,8 @@ const ReceiptImportCreate: React.FC = () => {
       newErrors.quantity = "Số lượng phải lớn hơn 0";
     }
 
-    if (!values.expectedImportDate) {
-      newErrors.expectedImportDate = "Vui lòng chọn ngày nhập";
+    if (!values.importDate) {
+      newErrors.importDate = "Vui lòng chọn ngày nhập";
     }
 
     if (!values.paymentDate) {
@@ -184,8 +184,8 @@ const ReceiptImportCreate: React.FC = () => {
 
     if (
       values.paymentDate &&
-      values.expectedImportDate &&
-      values.paymentDate < values.expectedImportDate
+      values.importDate &&
+      values.paymentDate < values.importDate
     ) {
       newErrors.paymentDate = "Ngày thanh toán phải sau ngày nhập";
     }
@@ -220,7 +220,7 @@ const ReceiptImportCreate: React.FC = () => {
 
     const newFormData = {
       ...formData,
-      expectedImportDate: formData.importDate,
+      importDate: formData.importDate,
       quantity,
       totalAmount,
       totalProduct: newItems.length,
@@ -316,12 +316,12 @@ const ReceiptImportCreate: React.FC = () => {
             <IonItem
               className={clsx(
                 "mt-3",
-                errors.expectedImportDate ? "ion-invalid" : ""
+                errors.importDate ? "ion-invalid" : ""
               )}
             >
               <IonLabel position="stacked">Ngày nhập dự kiến *</IonLabel>
               <DatePicker
-                attrs={{ id: "expectedImportDate" }}
+                attrs={{ id: "importDate" }}
                 value={formData.importDate}
                 onChange={(e) =>
                   setFormData((prev) => ({
@@ -330,8 +330,8 @@ const ReceiptImportCreate: React.FC = () => {
                   }))
                 }
               />
-              {errors.expectedImportDate && (
-                <IonNote slot="error">{errors.expectedImportDate}</IonNote>
+              {errors.importDate && (
+                <IonNote slot="error">{errors.importDate}</IonNote>
               )}
             </IonItem>
 

@@ -1,29 +1,30 @@
-import { useEffect, useState } from 'react';
-import { stringifySafe } from "../helpers/common";
-import { useStorage } from './useStorage';
-import { IHttpResponse, User } from '../types';
-import { request } from '../helpers/axios';
+import { useEffect, useState } from "react";
+import { Toast } from "@capacitor/toast";
+
+import { parseSafe, stringifySafe } from "../helpers/common";
+import { request } from "../helpers/axios";
+
+import { IHttpResponse, User } from "../types";
+import { useStorage } from "./useStorage";
 
 export const useAuth = () => {
-  const storage = useStorage();
+  const { addItem, getItem, removeItem } = useStorage();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const checkAuthentication = async () => {
-      if (!storage) return;
-
-      const token = await storage.get("token");
+      const token = await getItem("token");
       setIsAuthenticated(!!token);
 
       if (token) {
-        const user = await storage.get("user");
+        const user = await getItem("user");
         setUser(user);
       }
     };
 
     checkAuthentication();
-  }, [storage]);
+  }, []);
 
   const login = async (username: string, password: string) => {
     try {
@@ -36,12 +37,10 @@ export const useAuth = () => {
         return response;
       }
 
-      if (storage) {
-        await Promise.all([
-          storage.set("token", response.data?.token),
-          storage.set("user", stringifySafe(response.data?.user)),
-        ]);
-      }
+      await Promise.all([
+        addItem("token", response.data?.token),
+        addItem("user", response.data?.user),
+      ]);
 
       setIsAuthenticated(true);
       setUser(response.data?.user);
@@ -50,19 +49,23 @@ export const useAuth = () => {
     } catch (error: any) {
       return error;
     }
-  }
+  };
 
   const logout = async () => {
     setIsAuthenticated(false);
     setUser(null);
 
-    if (storage) {
-      await Promise.all([
-        storage.remove("token"),
-        storage.remove("user"),
-      ]);
+    try {
+      await request.post(`/auth/logout`);
+      await Promise.all([removeItem("token"), removeItem("user")]);
+    } catch (error) {
+      await Toast.show({
+        text: (error as Error).message,
+        duration: "short",
+        position: "center",
+      });
     }
-  }
+  };
 
   return { login, logout, isAuthenticated, user };
 };

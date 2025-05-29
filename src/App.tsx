@@ -24,7 +24,7 @@ import "@ionic/react/css/display.css";
  */
 
 /* import '@ionic/react/css/palettes/dark.always.css'; */
-import '@ionic/react/css/palettes/dark.class.css';
+import "@ionic/react/css/palettes/dark.class.css";
 // import "@ionic/react/css/palettes/dark.system.css";
 
 /* Theme variables */
@@ -33,14 +33,36 @@ import "./theme/tailwind.css";
 import "./theme/common.css";
 
 /* Components */
+import { useEffect } from "react";
 import { Routes } from "./routes";
+import { initStorage } from "./hooks";
+import { Toast } from "@capacitor/toast";
 
 setupIonicReact();
 
-const App: React.FC = () => (
-  <IonApp>
-    <Routes />
-  </IonApp>
-);
+const App: React.FC = () => {
+  useEffect(() => {
+    const initializeStorage = async () => {
+      try {
+        await initStorage();
+        console.log("Ionic Storage initialized successfully");
+      } catch (error) {
+        await Toast.show({
+          text: "Failed to initialize Ionic Storage",
+          duration: "long",
+          position: "center",
+        });
+      }
+    };
+
+    initializeStorage();
+  }, []);
+
+  return (
+    <IonApp>
+      <Routes />
+    </IonApp>
+  );
+};
 
 export default App;

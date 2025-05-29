@@ -56,6 +56,7 @@ export class HttpRequest {
       baseURL: api,
       headers: _headers,
       withCredentials: false,
+      timeout: 20_000,
     };
 
     if (apiVersion) {
@@ -81,6 +82,7 @@ export class HttpRequest {
         return config;
       },
       function (error) {
+        console.error({ 'interceptors.request': error })
         // Do something with request error
         return Promise.reject(error);
       },
@@ -100,6 +102,7 @@ export class HttpRequest {
       async function (error) {
         const resp = error.response;
         const data = resp?.data;
+        console.error({ 'interceptors.response': error })
 
         if (resp.status === 401 || resp.statusText === "Unauthorized") {
           const storage = await initStorage();

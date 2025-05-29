@@ -5,6 +5,7 @@ interface ItemListProps {
   id: string;
   productName: string;
   productCode: string;
+  code: string;
   inventory: number;
   unit: string;
   costPrice: number;
@@ -16,6 +17,7 @@ const ProductItem: React.FC<ItemListProps> = ({
   id,
   productName,
   productCode,
+  code,
   costPrice = 0,
   discount = 0,
   inventory = 0,
@@ -31,6 +33,7 @@ const ProductItem: React.FC<ItemListProps> = ({
           id,
           productName,
           productCode,
+          code,
           costPrice,
           discount,
           inventory,
@@ -50,7 +53,7 @@ const ProductItem: React.FC<ItemListProps> = ({
             />
             <div className="ml-2">
               <p className="text-sm font-medium text-balance">{productName}</p>
-              <p className="text-xs text-gray-500">{productCode}</p>
+              <p className="text-xs text-gray-500">{code}</p>
               <div className="mt-2">
                 {inventory === 0 ? (
                   <span className="text-red-500">

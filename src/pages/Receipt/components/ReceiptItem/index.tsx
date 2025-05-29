@@ -13,7 +13,8 @@ import { FC, useEffect, useState } from "react";
 type Props = {
   id: string;
   productName: string;
-  productCode: string;
+  productCode: number;
+  code: string;
   inventory: number;
   costPrice: number;
   discount: number;
@@ -25,6 +26,7 @@ const ReceiptItem: FC<Props> = ({
   id,
   productCode,
   productName,
+  code,
   inventory,
   costPrice,
   discount,
@@ -73,6 +75,7 @@ const ReceiptItem: FC<Props> = ({
           id,
           productCode,
           productName,
+          code,
           inventory,
           quantity,
           costPrice: newCostPrice,
@@ -91,7 +94,7 @@ const ReceiptItem: FC<Props> = ({
             <div className="flex justify-between">
               <div>
                 <h3 className="font-medium text-lg">{productName}</h3>
-                <p className="text-gray-500">{productCode}</p>
+                <p className="text-gray-500">{code}</p>
                 <div className="text-gray-500">
                   Tồn kho: {inventory} • Giá:{" "}
                   {costPrice.toLocaleString("vi-VN")}

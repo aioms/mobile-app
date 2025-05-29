@@ -13,3 +13,11 @@ export const convertToUTC = (date: Date) => {
 export const getDate = (date: Date | string) => {
   return dayjs(date);
 }
+
+export const toISODateTime = (dateStr?: string) => {
+  if (!dateStr) return dateStr;
+  // If already ISO, return as is
+  if (dateStr.includes("T")) return dateStr;
+  // Convert "YYYY-MM-DD HH:mm:ss" to "YYYY-MM-DDTHH:mm:ss"
+  return dateStr.replace(" ", "T");
+};

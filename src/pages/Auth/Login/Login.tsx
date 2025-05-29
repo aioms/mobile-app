@@ -18,7 +18,6 @@ import {
 import { useHistory } from "react-router-dom";
 import "./Login.css";
 import { useAuth } from "../../../hooks";
-import { Toast } from "@capacitor/toast";
 
 const Login: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -26,8 +25,10 @@ const Login: React.FC = () => {
     password: "",
   });
   const [error, setError] = useState("");
-  const { login } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const history = useHistory();
+
+  console.log({ isAuthenticated, user })
 
   const handleLogin = async () => {
     try {
@@ -46,13 +47,9 @@ const Login: React.FC = () => {
       setFormData({ username: "", password: "" });
       setError("");
 
-      await Toast.show({
-        text: "Đăng nhập thành công",
-        duration: "short",
-        position: "center",
-      });
-
-      history.push("/tabs/home");
+      setTimeout(() => {
+        history.replace("/tabs/home");
+      }, 500);
     } catch (error: any) {
       setError(error.message);
     }
@@ -108,7 +105,7 @@ const Login: React.FC = () => {
                   errorText="Mật khẩu không đúng"
                   clearInput
                   debounce={400}
-                  onIonInput={(e) => 
+                  onIonInput={(e) =>
                     setFormData((prev) => ({
                       ...prev,
                       password: e.target.value as string,

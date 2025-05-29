@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AIOM System</string>
+    <string name="title_activity_main">AIOM System</string>
+    <string name="package_name">com.aiom.system.app</string>
+    <string name="custom_url_scheme">com.aiom.system.app</string>
+</resources>

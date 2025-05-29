@@ -1,15 +1,20 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.aios',
-  appName: 'aios-mobile',
+  appId: 'com.aiom.system.app',
+  appName: 'AIOM System',
   webDir: 'dist',
   server: {
-    androidScheme: 'https',
     cleartext: true,
-    hostname: 'localhost',
-    iosScheme: 'ionic',
     allowNavigation: ['*'],
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 0
+    },
+    PushNotifications: {
+      presentationOptions: ["badge", "sound", "alert"],
+    },
   },
 };
 

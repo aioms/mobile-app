@@ -1,3 +1,9 @@
+import { Capacitor } from "@capacitor/core";
+
+export const isWeb = () => {
+  return Capacitor.getPlatform() === "web";
+}
+
 export const parseSafe = (json: string) => {
   try {
     return JSON.parse(json);
@@ -19,3 +25,7 @@ export const convertObjectToQueryString = (params: Record<string, any>) => {
     .map((key) => key + "=" + params[key])
     .join("&");
 };
+
+export const isHasProperty = (obj: Record<string, unknown>) => {
+  return Object.keys(obj).length;
+}

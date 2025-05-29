@@ -8,18 +8,18 @@ import {
   useIonViewWillLeave,
 } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
+import { logOut } from "ionicons/icons";
 
 import "./ExploreContainer.css";
 import { useStorage } from "../hooks/useStorage";
 import { stringifySafe } from "../helpers/common";
-import { logOut } from "ionicons/icons";
 import { useAuth } from "../hooks";
 
 interface ContainerProps {}
 
 const ExploreContainer: React.FC<ContainerProps> = () => {
   const { isAuthenticated, user } = useAuth();
-  const storage = useStorage();
+  const { storage } = useStorage();
   const history = useHistory();
 
   useIonViewDidEnter(() => {
@@ -39,9 +39,7 @@ const ExploreContainer: React.FC<ContainerProps> = () => {
   });
 
   const handleLogout = async () => {
-    if(!storage) return;
-
-    await storage.clear();
+    await storage?.clear();
     history.push('/login');
   }
 

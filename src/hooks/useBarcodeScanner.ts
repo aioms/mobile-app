@@ -7,7 +7,7 @@ import { Toast } from "@capacitor/toast";
 import { Capacitor } from "@capacitor/core";
 
 interface UseBarcodeScanner {
-  onBarcodeScanned: (value: string) => void;
+  onBarcodeScanned: (value: string, data?: Record<string, unknown>) => void;
   onError?: (error: Error) => void;
 }
 
@@ -189,7 +189,7 @@ export const useBarcodeScanner = ({
     updateDOMForCloseCamera();
   };
 
-  const handleBarcodeScanned = async (rawValue: string) => {
+  const handleBarcodeScanned = async (rawValue: string, data?: Record<string, unknown>) => {
     const currentTime = Date.now();
 
     // Check for duplicate scans
@@ -205,7 +205,7 @@ export const useBarcodeScanner = ({
     lastScannedTime.current = currentTime;
     scanCount.current++;
 
-    onBarcodeScanned(rawValue);
+    onBarcodeScanned(rawValue, data);
 
     await Toast.show({
       text: `Đã quét mã: ${rawValue}`,
@@ -214,7 +214,7 @@ export const useBarcodeScanner = ({
     });
   };
 
-  const startScan = async () => {
+  const startScan = async (data?: Record<string, unknown>) => {
     try {
       // Reset scan tracking variables
       lastScannedCode.current = "";
@@ -239,8 +239,11 @@ export const useBarcodeScanner = ({
 
         // Add listener for scanned barcodes
         listenerRef.current = await BarcodeScanner.addListener(
-          "barcodeScanned",
-          (result) => handleBarcodeScanned(result.barcode.rawValue)
+          "barcodesScanned",
+          result => {
+            const barcodes = result.barcodes;
+            handleBarcodeScanned(barcodes[0].rawValue, data);
+          }
         );
       }
     } catch (error) {

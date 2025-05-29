@@ -34,7 +34,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item }) => {
           <div className="flex items-center text-gray-600">
             <IonIcon icon={calendar} className="mr-2" />
             <span className="text-sm">
-              {formatDate(item.expectedImportDate)}
+              {formatDate(item.importDate)}
             </span>
           </div>
           <div className="flex items-center text-gray-600">
