@@ -286,7 +286,7 @@ const ReceiptCheckDetail: React.FC = () => {
           </div>
 
           <IonButtons slot="end">
-            <IonButton className="text-gray-600" onClick={startScan}>
+            <IonButton className="text-gray-600" onClick={() => startScan()}>
               <IonIcon slot="icon-only" icon={scanOutline} />
             </IonButton>
           </IonButtons>

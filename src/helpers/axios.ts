@@ -69,6 +69,7 @@ export class HttpRequest {
       });
     }
 
+    console.log(options)
     const instance = axios.create(options);
 
     instance.interceptors.request.use(
@@ -84,7 +85,7 @@ export class HttpRequest {
       function (error) {
         console.error({ 'interceptors.request': error })
         // Do something with request error
-        return Promise.reject(error);
+        return error;
       },
     );
 

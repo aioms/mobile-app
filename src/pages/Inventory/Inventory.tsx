@@ -114,7 +114,7 @@ const InventoryScreen = () => {
               showClearButton="focus"
             />
             <IonButtons slot="end">
-              <IonButton color="primary" onClick={startScan}>
+              <IonButton color="primary" onClick={() => startScan()}>
                 <IonIcon icon={scanOutline} slot="icon-only" />
               </IonButton>
             </IonButtons>

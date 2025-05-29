@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Toast } from "@capacitor/toast";
 
-import { parseSafe, stringifySafe } from "../helpers/common";
 import { request } from "../helpers/axios";
 
 import { IHttpResponse, User } from "../types";

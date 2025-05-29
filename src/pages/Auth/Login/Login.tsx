@@ -14,31 +14,34 @@ import {
   IonText,
   IonCheckbox,
   IonInputPasswordToggle,
+  useIonViewDidEnter,
 } from "@ionic/react";
 import { useHistory } from "react-router-dom";
-import "./Login.css";
 import { useAuth } from "../../../hooks";
 
+import "./Login.css";
+
 const Login: React.FC = () => {
+  const history = useHistory();
+
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
   const [error, setError] = useState("");
-  const { login, isAuthenticated, user } = useAuth();
-  const history = useHistory();
-
-  console.log({ isAuthenticated, user })
+  const { login, isAuthenticated } = useAuth();
 
   const handleLogin = async () => {
     try {
       const { username, password } = formData;
+      console.log({ formData })
 
       if (!username || !password) {
         return setError("Vui lòng nhập đầy đủ thông tin");
       }
 
       const response = await login(username, password);
+      console.log({ resp_status: response?.statusCode, resp_data: response?.data })
 
       if (response.statusCode !== 200 || !response.data) {
         return setError(JSON.stringify(response));
@@ -54,6 +57,12 @@ const Login: React.FC = () => {
       setError(error.message);
     }
   };
+
+  useIonViewDidEnter(() => {
+    if (isAuthenticated) {
+      history.replace("/tabs/home");
+    }
+  }, [isAuthenticated])
 
   return (
     <IonPage>

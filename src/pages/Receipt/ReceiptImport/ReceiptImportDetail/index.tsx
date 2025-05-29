@@ -579,7 +579,7 @@ const ReceiptImportDetail: React.FC = () => {
               <h2 className="text-lg font-semibold">Thông tin phiếu nhập</h2>
               {showRequestApproval && (
                 <IonButtons slot="end">
-                  <IonButton color="primary" onClick={startScan}>
+                  <IonButton color="primary" onClick={() => startScan()}>
                     <IonIcon icon={scanOutline} slot="icon-only" />
                   </IonButton>
                 </IonButtons>

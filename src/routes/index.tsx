@@ -23,7 +23,7 @@ export const Routes: React.FC = () => {
             <Redirect to="/tabs/home" />
           </Route> */}
 
-          <Redirect exact from="/" to="/tabs/home" />
+          <Redirect exact from="/" to="/login" />
         </IonRouterOutlet>
       </IonTabs>
     </IonReactRouter>

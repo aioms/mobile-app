@@ -1,4 +1,4 @@
-import { IonApp, setupIonicReact } from "@ionic/react";
+import { IonApp, setupIonicReact, useIonToast } from "@ionic/react";
 
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/react/css/core.css";
@@ -36,21 +36,23 @@ import "./theme/common.css";
 import { useEffect } from "react";
 import { Routes } from "./routes";
 import { initStorage } from "./hooks";
-import { Toast } from "@capacitor/toast";
 
 setupIonicReact();
 
 const App: React.FC = () => {
+  const [presentToast] = useIonToast();
+
   useEffect(() => {
     const initializeStorage = async () => {
       try {
         await initStorage();
         console.log("Ionic Storage initialized successfully");
       } catch (error) {
-        await Toast.show({
-          text: "Failed to initialize Ionic Storage",
-          duration: "long",
-          position: "center",
+        await presentToast({
+          message: (error as Error).message || "Failed to initialize Ionic Storage",
+          duration: 2000,
+          position: "top",
+          color: "danger",
         });
       }
     };

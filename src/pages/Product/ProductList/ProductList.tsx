@@ -300,7 +300,7 @@ const ProductListScreen: React.FC = () => {
             <IonButton fill="clear" color="primary" onClick={openFilterModal}>
               <IonIcon icon={filterOutline} size="icon-only" />
             </IonButton>
-            <IonButton color="primary" onClick={startScan}>
+            <IonButton color="primary" onClick={() => startScan()}>
               <IonIcon icon={scanOutline} slot="icon-only" />
             </IonButton>
           </IonButtons>
