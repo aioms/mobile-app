@@ -13,7 +13,7 @@ import { useStorage } from "../hooks/useStorage";
 
 const NotificationSettings: React.FC = () => {
   const [enabled, setEnabled] = useState(false);
-  const storage = useStorage();
+  const { storage } = useStorage();
 
   useEffect(() => {
     const checkPermission = async () => {

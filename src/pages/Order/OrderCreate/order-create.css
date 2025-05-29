@@ -1,0 +1,12 @@
+ion-input.custom-padding {
+  --padding-start: 10px;
+  --padding-end: 10px;
+}
+
+/* ion-radio.radio-checked::part(container) {
+  border-color: transparent;
+} */
+
+ion-radio.radio-checked::part(mark) {
+  border-color: rgb(97,210,204);
+}

@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { PushNotifications } from "@capacitor/push-notifications";
 import { Capacitor } from "@capacitor/core";
 import { Toast } from "@capacitor/toast";
+import { PushNotifications } from "@capacitor/push-notifications";
 import {
   IonContent,
   IonAvatar,
   IonImg,
   useIonViewWillEnter,
+  RefresherEventDetail,
 } from "@ionic/react";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
@@ -17,11 +18,13 @@ import StatisticCards, {
 import ImportantUpdates from "./components/ImportantUpdates";
 import QuickActions from "./components/QuickActions";
 import RecentActivities from "./components/RecentActivities";
+import LoadingScreen from "@/components/Loading/LoadingScreen";
+import { Refresher } from "@/components/Refresher/Refresher";
 
-import { useAuth } from "@/hooks";
+import { useAuth, useLoading, useStorage } from "@/hooks";
 import useProduct from "@/hooks/apis/useProduct";
 import useReceiptImport from "@/hooks/apis/useReceiptImport";
-import { useStorage } from "../../hooks/useStorage";
+
 import { isHasProperty } from "@/helpers/common";
 
 const userMock = {
@@ -30,7 +33,7 @@ const userMock = {
 
 const HomeScreen: React.FC = () => {
   const { user } = useAuth();
-  const storage = useStorage();
+  const { getItem, addItem } = useStorage();
 
   const [stats, setStats] = useState<StatisticCardsProps["stats"]>({
     revenue: 0,
@@ -41,6 +44,7 @@ const HomeScreen: React.FC = () => {
     totalProduct: 0,
     totalImport: 0,
   });
+  const { isLoading, withLoading } = useLoading();
 
   const { getTotalProductAndInventory } = useProduct();
   const { getTotalImportsByDateRange } = useReceiptImport();
@@ -51,6 +55,7 @@ const HomeScreen: React.FC = () => {
 
     if (permStatus.receive === "prompt") {
       permStatus = await PushNotifications.requestPermissions();
+      console.log({ permStatus });
     }
 
     if (permStatus.receive !== "granted") {
@@ -64,18 +69,32 @@ const HomeScreen: React.FC = () => {
   const requestPushPermission = async () => {
     const platform = Capacitor.getPlatform();
 
-    if (platform === "web") return;
+    if (platform === "web") {
+      if (!("Notification" in window)) {
+        await Toast.show({
+          text: "Thông báo không được hỗ trợ trên trình duyệt",
+          duration: "short",
+          position: "center",
+        });
+        return;
+      }
+
+      const newPermission = await Notification.requestPermission();
+      console.log({ newPermission });
+
+      return;
+    }
 
     try {
       // Check if permission was already requested
-      const permissionStatus = await storage?.get("pushPermissionRequested");
+      const permissionStatus = await getItem("pushPermissionRequested");
       console.log({ permissionStatus });
       // if (permissionStatus === "true") return;
 
       await registerNotifications();
 
       // Mark that we've requested permission
-      await storage?.set("pushPermissionRequested", "true");
+      await addItem("pushPermissionRequested", "true");
 
       // Add listeners for push events if needed
       PushNotifications.addListener("registration", (token) => {
@@ -90,8 +109,8 @@ const HomeScreen: React.FC = () => {
     }
   };
 
-  useIonViewWillEnter(() => {
-    const fetchData = async () => {
+  const fetchHomeData = () => {
+    return withLoading(async () => {
       try {
         await requestPushPermission();
 
@@ -128,14 +147,24 @@ const HomeScreen: React.FC = () => {
           position: "center",
         });
       }
-    };
+    });
+  };
 
-    fetchData();
+  useIonViewWillEnter(() => {
+    fetchHomeData();
   }, []);
 
-  // <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 mb-6">
+  const handleRefresh = (event: CustomEvent<RefresherEventDetail>) => {
+    fetchHomeData().finally(() => {
+      event.detail.complete();
+    });
+  };
+
   return (
     <IonContent className="ion-padding">
+      {isLoading && <LoadingScreen message="Đang tải dữ liệu..." />}
+      <Refresher onRefresh={handleRefresh} />
+
       {/* Header Section */}
       <div className="bg-teal-100/60 text-teal-500 backdrop-blur-sm rounded-2xl p-4 mb-6">
         <div className="flex justify-between items-start">

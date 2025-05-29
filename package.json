@@ -15,11 +15,12 @@
     "build:ios": "ionic build --platform=ios",
     "build:android": "ionic build --platform=android",
     "start:ios": "ionic cap run ios --livereload --external --open",
+    "start:android": "ionic cap run android --livereload --external --open",
     "clean": "xcodebuild clean -project ios/App/App.xcodeproj"
   },
   "dependencies": {
     "@capacitor-mlkit/barcode-scanning": "^7.2.1",
-    "@capacitor/android": "^7.0.0",
+    "@capacitor/android": "7.2.0",
     "@capacitor/app": "7.0.1",
     "@capacitor/camera": "^7.0.1",
     "@capacitor/core": "^7.0.0",

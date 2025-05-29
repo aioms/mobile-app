@@ -20,13 +20,17 @@ import MenuLayout from "../Layout/MenuLayout";
 import NotFound from "@/pages/Error/NotFound";
 
 import HomeScreen from "@/pages/Home/Home";
-import InventoryScreen from "@/pages/Inventory/Inventory";
 import ProductListScreen from "@/pages/Product/ProductList/ProductList";
 import ProductDetailScreen from "@/pages/Product/ProductDetail/ProductDetail";
+
+import InventoryScreen from "@/pages/Inventory/Inventory";
 import TransactionScreen from "@/pages/Transaction/TransactionList";
+
 import ReceiptImportCreateScreen from "@/pages/Receipt/ReceiptImport/ReceiptImportCreate";
 import ReceiptImportDetailScreen from "@/pages/Receipt/ReceiptImport/ReceiptImportDetail";
 import ReceiptCheckDetailScreen from "@/pages/Receipt/ReceiptCheck/ReceiptCheckDetail";
+
+import OrderCreateScreen from "@/pages/Order/OrderCreate";
 
 /* Hooks */
 // import { useAuth } from "../../hooks";
@@ -61,13 +65,14 @@ const TabBar: React.FC = () => {
         <Route
           exact
           path="/tabs/transaction"
-          children={
-            <MenuLayout
-              component={<TransactionScreen />}
-              isHeaderDefault
-              title="Giao dịch"
-            />
-          }
+          component={OrderCreateScreen}
+          // children={
+          //   <MenuLayout
+          //     component={<TransactionScreen />}
+          //     isHeaderDefault
+          //     title="Giao dịch"
+          //   />
+          // }
         />
 
         {/* Inventory Screens */}
@@ -107,6 +112,13 @@ const TabBar: React.FC = () => {
           }
         />
         <Route exact path="/tabs/product/:id" component={ProductDetailScreen} />
+
+        {/* Order Screens */}
+        <Route
+          exact
+          path="/tabs/order/create"
+          component={OrderCreateScreen}
+        />
 
         <Route component={NotFound} />
 

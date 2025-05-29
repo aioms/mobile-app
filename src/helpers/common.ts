@@ -1,3 +1,9 @@
+import { Capacitor } from "@capacitor/core";
+
+export const isWeb = () => {
+  return Capacitor.getPlatform() === "web";
+}
+
 export const parseSafe = (json: string) => {
   try {
     return JSON.parse(json);

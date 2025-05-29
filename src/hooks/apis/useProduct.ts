@@ -1,3 +1,4 @@
+import { IProduct } from "@/types/product.type";
 import { request } from "../../helpers/axios";
 
 interface ProductFilters {
@@ -44,7 +45,7 @@ const useProduct = () => {
     return response.data;
   };
 
-  const getDetail = async (id: string) => {
+  const getDetail = async (id: string): Promise<IProduct> => {
     const response = await request.get(`/products/${id}`);
     return response.data;
   };
