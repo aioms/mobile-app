@@ -1,0 +1,22 @@
+.date-display {
+  color: var(--ion-color-medium);
+  font-size: 14px;
+}
+
+.date-filter-container {
+  display: flex;
+  gap: 8px;
+}
+
+.order-item {
+  transition: transform 0.2s;
+}
+
+.order-item:active {
+  transform: scale(0.98);
+}
+
+.ripple-parent {
+  position: relative;
+  overflow: hidden;
+}

@@ -14,21 +14,24 @@ import {
   IonText,
   IonCheckbox,
   IonInputPasswordToggle,
+  useIonViewDidEnter,
+  useIonToast,
 } from "@ionic/react";
 import { useHistory } from "react-router-dom";
-import "./Login.css";
 import { useAuth } from "../../../hooks";
 
+import "./Login.css";
+
 const Login: React.FC = () => {
+  const history = useHistory();
+  const [presentToast] = useIonToast();
+
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
   const [error, setError] = useState("");
-  const { login, isAuthenticated, user } = useAuth();
-  const history = useHistory();
-
-  console.log({ isAuthenticated, user })
+  const { login, isAuthenticated } = useAuth();
 
   const handleLogin = async () => {
     try {
@@ -44,6 +47,13 @@ const Login: React.FC = () => {
         return setError(JSON.stringify(response));
       }
 
+      await presentToast({
+        message: "Đăng nhập thành công",
+        duration: 1000,
+        position: "top",
+        color: "success",
+      });
+
       setFormData({ username: "", password: "" });
       setError("");
 
@@ -54,6 +64,12 @@ const Login: React.FC = () => {
       setError(error.message);
     }
   };
+
+  useIonViewDidEnter(() => {
+    if (isAuthenticated) {
+      history.replace("/tabs/home");
+    }
+  }, [isAuthenticated])
 
   return (
     <IonPage>

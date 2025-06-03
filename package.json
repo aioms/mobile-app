@@ -11,11 +11,11 @@
     "test.unit": "vitest",
     "lint": "eslint",
     "sync": "ionic cap sync",
-    "build": "ionic build",
+    "build": "ionic build --prod && ionic cap copy",
     "build:ios": "ionic build --platform=ios",
     "build:android": "ionic build --platform=android",
     "start:ios": "ionic cap run ios --livereload --external --open",
-    "start:android": "ionic cap run android --livereload --external --open",
+    "start:android": "ionic cap run android --livereload --external --consolelogs --serverlogs --open",
     "clean": "xcodebuild clean -project ios/App/App.xcodeproj"
   },
   "dependencies": {

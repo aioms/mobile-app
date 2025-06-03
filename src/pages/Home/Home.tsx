@@ -8,6 +8,7 @@ import {
   IonImg,
   useIonViewWillEnter,
   RefresherEventDetail,
+  useIonToast,
 } from "@ionic/react";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
@@ -26,12 +27,14 @@ import useProduct from "@/hooks/apis/useProduct";
 import useReceiptImport from "@/hooks/apis/useReceiptImport";
 
 import { isHasProperty } from "@/helpers/common";
+import { dayjsFormat } from "@/helpers/formatters";
 
 const userMock = {
   avatar: "https://i.pravatar.cc/300",
 };
 
 const HomeScreen: React.FC = () => {
+  const [presentToast] = useIonToast();
   const { user } = useAuth();
   const { getItem, addItem } = useStorage();
 
@@ -67,25 +70,32 @@ const HomeScreen: React.FC = () => {
   };
 
   const requestPushPermission = async () => {
-    const platform = Capacitor.getPlatform();
+    try {
+      const platform = Capacitor.getPlatform();
 
-    if (platform === "web") {
-      if (!("Notification" in window)) {
-        await Toast.show({
-          text: "Thông báo không được hỗ trợ trên trình duyệt",
-          duration: "short",
-          position: "center",
+      if (platform === "web") {
+        if (!("Notification" in window)) {
+          await Toast.show({
+            text: "Thông báo không được hỗ trợ trên trình duyệt",
+            duration: "short",
+            position: "center",
+          });
+          return;
+        }
+
+        const newPermission = await Notification.requestPermission();
+        console.log({ newPermission });
+
+        presentToast({
+          message: JSON.stringify(newPermission),
+          duration: 2000,
+          position: "top",
+          color: "success",
         });
+
         return;
       }
 
-      const newPermission = await Notification.requestPermission();
-      console.log({ newPermission });
-
-      return;
-    }
-
-    try {
       // Check if permission was already requested
       const permissionStatus = await getItem("pushPermissionRequested");
       console.log({ permissionStatus });
@@ -106,13 +116,19 @@ const HomeScreen: React.FC = () => {
       });
     } catch (error) {
       console.error("Error requesting push permission:", error);
+      await presentToast({
+        message: (error as Error).message,
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
     }
   };
 
   const fetchHomeData = () => {
     return withLoading(async () => {
       try {
-        await requestPushPermission();
+        // await requestPushPermission();
 
         const [totalImport, totalProductAndInventory] =
           await Promise.allSettled([
@@ -141,10 +157,11 @@ const HomeScreen: React.FC = () => {
         }
       } catch (error) {
         const err = error as Error;
-        await Toast.show({
-          text: err.message,
-          duration: "short",
-          position: "center",
+        await presentToast({
+          message: err.message,
+          duration: 2000,
+          position: "top",
+          color: "danger",
         });
       }
     });
@@ -184,7 +201,7 @@ const HomeScreen: React.FC = () => {
                 </span>
               </div>
               <span className="text-gray-600 text-xs italic">
-                {dayjs().locale("vi").format("dddd, DD MMMM YYYY")}
+                {dayjsFormat(new Date(), "dddd, DD MMMM YYYY", "vi")}
               </span>
             </div>
           </div>

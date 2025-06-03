@@ -4,6 +4,10 @@ export const isWeb = () => {
   return Capacitor.getPlatform() === "web";
 }
 
+export const isNative = () => {
+  return Capacitor.isNativePlatform();
+}
+
 export const parseSafe = (json: string) => {
   try {
     return JSON.parse(json);

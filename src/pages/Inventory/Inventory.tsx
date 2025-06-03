@@ -87,9 +87,6 @@ const InventoryScreen = () => {
     <IonContent>
       <IonHeader>
         <IonToolbar>
-          <IonButtons slot="start">
-            <IonMenuButton></IonMenuButton>
-          </IonButtons>
           {/* Segment */}
           <IonSegment
             value={selectedSegment}
@@ -114,7 +111,7 @@ const InventoryScreen = () => {
               showClearButton="focus"
             />
             <IonButtons slot="end">
-              <IonButton color="primary" onClick={startScan}>
+              <IonButton color="primary" onClick={() => startScan()}>
                 <IonIcon icon={scanOutline} slot="icon-only" />
               </IonButton>
             </IonButtons>
