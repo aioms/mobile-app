@@ -87,9 +87,6 @@ const InventoryScreen = () => {
     <IonContent>
       <IonHeader>
         <IonToolbar>
-          <IonButtons slot="start">
-            <IonMenuButton></IonMenuButton>
-          </IonButtons>
           {/* Segment */}
           <IonSegment
             value={selectedSegment}

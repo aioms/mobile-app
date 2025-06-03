@@ -9,9 +9,9 @@ import {
 } from "@ionic/react";
 import {
   home,
-  cashOutline,
   cubeOutline,
   bagHandleOutline,
+  cartOutline,
 } from "ionicons/icons";
 import { Redirect, Route } from "react-router-dom";
 
@@ -24,22 +24,20 @@ import ProductListScreen from "@/pages/Product/ProductList/ProductList";
 import ProductDetailScreen from "@/pages/Product/ProductDetail/ProductDetail";
 
 import InventoryScreen from "@/pages/Inventory/Inventory";
-import TransactionScreen from "@/pages/Transaction/TransactionList";
+// import TransactionScreen from "@/pages/Transaction/TransactionList";
 
 import ReceiptImportCreateScreen from "@/pages/Receipt/ReceiptImport/ReceiptImportCreate";
 import ReceiptImportDetailScreen from "@/pages/Receipt/ReceiptImport/ReceiptImportDetail";
 import ReceiptCheckDetailScreen from "@/pages/Receipt/ReceiptCheck/ReceiptCheckDetail";
 
 import OrderCreateScreen from "@/pages/Order/OrderCreate";
-
-/* Hooks */
-// import { useAuth } from "../../hooks";
+import OrderListScreen from "@/pages/Order/OrderList";
 
 import "./TabBar.css";
 
 const tabs = [
   { icon: home, label: "Trang chủ", path: "/tabs/home" },
-  { icon: cashOutline, label: "Giao dịch", path: "/tabs/transaction" },
+  { icon: cartOutline, label: "Đơn hàng", path: "/tabs/orders" },
   { icon: cubeOutline, label: "Quản lý kho", path: "/tabs/inventory" },
   { icon: bagHandleOutline, label: "Sản phẩm", path: "/tabs/product" },
   // { icon: statsChartOutline, label: "Báo cáo", path: "/tabs/report" },
@@ -59,20 +57,6 @@ const TabBar: React.FC = () => {
               title="Trang chủ"
             />
           }
-        />
-
-        {/* Transaction Screens */}
-        <Route
-          exact
-          path="/tabs/transaction"
-          component={OrderCreateScreen}
-          // children={
-          //   <MenuLayout
-          //     component={<TransactionScreen />}
-          //     isHeaderDefault
-          //     title="Giao dịch"
-          //   />
-          // }
         />
 
         {/* Inventory Screens */}
@@ -118,6 +102,11 @@ const TabBar: React.FC = () => {
           exact
           path="/tabs/order/create"
           component={OrderCreateScreen}
+        />
+        <Route
+          exact
+          path="/tabs/orders"
+          component={OrderListScreen}
         />
 
         <Route component={NotFound} />

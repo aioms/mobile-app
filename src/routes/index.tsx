@@ -19,10 +19,6 @@ export const Routes: React.FC = () => {
 
           <Route component={NotFound} />
 
-          {/* <Route exact path="/">
-            <Redirect to="/tabs/home" />
-          </Route> */}
-
           <Redirect exact from="/" to="/login" />
         </IonRouterOutlet>
       </IonTabs>

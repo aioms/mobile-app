@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useHistory } from "react-router";
 
 import { Toast } from "@capacitor/toast";
-import { IonIcon } from "@ionic/react";
+import { IonIcon, useIonToast } from "@ionic/react";
 import {
   scanOutline,
   cartOutline,
@@ -15,16 +15,18 @@ import useProduct from "@/hooks/apis/useProduct";
 
 const QuickActions: React.FC = () => {
   const history = useHistory();
+  const [presentToast] = useIonToast();
   const { addItem, getItem } = useStorage();
   const { getDetail: getProductDetail } = useProduct();
 
   const { startScan, stopScan } = useBarcodeScanner({
     onBarcodeScanned: handleBarcodeScanned,
-    onError: async (error: Error) => {
-      await Toast.show({
-        text: error.message,
-        duration: "long",
+    onError: (error: Error) => {
+      presentToast({
+        message: error.message,
+        duration: 2000,
         position: "top",
+        color: "danger",
       });
     },
   });

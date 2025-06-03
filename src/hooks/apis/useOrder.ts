@@ -1,3 +1,4 @@
+import { IHttpResponse } from "@/types";
 import { request } from "../../helpers/axios";
 
 const useOrder = () => {
@@ -8,10 +9,11 @@ const useOrder = () => {
   ) => {
     const query = new URLSearchParams(filters);
 
-    const response = await request.get(
+    const response: IHttpResponse = await request.get(
       `/orders?${query.toString()}&page=${page}&limit=${limit}`
     );
-    return response?.data || [];
+
+    return response;
   };
 
   const getDetail = async (id: string) => {

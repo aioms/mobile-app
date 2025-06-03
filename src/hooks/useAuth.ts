@@ -46,6 +46,7 @@ export const useAuth = () => {
 
       return response;
     } catch (error: any) {
+      console.error(JSON.stringify(error));
       return error;
     }
   };

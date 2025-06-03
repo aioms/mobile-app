@@ -15,6 +15,7 @@ import {
   IonCheckbox,
   IonInputPasswordToggle,
   useIonViewDidEnter,
+  useIonToast,
 } from "@ionic/react";
 import { useHistory } from "react-router-dom";
 import { useAuth } from "../../../hooks";
@@ -23,6 +24,7 @@ import "./Login.css";
 
 const Login: React.FC = () => {
   const history = useHistory();
+  const [presentToast] = useIonToast();
 
   const [formData, setFormData] = useState({
     username: "",
@@ -34,18 +36,23 @@ const Login: React.FC = () => {
   const handleLogin = async () => {
     try {
       const { username, password } = formData;
-      console.log({ formData })
 
       if (!username || !password) {
         return setError("Vui lòng nhập đầy đủ thông tin");
       }
 
       const response = await login(username, password);
-      console.log({ resp_status: response?.statusCode, resp_data: response?.data })
 
       if (response.statusCode !== 200 || !response.data) {
         return setError(JSON.stringify(response));
       }
+
+      await presentToast({
+        message: "Đăng nhập thành công",
+        duration: 1000,
+        position: "top",
+        color: "success",
+      });
 
       setFormData({ username: "", password: "" });
       setError("");

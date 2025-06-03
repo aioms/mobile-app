@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useHistory } from "react-router";
 import { IonTextareaCustomEvent, TextareaChangeEventDetail } from "@ionic/core";
+import { Dialog } from "@capacitor/dialog";
 import {
   IonPage,
   IonHeader,
@@ -24,9 +25,7 @@ import {
   IonSelectOption,
   IonRippleEffect,
   InputCustomEvent,
-  useIonViewWillLeave,
   useIonViewWillEnter,
-  useIonViewDidEnter,
 } from "@ionic/react";
 import {
   checkmarkCircleOutline,
@@ -42,6 +41,7 @@ import { useLoading, useBarcodeScanner, useStorage } from "@/hooks";
 import useOrder from "@/hooks/apis/useOrder";
 import useProduct from "@/hooks/apis/useProduct";
 
+import { isHasProperty } from "@/helpers/common";
 import {
   formatCurrency,
   formatCurrencyWithoutSymbol,
@@ -52,11 +52,9 @@ import { cn } from "@/lib/utils";
 
 import OrderItem from "./components/OrderItem";
 import ModalSelectProduct from "../components/ModalSelectProduct";
-
-import "./order-create.css";
-import { Dialog } from "@capacitor/dialog";
 import ErrorMessage from "@/components/ErrorMessage";
-import { isHasProperty } from "@/helpers/common";
+
+import "./OrderCreate.css";
 
 interface IOrderItem {
   id: string;

@@ -1,7 +1,16 @@
 import dayjs from "dayjs";
 
-export const dayjsFormat = (date: string, format?: string) => {
-  return dayjs(date).format(format || "DD/MM/YYYY");
+export const dayjsFormat = (
+  date?: string | Date,
+  format?: string,
+  locale?: string
+) => {
+  let datetime = dayjs(date || new Date());
+
+  if (locale) {
+    datetime =  datetime.locale(locale);
+  }
+  return datetime.format(format || "DD/MM/YYYY");
 };
 
 export const formatDate = (date: string) => {

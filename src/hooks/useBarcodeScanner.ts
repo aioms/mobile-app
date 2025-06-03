@@ -249,7 +249,8 @@ export const useBarcodeScanner = ({
     } catch (error) {
       console.error("Error starting scan:", error);
       onError?.(error as Error);
-      await Toast.show({
+
+      !onError && await Toast.show({
         text: (error as Error).message,
         duration: "long",
         position: "top",

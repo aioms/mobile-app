@@ -69,7 +69,6 @@ export class HttpRequest {
       });
     }
 
-    console.log(options)
     const instance = axios.create(options);
 
     instance.interceptors.request.use(
@@ -80,10 +79,15 @@ export class HttpRequest {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`; // Attach the token to the Authorization header
         }
+        console.log(JSON.stringify({
+          'interceptors.request.use': config
+        }))
         return config;
       },
       function (error) {
-        console.error({ 'interceptors.request': error })
+        console.error(JSON.stringify({
+          'interceptors.request.error': error
+        }))
         // Do something with request error
         return error;
       },
@@ -91,6 +95,9 @@ export class HttpRequest {
 
     instance.interceptors.response.use(
       function (response) {
+        console.log(JSON.stringify({
+          'interceptors.response.use': response
+        }));
         if (response.status === 204) {
           return {
             statusCode: response.status,
@@ -103,7 +110,10 @@ export class HttpRequest {
       async function (error) {
         const resp = error.response;
         const data = resp?.data;
-        console.error({ 'interceptors.response': error })
+
+        console.error(JSON.stringify({
+          'interceptors.response.error': error
+        }))
 
         if (resp.status === 401 || resp.statusText === "Unauthorized") {
           const storage = await initStorage();
