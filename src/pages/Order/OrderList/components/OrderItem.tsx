@@ -58,8 +58,8 @@ const OrderItem: React.FC<OrderItemProps> = ({ order }) => {
     <IonItemSliding>
       <IonItem
         lines="full"
-        className="order-item ion-activatable ripple-parent rounded-lg shadow-sm"
-        routerLink={`/tabs/orders/detail/${order.id}`}
+        className="order-item ion-activatable ripple-parent rounded-lg shadow-sm mb-3"
+        routerLink={`/tabs/order/detail/${order.id}`}
       >
         <div className="py-4 w-full">
           <div className="flex justify-between items-start mb-2">

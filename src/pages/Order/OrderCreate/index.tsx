@@ -470,7 +470,7 @@ const OrderCreate: React.FC = () => {
 
         const orderCreated = await createOrder(orderData);
 
-        if (!orderCreated.id) {
+        if (!orderCreated?.id) {
           throw new Error("Tạo đơn hàng thất bại");
         }
 

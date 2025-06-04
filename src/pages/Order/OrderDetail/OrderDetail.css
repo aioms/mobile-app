@@ -1,0 +1,33 @@
+/* Custom styles for OrderDetail page */
+.bg-success {
+  background-color: #10b981;
+}
+
+.bg-warning {
+  background-color: #f59e0b;
+}
+
+.bg-danger {
+  background-color: #ef4444;
+}
+
+.bg-medium {
+  background-color: #6b7280;
+}
+
+/* Custom chip styles */
+ion-chip {
+  margin: 0;
+  height: 28px;
+}
+
+/* Custom badge styles */
+ion-badge {
+  padding: 6px 12px;
+  border-radius: 12px;
+}
+
+/* Add padding bottom to content to account for fixed buttons */
+ion-content {
+  --padding-bottom: 16px;
+}
