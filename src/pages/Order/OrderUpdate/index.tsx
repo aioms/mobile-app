@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useHistory } from "react-router";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { useHistory, useParams } from "react-router";
 import { IonTextareaCustomEvent, TextareaChangeEventDetail } from "@ionic/core";
 import { Dialog } from "@capacitor/dialog";
 import {
@@ -26,13 +26,12 @@ import {
   IonRippleEffect,
   InputCustomEvent,
   useIonViewWillEnter,
-  useIonViewWillLeave,
 } from "@ionic/react";
 import {
+  checkmarkCircle,
   checkmarkCircleOutline,
   chevronDownOutline,
   removeCircleOutline,
-  saveOutline,
   scanOutline,
   search,
 } from "ionicons/icons";
@@ -42,12 +41,15 @@ import { useLoading, useBarcodeScanner, useStorage } from "@/hooks";
 import useOrder from "@/hooks/apis/useOrder";
 import useProduct from "@/hooks/apis/useProduct";
 
-import { isHasProperty } from "@/helpers/common";
 import {
   formatCurrency,
   formatCurrencyWithoutSymbol,
   parseCurrencyInput,
 } from "@/helpers/formatters";
+import {
+  getOrderStatusColor,
+  getOrderStatusLabel,
+} from "@/common/constants/order";
 import { OrderStatus, PaymentMethod } from "@/common/enums/order";
 import { cn } from "@/lib/utils";
 
@@ -55,7 +57,7 @@ import OrderItem from "./components/OrderItem";
 import ModalSelectProduct from "../components/ModalSelectProduct";
 import ErrorMessage from "@/components/ErrorMessage";
 
-import "./OrderCreate.css";
+import "./OrderUpdate.css";
 
 interface IOrderItem {
   id: string;
@@ -67,6 +69,8 @@ interface IOrderItem {
 }
 
 interface IFormData {
+  code: string;
+  status: string;
   note: string;
   customer: string;
   paymentMethod: PaymentMethod;
@@ -82,6 +86,8 @@ interface IFormData {
 }
 
 const initialFormData: IFormData = {
+  code: "",
+  status: "",
   note: "",
   customer: "",
   paymentMethod: PaymentMethod.CASH,
@@ -92,7 +98,8 @@ const initialFormData: IFormData = {
   discountAmountFormatted: "",
 };
 
-const OrderCreate: React.FC = () => {
+const OrderUpdate: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const history = useHistory();
 
   const [formData, setFormData] = useState<IFormData>(initialFormData);
@@ -105,8 +112,12 @@ const OrderCreate: React.FC = () => {
 
   const { addItem, getItem, removeItem } = useStorage();
   const { isLoading, withLoading } = useLoading();
-  const { create: createOrder } = useOrder();
+  const { getDetail: getOrderDetail, update: updateOrder } = useOrder();
   const { getDetail: getProductDetail } = useProduct();
+
+  const isOrderPaid = useMemo(() => {
+    return formData.status === OrderStatus.PAID;
+  }, [formData.status]);
 
   const addProductToCartItem = async (productCode: string) => {
     try {
@@ -394,31 +405,128 @@ const OrderCreate: React.FC = () => {
   };
 
   const handleCancel = async () => {
+    try {
+      const { value } = await Dialog.confirm({
+        title: "Xác nhận hủy đơn hàng",
+        message: "Bạn có chắc chắn muốn hủy đơn hàng này không?",
+      });
+
+      if (!value) return;
+
+      const orderUpdated = await updateOrder(id, {
+        status: OrderStatus.CANCELLED,
+      });
+
+      if (!orderUpdated?.id) {
+        throw new Error("Hủy đơn hàng thất bại");
+      }
+
+      presentToast({
+        message: "Hủy đơn hàng thành công",
+        duration: 2000,
+        position: "top",
+        color: "success",
+      });
+      history.goBack();
+    } catch (error) {
+      presentToast({
+        message: (error as Error).message || "Có lỗi xảy ra",
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+    }
+  };
+
+  const handleUpdate = async () => {
     const { value } = await Dialog.confirm({
-      title: "Xác nhận hủy đơn hàng",
-      message: "Bạn có chắc chắn muốn hủy đơn hàng này không?",
+      title: "Xác nhận cập nhật đơn hàng",
+      message: "Bạn có chắc chắn muốn cập nhật đơn hàng này không?",
+    });
+    if (!value) return;
+
+    const orderData = {
+      customerType: formData.customer,
+      paymentMethod: formData.paymentMethod,
+      note: formData.note,
+      discountAmount: calculateDiscount(),
+      vatEnabled: formData.vatEnabled,
+      vatInfo: formData.vatEnabled
+        ? {
+            companyName: formData.companyName,
+            taxCode: formData.taxCode,
+            email: formData.email,
+            remark: formData.remark,
+          }
+        : null,
+    };
+
+    const orderUpdated = await updateOrder(id, orderData);
+
+    if (!orderUpdated?.id) {
+      throw new Error("Cập nhật đơn hàng thất bại");
+    }
+
+    presentToast({
+      message: "Cập nhật đơn hàng thành công",
+      duration: 2000,
+      position: "top",
+      color: "success",
+    });
+  };
+
+  const handlePaidOrder = async () => {
+    const { value } = await Dialog.confirm({
+      title: "Xác nhận thanh toán đơn hàng",
+      message: "Bạn có chắc chắn muốn thanh toán đơn hàng này không?",
     });
 
     if (!value) return;
 
-    history.replace("/tabs/orders");
+    const status =
+      formData.paymentMethod === PaymentMethod.CASH
+        ? OrderStatus.PAID
+        : OrderStatus.PENDING;
+
+    const orderData = {
+      status,
+      customerType: formData.customer,
+      paymentMethod: formData.paymentMethod,
+      note: formData.note,
+      discountAmount: calculateDiscount(),
+      items: orderItems.map((item) => ({
+        productId: item.id,
+        productName: item.productName,
+        code: item.code,
+        quantity: item.quantity,
+        price: item.sellingPrice,
+      })),
+      vatEnabled: formData.vatEnabled,
+      vatInfo: formData.vatEnabled
+        ? {
+            companyName: formData.companyName,
+            taxCode: formData.taxCode,
+            email: formData.email,
+            remark: formData.remark,
+          }
+        : null,
+    };
+
+    const orderUpdated = await updateOrder(id, orderData);
+
+    if (!orderUpdated?.id) {
+      throw new Error("Thanh toán đơn hàng thất bại");
+    }
+
+    presentToast({
+      message: "Thanh toán đơn hàng thành công",
+      duration: 2000,
+      position: "top",
+      color: "success",
+    });
   };
 
-  // const handleSaveDraft = async () => {
-  //   await addItem("order_draft", {
-  //     ...formData,
-  //     items: orderItems,
-  //   });
-
-  //   presentToast({
-  //     message: "Lưu tạm thành công",
-  //     duration: 500,
-  //     position: "top",
-  //     color: "success",
-  //   });
-  // };
-
-  const handleSubmit = async (status?: OrderStatus) => {
+  const handleSubmit = async () => {
     const isValid = validateForm();
 
     if (!isValid) {
@@ -431,57 +539,13 @@ const OrderCreate: React.FC = () => {
       return;
     }
 
-    if (!status) {
-      const { value } = await Dialog.confirm({
-        title: "Xác nhận tạo đơn hàng",
-        message: "Bạn có chắc chắn muốn tạo đơn hàng này không?",
-      });
-
-      if (!value) return;
-    }
-
     await withLoading(async () => {
       try {
-        const statusByPaymentMethod =
-          formData.paymentMethod === PaymentMethod.CASH
-            ? OrderStatus.PAID
-            : OrderStatus.PENDING;
-
-        const orderData = {
-          status: status || statusByPaymentMethod,
-          customerType: formData.customer,
-          paymentMethod: formData.paymentMethod,
-          note: formData.note,
-          discountAmount: calculateDiscount(),
-          items: orderItems.map((item) => ({
-            productId: item.id,
-            productName: item.productName,
-            code: item.code,
-            quantity: item.quantity,
-            price: item.sellingPrice,
-          })),
-          vatInfo: formData.vatEnabled
-            ? {
-                companyName: formData.companyName,
-                taxCode: formData.taxCode,
-                email: formData.email,
-                remark: formData.remark,
-              }
-            : null,
-        };
-
-        const orderCreated = await createOrder(orderData);
-
-        if (!orderCreated?.id) {
-          throw new Error("Tạo đơn hàng thất bại");
+        if (isOrderPaid) {
+          await handleUpdate();
+        } else {
+          await handlePaidOrder();
         }
-
-        presentToast({
-          message: "Tạo đơn hàng thành công",
-          duration: 2000,
-          position: "top",
-          color: "success",
-        });
 
         history.goBack();
       } catch (error) {
@@ -495,37 +559,119 @@ const OrderCreate: React.FC = () => {
     });
   };
 
-  useIonViewWillEnter(() => {
-    const loadDataFromStorage = async () => {
-      const order = await getItem("order_draft");
+  const fetchOrderDetail = async () => {
+    await withLoading(async () => {
+      try {
+        const orderDetail = await getOrderDetail(id);
 
-      if (order) {
-        const { items, ...rest } = order;
+        if (!orderDetail) {
+          presentToast({
+            message: "Không tìm thấy thông tin đơn hàng",
+            duration: 2000,
+            position: "top",
+            color: "danger",
+          });
+          history.goBack();
+          return;
+        }
 
-        items && setOrderItems(items);
-        isHasProperty(rest) && setFormData(rest);
+        // Map order items to component format
+        const items = orderDetail.items.map((item: any) => ({
+          id: item.productId,
+          productId: item.productId,
+          productName: item.productName,
+          code: item.code,
+          quantity: item.quantity,
+          sellingPrice: item.price,
+        }));
+
+        setOrderItems(items);
+
+        // Calculate discount type and value
+        let discountType = "fixed";
+        let discountPercentage = 0;
+        let discountAmount = orderDetail.discountAmount || 0;
+
+        const subtotal = items.reduce((total: number, item: any) => {
+          return total + item.sellingPrice * item.quantity;
+        }, 0);
+
+        if (subtotal > 0) {
+          const percentage = (discountAmount / subtotal) * 100;
+          // If percentage is a clean number (like 5%, 10%, etc.), use percentage type
+          if (percentage === Math.round(percentage)) {
+            discountType = "percentage";
+            discountPercentage = percentage;
+            discountAmount = 0;
+          }
+        }
+
+        // Set form data
+        setFormData({
+          code: orderDetail.code,
+          status: orderDetail.status,
+          note: orderDetail.note || "",
+          customer: orderDetail.customerType || "",
+          paymentMethod: orderDetail.paymentMethod || PaymentMethod.CASH,
+          vatEnabled: !!orderDetail.vatInfo,
+          companyName: orderDetail.vatInfo?.companyName || "",
+          taxCode: orderDetail.vatInfo?.taxCode || "",
+          email: orderDetail.vatInfo?.email || "",
+          remark: orderDetail.vatInfo?.remark || "",
+          discountType: discountType as "percentage" | "fixed",
+          discountPercentage,
+          discountAmount,
+          discountAmountFormatted: formatCurrencyWithoutSymbol(discountAmount),
+        });
+      } catch (error) {
+        presentToast({
+          message: (error as Error).message || "Có lỗi xảy ra khi tải dữ liệu",
+          duration: 2000,
+          position: "top",
+          color: "danger",
+        });
       }
-    };
+    });
+  };
 
-    loadDataFromStorage();
-  }, []);
-
-  useIonViewWillLeave(() => {
-    removeItem("order_draft");
-  }, []);
+  useIonViewWillEnter(() => {
+    if (id) {
+      fetchOrderDetail();
+    }
+  }, [id]);
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/tabs/home"></IonBackButton>
+            <IonBackButton defaultHref="/tabs/orders"></IonBackButton>
           </IonButtons>
-          <IonTitle>Tạo đơn hàng</IonTitle>
+          <IonTitle>Cập nhật đơn hàng</IonTitle>
         </IonToolbar>
       </IonHeader>
 
       <IonContent className="ion-padding bg-background">
+        {/* Order Status Header */}
+        <div className="bg-card rounded-lg shadow-sm mb-4">
+          <div
+            className={`p-4 bg-${getOrderStatusColor(
+              formData.status
+            )} rounded-lg`}
+          >
+            <div className="flex items-center">
+              <IonIcon
+                icon={checkmarkCircle}
+                className="text-white text-xl mr-2"
+              />
+              <span className="text-white font-medium">
+                {getOrderStatusLabel(formData.status)}
+              </span>
+            </div>
+            <div className="text-white mt-1">Mã đơn hàng: #{formData.code}</div>
+          </div>
+        </div>
+
         {/* 1. Product Selection Section */}
         <div className="bg-card rounded-lg shadow-sm mb-4">
           <div className="p-4">
@@ -540,31 +686,35 @@ const OrderCreate: React.FC = () => {
             )}
 
             {/* Barcode Scanner Section */}
-            <div
-              className="ion-activatable bg-teal-50 border-2 border-dashed border-teal-200 rounded-lg p-6 mb-4 text-center cursor-pointer hover:bg-teal-100 transition-colors"
-              onClick={() => startScan()}
-            >
-              <div className="flex flex-col items-center justify-center space-y-3">
-                <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center">
-                  <IonIcon
-                    icon={scanOutline}
-                    className="text-3xl text-teal-600"
-                  />
+            {!isOrderPaid && (
+              <>
+                <div
+                  className="ion-activatable bg-teal-50 border-2 border-dashed border-teal-200 rounded-lg p-6 mb-4 text-center cursor-pointer hover:bg-teal-100 transition-colors"
+                  onClick={() => startScan()}
+                >
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center">
+                      <IonIcon
+                        icon={scanOutline}
+                        className="text-3xl text-teal-600"
+                      />
+                    </div>
+                    <p className="text-teal-700 font-medium text-base">
+                      Quét mã vạch để thêm sản phẩm
+                    </p>
+                  </div>
                 </div>
-                <p className="text-teal-700 font-medium text-base">
-                  Quét mã vạch để thêm sản phẩm
-                </p>
-              </div>
-            </div>
 
-            <div
-              className="ion-activatable receipt-import-ripple-parent mb-3"
-              onClick={() => openModalSelectProduct()}
-            >
-              <IonIcon icon={search} className="text-2xl" />
-              Tìm kiếm hàng hóa
-              <IonRippleEffect className="custom-ripple"></IonRippleEffect>
-            </div>
+                <div
+                  className="ion-activatable receipt-import-ripple-parent mb-3"
+                  onClick={() => openModalSelectProduct()}
+                >
+                  <IonIcon icon={search} className="text-2xl" />
+                  Tìm kiếm hàng hóa
+                  <IonRippleEffect className="custom-ripple"></IonRippleEffect>
+                </div>
+              </>
+            )}
 
             <div className="relative">
               <div
@@ -576,6 +726,7 @@ const OrderCreate: React.FC = () => {
                     <OrderItem
                       key={item.id}
                       {...item}
+                      orderStatus={formData.status}
                       attrs={{ "data-order-item": "true" }}
                       onRowChange={(data) => handleItemChange(item.id, data)}
                       onRemoveItem={() => handleRemoveItem(item.id)}
@@ -688,7 +839,9 @@ const OrderCreate: React.FC = () => {
                     value={formData.customer}
                     onIonChange={handleCustomerChange}
                   >
-                    <IonSelectOption value="individual">Khách lẻ</IonSelectOption>
+                    <IonSelectOption value="individual">
+                      Khách lẻ
+                    </IonSelectOption>
                     <IonSelectOption value="loyal">Khách quen</IonSelectOption>
                   </IonSelect>
                 </IonItem>
@@ -854,48 +1007,34 @@ const OrderCreate: React.FC = () => {
         </div>
 
         {/* 7. Cancel order Section */}
-        <div className="">
-          <IonButton
-            expand="block"
-            fill="outline"
-            className="rounded-lg text-red-600"
-            onClick={handleCancel}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              "Đang xử lý..."
-            ) : (
-              <>
-                <IonIcon icon={removeCircleOutline} slot="start" />
-                Hủy đơn
-              </>
-            )}
-          </IonButton>
-        </div>
+        {formData.status !== OrderStatus.CANCELLED && (
+          <div>
+            <IonButton
+              expand="block"
+              fill="outline"
+              className="rounded-lg text-red-600"
+              onClick={handleCancel}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                "Đang xử lý..."
+              ) : (
+                <>
+                  <IonIcon icon={removeCircleOutline} slot="start" />
+                  Hủy đơn
+                </>
+              )}
+            </IonButton>
+          </div>
+        )}
       </IonContent>
 
       <IonFooter className="ion-no-border">
         <div className="flex justify-between p-2 bg-card">
           <IonButton
             expand="block"
-            fill="outline"
-            className="rounded-lg mr-2"
-            onClick={() => handleSubmit(OrderStatus.DRAFT)}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              "Đang xử lý..."
-            ) : (
-              <>
-                <IonIcon icon={saveOutline} slot="start" />
-                Lưu tạm
-              </>
-            )}
-          </IonButton>
-          <IonButton
-            expand="block"
             className="rounded-lg grow"
-            onClick={() => handleSubmit()}
+            onClick={handleSubmit}
             disabled={isLoading}
           >
             {isLoading ? (
@@ -903,7 +1042,7 @@ const OrderCreate: React.FC = () => {
             ) : (
               <>
                 <IonIcon icon={checkmarkCircleOutline} slot="start" />
-                Xác nhận đơn hàng
+                {!isOrderPaid ? "Xác nhận đơn hàng" : "Cập nhật đơn hàng"}
               </>
             )}
           </IonButton>
@@ -913,4 +1052,4 @@ const OrderCreate: React.FC = () => {
   );
 };
 
-export default OrderCreate;
+export default OrderUpdate;

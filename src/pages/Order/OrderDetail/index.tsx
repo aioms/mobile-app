@@ -14,12 +14,22 @@ import {
   RefresherEventDetail,
   useIonViewWillEnter,
 } from "@ionic/react";
-import { ellipsisVertical, chevronBack, checkmarkCircle, cubeOutline } from "ionicons/icons";
+import {
+  ellipsisVertical,
+  chevronBack,
+  checkmarkCircle,
+  cubeOutline,
+} from "ionicons/icons";
 
 import useOrder from "@/hooks/apis/useOrder";
 import { useLoading } from "@/hooks";
-import { OrderStatus, PaymentMethod } from "@/common/enums/order";
 import type { IOrder } from "@/types/order.type";
+import {
+  getOrderStatusColor,
+  getOrderStatusLabel,
+  getPaymentMethodLabel,
+} from "@/common/constants/order";
+import { OrderStatus } from "@/common/enums/order";
 
 import { Refresher } from "@/components/Refresher/Refresher";
 import LoadingScreen from "@/components/Loading/LoadingScreen";
@@ -29,43 +39,6 @@ import PaymentInfoSection from "./components/PaymentInfoSection";
 import VatInfoSection from "./components/VatInfoSection";
 
 import "./OrderDetail.css";
-
-const getStatusLabel = (status: string): string => {
-  switch (status) {
-    case OrderStatus.PENDING:
-      return "Chờ thanh toán";
-    case OrderStatus.PAID:
-      return "Đã hoàn thành";
-    case OrderStatus.CANCELLED:
-      return "Đã hủy";
-    default:
-      return "Không xác định";
-  }
-};
-
-const getStatusColor = (status: string): string => {
-  switch (status) {
-    case OrderStatus.PENDING:
-      return "warning";
-    case OrderStatus.PAID:
-      return "success";
-    case OrderStatus.CANCELLED:
-      return "danger";
-    default:
-      return "medium";
-  }
-};
-
-const getPaymentMethodLabel = (method: string): string => {
-  switch (method) {
-    case PaymentMethod.CASH:
-      return "Tiền mặt";
-    case PaymentMethod.BANK_TRANSFER:
-      return "Chuyển khoản";
-    default:
-      return "Không xác định";
-  }
-};
 
 const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -112,14 +85,18 @@ const OrderDetail: React.FC = () => {
         {
           text: "Chỉnh sửa",
           handler: () => {
-            history.push(`/tabs/orders/edit/${id}`);
+            history.push(`/tabs/order/update/${id}`);
           },
         },
         {
           text: "Xóa",
           role: "destructive",
           handler: () => {
-            // Handle delete action
+            Toast.show({
+              text: "Tính năng này đang được phát triển",
+              duration: "short",
+              position: "center",
+            });
           },
         },
         {
@@ -146,11 +123,13 @@ const OrderDetail: React.FC = () => {
             </IonButton>
           </IonButtons>
           <IonTitle>Mã đơn hàng</IonTitle>
-          <IonButtons slot="end">
-            <IonButton onClick={handleActionSheet}>
-              <IonIcon icon={ellipsisVertical} />
-            </IonButton>
-          </IonButtons>
+          {order?.status !== OrderStatus.CANCELLED && (
+            <IonButtons slot="end">
+              <IonButton onClick={handleActionSheet}>
+                <IonIcon icon={ellipsisVertical} />
+              </IonButton>
+            </IonButtons>
+          )}
         </IonToolbar>
       </IonHeader>
 
@@ -162,14 +141,18 @@ const OrderDetail: React.FC = () => {
           <>
             {/* Order Status Header */}
             <div className="bg-card rounded-lg shadow-sm mb-4">
-              <div className={`p-4 bg-${getStatusColor(order.status)}`}>
+              <div
+                className={`p-4 bg-${getOrderStatusColor(
+                  order.status
+                )} rounded-lg`}
+              >
                 <div className="flex items-center">
                   <IonIcon
                     icon={checkmarkCircle}
                     className="text-white text-xl mr-2"
                   />
                   <span className="text-white font-medium">
-                    {getStatusLabel(order.status)}
+                    {getOrderStatusLabel(order.status)}
                   </span>
                 </div>
                 <div className="text-white mt-1">
@@ -190,7 +173,10 @@ const OrderDetail: React.FC = () => {
               <div className="p-4 border-b border-border">
                 <div className="flex items-center">
                   <div className="w-6 h-6 bg-blue-500 rounded-md flex items-center justify-center mr-2">
-                    <IonIcon icon={cubeOutline} className="text-white text-sm" />
+                    <IonIcon
+                      icon={cubeOutline}
+                      className="text-white text-sm"
+                    />
                   </div>
                   <span className="font-medium">Danh sách sản phẩm</span>
                 </div>

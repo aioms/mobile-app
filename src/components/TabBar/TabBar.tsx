@@ -33,6 +33,7 @@ import ReceiptCheckDetailScreen from "@/pages/Receipt/ReceiptCheck/ReceiptCheckD
 import OrderCreateScreen from "@/pages/Order/OrderCreate";
 import OrderListScreen from "@/pages/Order/OrderList";
 import OrderDetailScreen from "@/pages/Order/OrderDetail";
+import OrderUpdateScreen from "@/pages/Order/OrderUpdate";
 
 import "./TabBar.css";
 
@@ -110,6 +111,7 @@ const TabBar: React.FC = () => {
           component={OrderListScreen}
         />
         <Route exact path="/tabs/order/detail/:id" component={OrderDetailScreen} />
+        <Route exact path="/tabs/order/update/:id" component={OrderUpdateScreen} />
 
         <Route component={NotFound} />
 
