@@ -195,6 +195,8 @@ const OrderList: React.FC = () => {
     });
   };
 
+  const handleCancelOrder = () => fetchOrders();
+
   return (
     <IonPage>
       <IonHeader>
@@ -247,7 +249,13 @@ const OrderList: React.FC = () => {
         {/* Order List */}
         <div>
           {orders.length > 0 ? (
-            orders.map((order) => <OrderItem key={order.id} order={order} />)
+            orders.map((order) => (
+              <OrderItem
+                key={order.id}
+                order={order}
+                onCancelOrder={handleCancelOrder}
+              />
+            ))
           ) : !isLoading ? (
             <div className="text-center text-gray-500 py-4">
               <p>Không tìm thấy đơn hàng nào</p>

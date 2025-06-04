@@ -1,0 +1,79 @@
+ion-input.custom-padding {
+  --padding-start: 10px;
+  --padding-end: 10px;
+}
+
+/* .custom-padding {
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+} */
+
+/* ion-radio::part(container) {
+  width: 20px;
+  height: 20px;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+}
+
+ion-radio::part(mark) {
+  background: none;
+  transition: none;
+  transform: none;
+  border-radius: 0;
+}
+
+ion-radio.radio-checked::part(container) {
+  background: rgb(97, 210, 204);
+  border-color: transparent;
+}
+
+ion-radio.radio-checked::part(mark) {
+  width: 6px;
+  height: 10px;
+  border-width: 0px 2px 2px 0px;
+  border-style: solid;
+  border-color: white;
+  transform: rotate(45deg);
+} */
+
+ion-toggle {
+  --handle-width: 20px;
+  --handle-height: 20px;
+  --handle-max-height: auto;
+  --handle-spacing: 6px;
+  --handle-border-radius: 50%;
+  --handle-box-shadow: none;
+  height: 32px;
+  width: 52px;
+  padding: 0;
+  --track-background: #ddd;
+  --track-background-checked: rgb(97, 210, 204);
+  --track-height: 32px;
+  --track-border-radius: 16px;
+}
+
+ion-toggle.toggle-checked::part(track) {
+  background: var(--track-background-checked);
+}
+
+ion-toggle::part(handle) {
+  background: white;
+  border-radius: 50%;
+  box-shadow: none;
+  width: var(--handle-width);
+  height: var(--handle-height);
+}
+
+.bg-custom-primary {
+  background-color: rgba(97, 210, 204, 0.1);
+}
+
+.border-custom-primary {
+  border-color: rgb(97, 210, 204);
+}
+
+.text-custom-primary {
+  color: rgb(97, 210, 204);
+}

@@ -5,9 +5,12 @@ import {
   IonLabel,
   IonSelect,
   IonSelectOption,
+  IonButton,
+  IonIcon,
 } from "@ionic/react";
 import DatePicker from "@/components/DatePicker";
 import { OrderStatus } from "@/common/enums/order";
+import { closeCircleOutline, removeCircleOutline } from "ionicons/icons";
 
 interface FilterSectionProps {
   onFilterChange: (filters: Record<string, string>) => void;
@@ -39,15 +42,36 @@ const FilterSection: React.FC<FilterSectionProps> = ({ onFilterChange }) => {
     }));
   };
 
+  const handleClearFilters = () => {
+    setKeyword("");
+    setStatus("");
+    setTimeFilter({ startDate: "", endDate: "" });
+  };
+
   return (
     <div className="filter-section bg-card rounded-lg shadow-sm p-3 mb-2">
-      <IonSearchbar
-        value={keyword}
-        onIonChange={(e) => setKeyword(e.detail.value || "")}
-        placeholder="Tìm kiếm đơn hàng"
-        className="mb-2"
-        debounce={300}
-      />
+      <div className="flex justify-between items-center mb-2">
+        <IonSearchbar
+          value={keyword}
+          onIonChange={(e) => setKeyword(e.detail.value || "")}
+          placeholder="Tìm kiếm đơn hàng"
+          debounce={300}
+          showClearButton="focus"
+        />
+        <IonButton
+          fill="outline"
+          // shape="round"
+          size="small"
+          color="danger"
+          className="w-12"
+          onClick={handleClearFilters}
+          style={{ marginLeft: 8 }}
+          aria-label="Xóa bộ lọc"
+        >
+          {/* Reset */}
+          <IonIcon icon={removeCircleOutline} slot="icon-only" />
+        </IonButton>
+      </div>
 
       <IonItem className="mb-2">
         <IonLabel>Trạng thái</IonLabel>
@@ -74,7 +98,9 @@ const FilterSection: React.FC<FilterSectionProps> = ({ onFilterChange }) => {
           <IonLabel position="stacked">Từ ngày</IonLabel>
           <DatePicker
             value={timeFilter.startDate}
-            onChange={(value) => handleDateChange("startDate", value)}
+            onChange={(e) =>
+              handleDateChange("startDate", e.detail.value! as string)
+            }
             extraClassName="pb-2"
             attrs={{ id: "startDate" }}
             presentation="date"
@@ -84,7 +110,9 @@ const FilterSection: React.FC<FilterSectionProps> = ({ onFilterChange }) => {
           <IonLabel position="stacked">Đến ngày</IonLabel>
           <DatePicker
             value={timeFilter.endDate}
-            onChange={(value) => handleDateChange("endDate", value)}
+            onChange={(e) =>
+              handleDateChange("endDate", e.detail.value! as string)
+            }
             extraClassName="pb-2"
             attrs={{ id: "endDate" }}
             presentation="date"

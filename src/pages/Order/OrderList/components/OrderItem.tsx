@@ -1,4 +1,5 @@
 import React from "react";
+import { Dialog } from "@capacitor/dialog";
 import {
   IonChip,
   IonIcon,
@@ -7,59 +8,71 @@ import {
   IonItemOptions,
   IonItemSliding,
   IonRippleEffect,
+  useIonToast,
 } from "@ionic/react";
 import { createOutline, trashBinOutline } from "ionicons/icons";
 
 import { dayjsFormat, formatCurrency } from "@/helpers/formatters";
-import { CustomerType, OrderStatus } from "@/common/enums/order";
 import type { IOrder } from "@/types/order.type";
+import {
+  getOrderStatusColor,
+  getOrderStatusLabel,
+  getCustomerTypeColor,
+  getCustomerTypeLabel,
+} from "@/common/constants/order";
+import useOrder from "@/hooks/apis/useOrder";
+import { OrderStatus } from "@/common/enums/order";
 
 interface OrderItemProps {
   order: IOrder;
+  onCancelOrder?: () => void;
 }
-const getStatusLabel = (status: string): string => {
-  switch (status) {
-    case OrderStatus.PENDING:
-      return "Chờ thanh toán";
-    case OrderStatus.PAID:
-      return "Đã thanh toán";
-    case OrderStatus.CANCELLED:
-      return "Đã hủy";
-    default:
-      return "Không xác định";
-  }
-};
 
-const getStatusColor = (status: string): string => {
-  switch (status) {
-    case OrderStatus.PENDING:
-      return "warning";
-    case OrderStatus.PAID:
-      return "success";
-    case OrderStatus.CANCELLED:
-      return "danger";
-    default:
-      return "medium";
-  }
-};
+const OrderItem: React.FC<OrderItemProps> = ({ order, onCancelOrder }) => {
+  const [presentToast] = useIonToast();
+  const { update: updateOrder } = useOrder();
 
-const getCustomerTypeLabel = (type: string): string => {
-  return type === CustomerType.LOYAL ? "Khách sỉ" : "Khách lẻ";
-};
+  const handleCancelOrder = async () => {
+    try {
+      const { value } = await Dialog.confirm({
+        title: "Xác nhận hủy đơn hàng",
+        message: "Bạn có chắc chắn muốn hủy đơn hàng này không?",
+      });
 
-const getCustomerTypeColor = (type: string): string => {
-  return type === CustomerType.LOYAL
-    ? "bg-blue-100 text-blue-700"
-    : "bg-orange-100 text-orange-700";
-};
+      if (!value) return;
 
-const OrderItem: React.FC<OrderItemProps> = ({ order }) => {
+      const orderUpdated = await updateOrder(order.id, {
+        status: OrderStatus.CANCELLED,
+      });
+
+      if (!orderUpdated?.id) {
+        throw new Error("Hủy đơn hàng thất bại");
+      }
+
+      presentToast({
+        message: "Hủy đơn hàng thành công",
+        duration: 2000,
+        position: "top",
+        color: "success",
+      });
+
+      onCancelOrder?.();
+    } catch (error) {
+      presentToast({
+        message: (error as Error).message || "Có lỗi xảy ra",
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+    }
+  };
+
   return (
     <IonItemSliding>
       <IonItem
         lines="full"
-        className="order-item ion-activatable ripple-parent rounded-lg shadow-sm"
-        routerLink={`/tabs/orders/detail/${order.id}`}
+        className="order-item ion-activatable ripple-parent rounded-lg shadow-sm mb-3"
+        routerLink={`/tabs/order/detail/${order.id}`}
       >
         <div className="py-4 w-full">
           <div className="flex justify-between items-start mb-2">
@@ -73,11 +86,11 @@ const OrderItem: React.FC<OrderItemProps> = ({ order }) => {
 
           <div className="flex items-center mb-2">
             <IonChip
-              color={getStatusColor(order.status)}
+              color={getOrderStatusColor(order.status)}
               className="m-0 font-medium"
             >
               <span className="text-sm italic">
-                {getStatusLabel(order.status)}
+                {getOrderStatusLabel(order.status)}
               </span>
             </IonChip>
           </div>
@@ -104,16 +117,21 @@ const OrderItem: React.FC<OrderItemProps> = ({ order }) => {
         <IonRippleEffect></IonRippleEffect>
       </IonItem>
 
-      <IonItemOptions side="end">
-        <IonItemOption color="tertiary">
-          Sửa đơn
-          <IonIcon slot="icon-only" icon={createOutline}></IonIcon>
-        </IonItemOption>
-        <IonItemOption color="danger">
-          Hủy đơn
-          <IonIcon slot="icon-only" icon={trashBinOutline}></IonIcon>
-        </IonItemOption>
-      </IonItemOptions>
+      {order.status !== OrderStatus.CANCELLED && (
+        <IonItemOptions side="end">
+          <IonItemOption
+            color="tertiary"
+            routerLink={`/tabs/order/update/${order.id}`}
+          >
+            Sửa đơn
+            <IonIcon slot="icon-only" icon={createOutline}></IonIcon>
+          </IonItemOption>
+          <IonItemOption color="danger" onClick={handleCancelOrder}>
+            Hủy đơn
+            <IonIcon slot="icon-only" icon={trashBinOutline}></IonIcon>
+          </IonItemOption>
+        </IonItemOptions>
+      )}
     </IonItemSliding>
   );
 };
