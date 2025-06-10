@@ -1,4 +1,5 @@
-import { CustomerType, OrderStatus, PaymentMethod } from "../enums/order";
+import type { ICustomer } from "@/types/order.type";
+import { OrderStatus, PaymentMethod } from "../enums/order";
 
 export const getOrderStatusLabel = (status: string): string => {
   switch (status) {
@@ -41,12 +42,19 @@ export const getPaymentMethodLabel = (method: string): string => {
   }
 };
 
-export const getCustomerTypeLabel = (type: string): string => {
-  return type === CustomerType.LOYAL ? "Khách sỉ" : "Khách lẻ";
+export const getCustomerTypeLabel = (customer: ICustomer | null, isTruncate = false): string => {
+  if (!customer) return "Khách lẻ";
+  if (!isTruncate) return customer.name;
+
+  // Truncate long customer names for chip display
+  const maxLength = 15;
+  return customer.name.length > maxLength
+    ? `${customer.name.substring(0, maxLength)}...`
+    : customer.name;
 };
 
-export const getCustomerTypeColor = (type: string): string => {
-  return type === CustomerType.LOYAL
+export const getCustomerTypeColor = (customer: ICustomer | null): string => {
+  return customer && customer.id
     ? "bg-blue-100 text-blue-700"
     : "bg-orange-100 text-orange-700";
 };

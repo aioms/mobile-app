@@ -141,11 +141,6 @@ const OrderList: React.FC = () => {
         if (!data.length) {
           if (!isLoadMore) {
             setOrders([]);
-            await Toast.show({
-              text: "Không tìm thấy kết quả",
-              duration: "short",
-              position: "top",
-            });
           }
           setHasMore(false);
         } else {

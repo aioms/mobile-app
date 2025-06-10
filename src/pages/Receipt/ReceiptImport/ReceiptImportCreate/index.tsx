@@ -38,7 +38,7 @@ import useReceiptImport from "@/hooks/apis/useReceiptImport";
 import DatePicker from "@/components/DatePicker";
 import ModalSelectProduct from "../../components/ModalSelectProduct";
 import ReceiptItem from "../../components/ReceiptItem";
-import ModalSelectSupplier from "../../components/ModalSelectSupplier";
+import ModalSelectSupplier from "@/components/ModalSelectSupplier";
 
 import "./ReceiptImportCreate.css";
 

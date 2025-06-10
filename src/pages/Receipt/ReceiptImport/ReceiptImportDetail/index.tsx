@@ -240,7 +240,6 @@ const ReceiptImportDetail: React.FC = () => {
         formData.supplier = formData.supplier.split("__")[0];
       }
 
-      console.log({ formData });
       const result = await updateReceiptImport(receipt.id, {
         ...formData,
         items: receipt?.items,

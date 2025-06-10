@@ -1,27 +1,17 @@
 import React from "react";
 import { dayjsFormat } from "@/helpers/formatters";
-import { CustomerType } from "@/common/enums/order";
+import { getCustomerTypeLabel } from "@/common/constants/order";
+import type { ICustomer } from "@/types/order.type";
 
 interface OrderInfoSectionProps {
   orderDate: string;
-  customerType: string;
+  customer: ICustomer | null;
   note?: string;
 }
 
-const getCustomerTypeLabel = (type: string): string => {
-  switch (type) {
-    case CustomerType.INDIVIDUAL:
-      return "Khách lẻ";
-    case CustomerType.LOYAL:
-      return "Khách sỉ";
-    default:
-      return "Không xác định";
-  }
-};
-
 const OrderInfoSection: React.FC<OrderInfoSectionProps> = ({
   orderDate,
-  customerType,
+  customer,
   note,
 }) => {
   return (
@@ -32,8 +22,8 @@ const OrderInfoSection: React.FC<OrderInfoSectionProps> = ({
           <span>{dayjsFormat(orderDate)}</span>
         </div>
         <div className="flex justify-between items-center mb-2">
-          <span className="text-muted-foreground">Loại khách hàng</span>
-          <span>{getCustomerTypeLabel(customerType)}</span>
+          <span className="text-muted-foreground">Khách hàng</span>
+          <span>{getCustomerTypeLabel(customer)}</span>
         </div>
         {note && (
           <div className="flex justify-between items-center">

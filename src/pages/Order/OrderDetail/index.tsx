@@ -164,7 +164,7 @@ const OrderDetail: React.FC = () => {
             {/* Order Info Section */}
             <OrderInfoSection
               orderDate={order.createdAt}
-              customerType={order.customerType}
+              customer={order.customer}
               note={order.note}
             />
 

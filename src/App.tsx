@@ -1,4 +1,6 @@
+import React from "react";
 import { IonApp, setupIonicReact, useIonToast } from "@ionic/react";
+import { ErrorBoundary } from "react-error-boundary";
 
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/react/css/core.css";
@@ -36,6 +38,7 @@ import "./theme/common.css";
 import { useEffect } from "react";
 import { Routes } from "./routes";
 import { initStorage } from "./hooks";
+import FallbackError from "./components/FallbackError";
 
 setupIonicReact();
 
@@ -49,7 +52,8 @@ const App: React.FC = () => {
         console.log("Ionic Storage initialized successfully");
       } catch (error) {
         await presentToast({
-          message: (error as Error).message || "Failed to initialize Ionic Storage",
+          message:
+            (error as Error).message || "Failed to initialize Ionic Storage",
           duration: 2000,
           position: "top",
           color: "danger",
@@ -61,9 +65,27 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <IonApp>
-      <Routes />
-    </IonApp>
+    <ErrorBoundary
+      FallbackComponent={FallbackError}
+      onReset={(details) => {
+        // Reset the state of your app so the error doesn't happen again
+        console.log('Error boundary reset:', details);
+        presentToast({
+          message: `App has been reset. Please try again. ${details.reason}`,
+          duration: 2000,
+          position: "top",
+          color: "warning",
+        });
+      }}
+      onError={(error, errorInfo) => {
+        // Log error to your error reporting service
+        console.error('Error caught by boundary:', error, errorInfo);
+      }}
+    >
+      <IonApp>
+        <Routes />
+      </IonApp>
+    </ErrorBoundary>
   );
 };
 

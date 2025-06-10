@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Dialog } from "@capacitor/dialog";
 import {
   IonChip,
@@ -14,6 +14,7 @@ import { createOutline, trashBinOutline } from "ionicons/icons";
 
 import { dayjsFormat, formatCurrency } from "@/helpers/formatters";
 import type { IOrder } from "@/types/order.type";
+import { OrderStatus } from "@/common/enums/order";
 import {
   getOrderStatusColor,
   getOrderStatusLabel,
@@ -21,7 +22,6 @@ import {
   getCustomerTypeLabel,
 } from "@/common/constants/order";
 import useOrder from "@/hooks/apis/useOrder";
-import { OrderStatus } from "@/common/enums/order";
 
 interface OrderItemProps {
   order: IOrder;
@@ -31,6 +31,7 @@ interface OrderItemProps {
 const OrderItem: React.FC<OrderItemProps> = ({ order, onCancelOrder }) => {
   const [presentToast] = useIonToast();
   const { update: updateOrder } = useOrder();
+  const slidingRef = useRef<HTMLIonItemSlidingElement>(null);
 
   const handleCancelOrder = async () => {
     try {
@@ -40,6 +41,9 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onCancelOrder }) => {
       });
 
       if (!value) return;
+
+      // Close the sliding item
+      await slidingRef.current?.close();
 
       const orderUpdated = await updateOrder(order.id, {
         status: OrderStatus.CANCELLED,
@@ -68,7 +72,7 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onCancelOrder }) => {
   };
 
   return (
-    <IonItemSliding>
+    <IonItemSliding ref={slidingRef}>
       <IonItem
         lines="full"
         className="order-item ion-activatable ripple-parent rounded-lg shadow-sm mb-3"
@@ -106,11 +110,11 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onCancelOrder }) => {
               Tổng tiền: {formatCurrency(order.totalAmount)}
             </div>
             <IonChip
-              className={`ml-auto m-0 ${getCustomerTypeColor(
-                order.customerType
-              )}`}
+              className={`ml-auto m-0 py-2 ${getCustomerTypeColor(order.customer)} max-w-32`}
             >
-              {getCustomerTypeLabel(order.customerType)}
+              <span className="truncate">
+                {getCustomerTypeLabel(order.customer)}
+              </span>
             </IonChip>
           </div>
         </div>

@@ -13,10 +13,15 @@ export interface IVatInfo {
   remark: string;
 }
 
+export interface ICustomer {
+  id: string;
+  name: string;
+}
+
 export interface IOrder {
   id: string;
   code: string;
-  customerType: string;
+  customer: ICustomer | null;
   paymentMethod: string;
   totalAmount: number;
   discountAmount: number;
