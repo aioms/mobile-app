@@ -17,7 +17,7 @@ import {
   IonIcon,
 } from "@ionic/react";
 import { close } from "ionicons/icons";
-import ModalSelectSupplier from "./SuppliersModal";
+import ModalSelectSupplier from "@/components/ModalSelectSupplier";
 import { PRODUCT_STATUS } from "@/common/constants/product";
 
 export interface FilterValues {

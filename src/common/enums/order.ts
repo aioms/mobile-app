@@ -6,11 +6,6 @@ export enum OrderStatus {
   REFUNDED = "refunded",
 }
 
-export enum CustomerType {
-  LOYAL = "loyal",
-  INDIVIDUAL = "individual",
-}
-
 export enum PaymentMethod {
   CASH = "cash",
   BANK_TRANSFER = "bank_transfer",

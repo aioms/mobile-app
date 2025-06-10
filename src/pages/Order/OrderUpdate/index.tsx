@@ -55,6 +55,7 @@ import { cn } from "@/lib/utils";
 
 import OrderItem from "./components/OrderItem";
 import ModalSelectProduct from "../components/ModalSelectProduct";
+import ModalSelectCustomer from "../components/ModalSelectCustomer";
 import ErrorMessage from "@/components/ErrorMessage";
 
 import "./OrderUpdate.css";
@@ -106,6 +107,10 @@ const OrderUpdate: React.FC = () => {
   const [orderItems, setOrderItems] = useState<IOrderItem[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showDownArrow, setShowDownArrow] = useState(false);
+  
+  // Add customer name state
+  const [selectedCustomerName, setSelectedCustomerName] =
+    useState<string>("Khách lẻ");
 
   const [presentToast] = useIonToast();
   const orderItemsListRef = useRef<HTMLDivElement>(null);
@@ -181,6 +186,14 @@ const OrderUpdate: React.FC = () => {
     }
   );
 
+  // Modal for customer selection
+  const [presentModalCustomer, dismissModalCustomer] = useIonModal(
+    ModalSelectCustomer,
+    {
+      dismiss: (data: any, role: string) => dismissModalCustomer(data, role),
+    }
+  );
+
   const openModalSelectProduct = () => {
     presentModalProduct({
       onWillDismiss: async (event: CustomEvent<OverlayEventDetail>) => {
@@ -195,6 +208,34 @@ const OrderUpdate: React.FC = () => {
             },
           ]);
         }
+      },
+    });
+  };
+
+  const openModalSelectCustomer = () => {
+    presentModalCustomer({
+      onWillDismiss: async (event: CustomEvent<OverlayEventDetail>) => {
+        const { role, data } = event.detail;
+
+        if (role !== "confirm") return;
+
+        if (!data) {
+          setSelectedCustomerName("Khách lẻ");
+          setFormData((prev) => ({
+            ...prev,
+            customer: "",
+          }));
+          return;
+        }
+
+        const [customerId, customerName] = data.split("__");
+        setSelectedCustomerName(customerName);
+
+        // Update form data with the selected customer ID
+        setFormData((prev) => ({
+          ...prev,
+          customer: customerId,
+        }));
       },
     });
   };
@@ -305,9 +346,9 @@ const OrderUpdate: React.FC = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.customer) {
-      newErrors.customer = "Vui lòng chọn khách hàng";
-    }
+    // if (!formData.customer) {
+    //   newErrors.customer = "Vui lòng chọn khách hàng";
+    // }
 
     if (!orderItems.length) {
       newErrors.items = "Vui lòng thêm ít nhất một sản phẩm";
@@ -446,7 +487,7 @@ const OrderUpdate: React.FC = () => {
     if (!value) return;
 
     const orderData = {
-      customerType: formData.customer,
+      customer: formData.customer,
       paymentMethod: formData.paymentMethod,
       note: formData.note,
       discountAmount: calculateDiscount(),
@@ -490,7 +531,7 @@ const OrderUpdate: React.FC = () => {
 
     const orderData = {
       status,
-      customerType: formData.customer,
+      customer: formData.customer,
       paymentMethod: formData.paymentMethod,
       note: formData.note,
       discountAmount: calculateDiscount(),
@@ -606,12 +647,13 @@ const OrderUpdate: React.FC = () => {
           }
         }
 
+        console.log({ orderDetail });
         // Set form data
         setFormData({
           code: orderDetail.code,
           status: orderDetail.status,
           note: orderDetail.note || "",
-          customer: orderDetail.customerType || "",
+          customer: orderDetail.customer?.id || "",
           paymentMethod: orderDetail.paymentMethod || PaymentMethod.CASH,
           vatEnabled: !!orderDetail.vatInfo,
           companyName: orderDetail.vatInfo?.companyName || "",
@@ -623,6 +665,13 @@ const OrderUpdate: React.FC = () => {
           discountAmount,
           discountAmountFormatted: formatCurrencyWithoutSymbol(discountAmount),
         });
+
+        // Set customer name
+        if (orderDetail.customer?.name) {
+          setSelectedCustomerName(orderDetail.customer.name);
+        } else {
+          setSelectedCustomerName("Khách lẻ");
+        }
       } catch (error) {
         presentToast({
           message: (error as Error).message || "Có lỗi xảy ra khi tải dữ liệu",
@@ -832,19 +881,14 @@ const OrderUpdate: React.FC = () => {
                 Khách hàng
               </h2>
               <div className="mb-4">
-                <IonItem className="rounded-lg border border-input">
-                  <IonSelect
-                    interface="popover"
-                    placeholder="Chọn loại khách hàng"
-                    value={formData.customer}
-                    onIonChange={handleCustomerChange}
-                  >
-                    <IonSelectOption value="individual">
-                      Khách lẻ
-                    </IonSelectOption>
-                    <IonSelectOption value="loyal">Khách quen</IonSelectOption>
-                  </IonSelect>
-                </IonItem>
+                <div
+                  className="ion-activatable receipt-import-ripple-parent break-normal p-2"
+                  onClick={() => openModalSelectCustomer()}
+                >
+                  <IonIcon icon={search} className="text-2xl mr-2" />
+                  {selectedCustomerName}
+                  <IonRippleEffect className="custom-ripple"></IonRippleEffect>
+                </div>
                 <ErrorMessage message={errors.customer} />
               </div>
             </div>

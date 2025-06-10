@@ -35,7 +35,9 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
         </div>
         <div className="flex justify-between items-center mb-2">
           <span className="text-muted-foreground">Giảm giá:</span>
-          <span className="text-red-500">-{formatCurrency(discount)}</span>
+          {discount && (
+            <span className="text-red-500">-{formatCurrency(discount)}</span>
+          )}
         </div>
         <div className="flex justify-between items-center mb-2">
           <span className="text-muted-foreground">Phương thức thanh toán:</span>

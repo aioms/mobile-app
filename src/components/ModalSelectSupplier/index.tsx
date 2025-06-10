@@ -31,15 +31,7 @@ const ModalSelectSupplier: React.FC<Props> = ({ dismiss }) => {
         25
       );
 
-      if (!response.length) {
-        await Toast.show({
-          text: "Không tìm thấy kết quả",
-          duration: "short",
-          position: "top",
-        });
-      }
-
-      setSuppliers(response);
+      setSuppliers(response || []);
     } catch (error) {
       await Toast.show({
         text: (error as Error).message,
@@ -73,8 +65,10 @@ const ModalSelectSupplier: React.FC<Props> = ({ dismiss }) => {
       <IonList>
         <IonRadioGroup onIonChange={selectChange}>
           {suppliers.map((item) => (
-            <IonItem key={item.id}>
-              <IonRadio value={`${item.id}__${item.name}`}>{item.name}</IonRadio>
+            <IonItem>
+              <IonRadio key={item.id} value={`${item.id}__${item.name}`}>
+                {item.name}
+              </IonRadio>
             </IonItem>
           ))}
         </IonRadioGroup>

@@ -53,6 +53,7 @@ import { cn } from "@/lib/utils";
 
 import OrderItem from "./components/OrderItem";
 import ModalSelectProduct from "../components/ModalSelectProduct";
+import ModalSelectCustomer from "../components/ModalSelectCustomer";
 import ErrorMessage from "@/components/ErrorMessage";
 
 import "./OrderCreate.css";
@@ -103,7 +104,7 @@ const OrderCreate: React.FC = () => {
   const [presentToast] = useIonToast();
   const orderItemsListRef = useRef<HTMLDivElement>(null);
 
-  const { addItem, getItem, removeItem } = useStorage();
+  const { getItem, removeItem } = useStorage();
   const { isLoading, withLoading } = useLoading();
   const { create: createOrder } = useOrder();
   const { getDetail: getProductDetail } = useProduct();
@@ -188,6 +189,47 @@ const OrderCreate: React.FC = () => {
     });
   };
 
+  // Add this after the existing state variables (around line 102)
+  const [selectedCustomerName, setSelectedCustomerName] =
+    useState<string>("Khách lẻ");
+
+  // Add this after the existing modal setup (around line 180, after the product modal setup)
+  // Modal for customer selection
+  const [presentModalCustomer, dismissModalCustomer] = useIonModal(
+    ModalSelectCustomer,
+    {
+      dismiss: (data: any, role: string) => dismissModalCustomer(data, role),
+    }
+  );
+
+  const openModalSelectCustomer = () => {
+    presentModalCustomer({
+      onWillDismiss: async (event: CustomEvent<OverlayEventDetail>) => {
+        const { role, data } = event.detail;
+
+        if (role !== "confirm") return;
+
+        if (!data) {
+          setSelectedCustomerName("Khách lẻ");
+          setFormData((prev) => ({
+            ...prev,
+            customer: "",
+          }));
+          return;
+        }
+
+        const [customerId, customerName] = data.split("__");
+        setSelectedCustomerName(customerName);
+
+        // Update form data with the selected customer ID
+        setFormData((prev) => ({
+          ...prev,
+          customer: customerId,
+        }));
+      },
+    });
+  };
+
   const handleInputChange = (e: InputCustomEvent) => {
     const { name, value } = e.target;
 
@@ -247,14 +289,6 @@ const OrderCreate: React.FC = () => {
     }));
   };
 
-  const handleCustomerChange = (e: CustomEvent) => {
-    const { value } = e.detail;
-    setFormData((prev) => ({
-      ...prev,
-      customer: value,
-    }));
-  };
-
   const handlePaymentMethodChange = (e: CustomEvent) => {
     const { value } = e.detail;
     setFormData((prev) => ({
@@ -289,30 +323,6 @@ const OrderCreate: React.FC = () => {
 
   const handleRemoveItem = (id: string) => {
     setOrderItems((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.customer) {
-      newErrors.customer = "Vui lòng chọn khách hàng";
-    }
-
-    if (!orderItems.length) {
-      newErrors.items = "Vui lòng thêm ít nhất một sản phẩm";
-    }
-
-    if (formData.vatEnabled) {
-      if (!formData.companyName) {
-        newErrors.companyName = "Vui lòng nhập tên công ty";
-      }
-      if (!formData.taxCode) {
-        newErrors.taxCode = "Vui lòng nhập mã số thuế";
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const calculateTotal = () => {
@@ -393,6 +403,30 @@ const OrderCreate: React.FC = () => {
     scrollToEl.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    // if (!formData.customer) {
+    //   newErrors.customer = "Vui lòng chọn khách hàng";
+    // }
+
+    if (!orderItems.length) {
+      newErrors.items = "Vui lòng thêm ít nhất một sản phẩm";
+    }
+
+    if (formData.vatEnabled) {
+      if (!formData.companyName) {
+        newErrors.companyName = "Vui lòng nhập tên công ty";
+      }
+      if (!formData.taxCode) {
+        newErrors.taxCode = "Vui lòng nhập mã số thuế";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleCancel = async () => {
     const { value } = await Dialog.confirm({
       title: "Xác nhận hủy đơn hàng",
@@ -403,20 +437,6 @@ const OrderCreate: React.FC = () => {
 
     history.replace("/tabs/orders");
   };
-
-  // const handleSaveDraft = async () => {
-  //   await addItem("order_draft", {
-  //     ...formData,
-  //     items: orderItems,
-  //   });
-
-  //   presentToast({
-  //     message: "Lưu tạm thành công",
-  //     duration: 500,
-  //     position: "top",
-  //     color: "success",
-  //   });
-  // };
 
   const handleSubmit = async (status?: OrderStatus) => {
     const isValid = validateForm();
@@ -449,7 +469,7 @@ const OrderCreate: React.FC = () => {
 
         const orderData = {
           status: status || statusByPaymentMethod,
-          customerType: formData.customer,
+          customer: formData.customer,
           paymentMethod: formData.paymentMethod,
           note: formData.note,
           discountAmount: calculateDiscount(),
@@ -681,17 +701,14 @@ const OrderCreate: React.FC = () => {
                 Khách hàng
               </h2>
               <div className="mb-4">
-                <IonItem className="rounded-lg border border-input">
-                  <IonSelect
-                    interface="popover"
-                    placeholder="Chọn loại khách hàng"
-                    value={formData.customer}
-                    onIonChange={handleCustomerChange}
-                  >
-                    <IonSelectOption value="individual">Khách lẻ</IonSelectOption>
-                    <IonSelectOption value="loyal">Khách quen</IonSelectOption>
-                  </IonSelect>
-                </IonItem>
+                <div
+                  className="ion-activatable receipt-import-ripple-parent break-normal p-2"
+                  onClick={() => openModalSelectCustomer()}
+                >
+                  <IonIcon icon={search} className="text-2xl mr-2" />
+                  {selectedCustomerName}
+                  <IonRippleEffect className="custom-ripple"></IonRippleEffect>
+                </div>
                 <ErrorMessage message={errors.customer} />
               </div>
             </div>
