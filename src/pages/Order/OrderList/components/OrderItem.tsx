@@ -76,7 +76,7 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onCancelOrder }) => {
       <IonItem
         lines="full"
         className="order-item ion-activatable ripple-parent rounded-lg shadow-sm mb-3"
-        routerLink={`/tabs/order/detail/${order.id}`}
+        routerLink={`/tabs/orders/detail/${order.id}`}
       >
         <div className="py-4 w-full">
           <div className="flex justify-between items-start mb-2">
@@ -125,7 +125,7 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onCancelOrder }) => {
         <IonItemOptions side="end">
           <IonItemOption
             color="tertiary"
-            routerLink={`/tabs/order/update/${order.id}`}
+            routerLink={`/tabs/orders/update/${order.id}`}
           >
             Sửa đơn
             <IonIcon slot="icon-only" icon={createOutline}></IonIcon>

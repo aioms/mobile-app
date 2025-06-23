@@ -24,16 +24,17 @@ import ProductListScreen from "@/pages/Product/ProductList/ProductList";
 import ProductDetailScreen from "@/pages/Product/ProductDetail/ProductDetail";
 
 import InventoryScreen from "@/pages/Inventory/Inventory";
-// import TransactionScreen from "@/pages/Transaction/TransactionList";
 
 import ReceiptImportCreateScreen from "@/pages/Receipt/ReceiptImport/ReceiptImportCreate";
 import ReceiptImportDetailScreen from "@/pages/Receipt/ReceiptImport/ReceiptImportDetail";
 import ReceiptCheckDetailScreen from "@/pages/Receipt/ReceiptCheck/ReceiptCheckDetail";
+import ReceiptDebtCreate from "@/pages/Receipt/ReceiptDebt/ReceiptDebtCreate";
+import ReceiptDebtDetail from "@/pages/Receipt/ReceiptDebt/ReceiptDebtDetail";
 
 import OrderCreateScreen from "@/pages/Order/OrderCreate";
-import OrderListScreen from "@/pages/Order/OrderList";
 import OrderDetailScreen from "@/pages/Order/OrderDetail";
 import OrderUpdateScreen from "@/pages/Order/OrderUpdate";
+import OrderPage from "@/pages/Order";
 
 import "./TabBar.css";
 
@@ -41,7 +42,7 @@ const tabs = [
   { icon: home, label: "Trang chủ", path: "/tabs/home" },
   { icon: cartOutline, label: "Đơn hàng", path: "/tabs/orders" },
   { icon: cubeOutline, label: "Quản lý kho", path: "/tabs/inventory" },
-  { icon: bagHandleOutline, label: "Sản phẩm", path: "/tabs/product" },
+  { icon: bagHandleOutline, label: "Sản phẩm", path: "/tabs/products" },
   // { icon: statsChartOutline, label: "Báo cáo", path: "/tabs/report" },
 ];
 
@@ -68,7 +69,7 @@ const TabBar: React.FC = () => {
           children={<MenuLayout component={<InventoryScreen />} />}
         />
 
-        {/* Receipt Screens */}
+        {/* Receipt import Screens */}
         <Route
           exact
           path="/tabs/receipt-import/create"
@@ -79,39 +80,43 @@ const TabBar: React.FC = () => {
           path="/tabs/receipt-import/detail/:id"
           component={ReceiptImportDetailScreen}
         />
+
+        {/* Receipt check Screens */}
         <Route
           exact
           path="/tabs/receipt-check/:id"
           component={ReceiptCheckDetailScreen}
         />
 
-        {/* Product Screens */}
+        {/* Receipt debt Screens */}
+        <Route exact path="/tabs/debt/create" component={ReceiptDebtCreate} />
         <Route
           exact
-          path="/tabs/product"
-          children={
-            <MenuLayout
-              component={<ProductListScreen />}
-              isHeaderDefault
-              title="Danh sách sản phẩm"
-            />
-          }
+          path="/tabs/debt/detail/:id"
+          component={ReceiptDebtDetail}
         />
-        <Route exact path="/tabs/product/:id" component={ProductDetailScreen} />
+
+        {/* Product Screens */}
+        <Route exact path="/tabs/products" component={ProductListScreen} />
+        <Route
+          exact
+          path="/tabs/products/:id"
+          component={ProductDetailScreen}
+        />
 
         {/* Order Screens */}
+        <Route exact path="/tabs/orders" component={OrderPage} />
+        <Route exact path="/tabs/orders/create" component={OrderCreateScreen} />
         <Route
           exact
-          path="/tabs/order/create"
-          component={OrderCreateScreen}
+          path="/tabs/orders/detail/:id"
+          component={OrderDetailScreen}
         />
         <Route
           exact
-          path="/tabs/orders"
-          component={OrderListScreen}
+          path="/tabs/orders/update/:id"
+          component={OrderUpdateScreen}
         />
-        <Route exact path="/tabs/order/detail/:id" component={OrderDetailScreen} />
-        <Route exact path="/tabs/order/update/:id" component={OrderUpdateScreen} />
 
         <Route component={NotFound} />
 

@@ -1,14 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Toast } from "@capacitor/toast";
 import {
-  IonContent,
-  IonHeader,
-  IonPage,
-  IonSegment,
-  IonSegmentButton,
-  IonLabel,
-  IonToolbar,
-  IonTitle,
   IonSpinner,
   IonButton,
   useIonToast,
@@ -38,7 +30,6 @@ const OrderList: React.FC = () => {
   const history = useHistory();
   const [presentToast] = useIonToast();
 
-  const [segment, setSegment] = useState<"orders" | "receivables">("orders");
   const [orders, setOrders] = useState<IOrder[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -120,7 +111,7 @@ const OrderList: React.FC = () => {
         });
       }
 
-      history.push(`/tabs/order/create`);
+      history.push(`/tabs/orders/create`);
     } catch (error) {
       await Toast.show({
         text: (error as Error).message,
@@ -166,7 +157,7 @@ const OrderList: React.FC = () => {
   useEffect(() => {
     setPage(1);
     fetchOrders(1, false);
-  }, [filters, segment]);
+  }, [filters]);
 
   const handleLoadMore = () => {
     const nextPage = page + 1;
@@ -178,12 +169,6 @@ const OrderList: React.FC = () => {
     setFilters(newFilters);
   };
 
-  const handleSegmentChange = (value: "orders" | "receivables") => {
-    setSegment(value);
-    // Reset filters when changing segments
-    setFilters({});
-  };
-
   const handleRefresh = (event: CustomEvent<RefresherEventDetail>) => {
     fetchOrders().finally(() => {
       event.detail.complete();
@@ -193,85 +178,62 @@ const OrderList: React.FC = () => {
   const handleCancelOrder = () => fetchOrders();
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Đơn hàng</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+    <div className="">
+      {isLoading && <LoadingScreen message="Đang tải dữ liệu..." />}
+      <Refresher onRefresh={handleRefresh} />
 
-      <IonContent className="ion-padding">
-        {isLoading && <LoadingScreen message="Đang tải dữ liệu..." />}
-        <Refresher onRefresh={handleRefresh} />
-
-        {/* Segment Buttons */}
-        <IonSegment
-          value={segment}
-          onIonChange={(e) =>
-            handleSegmentChange(e.detail.value as "orders" | "receivables")
-          }
+      {/* Order Count */}
+      <div className="flex justify-between items-center bg-card rounded-lg shadow-sm mb-2 p-4">
+        <div className="flex flex-col">
+          <h2 className="text-lg font-medium">
+            Tổng số đơn hàng: {totalOrders}
+          </h2>
+          <div className="date-display">
+            {dayjsFormat(new Date(), "dddd, DD MMMM YYYY", "vi")}
+          </div>
+        </div>
+        <div
+          className="w-12 h-12 bg-teal-50 rounded-full flex items-center justify-center ion-activatable ripple-parent"
+          onClick={() => startScan()}
         >
-          <IonSegmentButton value="orders">
-            <IonLabel>Đơn hàng</IonLabel>
-          </IonSegmentButton>
-          <IonSegmentButton value="receivables">
-            <IonLabel>Nợ thu</IonLabel>
-          </IonSegmentButton>
-        </IonSegment>
-
-        {/* Order Count */}
-        <div className="flex justify-between items-center bg-card rounded-lg shadow-sm mb-2 p-4">
-          <div className="flex flex-col">
-            <h2 className="text-lg font-medium">
-              Tổng số đơn hàng: {totalOrders}
-            </h2>
-            <div className="date-display">
-              {dayjsFormat(new Date(), "dddd, DD MMMM YYYY", "vi")}
-            </div>
-          </div>
-          <div
-            className="w-12 h-12 bg-teal-50 rounded-full flex items-center justify-center ion-activatable ripple-parent"
-            onClick={() => startScan()}
-          >
-            <IonIcon icon={scanOutline} className="text-3xl text-teal-400" />
-            <IonRippleEffect></IonRippleEffect>
-          </div>
+          <IonIcon icon={scanOutline} className="text-3xl text-teal-400" />
+          <IonRippleEffect></IonRippleEffect>
         </div>
+      </div>
 
-        {/* Filter Section */}
-        <FilterSection onFilterChange={handleFilterChange} />
+      {/* Filter Section */}
+      <FilterSection onFilterChange={handleFilterChange} />
 
-        {/* Order List */}
-        <div>
-          {orders.length > 0 ? (
-            orders.map((order) => (
-              <OrderItem
-                key={order.id}
-                order={order}
-                onCancelOrder={handleCancelOrder}
-              />
-            ))
-          ) : !isLoading ? (
-            <div className="text-center text-gray-500 py-4">
-              <p>Không tìm thấy đơn hàng nào</p>
-            </div>
-          ) : null}
+      {/* Order List */}
+      <div>
+        {orders.length > 0 ? (
+          orders.map((order) => (
+            <OrderItem
+              key={order.id}
+              order={order}
+              onCancelOrder={handleCancelOrder}
+            />
+          ))
+        ) : !isLoading ? (
+          <div className="text-center text-gray-500 py-4">
+            <p>Không tìm thấy đơn hàng nào</p>
+          </div>
+        ) : null}
 
-          {/* Load More Button */}
-          {hasMore && (
-            <div className="flex justify-center my-4">
-              <IonButton
-                fill="clear"
-                onClick={handleLoadMore}
-                disabled={isLoading}
-              >
-                {isLoading ? <IonSpinner name="crescent" /> : "Xem thêm"}
-              </IonButton>
-            </div>
-          )}
-        </div>
-      </IonContent>
-    </IonPage>
+        {/* Load More Button */}
+        {hasMore && (
+          <div className="flex justify-center">
+            <IonButton
+              fill="clear"
+              onClick={handleLoadMore}
+              disabled={isLoading}
+            >
+              {isLoading ? <IonSpinner name="crescent" /> : "Xem thêm"}
+            </IonButton>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

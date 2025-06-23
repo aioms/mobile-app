@@ -209,7 +209,7 @@ const ProductDetail: React.FC = () => {
       <IonHeader className="ion-no-border">
         <IonToolbar>
           <IonButtons slot="start">
-            <IonButton routerLink="/tabs/product" className="text-gray-600">
+            <IonButton routerLink="/tabs/products" className="text-gray-600">
               <IonIcon slot="icon-only" icon={chevronBack} />
             </IonButton>
           </IonButtons>

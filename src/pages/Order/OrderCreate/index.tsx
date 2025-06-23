@@ -21,8 +21,6 @@ import {
   useIonModal,
   useIonToast,
   IonFooter,
-  IonSelect,
-  IonSelectOption,
   IonRippleEffect,
   InputCustomEvent,
   useIonViewWillEnter,
