@@ -22,7 +22,7 @@ const DatePicker: FC<Props> = ({ value, onChange, presentation = 'date-time', at
           onIonChange={onChange}
           formatOptions={{
             date: {
-              weekday: 'short',
+              weekday: 'long',
               month: 'long',
               day: '2-digit',
             },

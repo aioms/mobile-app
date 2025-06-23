@@ -22,6 +22,14 @@ export const RECEIPT_CHECK_STATUS = {
   BALANCED: "balanced",
 } as const;
 
+export const RECEIPT_DEBT_STATUS = {
+  PENDING: "pending",
+  PARTIAL_PAID: "partial_paid",
+  COMPLETED: "completed",
+  OVERDUE: "overdue",
+  CANCELLED: "cancelled",
+} as const;
+
 export type TReceiptImportStatus =
   (typeof RECEIPT_IMPORT_STATUS)[keyof typeof RECEIPT_IMPORT_STATUS];
 
@@ -31,10 +39,14 @@ export type TReceiptReturnStatus =
 export type TReceiptCheckStatus =
   (typeof RECEIPT_CHECK_STATUS)[keyof typeof RECEIPT_CHECK_STATUS];
 
+export type TReceiptDebtStatus =
+  (typeof RECEIPT_DEBT_STATUS)[keyof typeof RECEIPT_DEBT_STATUS];
+
 export type ReceiptStatus =
   | TReceiptImportStatus
   | TReceiptReturnStatus
   | TReceiptCheckStatus
+  | TReceiptDebtStatus
   | "unknown";
 
 export const getStatusColor = (status: ReceiptStatus): string => {
@@ -45,25 +57,30 @@ export const getStatusColor = (status: ReceiptStatus): string => {
 
     case RECEIPT_CHECK_STATUS.PENDING:
     case RECEIPT_IMPORT_STATUS.WAITING:
+    case RECEIPT_DEBT_STATUS.PENDING:
       return "warning";
 
     case RECEIPT_IMPORT_STATUS.PROCESSING:
     case RECEIPT_RETURN_STATUS.PROCESSING:
     case RECEIPT_CHECK_STATUS.PROCESSING:
+    case RECEIPT_DEBT_STATUS.PARTIAL_PAID:
       return "tertiary";
 
     case RECEIPT_IMPORT_STATUS.COMPLETED:
     case RECEIPT_RETURN_STATUS.COMPLETED:
     case RECEIPT_CHECK_STATUS.BALANCED:
+    case RECEIPT_DEBT_STATUS.COMPLETED:
       return "success";
 
     case RECEIPT_IMPORT_STATUS.CANCELLED:
     case RECEIPT_RETURN_STATUS.CANCELLED:
     case RECEIPT_CHECK_STATUS.BALANCING_REQUIRED:
+    case RECEIPT_DEBT_STATUS.CANCELLED:
       return "danger";
 
     case RECEIPT_IMPORT_STATUS.SHORT_RECEIVED:
     case RECEIPT_IMPORT_STATUS.OVER_RECEIVED:
+    case RECEIPT_DEBT_STATUS.OVERDUE:
       return "dark";
 
     default:
@@ -78,7 +95,11 @@ export const getStatusLabel = (status: ReceiptStatus): string => {
       return "Nháp";
 
     case RECEIPT_CHECK_STATUS.PENDING:
+    case RECEIPT_DEBT_STATUS.PENDING:
       return "Chờ xử lý";
+
+    case RECEIPT_DEBT_STATUS.PARTIAL_PAID:
+      return "Đã thu 1 nửa";
 
     case RECEIPT_IMPORT_STATUS.PROCESSING:
     case RECEIPT_RETURN_STATUS.PROCESSING:
@@ -90,10 +111,15 @@ export const getStatusLabel = (status: ReceiptStatus): string => {
 
     case RECEIPT_IMPORT_STATUS.COMPLETED:
     case RECEIPT_RETURN_STATUS.COMPLETED:
+    case RECEIPT_DEBT_STATUS.COMPLETED:
       return "Hoàn thành";
+
+    case RECEIPT_DEBT_STATUS.OVERDUE:
+      return "Trễ hạn";
 
     case RECEIPT_IMPORT_STATUS.CANCELLED:
     case RECEIPT_RETURN_STATUS.CANCELLED:
+    case RECEIPT_DEBT_STATUS.CANCELLED:
       return "Đã hủy";
 
     case RECEIPT_IMPORT_STATUS.SHORT_RECEIVED:

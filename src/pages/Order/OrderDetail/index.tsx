@@ -85,7 +85,7 @@ const OrderDetail: React.FC = () => {
         {
           text: "Chỉnh sửa",
           handler: () => {
-            history.push(`/tabs/order/update/${id}`);
+            history.push(`/tabs/orders/update/${id}`);
           },
         },
         {

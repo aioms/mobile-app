@@ -50,7 +50,7 @@ const QuickActions: React.FC = () => {
 
       switch (data?.type) {
         case "product":
-          history.push(`/tabs/product/${result.id}`);
+          history.push(`/tabs/products/${result.id}`);
           break;
         case "order":
           if (result.inventory === 0) {
@@ -97,7 +97,7 @@ const QuickActions: React.FC = () => {
             });
           }
 
-          history.push(`/tabs/order/create`);
+          history.push(`/tabs/orders/create`);
           break;
         default:
           throw new Error(`Không hỗ trợ loại chức năng này: ${data?.type}`);

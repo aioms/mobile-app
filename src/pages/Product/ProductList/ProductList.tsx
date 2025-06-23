@@ -15,6 +15,10 @@ import {
   IonText,
   IonChip,
   useIonModal,
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
 } from "@ionic/react";
 import {
   filterOutline,
@@ -30,6 +34,7 @@ import { Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 
+import ContentSkeleton from "@/components/Loading/ContentSkeleton";
 import ProductCard from "./components/ProductCard";
 import CategoriesModal from "./components/CategoriesModal";
 import FilterModal, { FilterValues } from "./components/FilterModal";
@@ -39,7 +44,6 @@ import useProduct from "@/hooks/apis/useProduct";
 import { useBarcodeScanner, useLoading } from "@/hooks";
 
 import "./ProductList.css";
-import ContentSkeleton from "@/components/Loading/ContentSkeleton";
 
 interface Product {
   id: string;
@@ -114,7 +118,7 @@ const ProductListScreen: React.FC = () => {
       }
 
       // Navigate to product detail page
-      history.push(`/tabs/product/${product.id}`);
+      history.push(`/tabs/products/${product.id}`);
     } catch (error) {
       await Toast.show({
         text: (error as Error).message,
@@ -279,209 +283,230 @@ const ProductListScreen: React.FC = () => {
   };
 
   return (
-    <IonContent fullscreen>
-      <div className="px-4 py-2">
-        <div className="flex items-center gap-2 mb-2">
-          <IonSearchbar
-            value={filters.keyword}
-            onIonChange={(e) => {
-              setFilters((prev) => ({
-                ...prev,
-                keyword: e.detail.value ?? "",
-              }));
-            }}
-            placeholder="Tìm kiếm sản phẩm"
-            className="flex-1 bg-gray-100 rounded-lg p-0 h-[40px]"
-            debounce={300}
-            enterkeyhint="search"
-            inputmode="search"
-          />
-          <IonButtons slot="end">
-            <IonButton fill="clear" color="primary" onClick={openFilterModal}>
-              <IonIcon icon={filterOutline} size="icon-only" />
-            </IonButton>
-            <IonButton color="primary" onClick={() => startScan()}>
-              <IonIcon icon={scanOutline} slot="icon-only" />
-            </IonButton>
-          </IonButtons>
-        </div>
+    <IonPage>
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle>Danh sách sản phẩm</IonTitle>
+        </IonToolbar>
+      </IonHeader>
 
-        <div className="mb-3">
-          <IonList>
-            <IonItem>
-              <IonBadge slot="end">{dataTotal.totalProduct}</IonBadge>
-              <IonLabel>Tổng sản phẩm</IonLabel>
-            </IonItem>
-            <IonItem>
-              <IonBadge slot="end">{dataTotal.totalInventory}</IonBadge>
-              <IonLabel>Tổng tồn kho</IonLabel>
-            </IonItem>
-          </IonList>
-        </div>
-
-        <div className="mb-2">
-          <div className="flex justify-between items-center mb-2">
-            <IonText>
-              <h3 className="text-md font-medium">Nhóm hàng</h3>
-            </IonText>
-            <IonButton
-              fill="clear"
-              size="small"
-              onClick={openCategoriesModal}
-              className="text-primary"
-            >
-              Tất cả
-              <IonIcon slot="end" icon={chevronForward} />
-            </IonButton>
+      <IonContent className="ion-padding">
+        <div className="">
+          <div className="flex items-center gap-2 mb-2">
+            <IonSearchbar
+              value={filters.keyword}
+              onIonChange={(e) => {
+                setFilters((prev) => ({
+                  ...prev,
+                  keyword: e.detail.value ?? "",
+                }));
+              }}
+              placeholder="Tìm kiếm sản phẩm"
+              className="flex-1 bg-gray-100 rounded-lg p-0 h-[40px]"
+              debounce={300}
+              enterkeyhint="search"
+              inputmode="search"
+            />
+            <IonButtons slot="end">
+              <IonButton fill="clear" color="primary" onClick={openFilterModal}>
+                <IonIcon icon={filterOutline} size="icon-only" />
+              </IonButton>
+              <IonButton color="primary" onClick={() => startScan()}>
+                <IonIcon icon={scanOutline} slot="icon-only" />
+              </IonButton>
+            </IonButtons>
           </div>
 
-          <div className="flex overflow-x-auto pb-2 hide-scrollbar">
-            <div className="flex gap-2 flex-nowrap">
-              {selectedCategories.map((category) => (
-                <IonChip
-                  key={category}
-                  className="whitespace-nowrap"
-                  color="secondary"
-                >
-                  <IonLabel>{category}</IonLabel>
-                  <IonIcon
-                    icon={close}
-                    onClick={() => {
-                      setSelectedCategories((prev) =>
-                        prev.filter((c) => c !== category)
-                      );
-
-                      setFilters((prev) => {
-                        const newFilters: any = { ...prev };
-
-                        if (newFilters.categories) {
-                          newFilters.categories = newFilters.categories.filter(
-                            (c: string) => c !== category
-                          );
-                        }
-
-                        return newFilters;
-                      });
-                    }}
-                  />
-                </IonChip>
-              ))}
-            </div>
+          <div className="mb-3 bg-white rounded-lg shadow-md p-4">
+            <IonList>
+              <IonItem>
+                <IonBadge slot="end">
+                  {formatCurrencyWithoutSymbol(dataTotal.totalProduct)}
+                </IonBadge>
+                <IonLabel>Tổng sản phẩm</IonLabel>
+              </IonItem>
+              <IonItem>
+                <IonBadge slot="end">
+                  {formatCurrencyWithoutSymbol(dataTotal.totalInventory)}
+                </IonBadge>
+                <IonLabel>Tổng tồn kho</IonLabel>
+              </IonItem>
+            </IonList>
           </div>
-        </div>
 
-        <h3 className="text-md font-medium mb-4">Sản phẩm</h3>
-        <div className="space-y-4">
-          {products.length ? (
-            products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))
-          ) : (
-            <ContentSkeleton lines={3} />
-          )}
-
-          {!hasMore && products.length === 0 && (
-            <div className="text-center text-gray-500">
-              <i className="text-sm"> Không tìm thấy sản phẩm nào</i>
-            </div>
-          )}
-        </div>
-        {/* Load More Button */}
-        {hasMore && (
-          <div className="flex justify-center mb-6">
-            <IonButton fill="clear" onClick={handleLoadMore} disabled={isLoading}>
-              {isLoading ? <IonSpinner name="crescent" /> : "Xem thêm"}
-            </IonButton>
-          </div>
-        )}
-
-        {/* Low Stock Products Section */}
-        <div className="mt-6">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-md font-medium">Sản phẩm sắp hết hàng</h3>
-            {hasMoreLowStock && (
+          <div className="mb-2">
+            <div className="flex justify-between items-center mb-2">
+              <IonText>
+                <h3 className="text-md font-medium">Nhóm hàng</h3>
+              </IonText>
               <IonButton
                 fill="clear"
                 size="small"
-                onClick={handleLoadMoreLowStock}
-                disabled={lowStockLoading}
+                onClick={openCategoriesModal}
+                className="text-primary"
               >
-                {lowStockLoading ? <IonSpinner name="crescent" /> : "Xem thêm"}
+                Tất cả
+                <IonIcon slot="end" icon={chevronForward} />
               </IonButton>
-            )}
+            </div>
+
+            <div className="flex overflow-x-auto pb-2 hide-scrollbar">
+              <div className="flex gap-2 flex-nowrap">
+                {selectedCategories.map((category) => (
+                  <IonChip
+                    key={category}
+                    className="whitespace-nowrap"
+                    color="secondary"
+                  >
+                    <IonLabel>{category}</IonLabel>
+                    <IonIcon
+                      icon={close}
+                      onClick={() => {
+                        setSelectedCategories((prev) =>
+                          prev.filter((c) => c !== category)
+                        );
+
+                        setFilters((prev) => {
+                          const newFilters: any = { ...prev };
+
+                          if (newFilters.categories) {
+                            newFilters.categories =
+                              newFilters.categories.filter(
+                                (c: string) => c !== category
+                              );
+                          }
+
+                          return newFilters;
+                        });
+                      }}
+                    />
+                  </IonChip>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {lowStockProducts.length > 0 ? (
-            <Swiper
-              modules={[Pagination]}
-              spaceBetween={16}
-              slidesPerView={1}
-              pagination={{
-                clickable: true,
-                bulletClass:
-                  "swiper-pagination-bullet swiper-pagination-bullet-custom",
-                bulletActiveClass:
-                  "swiper-pagination-bullet-active swiper-pagination-bullet-active-custom",
-                renderBullet: (_index, className) => {
-                  return `<span class="${className}"></span>`;
-                },
-              }}
-              className="low-stock-swiper"
-            >
-              {lowStockProducts.map((product) => (
-                <SwiperSlide key={product.id}>
-                  <div className="bg-gray-100 rounded-lg p-4 flex items-center">
-                    <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center mr-4">
-                      <IonIcon
-                        icon={addOutline}
-                        className="text-gray-400 text-2xl"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium">{product.productName}</h4>
-                      <p className="text-sm text-gray-500">
-                        {product.code}
-                      </p>
-                      <div className="flex gap-2 mt-1">
-                        <p className="text-sm">
-                          Tồn: {product.inventory} {product.unit}
-                        </p>
-                      </div>
-                      <div className="flex justify-between mt-1">
-                        <div>
-                          <p className="text-xs text-gray-500">Giá vốn</p>
-                          <p className="text-sm font-medium">
-                            {formatCurrencyWithoutSymbol(product.costPrice)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Giá bán</p>
-                          <p className="text-sm font-medium">
-                            {formatCurrencyWithoutSymbol(product.sellingPrice)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <IonButton
-                      fill="solid"
-                      size="small"
-                      className="bg-blue-600 rounded text-white"
-                      routerLink="/tabs/receipt-import/create"
-                    >
-                      Nhập thêm
-                    </IonButton>
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
-          ) : (
-            <div className="text-center text-gray-500 py-4">
-              <i className="text-sm">Không có sản phẩm sắp hết hàng</i>
+          <h3 className="text-md font-medium mb-4">Sản phẩm</h3>
+          <div className="space-y-4">
+            {products.length ? (
+              products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))
+            ) : (
+              <ContentSkeleton lines={3} />
+            )}
+
+            {!hasMore && products.length === 0 && (
+              <div className="text-center text-gray-500">
+                <i className="text-sm"> Không tìm thấy sản phẩm nào</i>
+              </div>
+            )}
+          </div>
+          {/* Load More Button */}
+          {hasMore && (
+            <div className="flex justify-center mb-6">
+              <IonButton
+                fill="clear"
+                onClick={handleLoadMore}
+                disabled={isLoading}
+              >
+                {isLoading ? <IonSpinner name="crescent" /> : "Xem thêm"}
+              </IonButton>
             </div>
           )}
+
+          {/* Low Stock Products Section */}
+          <div className="mt-6">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-md font-medium">Sản phẩm sắp hết hàng</h3>
+              {hasMoreLowStock && (
+                <IonButton
+                  fill="clear"
+                  size="small"
+                  onClick={handleLoadMoreLowStock}
+                  disabled={lowStockLoading}
+                >
+                  {lowStockLoading ? (
+                    <IonSpinner name="crescent" />
+                  ) : (
+                    "Xem thêm"
+                  )}
+                </IonButton>
+              )}
+            </div>
+
+            {lowStockProducts.length > 0 ? (
+              <Swiper
+                modules={[Pagination]}
+                spaceBetween={16}
+                slidesPerView={1}
+                pagination={{
+                  clickable: true,
+                  bulletClass:
+                    "swiper-pagination-bullet swiper-pagination-bullet-custom",
+                  bulletActiveClass:
+                    "swiper-pagination-bullet-active swiper-pagination-bullet-active-custom",
+                  renderBullet: (_index, className) => {
+                    return `<span class="${className}"></span>`;
+                  },
+                }}
+                className="low-stock-swiper"
+              >
+                {lowStockProducts.map((product) => (
+                  <SwiperSlide key={product.id}>
+                    <div className="bg-gray-100 rounded-lg p-4 flex items-center">
+                      <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center mr-4">
+                        <IonIcon
+                          icon={addOutline}
+                          className="text-gray-400 text-2xl"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium">{product.productName}</h4>
+                        <p className="text-sm text-gray-500">{product.code}</p>
+                        <div className="flex gap-2 mt-1">
+                          <p className="text-sm">
+                            Tồn: {product.inventory} {product.unit}
+                          </p>
+                        </div>
+                        <div className="flex justify-between mt-1">
+                          <div>
+                            <p className="text-xs text-gray-500">Giá vốn</p>
+                            <p className="text-sm font-medium">
+                              {formatCurrencyWithoutSymbol(product.costPrice)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">Giá bán</p>
+                            <p className="text-sm font-medium">
+                              {formatCurrencyWithoutSymbol(
+                                product.sellingPrice
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <IonButton
+                        fill="solid"
+                        size="small"
+                        className="bg-blue-600 rounded text-white"
+                        routerLink="/tabs/receipt-import/create"
+                      >
+                        Nhập thêm
+                      </IonButton>
+                    </div>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            ) : (
+              <div className="text-center text-gray-500 py-4">
+                <i className="text-sm">Không có sản phẩm sắp hết hàng</i>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </IonContent>
+      </IonContent>
+    </IonPage>
   );
 };
 

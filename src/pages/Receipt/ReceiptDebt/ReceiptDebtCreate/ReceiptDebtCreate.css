@@ -1,0 +1,134 @@
+.receipt-debt-ripple-parent {
+  display: flex;
+  align-items: center;
+
+  position: relative;
+  overflow: hidden;
+
+  border: 1px solid #ddd;
+
+  user-select: none;
+
+  width: 100%;
+  height: 50px;
+  border-radius: 8px;
+  color: gray;
+  background-color: white;
+}
+
+/* ----------- */
+
+.receipt-header {
+  margin-bottom: 16px;
+}
+
+.product-search {
+  margin: 16px 0;
+  --background: #f8f9fa;
+  --border-radius: 8px;
+}
+
+.product-item {
+  --padding-start: 0;
+  --padding-end: 0;
+  margin-bottom: 8px;
+}
+
+.product-content {
+  width: 100%;
+  padding: 12px;
+}
+
+.product-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.product-info {
+  flex: 1;
+}
+
+.product-date {
+  font-size: 12px;
+  color: var(--ion-color-medium);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.product-name {
+  font-weight: 600;
+  font-size: 14px;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.product-code {
+  font-size: 12px;
+  color: var(--ion-color-medium);
+  display: block;
+}
+
+.remove-button {
+  --color: var(--ion-color-medium);
+  margin: 0;
+}
+
+.product-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quantity-chip {
+  --background: var(--ion-color-light);
+  --color: var(--ion-color-dark);
+  margin: 0;
+  min-width: 40px;
+  text-align: center;
+}
+
+.price-info {
+  text-align: right;
+}
+
+.unit-price {
+  font-size: 12px;
+  color: var(--ion-color-medium);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.total-price {
+  font-weight: 600;
+  font-size: 16px;
+  display: block;
+}
+
+.payment-info {
+  margin-top: 16px;
+}
+
+.submit-button {
+  --background: #4caf50;
+  --background-activated: #45a049;
+  --color: white;
+  font-weight: 600;
+  margin: 0;
+}
+
+.select-icon {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--ion-color-medium);
+}

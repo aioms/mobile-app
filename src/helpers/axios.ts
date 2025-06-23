@@ -1,3 +1,4 @@
+import { Toast } from "@capacitor/toast";
 import axios from "axios";
 import type { IExtraConfig, IHttpRequestConfig } from "../types";
 import { initStorage } from "../hooks";
@@ -79,25 +80,39 @@ export class HttpRequest {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`; // Attach the token to the Authorization header
         }
-        console.log(JSON.stringify({
-          'interceptors.request.use': config
-        }))
+        // console.log(
+        //   JSON.stringify({
+        //     "interceptors.request.use": config,
+        //   })
+        // );
         return config;
       },
       function (error) {
-        console.error(JSON.stringify({
-          'interceptors.request.error': error
-        }))
-        // Do something with request error
+        // console.error(
+        //   JSON.stringify({
+        //     "interceptors.request.error": error,
+        //   })
+        // );
+
+        if (error.message) {
+          Toast.show({
+            text: error.message,
+            duration: "short",
+            position: "center",
+          });
+        }
+
         return error;
-      },
+      }
     );
 
     instance.interceptors.response.use(
       function (response) {
-        console.log(JSON.stringify({
-          'interceptors.response.use': response
-        }));
+        // console.log(
+        //   JSON.stringify({
+        //     "interceptors.response.use": response,
+        //   })
+        // );
         if (response.status === 204) {
           return {
             statusCode: response.status,
@@ -111,21 +126,31 @@ export class HttpRequest {
         const resp = error.response;
         const data = resp?.data;
 
-        console.error(JSON.stringify({
-          'interceptors.response.error': error
-        }))
+        // console.error(
+        //   JSON.stringify({
+        //     "interceptors.response.error": error,
+        //   })
+        // );
 
         if (resp.status === 401 || resp.statusText === "Unauthorized") {
           const storage = await initStorage();
           await Promise.allSettled([
             storage.remove("token"),
             storage.remove("user"),
-          ])
+          ]);
           window.location.replace("/login");
         }
 
+        if (error.message) {
+          Toast.show({
+            text: error.message,
+            duration: "short",
+            position: "center",
+          });
+        }
+
         return data;
-      },
+      }
     );
 
     return instance;
