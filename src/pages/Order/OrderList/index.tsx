@@ -53,6 +53,13 @@ const OrderList: React.FC = () => {
     },
   });
 
+  /**
+   * Handles the result of a scanned barcode by adding the corresponding product to a draft order or creating a new draft.
+   *
+   * If the scanned product is not found or is out of stock, displays a toast notification. If a draft order exists, increments the quantity of the product if already present, or adds it as a new item. If no draft exists, creates a new draft order with the scanned product. Navigates to the order creation page upon success.
+   *
+   * @param value - The scanned barcode value
+   */
   async function handleBarcodeScanned(value: string) {
     stopScan();
 
