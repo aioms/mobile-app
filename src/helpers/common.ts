@@ -1,12 +1,28 @@
 import { Capacitor } from "@capacitor/core";
+import { Environment } from "@/common/enums";
 
 export const isWeb = () => {
   return Capacitor.getPlatform() === "web";
-}
+};
 
 export const isNative = () => {
   return Capacitor.isNativePlatform();
-}
+};
+
+export const getEnvironment = (): Environment => {
+  const env = process.env.REACT_APP_ENV;
+
+  switch (env) {
+    case "production":
+      return Environment.PRODUCTION;
+    case "staging":
+      return Environment.STAGING;
+    case "development":
+      return Environment.DEVELOPMENT;
+    default:
+      throw new Error("Invalid environment");
+  }
+};
 
 export const parseSafe = (json: string) => {
   try {
@@ -14,7 +30,7 @@ export const parseSafe = (json: string) => {
   } catch {
     return null;
   }
-}
+};
 
 export const stringifySafe = (data: any) => {
   try {
@@ -22,7 +38,7 @@ export const stringifySafe = (data: any) => {
   } catch {
     return null;
   }
-}
+};
 
 export const convertObjectToQueryString = (params: Record<string, any>) => {
   return Object.keys(params)
@@ -32,4 +48,9 @@ export const convertObjectToQueryString = (params: Record<string, any>) => {
 
 export const isHasProperty = (obj: Record<string, unknown>) => {
   return Object.keys(obj).length;
-}
+};
+
+export const capitalizeFirstLetter = (str: string) => {
+  if (!str) return "";
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};

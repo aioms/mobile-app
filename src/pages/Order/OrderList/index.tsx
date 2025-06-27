@@ -23,6 +23,7 @@ import FilterSection from "./components/FilterSection";
 import OrderItem from "./components/OrderItem";
 
 import "./OrderList.css";
+import { capitalizeFirstLetter } from "@/helpers/common";
 
 const LIMIT = 10;
 
@@ -196,7 +197,7 @@ const OrderList: React.FC = () => {
             Tổng số đơn hàng: {totalOrders}
           </h2>
           <div className="date-display">
-            {dayjsFormat(new Date(), "dddd, DD MMMM YYYY", "vi")}
+            {capitalizeFirstLetter(dayjsFormat(new Date(), "dddd, DD MMMM YYYY", "vi"))}
           </div>
         </div>
         <div

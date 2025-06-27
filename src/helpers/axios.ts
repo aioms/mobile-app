@@ -5,20 +5,27 @@ import { initStorage } from "../hooks";
 
 const {
   VITE_ENV,
-  VITE_API_URL,
-  VITE_SERVER_URL,
   VITE_API_VERSION,
+
   VITE_API_URL_DEV,
   VITE_SERVER_URL_DEV,
+
+  VITE_API_URL_STG,
+  VITE_SERVER_URL_STG,
+
+  VITE_API_URL_PROD,
+  VITE_SERVER_URL_PROD,
 } = import.meta.env;
 
 const serverUrl: Record<string, string> = {
   development: VITE_SERVER_URL_DEV!,
-  production: VITE_SERVER_URL!,
+  staging: VITE_SERVER_URL_STG!,
+  production: VITE_SERVER_URL_PROD!,
 };
 const apiUrl: Record<string, string> = {
   development: VITE_API_URL_DEV!,
-  production: VITE_API_URL!,
+  staging: VITE_API_URL_STG!,
+  production: VITE_API_URL_PROD!,
 };
 
 export const defaultConfig: IHttpRequestConfig = {
@@ -31,6 +38,7 @@ export const defaultConfig: IHttpRequestConfig = {
     },
   },
 };
+console.log({ defaultConfig })
 
 export class HttpRequest {
   private config: Partial<IExtraConfig> = {};

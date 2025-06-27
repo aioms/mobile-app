@@ -43,17 +43,20 @@ const OrderPage: React.FC = () => {
             <IonLabel>Đơn hàng</IonLabel>
           </IonSegmentButton>
           <IonSegmentButton value="debt">
-            <IonLabel>Nợ thu</IonLabel>
+            <IonLabel>Phiếu thu</IonLabel>
           </IonSegmentButton>
         </IonSegment>
 
         {segment === "orders" ? <OrderList /> : <ReceiptDebtList />}
 
-        <IonFab vertical="bottom" horizontal="end" slot="fixed">
-          <IonFabButton routerLink={`/tabs/${segment}/create`}>
-            <IonIcon icon={add} />
-          </IonFabButton>
-        </IonFab>
+        {/* Floating Action Button */}
+        {segment === "orders" && (
+          <IonFab vertical="bottom" horizontal="end" slot="fixed">
+            <IonFabButton routerLink={`/tabs/${segment}/create`}>
+              <IonIcon icon={add} />
+            </IonFabButton>
+          </IonFab>
+        )}
       </IonContent>
     </IonPage>
   );

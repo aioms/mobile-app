@@ -1,4 +1,5 @@
 import { FC, useState, useEffect } from "react";
+import { Toast } from "@capacitor/toast";
 import {
   IonList,
   IonButton,
@@ -6,15 +7,21 @@ import {
   IonSpinner,
   IonIcon,
   useIonToast,
+  IonRippleEffect,
+  IonItem,
+  IonBadge,
+  IonLabel,
 } from "@ionic/react";
-import { funnel } from "ionicons/icons";
+import { funnelOutline, scanOutline } from "ionicons/icons";
 
 import { TReceiptDebtStatus } from "@/common/constants/receipt";
 import ReceiptDebtItem from "./components/ReceiptDebtItem";
 import FilterModal from "./components/FilterModal";
+
 import { useLoading } from "@/hooks";
 import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
-import { Toast } from "@capacitor/toast";
+import { capitalizeFirstLetter } from "@/helpers/common";
+import { dayjsFormat, formatCurrencyWithoutSymbol } from "@/helpers/formatters";
 
 interface ReceiptDebt {
   id: string;
@@ -140,33 +147,63 @@ const ReceiptDebtList: FC = () => {
 
   return (
     <div className="">
+      {/* {isLoading && <LoadingScreen message="Đang tải dữ liệu..." />}
+      <Refresher onRefresh={handleRefresh} /> */}
+
+      {/* Order Count */}
+      <div className="mb-3 bg-white rounded-lg shadow-sm p-2">
+        <IonList>
+          <IonItem>
+            <div className="date-display">
+              {capitalizeFirstLetter(
+                dayjsFormat(new Date(), "dddd, DD MMMM YYYY", "vi")
+              )}
+            </div>
+          </IonItem>
+          <IonItem>
+            <IonBadge slot="end">
+              {formatCurrencyWithoutSymbol(totalCount)}
+            </IonBadge>
+            <IonLabel>Tổng số phiếu thu</IonLabel>
+          </IonItem>
+          <IonItem>
+            <IonBadge slot="end" color="danger">
+              {formatCurrencyWithoutSymbol(totalCount)}
+            </IonBadge>
+            <IonLabel>Tổng công nợ</IonLabel>
+          </IonItem>
+        </IonList>
+      </div>
+
       {/* Search and Filter */}
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center mb-2">
         <IonSearchbar
           placeholder="Tìm Phiếu Thu"
           onIonInput={handleSearch}
           className="flex-1"
           debounce={500}
         />
-        <IonButton
-          fill="outline"
-          size="default"
-          className="flex-shrink-0"
-          onClick={() => setIsFilterModalOpen(true)}
-        >
-          <IonIcon icon={funnel} slot="icon-only" />
-        </IonButton>
-      </div>
-
-      {/* {isLoading && <LoadingScreen message="Đang tải dữ liệu..." />}
-      <Refresher onRefresh={handleRefresh} /> */}
-
-      {/* Order Count */}
-      <div className="flex justify-between items-center bg-card rounded-lg shadow-sm mb-2 p-4">
-        <div className="flex flex-col">
-          <h2 className="text-lg font-medium">
-            Tổng số phiếu thu: {totalCount}
-          </h2>
+        <div className="flex-shrink-0 flex items-center justify-center space-x-1">
+          <IonButton
+            fill="clear"
+            size="default"
+            className="w-10 h-10 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200 ion-activatable ripple-parent"
+            onClick={() => setIsFilterModalOpen(true)}
+          >
+            <IonIcon
+              icon={funnelOutline}
+              slot="icon-only"
+              className="text-2xl text-gray-400"
+            />
+            <IonRippleEffect></IonRippleEffect>
+          </IonButton>
+          <div
+            className="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center ion-activatable ripple-parent"
+            // onClick={() => startScan()}
+          >
+            <IonIcon icon={scanOutline} className="text-3xl text-teal-400" />
+            <IonRippleEffect></IonRippleEffect>
+          </div>
         </div>
       </div>
 

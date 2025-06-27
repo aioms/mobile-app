@@ -21,8 +21,6 @@ import {
   useIonModal,
   useIonToast,
   IonFooter,
-  IonSelect,
-  IonSelectOption,
   IonRippleEffect,
   InputCustomEvent,
   useIonViewWillEnter,
@@ -107,7 +105,7 @@ const OrderUpdate: React.FC = () => {
   const [orderItems, setOrderItems] = useState<IOrderItem[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showDownArrow, setShowDownArrow] = useState(false);
-  
+
   // Add customer name state
   const [selectedCustomerName, setSelectedCustomerName] =
     useState<string>("Khách lẻ");

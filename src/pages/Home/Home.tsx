@@ -26,7 +26,7 @@ import { useAuth, useLoading, useStorage } from "@/hooks";
 import useProduct from "@/hooks/apis/useProduct";
 import useReceiptImport from "@/hooks/apis/useReceiptImport";
 
-import { isHasProperty } from "@/helpers/common";
+import { capitalizeFirstLetter, isHasProperty } from "@/helpers/common";
 import { dayjsFormat } from "@/helpers/formatters";
 
 const userMock = {
@@ -201,7 +201,7 @@ const HomeScreen: React.FC = () => {
                 </span>
               </div>
               <span className="text-gray-600 text-xs italic">
-                {dayjsFormat(new Date(), "dddd, DD MMMM YYYY", "vi")}
+                {capitalizeFirstLetter(dayjsFormat(new Date(), "dddd, DD MMMM YYYY", "vi"))}
               </span>
             </div>
           </div>

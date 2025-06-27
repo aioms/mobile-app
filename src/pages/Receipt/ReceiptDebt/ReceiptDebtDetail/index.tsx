@@ -17,6 +17,7 @@ import {
   IonRow,
   IonCol,
   useIonToast,
+  useIonActionSheet,
 } from "@ionic/react";
 import {
   chevronBack,
@@ -24,6 +25,8 @@ import {
   cashOutline,
   cardOutline,
   addCircleOutline,
+  ellipsisVertical,
+  ellipsisVerticalOutline,
 } from "ionicons/icons";
 import {
   dayjsFormat,
@@ -106,6 +109,7 @@ const ReceiptDebtDetail: React.FC = () => {
   const history = useHistory();
   const { id } = useParams<{ id: string }>();
   const [presentToast] = useIonToast();
+  const [presentActionSheet] = useIonActionSheet();
 
   const [receiptData, setReceiptData] = useState<ResponseData>({
     receipt: null,
@@ -114,16 +118,13 @@ const ReceiptDebtDetail: React.FC = () => {
 
   const { isLoading, withLoading } = useLoading();
   const { getDetail } = useReceiptDebt();
-  console.log({ id, isLoading });
 
   // Fetch receipt data from API
   useEffect(() => {
     const fetchReceiptDetail = async () => {
       await withLoading(async () => {
         try {
-          console.log({ start_call: id });
           const result = await getDetail(id);
-          console.log({ result });
 
           if (!result) {
             return await Toast.show({
@@ -159,6 +160,45 @@ const ReceiptDebtDetail: React.FC = () => {
     );
   }
 
+  const handleActionSheet = () => {
+    presentActionSheet({
+      header: "Tùy chọn",
+      buttons: [
+        {
+          text: "Thanh toán",
+          role: "selected",
+          handler: () => {
+            Toast.show({
+              text: "Tính năng này đang được phát triển",
+              duration: "short",
+              position: "center",
+            });
+          },
+        },
+        {
+          text: "Chỉnh sửa",
+          handler: () => {
+            history.push(`/tabs/debt/update/${id}`);
+          },
+        },
+        {
+          text: "In phiếu",
+          handler: () => {
+            Toast.show({
+              text: "Tính năng này đang được phát triển",
+              duration: "short",
+              position: "center",
+            });
+          },
+        },
+        {
+          text: "Hủy",
+          role: "cancel",
+        },
+      ],
+    });
+  };
+
   const { receipt, items } = receiptData;
 
   return (
@@ -178,8 +218,8 @@ const ReceiptDebtDetail: React.FC = () => {
             Mã Phiếu Thu - {receipt?.code}
           </IonTitle>
           <IonButtons slot="end">
-            <IonButton fill="clear" className="text-blue-500">
-              <IonIcon icon={createOutline} />
+            <IonButton onClick={handleActionSheet}>
+              <IonIcon icon={ellipsisVertical} />
             </IonButton>
           </IonButtons>
         </IonToolbar>
@@ -191,7 +231,7 @@ const ReceiptDebtDetail: React.FC = () => {
           <IonCard className="shadow-sm">
             <IonCardContent className="p-4">
               <div className="space-y-3">
-               <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center">
                   <span className="text-gray-600 text-sm">Mã phiếu:</span>
                   <span className="text-gray-800 font-medium">
                     {receipt?.code}
