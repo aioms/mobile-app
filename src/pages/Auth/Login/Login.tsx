@@ -17,7 +17,7 @@ import {
   useIonViewDidEnter,
   useIonToast,
 } from "@ionic/react";
-import * as Sentry from "@sentry/capacitor";
+// import * as Sentry from "@sentry/capacitor";
 import { useHistory } from "react-router-dom";
 import { useAuth } from "../../../hooks";
 import { defaultConfig } from "@/helpers/axios";
@@ -51,18 +51,18 @@ const Login: React.FC = () => {
         VITE_SERVER_URL_PROD,
       } = import.meta.env;
 
-      Sentry.captureMessage(JSON.stringify(defaultConfig), {
-        extra: {
-          environment: VITE_ENV,
-          apiVersion: VITE_API_VERSION,
-          apiUrl: VITE_API_URL_DEV,
-          serverUrl: VITE_SERVER_URL_DEV,
-          apiUrlStg: VITE_API_URL_STG,
-          serverUrlStg: VITE_SERVER_URL_STG,
-          apiUrlProd: VITE_API_URL_PROD,
-          serverUrlProd: VITE_SERVER_URL_PROD,
-        },
-      });
+      // Sentry.captureMessage(JSON.stringify(defaultConfig), {
+      //   extra: {
+      //     environment: VITE_ENV,
+      //     apiVersion: VITE_API_VERSION,
+      //     apiUrl: VITE_API_URL_DEV,
+      //     serverUrl: VITE_SERVER_URL_DEV,
+      //     apiUrlStg: VITE_API_URL_STG,
+      //     serverUrlStg: VITE_SERVER_URL_STG,
+      //     apiUrlProd: VITE_API_URL_PROD,
+      //     serverUrlProd: VITE_SERVER_URL_PROD,
+      //   },
+      // });
 
       const { username, password } = formData;
 
@@ -95,7 +95,6 @@ const Login: React.FC = () => {
         history.replace("/tabs/home");
       }, 500);
     } catch (error: any) {
-      Sentry.captureException(error);
       presentToast({
         message: error.message,
         duration: 1000,

@@ -69,10 +69,6 @@ PODS:
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
   - PromisesObjC (2.4.0)
-  - Sentry/HybridSDK (8.48.0)
-  - SentryCapacitor (1.4.0):
-    - Capacitor
-    - Sentry/HybridSDK (= 8.48.0)
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
@@ -87,7 +83,6 @@ DEPENDENCIES:
   - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
   - "CapacitorToast (from `../../node_modules/@capacitor/toast`)"
   - CordovaPlugins (from `../capacitor-cordova-ios-plugins`)
-  - "SentryCapacitor (from `../../node_modules/@sentry/capacitor`)"
 
 SPEC REPOS:
   trunk:
@@ -102,7 +97,6 @@ SPEC REPOS:
     - MLKitVision
     - nanopb
     - PromisesObjC
-    - Sentry
 
 EXTERNAL SOURCES:
   Capacitor:
@@ -129,8 +123,6 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/toast"
   CordovaPlugins:
     :path: "../capacitor-cordova-ios-plugins"
-  SentryCapacitor:
-    :path: "../../node_modules/@sentry/capacitor"
 
 SPEC CHECKSUMS:
   Capacitor: 03bc7cbdde6a629a8b910a9d7d78c3cc7ed09ea7
@@ -156,9 +148,7 @@ SPEC CHECKSUMS:
   MLKitVision: 45e79d68845a2de77e2dd4d7f07947f0ed157b0e
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
-  Sentry: 1ca8405451040482877dcd344dfa3ef80b646631
-  SentryCapacitor: 5555ac5b8c2cf3fbdac6973e7d1d62c9b7d5277b
 
-PODFILE CHECKSUM: cec769327981a5ab55a2ecbf1bf151f2f01b2599
+PODFILE CHECKSUM: d2801f3a5c43f70441045748b7814519936b3e54
 
 COCOAPODS: 1.16.2
