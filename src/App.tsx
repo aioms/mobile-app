@@ -35,9 +35,7 @@ import "./theme/tailwind.css";
 import "./theme/common.css";
 
 /* Components */
-import { useEffect } from "react";
 import { Routes } from "./routes";
-import { initStorage } from "./hooks";
 import FallbackError from "./components/FallbackError";
 
 setupIonicReact();
@@ -45,31 +43,12 @@ setupIonicReact();
 const App: React.FC = () => {
   const [presentToast] = useIonToast();
 
-  useEffect(() => {
-    const initializeStorage = async () => {
-      try {
-        await initStorage();
-        console.log("Ionic Storage initialized successfully");
-      } catch (error) {
-        await presentToast({
-          message:
-            (error as Error).message || "Failed to initialize Ionic Storage",
-          duration: 2000,
-          position: "top",
-          color: "danger",
-        });
-      }
-    };
-
-    initializeStorage();
-  }, []);
-
   return (
     <ErrorBoundary
       FallbackComponent={FallbackError}
       onReset={(details) => {
         // Reset the state of your app so the error doesn't happen again
-        console.log('Error boundary reset:', details);
+        console.log("Error boundary reset:", details);
         presentToast({
           message: `App has been reset. Please try again. ${details.reason}`,
           duration: 2000,
@@ -79,7 +58,7 @@ const App: React.FC = () => {
       }}
       onError={(error, errorInfo) => {
         // Log error to your error reporting service
-        console.error('Error caught by boundary:', error, errorInfo);
+        console.error("Error caught by boundary:", error, errorInfo);
       }}
     >
       <IonApp>

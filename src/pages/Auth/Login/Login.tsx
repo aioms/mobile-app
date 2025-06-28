@@ -20,6 +20,7 @@ import {
 import * as Sentry from "@sentry/capacitor";
 import { useHistory } from "react-router-dom";
 import { useAuth } from "../../../hooks";
+import { defaultConfig } from "@/helpers/axios";
 
 import "./Login.css";
 
@@ -36,6 +37,33 @@ const Login: React.FC = () => {
 
   const handleLogin = async () => {
     try {
+      const {
+        VITE_ENV,
+        VITE_API_VERSION,
+
+        VITE_API_URL_DEV,
+        VITE_SERVER_URL_DEV,
+
+        VITE_API_URL_STG,
+        VITE_SERVER_URL_STG,
+
+        VITE_API_URL_PROD,
+        VITE_SERVER_URL_PROD,
+      } = import.meta.env;
+
+      Sentry.captureMessage(JSON.stringify(defaultConfig), {
+        extra: {
+          environment: VITE_ENV,
+          apiVersion: VITE_API_VERSION,
+          apiUrl: VITE_API_URL_DEV,
+          serverUrl: VITE_SERVER_URL_DEV,
+          apiUrlStg: VITE_API_URL_STG,
+          serverUrlStg: VITE_SERVER_URL_STG,
+          apiUrlProd: VITE_API_URL_PROD,
+          serverUrlProd: VITE_SERVER_URL_PROD,
+        },
+      });
+
       const { username, password } = formData;
 
       if (!username || !password) {
@@ -62,7 +90,6 @@ const Login: React.FC = () => {
       });
 
       setFormData({ username: "", password: "" });
-      setError("");
 
       setTimeout(() => {
         history.replace("/tabs/home");
@@ -82,7 +109,7 @@ const Login: React.FC = () => {
     if (isAuthenticated) {
       history.replace("/tabs/home");
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated]);
 
   return (
     <IonPage>

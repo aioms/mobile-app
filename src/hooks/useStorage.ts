@@ -2,8 +2,8 @@ import { parseSafe, stringifySafe } from "@/helpers/common";
 import { Drivers, Storage } from "@ionic/storage";
 import CordovaSQLiteDriver from "localforage-cordovasqlitedriver";
 
-const storage = new Storage({
-  name: "aios_local_db",
+export const storage = new Storage({
+  name: "aiom_local_db",
   driverOrder: [
     CordovaSQLiteDriver._driver,
     Drivers.IndexedDB,
@@ -11,10 +11,9 @@ const storage = new Storage({
   ],
 });
 
-export const initStorage = async () => {
-  // await storage.defineDriver(CordovaSQLiteDriver);
-  return await storage.create();
-};
+(async () => {
+  await storage.create();
+})();
 
 export const useStorage = () => {
   const addItem = async (key: string, value: any) => {

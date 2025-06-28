@@ -2,7 +2,7 @@ import { Toast } from "@capacitor/toast";
 import * as Sentry from "@sentry/capacitor";
 import axios from "axios";
 import type { IExtraConfig, IHttpRequestConfig } from "../types";
-import { initStorage } from "../hooks";
+import { storage } from "../hooks";
 
 const {
   VITE_ENV,
@@ -86,7 +86,6 @@ export class HttpRequest {
 
     instance.interceptors.request.use(
       async function (config) {
-        const storage = await initStorage();
         const token = await storage.get("token"); // Retrieve the token from localStorage
 
         if (token) {
@@ -149,7 +148,6 @@ export class HttpRequest {
         // );
 
         if (resp.status === 401 || resp.statusText === "Unauthorized") {
-          const storage = await initStorage();
           await Promise.allSettled([
             storage.remove("token"),
             storage.remove("user"),
