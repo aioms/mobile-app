@@ -17,6 +17,7 @@ import {
   useIonViewDidEnter,
   useIonToast,
 } from "@ionic/react";
+import * as Sentry from "@sentry/capacitor";
 import { useHistory } from "react-router-dom";
 import { useAuth } from "../../../hooks";
 
@@ -44,7 +45,13 @@ const Login: React.FC = () => {
       const response = await login(username, password);
 
       if (response.statusCode !== 200 || !response.data) {
-        return setError(JSON.stringify(response));
+        await presentToast({
+          message: response.message,
+          duration: 1000,
+          position: "top",
+          color: "danger",
+        });
+        return;
       }
 
       await presentToast({
@@ -61,7 +68,13 @@ const Login: React.FC = () => {
         history.replace("/tabs/home");
       }, 500);
     } catch (error: any) {
-      setError(error.message);
+      Sentry.captureException(error);
+      presentToast({
+        message: error.message,
+        duration: 1000,
+        position: "top",
+        color: "danger",
+      });
     }
   };
 

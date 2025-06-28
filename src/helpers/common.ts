@@ -10,7 +10,7 @@ export const isNative = () => {
 };
 
 export const getEnvironment = (): Environment => {
-  const env = process.env.REACT_APP_ENV;
+  const env = process.env.VITE_ENV;
 
   switch (env) {
     case "production":
