@@ -17,7 +17,7 @@ import {
   useIonViewDidEnter,
   useIonToast,
 } from "@ionic/react";
-// import * as Sentry from "@sentry/capacitor";
+import * as Sentry from "@sentry/capacitor";
 import { useHistory } from "react-router-dom";
 import { useAuth } from "../../../hooks";
 import { defaultConfig } from "@/helpers/axios";
@@ -37,19 +37,19 @@ const Login: React.FC = () => {
 
   const handleLogin = async () => {
     try {
-      const {
-        VITE_ENV,
-        VITE_API_VERSION,
+      // const {
+      //   VITE_ENV,
+      //   VITE_API_VERSION,
 
-        VITE_API_URL_DEV,
-        VITE_SERVER_URL_DEV,
+      //   VITE_API_URL_DEV,
+      //   VITE_SERVER_URL_DEV,
 
-        VITE_API_URL_STG,
-        VITE_SERVER_URL_STG,
+      //   VITE_API_URL_STG,
+      //   VITE_SERVER_URL_STG,
 
-        VITE_API_URL_PROD,
-        VITE_SERVER_URL_PROD,
-      } = import.meta.env;
+      //   VITE_API_URL_PROD,
+      //   VITE_SERVER_URL_PROD,
+      // } = import.meta.env;
 
       // Sentry.captureMessage(JSON.stringify(defaultConfig), {
       //   extra: {
@@ -112,7 +112,7 @@ const Login: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader translucent>
         <IonToolbar>
           <IonTitle>Welcome back</IonTitle>
         </IonToolbar>

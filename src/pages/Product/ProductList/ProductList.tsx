@@ -284,7 +284,7 @@ const ProductListScreen: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader translucent>
         <IonToolbar>
           <IonTitle>Danh sách sản phẩm</IonTitle>
         </IonToolbar>

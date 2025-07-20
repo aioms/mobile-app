@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ReceiptItemData {
   id: string;
+  code: string;
   productName: string;
   productCode: string;
   systemInventory: number;
@@ -134,7 +135,7 @@ const SlideableReceiptItem: React.FC<SlideableReceiptItemProps> = ({
                     {truncateProductName(currentItem.productName)}
                   </div>
                   <div className="text-[12px] text-gray-500 truncate">
-                    {currentItem.productCode}
+                    {currentItem.code}
                   </div>
                 </div>
               </td>

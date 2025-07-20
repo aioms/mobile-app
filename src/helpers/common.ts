@@ -1,6 +1,9 @@
 import { Capacitor } from "@capacitor/core";
 import { Environment } from "@/common/enums";
 
+export const env = import.meta.env.VITE_ENV;
+export const envConfig = import.meta.env;
+
 export const isWeb = () => {
   return Capacitor.getPlatform() === "web";
 };
@@ -10,8 +13,7 @@ export const isNative = () => {
 };
 
 export const getEnvironment = (): Environment => {
-  const env = process.env.VITE_ENV;
-
+  console.log("ENVIRONMENT", env);
   switch (env) {
     case "production":
       return Environment.PRODUCTION;
@@ -53,4 +55,16 @@ export const isHasProperty = (obj: Record<string, unknown>) => {
 export const capitalizeFirstLetter = (str: string) => {
   if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+export const createDebounce = <T extends any[]>(
+  func: (...args: T) => void,
+  delay: number
+) => {
+  let timeoutId: NodeJS.Timeout;
+
+  return (...args: T) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
 };

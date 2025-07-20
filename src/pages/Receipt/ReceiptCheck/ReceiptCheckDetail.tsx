@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useHistory, useParams } from "react-router";
 
 import { Toast } from "@capacitor/toast";
@@ -13,15 +13,18 @@ import {
   IonPage,
   IonToolbar,
   RefresherEventDetail,
+  useIonToast,
 } from "@ionic/react";
 import { chevronBack, scanOutline } from "ionicons/icons";
 
 import useReceiptCheck from "@/hooks/apis/useReceiptCheck";
-import { useBarcodeScanner, useLoading } from "@/hooks";
+import { useAuth, useBarcodeScanner, useLoading } from "@/hooks";
+import { createDebounce } from "@/helpers/common";
 
 import {
   getStatusColor,
   getStatusLabel,
+  RECEIPT_CHECK_REASONS,
   RECEIPT_CHECK_STATUS,
   TReceiptCheckStatus,
 } from "@/common/constants/receipt";
@@ -31,10 +34,12 @@ import { Refresher } from "@/components/Refresher/Refresher";
 import LoadingScreen from "@/components/Loading/LoadingScreen";
 import SlideableReceiptItem from "./components/SlideableReceiptItemV2";
 import ActivityHistory, { ActivityLog } from "./components/ActivityHistory";
+import { UserRole } from "@/common/enums/user";
 
 interface ReceiptItem {
   id: string;
   productId: string;
+  code: string;
   productName: string;
   productCode: string;
   systemInventory: number;
@@ -53,39 +58,103 @@ interface ReceiptCheck {
     id: string;
     name: string;
   };
-  warehouseLocation: string;
+  warehouse: string;
   activityLog: ActivityLog[];
   date: string;
   status: TReceiptCheckStatus;
 }
 
-const reasons = [
-  { value: "input_error", label: "Sai sót nhập liệu" },
-  { value: "damage", label: "Mất hàng / Hư hỏng" },
-  { value: "wrong_import", label: "Nhập kho sai" },
-  { value: "other", label: "Khác (nhập ghi chú cụ thể)" },
-];
-
 const ReceiptCheckDetail: React.FC = () => {
   const history = useHistory();
   const { id } = useParams<{ id: string }>();
+
+  const [presentToast] = useIonToast();
+
   const [receipt, setReceipt] = useState<ReceiptCheck | null>(null);
   const [items, setItems] = useState<ReceiptItem[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [selectedReason, setSelectedReason] = useState<string>("");
   const [showReasonNote, setShowReasonNote] = useState(false);
   const [reasonNote, setReasonNote] = useState("");
+  const [note, setNote] = useState("");
 
   const { isLoading, withLoading } = useLoading();
-  const { getDetail, incrementActualInventory, updateBalanceInventory } =
-    useReceiptCheck();
+  const { user } = useAuth();
+  const {
+    getDetail,
+    update: updateReceiptCheck,
+    incrementActualInventory,
+    updateBalanceInventory,
+  } = useReceiptCheck();
+
+  // Get available reason values
+  const availableReasons = useMemo(() => {
+    return RECEIPT_CHECK_REASONS.map((r) => r.value);
+  }, [RECEIPT_CHECK_REASONS]);
+
+  // Debounced update function for reason
+  const debouncedUpdateReason = useCallback(
+    createDebounce(async (reason: string) => {
+      if (!receipt?.id) return;
+
+      try {
+        await updateReceiptCheck(receipt.id, { reason });
+        console.log("Reason updated successfully");
+      } catch (error) {
+        await Toast.show({
+          text: `Failed to update reason: ${(error as Error).message}`,
+          duration: "short",
+          position: "top",
+        });
+      }
+    }, 500),
+    [receipt?.id, updateReceiptCheck, availableReasons]
+  );
+
+  // Debounced update function for note
+  const debouncedUpdateNote = useCallback(
+    createDebounce(async (note: string) => {
+      if (!receipt?.id) return;
+
+      try {
+        await updateReceiptCheck(receipt.id, { note });
+        console.log("Note updated successfully");
+      } catch (error) {
+        await Toast.show({
+          text: `Failed to update note: ${(error as Error).message}`,
+          duration: "short",
+          position: "top",
+        });
+      }
+    }, 500),
+    [receipt?.id, updateReceiptCheck]
+  );
 
   const handleReasonChange = (value: string) => {
     setSelectedReason(value);
     setShowReasonNote(value === "other");
+
     if (value !== "other") {
       setReasonNote("");
+
+      if (receipt?.id) {
+        debouncedUpdateReason(value);
+      }
     }
+  };
+
+  const handleReasonNoteChange = (value: string) => {
+    setReasonNote(value);
+  };
+
+  const handleReasonNoteBlur = () => {
+    if (reasonNote.trim() && receipt?.id) {
+      debouncedUpdateReason(reasonNote.trim());
+    }
+  };
+
+  const handleNoteChange = (value: string) => {
+    setNote(value);
   };
 
   const fetchReceiptCheck = async () => {
@@ -105,6 +174,25 @@ const ReceiptCheckDetail: React.FC = () => {
 
         setReceipt(receipt);
         setItems(items);
+
+        // Set initial values from receipt data if available
+        if (receipt.reason) {
+          // Check if the reason exists in available reasons
+          const reasonExists = availableReasons.includes(receipt.reason);
+          if (reasonExists) {
+            setSelectedReason(receipt.reason);
+          } else {
+            setSelectedReason("other");
+            setShowReasonNote(true);
+            setReasonNote(receipt.reason);
+          }
+        }
+        if (receipt.reasonNote) {
+          setReasonNote(receipt.reasonNote);
+        }
+        if (receipt.note) {
+          setNote(receipt.note);
+        }
       } catch (error) {
         await Toast.show({
           text: (error as Error).message,
@@ -129,7 +217,7 @@ const ReceiptCheckDetail: React.FC = () => {
     });
   };
 
-  const showConfirmBalance = async () => {
+  const handleBalance = async () => {
     const { value } = await Dialog.confirm({
       title: "Xác nhận cân đối",
       message: `Bạn có chắc chắn muốn cân đối phiếu kiểm ${receipt?.receiptNumber} không?`,
@@ -160,20 +248,61 @@ const ReceiptCheckDetail: React.FC = () => {
         throw new Error("Cân đối thất bại");
       }
 
-      // Show success message
-      await Toast.show({
-        text: "Đã cân đối thành công",
-        duration: "short",
+      await presentToast({
+        message: "Đã cân đối thành công",
+        duration: 1000,
         position: "top",
+        color: "success",
       });
 
       // Refresh the receipt data
       fetchReceiptCheck();
     } catch (error) {
-      await Toast.show({
-        text: (error as Error).message,
-        duration: "short",
+      await presentToast({
+        message: (error as Error).message,
+        duration: 1000,
         position: "top",
+        color: "danger",
+      });
+    }
+  };
+
+  const handleBalanceRequest = async () => {
+    const { value } = await Dialog.confirm({
+      title: "Xác nhận yêu cầu cân đối",
+      message: `Bạn có chắc chắn muốn gửi yêu cầu cân đối phiếu kiểm ${receipt?.receiptNumber} không?`,
+    });
+    if (!value) return;
+
+    try {
+      if (!receipt?.id) {
+        await Toast.show({
+          text: "Không tìm thấy phiếu",
+          duration: "short",
+          position: "top",
+        });
+        return;
+      }
+
+      const response = await updateReceiptCheck(receipt.id, {
+        status: RECEIPT_CHECK_STATUS.BALANCING_REQUIRED,
+      });
+      if (!response.id) {
+        throw new Error("Gửi yêu cầu cân đối thất bại");
+      }
+
+      await presentToast({
+        message: "Gửi yêu cầu cân đối thành công",
+        duration: 1000,
+        position: "top",
+        color: "success",
+      });
+    } catch (error) {
+      await presentToast({
+        message: (error as Error).message,
+        duration: 1000,
+        position: "top",
+        color: "danger",
       });
     }
   };
@@ -248,17 +377,35 @@ const ReceiptCheckDetail: React.FC = () => {
       return "unknown";
     }
 
-    if (totalValueDifference === 0) {
-      return RECEIPT_CHECK_STATUS.BALANCED;
-    }
-
     return receipt?.status;
-  }, [receipt?.status, totalValueDifference]);
+  }, [receipt?.status]);
+
+  const { isShowBalanceButton, isShowBalanceRequireButton } = useMemo(() => {
+    if (!user || !receipt)
+      return {
+        isShowBalanceButton: false,
+        isShowBalanceRequireButton: false,
+      };
+
+    const roles = [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.MANAGER];
+    const isShowBalanceButton =
+      receipt.status !== RECEIPT_CHECK_STATUS.BALANCED &&
+      roles.includes(user.role);
+
+    const isShowBalanceRequireButton =
+      receipt.status === RECEIPT_CHECK_STATUS.PROCESSING &&
+      [UserRole.EMPLOYEE].includes(user.role);
+
+    return {
+      isShowBalanceButton,
+      isShowBalanceRequireButton,
+    };
+  }, [receipt, user]);
 
   return (
     <IonPage>
       <IonHeader>
-        <IonToolbar className="px-4 py-3 flex items-center justify-between border-b">
+        <IonToolbar className="py-3 flex items-center justify-between border-b">
           <IonButtons slot="start">
             <IonButton
               className="text-gray-600"
@@ -270,7 +417,7 @@ const ReceiptCheckDetail: React.FC = () => {
             </IonButton>
           </IonButtons>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1">
             <div>
               <h1 className="text-base font-semibold">
                 {receipt?.receiptNumber}
@@ -286,9 +433,11 @@ const ReceiptCheckDetail: React.FC = () => {
           </div>
 
           <IonButtons slot="end">
-            <IonButton className="text-gray-600" onClick={() => startScan()}>
-              <IonIcon slot="icon-only" icon={scanOutline} />
-            </IonButton>
+            {isShowBalanceRequireButton && (
+              <IonButton className="text-gray-600" onClick={() => startScan()}>
+                <IonIcon slot="icon-only" icon={scanOutline} />
+              </IonButton>
+            )}
           </IonButtons>
         </IonToolbar>
       </IonHeader>
@@ -334,14 +483,25 @@ const ReceiptCheckDetail: React.FC = () => {
             </div>
           </div>
 
-          {selectedItemDifference !== 0 && (
+          {isShowBalanceButton && (
             <IonButton
               className="w-full"
               color="dark"
-              onClick={showConfirmBalance}
+              onClick={handleBalance}
               disabled={receiptStatus === RECEIPT_CHECK_STATUS.BALANCED}
             >
               Cân đối
+            </IonButton>
+          )}
+
+          {isShowBalanceRequireButton && (
+            <IonButton
+              className="w-full"
+              color="dark"
+              onClick={handleBalanceRequest}
+              disabled={receiptStatus === RECEIPT_CHECK_STATUS.BALANCED}
+            >
+              Yêu cầu kiểm tra cân đối
             </IonButton>
           )}
 
@@ -371,7 +531,7 @@ const ReceiptCheckDetail: React.FC = () => {
                   className="mt-1 w-full px-4 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Chọn lý do</option>
-                  {reasons.map((reason) => (
+                  {RECEIPT_CHECK_REASONS.map((reason) => (
                     <option key={reason.value} value={reason.value}>
                       {reason.label}
                     </option>
@@ -383,7 +543,8 @@ const ReceiptCheckDetail: React.FC = () => {
                 <div>
                   <textarea
                     value={reasonNote}
-                    onChange={(e) => setReasonNote(e.target.value)}
+                    onChange={(e) => handleReasonNoteChange(e.target.value)}
+                    onBlur={handleReasonNoteBlur}
                     placeholder="Nhập lý do cụ thể..."
                     className="w-full p-3 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={3}
@@ -410,7 +571,7 @@ const ReceiptCheckDetail: React.FC = () => {
                 <label className="text-sm text-gray-600 mb-1 block">Kho</label>
                 <button className="w-full flex items-center justify-between px-4 py-2 border rounded-lg bg-white">
                   <span className="text-gray-500">
-                    {receipt?.warehouseLocation || "Unknown"}
+                    {receipt?.warehouse || "Unknown"}
                   </span>
                 </button>
               </div>
@@ -419,8 +580,13 @@ const ReceiptCheckDetail: React.FC = () => {
 
           <div>
             <textarea
-              // value={notes}
-              // onChange={(e) => setNotes(e.target.value)}
+              value={note}
+              onBlur={() => {
+                if (note.trim() && receipt?.id) {
+                  debouncedUpdateNote(note.trim());
+                }
+              }}
+              onChange={(e) => handleNoteChange(e.target.value)}
               placeholder="Ghi chú"
               className="w-full p-3 border rounded-lg bg-white"
               rows={3}

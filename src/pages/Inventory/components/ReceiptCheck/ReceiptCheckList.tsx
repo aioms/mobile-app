@@ -17,7 +17,7 @@ import DatePicker from "@/components/DatePicker";
 
 import useReceiptCheck from "@/hooks/apis/useReceiptCheck";
 
-import { RECEIPT_CHECK_STATUS } from "@/common/constants/receipt";
+import { RECEIPT_CHECK_STATUS, TReceiptCheckStatus } from "@/common/constants/receipt";
 import { Refresher } from "@/components/Refresher/Refresher";
 import { ItemList } from "./components/ItemList";
 
@@ -39,8 +39,9 @@ interface Receipt {
   actualInventory: number;
   totalDifference: number;
   totalItems: number;
+  checker: string;
   date: string;
-  status: string;
+  status: TReceiptCheckStatus;
   items: ReceiptItem[];
 }
 

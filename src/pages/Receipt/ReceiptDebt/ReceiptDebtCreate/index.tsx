@@ -15,14 +15,18 @@ import {
   IonRippleEffect,
   IonText,
   useIonToast,
+  useIonViewWillEnter,
+  useIonViewWillLeave,
 } from "@ionic/react";
 import { OverlayEventDetail } from "@ionic/core";
 import { checkmarkCircleOutline, printOutline, search } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
 
+import { useStorage } from "@/hooks";
+import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
+import { isHasProperty } from "@/helpers/common";
 import { getDate } from "@/helpers/date";
 import { formatCurrency } from "@/helpers/formatters";
-import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
 
 import DatePicker from "@/components/DatePicker";
 import ModalSelectCustomer from "@/components/ModalSelectCustomer";
@@ -48,18 +52,17 @@ const initialFormData = {
 
 const ReceiptDebtCreate: React.FC = () => {
   const history = useHistory();
+  const [presentToast] = useIonToast();
+
   const [formData, setFormData] = useState(initialFormData);
   const [productItems, setProductItems] = useState<IProductItem[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const [presentToast] = useIonToast();
-
+  const { getItem, removeItem } = useStorage();
   const { create: createReceiptDebt } = useReceiptDebt();
 
-  // Add this after the existing state variables (around line 102)
   const [selectedCustomerName, setSelectedCustomerName] = useState<string>("");
 
-  // Add this after the existing modal setup (around line 180, after the product modal setup)
   // Modal for customer selection
   const [presentModalCustomer, dismissModalCustomer] = useIonModal(
     ModalSelectCustomer,
@@ -180,6 +183,25 @@ const ReceiptDebtCreate: React.FC = () => {
       });
     }
   };
+
+  useIonViewWillEnter(() => {
+    const loadDataFromStorage = async () => {
+      const draftReceipt = await getItem("debt_draft");
+
+      if (draftReceipt) {
+        const { items, ...rest } = draftReceipt;
+
+        items && setProductItems(items);
+        isHasProperty(rest) && setFormData(rest);
+      }
+    };
+
+    loadDataFromStorage();
+  }, []);
+
+  useIonViewWillLeave(() => {
+    removeItem("debt_draft");
+  }, []);
 
   return (
     <IonPage>

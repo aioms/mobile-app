@@ -11,17 +11,23 @@ import {
   IonItem,
   IonBadge,
   IonLabel,
+  RefresherEventDetail,
 } from "@ionic/react";
 import { funnelOutline, scanOutline } from "ionicons/icons";
+import { useHistory } from "react-router";
+
+import { useBarcodeScanner, useLoading, useStorage } from "@/hooks";
+import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
+import useProduct from "@/hooks/apis/useProduct";
 
 import { TReceiptDebtStatus } from "@/common/constants/receipt";
-import ReceiptDebtItem from "./components/ReceiptDebtItem";
-import FilterModal from "./components/FilterModal";
-
-import { useLoading } from "@/hooks";
-import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
 import { capitalizeFirstLetter } from "@/helpers/common";
 import { dayjsFormat, formatCurrencyWithoutSymbol } from "@/helpers/formatters";
+
+import LoadingScreen from "@/components/Loading/LoadingScreen";
+import { Refresher } from "@/components/Refresher/Refresher";
+import ReceiptDebtItem from "./components/ReceiptDebtItem";
+import FilterModal from "./components/FilterModal";
 
 interface ReceiptDebt {
   id: string;
@@ -35,6 +41,9 @@ interface ReceiptDebt {
 const LIMIT = 10;
 
 const ReceiptDebtList: FC = () => {
+  const history = useHistory();
+  const [presentToast] = useIonToast();
+
   const [receiptDebts, setReceiptDebts] = useState<ReceiptDebt[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -47,10 +56,99 @@ const ReceiptDebtList: FC = () => {
     createdDate: "",
     status: "",
   });
-  const { isLoading, withLoading } = useLoading();
 
-  const [presentToast] = useIonToast();
+  const { isLoading, withLoading } = useLoading();
+  const { addItem, getItem } = useStorage();
   const { getList } = useReceiptDebt();
+
+    const { getDetail: getProductDetail } = useProduct();
+
+  const { startScan, stopScan } = useBarcodeScanner({
+    onBarcodeScanned: handleBarcodeScanned,
+    onError: (error: Error) => {
+      presentToast({
+        message: error.message,
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+    },
+  });
+
+  /**
+   * Handles the result of a scanned barcode by adding the corresponding product to a draft receipt or creating a new draft.
+   *
+   * If the scanned product is not found or is out of stock, displays a toast notification. If a draft receipt exists, increments the quantity of the product if already present, or adds it as a new item. If no draft exists, creates a new draft receipt with the scanned product. Navigates to the receipt creation page upon success.
+   *
+   * @param value - The scanned barcode value
+   */
+  async function handleBarcodeScanned(value: string) {
+    stopScan();
+
+    try {
+      const result = await getProductDetail(value);
+
+      if (!result) {
+        return await Toast.show({
+          text: `Không tìm thấy sản phẩm với mã vạch ${value}`,
+          duration: "short",
+          position: "center",
+        });
+      }
+
+      if (result.inventory === 0) {
+        return await Toast.show({
+          text: "Sản phẩm này đã hết hàng",
+          duration: "short",
+          position: "center",
+        });
+      }
+
+      const draftReceipt = await getItem("debt_draft");
+
+      if (draftReceipt) {
+        const existingItem = draftReceipt.items.find(
+          (item: { id: string }) => item.id === result.id
+        );
+
+        if (existingItem) {
+          existingItem.quantity += 1;
+        } else {
+          draftReceipt.items.push({
+            id: result.id,
+            productName: result.productName,
+            productCode: result.productCode,
+            code: result.code,
+            sellingPrice: result.sellingPrice,
+            quantity: 1,
+          });
+        }
+
+        await addItem("debt_draft", draftReceipt);
+      } else {
+        await addItem("debt_draft", {
+          items: [
+            {
+              id: result.id,
+              productId: result.id,
+              productName: result.productName,
+              code: result.code,
+              sellingPrice: result.sellingPrice,
+              quantity: 1,
+            },
+          ],
+        });
+      }
+
+      history.push(`/tabs/debt/create`);
+    } catch (error) {
+      await Toast.show({
+        text: (error as Error).message,
+        duration: "short",
+        position: "top",
+      });
+    }
+  }
 
   const fetchReceiptDebts = async (
     pageNum: number = 1,
@@ -145,10 +243,16 @@ const ReceiptDebtList: FC = () => {
     fetchReceiptDebts(1, searchKeyword, clearedFilters);
   };
 
+  const handleRefresh = (event: CustomEvent<RefresherEventDetail>) => {
+    fetchReceiptDebts().finally(() => {
+      event.detail.complete();
+    });
+  };
+
   return (
     <div className="">
-      {/* {isLoading && <LoadingScreen message="Đang tải dữ liệu..." />}
-      <Refresher onRefresh={handleRefresh} /> */}
+      {isLoading && <LoadingScreen message="Đang tải dữ liệu..." />}
+      <Refresher onRefresh={handleRefresh} />
 
       {/* Order Count */}
       <div className="mb-3 bg-white rounded-lg shadow-sm p-2">
@@ -199,7 +303,7 @@ const ReceiptDebtList: FC = () => {
           </IonButton>
           <div
             className="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center ion-activatable ripple-parent"
-            // onClick={() => startScan()}
+            onClick={() => startScan()}
           >
             <IonIcon icon={scanOutline} className="text-3xl text-teal-400" />
             <IonRippleEffect></IonRippleEffect>

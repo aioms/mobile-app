@@ -20,7 +20,7 @@ const MenuLayout: React.FC<Props> = ({ component, title, isHeaderDefault }) => {
       <MenuBar />
       <IonPage id="main-content">
         {isHeaderDefault && (
-          <IonHeader>
+          <IonHeader translucent>
             <IonToolbar>
               <IonButtons slot="start">
                 <IonMenuButton></IonMenuButton>

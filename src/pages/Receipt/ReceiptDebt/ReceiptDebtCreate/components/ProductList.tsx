@@ -14,6 +14,7 @@ import useProduct from "@/hooks/apis/useProduct";
 import ModalSelectProduct from "@/components/ModalSelectProduct";
 import ProductItem from "./ProductItem";
 import ErrorMessage from "@/components/ErrorMessage";
+import { Toast } from "@capacitor/toast";
 
 interface IProductItem {
   id: string;
@@ -97,10 +98,18 @@ const ProductList: React.FC<Props> = ({
         const { role, data } = event.detail;
 
         if (role === "confirm" && data) {
-          onAddItem({
-            ...data,
-            quantity: 1,
-          });
+          if (data.inventory === 0) {
+            await Toast.show({
+              text: "Sản phẩm đã hết hàng",
+              duration: "short",
+              position: "center",
+            });
+          } else {
+            onAddItem({
+              ...data,
+              quantity: 1,
+            });
+          }
         }
       },
     });

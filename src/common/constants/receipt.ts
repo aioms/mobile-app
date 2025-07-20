@@ -58,6 +58,7 @@ export const getStatusColor = (status: ReceiptStatus): string => {
     case RECEIPT_CHECK_STATUS.PENDING:
     case RECEIPT_IMPORT_STATUS.WAITING:
     case RECEIPT_DEBT_STATUS.PENDING:
+    case RECEIPT_CHECK_STATUS.BALANCING_REQUIRED:
       return "warning";
 
     case RECEIPT_IMPORT_STATUS.PROCESSING:
@@ -74,7 +75,6 @@ export const getStatusColor = (status: ReceiptStatus): string => {
 
     case RECEIPT_IMPORT_STATUS.CANCELLED:
     case RECEIPT_RETURN_STATUS.CANCELLED:
-    case RECEIPT_CHECK_STATUS.BALANCING_REQUIRED:
     case RECEIPT_DEBT_STATUS.CANCELLED:
       return "danger";
 
@@ -138,3 +138,10 @@ export const getStatusLabel = (status: ReceiptStatus): string => {
       return "Unknown";
   }
 };
+
+export const RECEIPT_CHECK_REASONS = [
+  { value: "input_error", label: "Sai sót nhập liệu" },
+  { value: "damage", label: "Mất hàng / Hư hỏng" },
+  { value: "wrong_import", label: "Nhập kho sai" },
+  { value: "other", label: "Khác (nhập ghi chú cụ thể)" },
+];

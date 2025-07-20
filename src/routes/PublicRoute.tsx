@@ -18,7 +18,7 @@ const PublicRoute: React.FC<PublicRouteProps> = ({
         !isAuthenticated ? (
           <Component {...props} />
         ) : (
-          <Redirect to={{ pathname: '/home' }} />
+          <Redirect to={{ pathname: '/tabs/home' }} />
         )
       }
     />

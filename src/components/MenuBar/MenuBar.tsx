@@ -59,7 +59,7 @@ const MenuBar: React.FC = () => {
 
   return (
     <IonMenu type="push" contentId="main-content">
-      <IonHeader>
+      <IonHeader translucent>
         <IonToolbar>
           <IonTitle>
             <IonItem lines="none" className="menu-logo">
@@ -69,7 +69,7 @@ const MenuBar: React.FC = () => {
                   className="text-primary w-12 h-12"
                 />
                 <span className="text-xl font-bold ml-2 text-primary">
-                  AIOS
+                  AIOM
                 </span>
               </div>
             </IonItem>

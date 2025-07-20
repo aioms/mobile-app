@@ -57,6 +57,7 @@ import ModalSelectCustomer from "../components/ModalSelectCustomer";
 import ErrorMessage from "@/components/ErrorMessage";
 
 import "./OrderUpdate.css";
+import { Toast } from "@capacitor/toast";
 
 interface IOrderItem {
   id: string;
@@ -113,7 +114,6 @@ const OrderUpdate: React.FC = () => {
   const [presentToast] = useIonToast();
   const orderItemsListRef = useRef<HTMLDivElement>(null);
 
-  const { addItem, getItem, removeItem } = useStorage();
   const { isLoading, withLoading } = useLoading();
   const { getDetail: getOrderDetail, update: updateOrder } = useOrder();
   const { getDetail: getProductDetail } = useProduct();
@@ -198,13 +198,21 @@ const OrderUpdate: React.FC = () => {
         const { role, data } = event.detail;
 
         if (role === "confirm" && data) {
-          setOrderItems((prev) => [
-            ...prev,
-            {
-              ...data,
-              quantity: 1,
-            },
-          ]);
+          if (data.inventory === 0) {
+            await Toast.show({
+              text: "Sản phẩm đã hết hàng",
+              duration: "short",
+              position: "center",
+            });
+          } else {
+            setOrderItems((prev) => [
+              ...prev,
+              {
+                ...data,
+                quantity: 1,
+              },
+            ]);
+          }
         }
       },
     });
