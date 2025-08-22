@@ -3,7 +3,7 @@ import { Toast } from "@capacitor/toast";
 
 import { request } from "../helpers/axios";
 
-import { IHttpResponse, User } from "../types";
+import { IHttpResponse, User } from "../types/index.d";
 import { useStorage } from "./useStorage";
 
 export const useAuth = () => {
