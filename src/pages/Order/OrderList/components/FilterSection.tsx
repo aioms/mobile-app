@@ -84,7 +84,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({ onFilterChange }) => {
           <IonSelectOption value={OrderStatus.PENDING}>
             Chờ thanh toán
           </IonSelectOption>
-          <IonSelectOption value={OrderStatus.PAID}>
+          <IonSelectOption value={OrderStatus.COMPLETED}>
             Đã thanh toán
           </IonSelectOption>
           <IonSelectOption value={OrderStatus.CANCELLED}>

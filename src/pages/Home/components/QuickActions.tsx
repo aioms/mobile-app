@@ -29,6 +29,7 @@ const QuickActions: React.FC = () => {
         color: "danger",
       });
     },
+    delay: 300,
   });
 
   /**

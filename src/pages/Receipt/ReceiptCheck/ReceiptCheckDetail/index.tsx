@@ -58,6 +58,10 @@ interface ReceiptCheck {
     id: string;
     name: string;
   };
+  checker: {
+    id: string;
+    fullname: string
+  };
   warehouse: string;
   activityLog: ActivityLog[];
   date: string;
@@ -380,7 +384,7 @@ const ReceiptCheckDetail: React.FC = () => {
     return receipt?.status;
   }, [receipt?.status]);
 
-  const { isShowBalanceButton, isShowBalanceRequireButton } = useMemo(() => {
+  const { isShowBalanceButton, isShowBalanceRequireButton, isAdmin } = useMemo(() => {
     if (!user || !receipt)
       return {
         isShowBalanceButton: false,
@@ -392,13 +396,13 @@ const ReceiptCheckDetail: React.FC = () => {
       receipt.status !== RECEIPT_CHECK_STATUS.BALANCED &&
       roles.includes(user.role);
 
-    const isShowBalanceRequireButton =
-      receipt.status === RECEIPT_CHECK_STATUS.PROCESSING &&
-      [UserRole.EMPLOYEE].includes(user.role);
+    const statusAllowed = [RECEIPT_CHECK_STATUS.PROCESSING, RECEIPT_CHECK_STATUS.PENDING] as string[];
+    const isShowBalanceRequireButton = statusAllowed.includes(receipt.status)
 
     return {
       isShowBalanceButton,
       isShowBalanceRequireButton,
+      isAdmin: roles.includes(user.role)
     };
   }, [receipt, user]);
 
@@ -473,9 +477,8 @@ const ReceiptCheckDetail: React.FC = () => {
             <div className="flex justify-between items-center">
               <span className="text-sm">Chênh lệch giá trị tăng / giảm</span>
               <span
-                className={`px-3 py-1 bg-gray-600 text-white rounded-full text-sm ${
-                  selectedItemDifference >= 0 ? "bg-green-600" : "bg-red-600"
-                }`}
+                className={`px-3 py-1 bg-gray-600 text-white rounded-full text-sm ${selectedItemDifference >= 0 ? "bg-green-600" : "bg-red-600"
+                  }`}
               >
                 {selectedItemDifference > 0 ? "+" : ""}
                 {formatCurrency(selectedItemDifference)}
@@ -494,7 +497,7 @@ const ReceiptCheckDetail: React.FC = () => {
             </IonButton>
           )}
 
-          {isShowBalanceRequireButton && (
+          {isShowBalanceRequireButton && !isAdmin && (
             <IonButton
               className="w-full"
               color="dark"
@@ -510,9 +513,8 @@ const ReceiptCheckDetail: React.FC = () => {
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium">Tổng chênh lệch phiếu</span>
               <span
-                className={`px-3 py-1 bg-gray-600 text-white rounded-full text-sm ${
-                  totalValueDifference >= 0 ? "bg-green-600" : "bg-red-600"
-                }`}
+                className={`px-3 py-1 bg-gray-600 text-white rounded-full text-sm ${totalValueDifference >= 0 ? "bg-green-600" : "bg-red-600"
+                  }`}
               >
                 {totalValueDifference > 0 ? "+" : ""}
                 {formatCurrency(totalValueDifference)}
@@ -563,7 +565,7 @@ const ReceiptCheckDetail: React.FC = () => {
                 </label>
                 <button className="w-full flex items-center justify-between px-4 py-2 border rounded-lg bg-white">
                   <span className="text-gray-500">
-                    {receipt?.supplier.name || "Chọn người kiểm"}
+                    {receipt?.checker?.fullname || "Chọn người kiểm"}
                   </span>
                 </button>
               </div>

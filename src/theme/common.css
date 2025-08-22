@@ -136,3 +136,121 @@
   border-color: #2dd36f;
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 15px rgba(45, 211, 111, 0.5);
 }
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Scanner overlay styles */
+.scanner-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 998;
+  pointer-events: none;
+}
+
+.scanner-controls {
+  pointer-events: auto;
+}
+
+/* Scanner button positioning */
+.scanner-torch-button {
+  position: fixed !important;
+  bottom: 30px !important;
+  left: 30px !important;
+  z-index: 10001 !important;
+}
+
+.scanner-stop-button {
+  position: fixed !important;
+  bottom: 30px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 10001 !important;
+}
+
+.scanner-zoom-button {
+  position: fixed !important;
+  bottom: 30px !important;
+  right: 30px !important;
+  z-index: 10001 !important;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .scanner-torch-button {
+    bottom: 20px !important;
+    left: 20px !important;
+  }
+  
+  .scanner-stop-button {
+    bottom: 20px !important;
+  }
+  
+  .scanner-zoom-button {
+    bottom: 20px !important;
+    right: 20px !important;
+  }
+}
+
+/* Scanner frame styling */
+.barcode-frame {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 280px;
+  height: 280px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.barcode-frame-corners::before,
+.barcode-frame-corners::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #fff;
+}
+
+.barcode-frame-corners::before {
+  top: -3px;
+  left: -3px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.barcode-frame-corners::after {
+  bottom: -3px;
+  right: -3px;
+  border-left: none;
+  border-top: none;
+}
+
+.scan-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #00ff00, transparent);
+  animation: scanLine 2s linear infinite;
+}
+
+@keyframes scanLine {
+  0% { transform: translateY(-140px); }
+  100% { transform: translateY(140px); }
+}

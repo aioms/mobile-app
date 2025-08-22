@@ -120,6 +120,7 @@ const OrderDetail: React.FC = () => {
           <IonButtons slot="start">
             <IonButton onClick={() => history.goBack()}>
               <IonIcon icon={chevronBack} />
+              Trở lại
             </IonButton>
           </IonButtons>
           <IonTitle>Mã đơn hàng</IonTitle>

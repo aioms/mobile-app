@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Toast } from "@capacitor/toast";
 import {
   IonIcon,
   IonRippleEffect,
@@ -14,7 +15,6 @@ import useProduct from "@/hooks/apis/useProduct";
 import ModalSelectProduct from "@/components/ModalSelectProduct";
 import ProductItem from "./ProductItem";
 import ErrorMessage from "@/components/ErrorMessage";
-import { Toast } from "@capacitor/toast";
 
 interface IProductItem {
   id: string;

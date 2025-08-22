@@ -7,7 +7,7 @@ export const getOrderStatusLabel = (status: string): string => {
       return "Đơn nháp";
     case OrderStatus.PENDING:
       return "Chờ thanh toán";
-    case OrderStatus.PAID:
+    case OrderStatus.COMPLETED:
       return "Đã hoàn thành";
     case OrderStatus.CANCELLED:
       return "Đã hủy";
@@ -20,7 +20,7 @@ export const getOrderStatusColor = (status: string): string => {
   switch (status) {
     case OrderStatus.PENDING:
       return "warning";
-    case OrderStatus.PAID:
+    case OrderStatus.COMPLETED:
       return "success";
     case OrderStatus.CANCELLED:
       return "danger";
@@ -42,7 +42,10 @@ export const getPaymentMethodLabel = (method: string): string => {
   }
 };
 
-export const getCustomerTypeLabel = (customer: ICustomer | null, isTruncate = false): string => {
+export const getCustomerTypeLabel = (
+  customer: ICustomer | null,
+  isTruncate = false
+): string => {
   if (!customer) return "Khách lẻ";
   if (!isTruncate) return customer.name;
 

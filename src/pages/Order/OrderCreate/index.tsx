@@ -53,6 +53,12 @@ import OrderItem from "./components/OrderItem";
 import ModalSelectProduct from "../components/ModalSelectProduct";
 import ModalSelectCustomer from "../components/ModalSelectCustomer";
 import ErrorMessage from "@/components/ErrorMessage";
+import PaymentModal, {
+  PaymentMethod as PaymentModalMethod,
+} from "./components/PaymentModal";
+import { PaymentTransactionDto } from "@/types/payment.type";
+import { PaymentMethod as PaymentMethodEnum } from "@/common/enums/payment";
+import { TransactionType } from "@/common/enums/transaction";
 
 import "./OrderCreate.css";
 import { Toast } from "@capacitor/toast";
@@ -92,12 +98,28 @@ const initialFormData: IFormData = {
   discountAmountFormatted: "",
 };
 
+// Map order payment method to modal payment method
+const mapOrderPaymentMethodToModal = (
+  orderMethod: PaymentMethod
+): PaymentModalMethod => {
+  switch (orderMethod) {
+    case PaymentMethod.CASH:
+      return "cash";
+    case PaymentMethod.BANK_TRANSFER:
+      return "qr";
+    default:
+      return "cash";
+  }
+};
+
 const OrderCreate: React.FC = () => {
   const history = useHistory();
 
   const [formData, setFormData] = useState<IFormData>(initialFormData);
   const [orderItems, setOrderItems] = useState<IOrderItem[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [pendingOrderData, setPendingOrderData] = useState<any>(null);
   const [showDownArrow, setShowDownArrow] = useState(false);
 
   const [presentToast] = useIonToast();
@@ -107,6 +129,82 @@ const OrderCreate: React.FC = () => {
   const { isLoading, withLoading } = useLoading();
   const { create: createOrder } = useOrder();
   const { getDetail: getProductDetail } = useProduct();
+
+  // Handle payment completion
+  const handlePaymentComplete = async (
+    amount: number,
+    method: PaymentModalMethod
+  ) => {
+    if (!pendingOrderData) {
+      presentToast({
+        message: "Không tìm thấy thông tin đơn hàng",
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+      return;
+    }
+
+    await withLoading(async () => {
+      try {
+        // Map payment method from modal to API enum
+        const mapPaymentMethod = (
+          method: PaymentModalMethod
+        ): PaymentMethodEnum => {
+          switch (method) {
+            case "cash":
+              return PaymentMethodEnum.CASH;
+            case "qr":
+              return PaymentMethodEnum.BANK_TRANSFER;
+            default:
+              return PaymentMethodEnum.CASH;
+          }
+        };
+
+        // Create payment transaction data
+        const paymentTransaction: PaymentTransactionDto = {
+          amount,
+          paymentMethod: mapPaymentMethod(method),
+          type: TransactionType.PAYMENT,
+          note: `Thanh toán đơn hàng`,
+        };
+
+        // Update order data with completed status and transaction
+        const finalOrderData = {
+          ...pendingOrderData,
+          status: OrderStatus.COMPLETED,
+          transaction: paymentTransaction,
+        };
+
+        const orderCreated = await createOrder(finalOrderData);
+
+        if (!orderCreated?.id) {
+          throw new Error("Tạo đơn hàng thất bại");
+        }
+
+        presentToast({
+          message: `Tạo đơn hàng và thanh toán ${formatCurrency(
+            calculateFinalTotal()
+          )} thành công!`,
+          duration: 2000,
+          position: "top",
+          color: "success",
+        });
+
+        // Reset states
+        setPendingOrderData(null);
+        setIsPaymentModalOpen(false);
+        history.goBack();
+      } catch (error) {
+        presentToast({
+          message: (error as Error).message || "Có lỗi xảy ra khi tạo đơn hàng",
+          duration: 2000,
+          position: "top",
+          color: "danger",
+        });
+      }
+    });
+  };
 
   const addProductToCartItem = async (productCode: string) => {
     try {
@@ -467,59 +565,33 @@ const OrderCreate: React.FC = () => {
       if (!value) return;
     }
 
-    await withLoading(async () => {
-      try {
-        const statusByPaymentMethod =
-          formData.paymentMethod === PaymentMethod.CASH
-            ? OrderStatus.PAID
-            : OrderStatus.PENDING;
+    // Prepare order data
+    const orderData = {
+      status: status || OrderStatus.PENDING,
+      customer: formData.customer,
+      paymentMethod: formData.paymentMethod,
+      note: formData.note,
+      discountAmount: calculateDiscount(),
+      items: orderItems.map((item) => ({
+        productId: item.id,
+        productName: item.productName,
+        code: item.code,
+        quantity: item.quantity,
+        price: item.sellingPrice,
+      })),
+      vatInfo: formData.vatEnabled
+        ? {
+            companyName: formData.companyName,
+            taxCode: formData.taxCode,
+            email: formData.email,
+            remark: formData.remark,
+          }
+        : null,
+    };
 
-        const orderData = {
-          status: status || statusByPaymentMethod,
-          customer: formData.customer,
-          paymentMethod: formData.paymentMethod,
-          note: formData.note,
-          discountAmount: calculateDiscount(),
-          items: orderItems.map((item) => ({
-            productId: item.id,
-            productName: item.productName,
-            code: item.code,
-            quantity: item.quantity,
-            price: item.sellingPrice,
-          })),
-          vatInfo: formData.vatEnabled
-            ? {
-                companyName: formData.companyName,
-                taxCode: formData.taxCode,
-                email: formData.email,
-                remark: formData.remark,
-              }
-            : null,
-        };
-
-        const orderCreated = await createOrder(orderData);
-
-        if (!orderCreated?.id) {
-          throw new Error("Tạo đơn hàng thất bại");
-        }
-
-        presentToast({
-          message: "Tạo đơn hàng thành công",
-          duration: 2000,
-          position: "top",
-          color: "success",
-        });
-
-        history.goBack();
-      } catch (error) {
-        presentToast({
-          message: (error as Error).message || "Có lỗi xảy ra",
-          duration: 2000,
-          position: "top",
-          color: "danger",
-        });
-      }
-    });
+    // Store order data and open payment modal
+    setPendingOrderData(orderData);
+    setIsPaymentModalOpen(true);
   };
 
   useIonViewWillEnter(() => {
@@ -933,6 +1005,24 @@ const OrderCreate: React.FC = () => {
           </IonButton>
         </div>
       </IonFooter>
+
+      {/* Payment Modal */}
+      {pendingOrderData && (
+        <PaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => {
+            setIsPaymentModalOpen(false);
+            setPendingOrderData(null);
+          }}
+          orderData={{
+            totalAmount: calculateFinalTotal(),
+          }}
+          preSelectedMethod={mapOrderPaymentMethodToModal(
+            formData.paymentMethod
+          )}
+          onPaymentComplete={handlePaymentComplete}
+        />
+      )}
     </IonPage>
   );
 };

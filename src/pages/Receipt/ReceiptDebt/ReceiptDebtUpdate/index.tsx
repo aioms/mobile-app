@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
   IonContent,
   IonHeader,
@@ -6,121 +6,139 @@ import {
   IonToolbar,
   IonButton,
   IonButtons,
-  IonBackButton,
   IonFooter,
   IonPage,
   IonIcon,
   IonTextarea,
-  useIonModal,
-  IonRippleEffect,
-  IonText,
   useIonToast,
+  IonRefresher,
+  IonRefresherContent,
+  IonChip,
+  IonLabel,
 } from "@ionic/react";
-import { OverlayEventDetail } from "@ionic/core";
-import { checkmarkCircleOutline, printOutline, search } from "ionicons/icons";
+import { RefresherEventDetail } from "@ionic/core";
+import {
+  checkmarkCircleOutline,
+  chevronBack,
+  printOutline,
+} from "ionicons/icons";
 import { useHistory, useParams } from "react-router-dom";
 
 import { getDate } from "@/helpers/date";
 import { formatCurrency } from "@/helpers/formatters";
+import { getStatusLabel, getStatusColor } from "@/common/constants/receipt";
 import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
 
 import DatePicker from "@/components/DatePicker";
-import ModalSelectCustomer from "@/components/ModalSelectCustomer";
-import ErrorMessage from "@/components/ErrorMessage";
-import ProductList from "./components/ProductList";
-
-interface IProductItem {
-  id: string;
-  productName: string;
-  productCode: number;
-  code: string;
-  quantity: number;
-  sellingPrice: number;
-}
+import ContentSkeleton from "@/components/Loading/ContentSkeleton";
+import PurchasePeriodList from "./components/PurchasePeriodList";
+import { IProductItem } from "@/types/product.type";
+import { useLoading } from "@/hooks";
+import { Dialog } from "@capacitor/dialog";
+import { Toast } from "@capacitor/toast";
+import LoadingScreen from "@/components/Loading/LoadingScreen";
+import EmptyPage from "@/components/EmptyPage";
 
 const initialFormData = {
   customer: "",
-  estimatedDate: getDate(new Date()).format(),
+  dueDate: "",
   note: "",
 };
 
-const sampleProducts = [
-  {
-    id: "1",
-    productName: "Sản phẩm A",
-    productCode: "SP001",
-    quantity: 2,
-    unitPrice: 500000,
-    totalPrice: 1000000,
-    date: "15/02/2024",
-  },
-  {
-    id: "2",
-    productName: "Sản phẩm B",
-    productCode: "SP001",
-    quantity: 2,
-    unitPrice: 500000,
-    totalPrice: 1000000,
-    date: "15/02/2024",
-  },
-];
+interface IReceiptDebtDetail {
+  id: string;
+  code: string;
+  type: string;
+  totalAmount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  status: string;
+  dueDate: string;
+  paymentDate: string | null;
+  note: string;
+  receiptImportId: string | null;
+  receiptReturnId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  supplierName: string | null;
+  customerName: string | null;
+}
+
+interface ReceiptDebtDetailResponse {
+  receipt: IReceiptDebtDetail;
+  items: Record<string, IProductItem[]>;
+}
 
 const ReceiptDebtUpdate: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
-  const [formData, setFormData] = useState(initialFormData);
-  const [productItems, setProductItems] = useState<IProductItem[]>([]);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
   const [presentToast] = useIonToast();
-
-  const { create: createReceiptDebt } = useReceiptDebt();
-
-  // Add this after the existing state variables (around line 102)
-  const [selectedCustomerName, setSelectedCustomerName] = useState<string>("");
-
-  // Add this after the existing modal setup (around line 180, after the product modal setup)
-  // Modal for customer selection
-  const [presentModalCustomer, dismissModalCustomer] = useIonModal(
-    ModalSelectCustomer,
-    {
-      dismiss: (data: any, role: string) => dismissModalCustomer(data, role),
-    }
+  const [formData, setFormData] = useState(initialFormData);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [receiptDebt, setReceiptDebt] = useState<IReceiptDebtDetail | null>(
+    null
   );
+  const [productItems, setProductItems] = useState<
+    Record<string, IProductItem[]>
+  >({});
 
-  const openModalSelectCustomer = () => {
-    presentModalCustomer({
-      onWillDismiss: async (event: CustomEvent<OverlayEventDetail>) => {
-        const { role, data } = event.detail;
+  const { withLoading, isLoading } = useLoading();
 
-        if (role !== "confirm") return;
+  const { getDetail, update } = useReceiptDebt();
 
-        if (!data) {
-          setSelectedCustomerName("");
-          handleFormChange("customer", "");
-          return;
-        }
+  const fetchReceiptDebtDetails = async () => {
+    if (!id) {
+      await presentToast({
+        message: "Không thể load dữ liệu",
+        duration: 1000,
+        position: "top",
+        color: "warning",
+      });
+      return;
+    }
 
-        const [customerId, customerName] = data.split("__");
-        setSelectedCustomerName(customerName);
+    await withLoading(async () => {
+      const response: ReceiptDebtDetailResponse = await getDetail(id);
 
-        // Update form data with the selected customer ID
-        handleFormChange("customer", customerId);
-      },
+      if (!response.receipt) {
+        Toast.show({
+          text: "Không tìm thấy thông tin phiếu",
+          duration: "short",
+          position: "center",
+        });
+        history.goBack();
+        return;
+      }
+
+      const { customerName, dueDate, note } = response.receipt;
+
+      setReceiptDebt(response.receipt);
+      setProductItems(response.items);
+
+      setFormData({
+        customer: customerName || "",
+        dueDate: getDate(dueDate || new Date()).format(),
+        note,
+      });
     });
   };
 
-  const totalAmount = useMemo(() => {
-    return productItems.reduce((total, product) => {
-      return total + product.sellingPrice * product.quantity;
-    }, 0);
-  }, [productItems]);
+  useEffect(() => {
+    fetchReceiptDebtDetails();
+  }, [id]);
+
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    fetchReceiptDebtDetails().then(() => {
+      event.detail.complete();
+    });
+  };
 
   const handleFormChange = (field: string, value: any) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
+
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({
@@ -133,16 +151,8 @@ const ReceiptDebtUpdate: React.FC = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.customer) {
-      newErrors.customer = "Vui lòng chọn khách hàng";
-    }
-
-    if (!formData.estimatedDate) {
-      newErrors.estimatedDate = "Vui lòng chọn ngày dự kiến thu";
-    }
-
-    if (productItems.length === 0) {
-      newErrors.productItems = "Vui lòng chọn ít nhất 1 sản phẩm";
+    if (!formData.dueDate) {
+      newErrors.dueDate = "Vui lòng chọn ngày dự kiến thu";
     }
 
     setErrors(newErrors);
@@ -162,52 +172,58 @@ const ReceiptDebtUpdate: React.FC = () => {
       return;
     }
 
-    try {
+    const { value } = await Dialog.confirm({
+      title: "Xác nhận cập nhật phiếu",
+      message: "Bạn có chắc chắn muốn cập nhật phiếu không?",
+    });
+
+    if (!value) return;
+
+    await withLoading(async () => {
       const payload = {
-        type: "customer_debt",
-        customerId: formData.customer,
-        dueDate: formData.estimatedDate,
-        totalAmount,
+        dueDate: formData.dueDate,
         note: formData.note,
-        items: productItems.map((item) => ({
-          productId: item.id,
-          productCode: item.productCode,
-          productName: item.productName,
-          quantity: item.quantity,
-          costPrice: item.sellingPrice,
-        })),
       };
 
-      const response = await createReceiptDebt(payload);
+      const response = await update(id!, payload);
 
       if (response.id) {
         await presentToast({
-          message: "Tạo mới Phiếu Thu thành công",
+          message: "Cập nhật Phiếu Thu thành công",
           duration: 2000,
           position: "top",
           color: "success",
         });
       }
 
-      // API call to create receipt debt
       history.goBack();
-    } catch (error) {
-      await presentToast({
-        message: (error as Error).message || "Có lỗi xảy ra",
-        duration: 2000,
-        position: "top",
-        color: "danger",
-      });
-    }
+    });
   };
+
+  if (isLoading) {
+    return <LoadingScreen message="Đang tải dữ liệu..." />;
+  }
+
+  if (!receiptDebt) {
+    return <EmptyPage />;
+  }
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/tabs/home" />
+            <IonButton
+              className="text-gray-600"
+              onClick={() => {
+                history.goBack();
+              }}
+            >
+              <IonIcon slot="icon-only" icon={chevronBack} />
+              Trở lại
+            </IonButton>
           </IonButtons>
+
           <IonTitle>Cập nhật Phiếu Thu</IonTitle>
           <IonButtons slot="end">
             <IonButton fill="clear" size="default">
@@ -218,97 +234,131 @@ const ReceiptDebtUpdate: React.FC = () => {
       </IonHeader>
 
       <IonContent className="ion-padding">
-        {/* Khách hàng section */}
-        <div className="bg-card rounded-lg shadow-sm">
-         <div className="px-4 pt-4">
-            <h2 className="text-md font-medium text-foreground mb-2">
-              Mã phiếu thu
-            </h2>
-            <div>{id}</div>
-          </div>
-          <div className="px-4 mt-4">
-            <h2 className="text-md font-medium text-foreground mb-2">
-              Ngày tạo
-            </h2>
-            <div>{getDate(new Date()).format("DD/MM/YYYY")}</div>
-          </div>
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+          <IonRefresherContent></IonRefresherContent>
+        </IonRefresher>
 
-          {/* Khách hàng */}
-          <div className="p-4 mb-3">
-            <h2 className="text-md font-medium text-foreground mb-2">
-              Khách hàng
-            </h2>
-            <div
-              className="ion-activatable receipt-debt-ripple-parent break-normal p-2"
-              onClick={() => openModalSelectCustomer()}
-            >
-              <IonIcon icon={search} className="text-2xl mr-2" />
-              {selectedCustomerName || "Chọn khách hàng"}
-              <IonRippleEffect className="custom-ripple"></IonRippleEffect>
+        {isLoading ? (
+          <ContentSkeleton lines={5} />
+        ) : (
+          <>
+            {/* Display receipt information */}
+            <div className="bg-card rounded-lg shadow-sm">
+              <div className="px-4 pt-4">
+                <h2 className="text-lg font-semibold text-foreground mb-3">
+                  Mã phiếu thu
+                </h2>
+                <div className="text-base">{receiptDebt?.code}</div>
+              </div>
+
+              <div className="px-4 mt-4">
+                <h2 className="text-lg font-semibold text-foreground mb-3">
+                  Trạng thái
+                </h2>
+                <IonChip color={getStatusColor(receiptDebt?.status as any)}>
+                  <IonLabel>
+                    {getStatusLabel(receiptDebt?.status as any)}
+                  </IonLabel>
+                </IonChip>
+              </div>
+
+              <div className="px-4 mt-4">
+                <h2 className="text-lg font-semibold text-foreground mb-3">
+                  Tổng tiền
+                </h2>
+                <div className="text-base">
+                  {formatCurrency(receiptDebt?.totalAmount || 0)}
+                </div>
+              </div>
+
+              <div className="px-4 mt-4">
+                <h2 className="text-lg font-semibold text-foreground mb-3">
+                  Đã thanh toán
+                </h2>
+                <div className="text-base">
+                  {formatCurrency(receiptDebt?.paidAmount || 0)}
+                </div>
+              </div>
+
+              <div className="px-4 mt-4 pb-4">
+                <h2 className="text-lg font-semibold text-foreground mb-3">
+                  Còn lại
+                </h2>
+                <div className="text-red-600 font-semibold text-base">
+                  {formatCurrency(receiptDebt?.remainingAmount || 0)}
+                </div>
+              </div>
+
+              {/* Khách hàng - Only show customer name, no modal */}
+              <div className="px-4 pb-4">
+                <h2 className="text-lg font-semibold text-foreground mb-3">
+                  Khách hàng
+                </h2>
+                <div className="p-2 bg-gray-50 rounded-lg text-base">
+                  {receiptDebt?.customerName || "Chưa có thông tin khách hàng"}
+                </div>
+              </div>
             </div>
-            <ErrorMessage message={errors.customer} />
-          </div>
-        </div>
 
-        {/* Danh sách đợt hàng (slideable receipt items) */}
-        <ProductList
-          items={sampleProducts}
-          onSelect={(id) => console.log("Selected:", id)}
-        />
+            <PurchasePeriodList items={productItems} />
 
-        <div className="bg-card rounded-lg shadow-sm p-4 mt-3">
-          <IonText className="text-lg">Tổng Tiền Phải Thu: </IonText>
-          <IonText className="text-lg font-semibold" color="danger">
-            {formatCurrency(totalAmount)}
-          </IonText>
-        </div>
+            {/* <div className="bg-card rounded-lg shadow-sm p-4 mt-3">
+              <IonText className="text-xl font-semibold">Tổng Tiền Phải Thu: </IonText>
+              <IonText className="text-xl font-bold" color="danger">
+                {formatCurrency(
+                  receiptDebt?.totalAmount - receiptDebt?.paidAmount
+                )}
+              </IonText>
+            </div> */}
 
-        <div className="bg-card rounded-lg shadow-sm mt-3">
-          {/* Dự kiến thu */}
-          <div className="p-4">
-            <h2 className="text-md font-medium text-foreground mb-2">
-              Dự kiến thu
-            </h2>
-            <div>
-              <DatePicker
-                value={formData.estimatedDate}
-                presentation="date"
-                onChange={(e) =>
-                  handleFormChange("estimatedDate", e.detail.value)
-                }
-                attrs={{ id: "estimated-date" }}
-                extraClassName="w-full flex items-center justify-start"
-              />
+            <div className="bg-card rounded-lg shadow-sm mt-3">
+              {/* Dự kiến thu */}
+              <div className="p-4">
+                <h2 className="text-lg font-semibold text-foreground mb-3">
+                  Dự kiến thu
+                </h2>
+                <div>
+                  <DatePicker
+                    value={formData.dueDate}
+                    presentation="date"
+                    onChange={(e) =>
+                      handleFormChange("dueDate", e.detail.value)
+                    }
+                    attrs={{ id: "estimated-date" }}
+                    extraClassName="w-full flex items-center justify-start"
+                  />
+                </div>
+                {errors.dueDate && (
+                  <div className="text-red-500 text-sm mt-1">
+                    {errors.dueDate}
+                  </div>
+                )}
+              </div>
+
+              {/* Ghi chú */}
+              <div className="p-4">
+                <h2 className="text-xl font-semibold text-foreground mb-3">
+                  Ghi chú
+                </h2>
+                <IonTextarea
+                  name="note"
+                  value={formData.note}
+                  onIonInput={(e) => handleFormChange("note", e.target.value)}
+                  placeholder="Nhập ghi chú đơn hàng"
+                  rows={3}
+                  className="border border-input rounded-lg px-2"
+                ></IonTextarea>
+              </div>
             </div>
-          </div>
-
-          {/* Ghi chú */}
-          <div className="p-4">
-            <h2 className="text-lg font-medium text-foreground mb-2">
-              Ghi chú
-            </h2>
-            <IonTextarea
-              name="note"
-              value={formData.note}
-              onIonInput={(e) => handleFormChange("note", e.target.value)}
-              placeholder="Nhập ghi chú đơn hàng"
-              rows={3}
-              className="border border-input rounded-lg px-2"
-            ></IonTextarea>
-          </div>
-        </div>
+          </>
+        )}
       </IonContent>
 
       <IonFooter>
         <div className="ion-padding">
-          <IonButton
-            expand="block"
-            size="default"
-            onClick={handleSubmit}
-            // className="submit-button"
-          >
+          <IonButton expand="block" size="default" onClick={handleSubmit}>
             <IonIcon icon={checkmarkCircleOutline} slot="start" />
-            Xác nhận tạo Phiếu Thu
+            Cập nhật
           </IonButton>
         </div>
       </IonFooter>

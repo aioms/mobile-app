@@ -1,12 +1,16 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { defineCustomElements } from "@ionic/pwa-elements/loader";
+import { addIcons } from "ionicons";
+import { flashlight, stop, search } from "ionicons/icons";
 import App from "./App";
 
 import * as Sentry from "@sentry/capacitor";
 import * as SentryReact from "@sentry/react";
 import { envConfig, getEnvironment } from "./helpers/common";
 import { Environment } from "./common/enums";
+
+addIcons({ flashlight, stop, search });
 
 // Call the element loader after the platform has been bootstrapped
 defineCustomElements(window);

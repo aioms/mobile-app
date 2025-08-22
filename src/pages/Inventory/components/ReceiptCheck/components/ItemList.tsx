@@ -50,7 +50,10 @@ interface Receipt {
   actualInventory: number;
   totalDifference: number;
   totalItems: number;
-  checker: string;
+  checker: {
+    id: string;
+    fullname: string;
+  };
   date: string;
   status: TReceiptCheckStatus;
   items: ReceiptItem[];
@@ -90,6 +93,10 @@ export const ItemList: FC<Props> = ({ receipt }) => {
   const { startScan } = useBarcodeScanner({
     onBarcodeScanned: handleBarcodeScanned,
     onError: handleError,
+    onStop: () => {
+      history.push(`/tabs/receipt-check/${receipt.id}`);
+    },
+    delay: 4000,
   });
 
   const handleCheckInventory = () => {
@@ -122,7 +129,7 @@ export const ItemList: FC<Props> = ({ receipt }) => {
     return (
       receipt.status !== RECEIPT_CHECK_STATUS.BALANCED &&
       receipt.status !== RECEIPT_CHECK_STATUS.BALANCING_REQUIRED &&
-      receipt.checker === user.id
+      receipt.checker?.id === user.id
     );
   }, [receipt, user]);
 
@@ -139,10 +146,10 @@ export const ItemList: FC<Props> = ({ receipt }) => {
         >
           <IonLabel className="ml-4">
             <div className="md:flex md:items-center mb-2">
-              <div>
+              <div className="flex items-center">
                 <IonText>
                   <span className="font-semibold text-sm mr-1">
-                    Mã phiếu: {receipt.receiptNumber}
+                    Mã: {receipt.receiptNumber}
                   </span>
                 </IonText>
 

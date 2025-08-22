@@ -39,7 +39,10 @@ interface Receipt {
   actualInventory: number;
   totalDifference: number;
   totalItems: number;
-  checker: string;
+  checker: {
+    id: string;
+    fullname: string;
+  };
   date: string;
   status: TReceiptCheckStatus;
   items: ReceiptItem[];
@@ -85,6 +88,7 @@ const ReceiptCheckScreen = () => {
   ) => {
     try {
       setIsLoading(true);
+
       const { data, metadata, success, statusCode } = await getListReceiptCheck(
         {
           keyword: searchText,

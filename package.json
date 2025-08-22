@@ -11,7 +11,7 @@
     "test.unit": "vitest",
     "lint": "eslint",
     "sync": "ionic cap sync",
-    "sync:deploy": "npx cap sync android --deployment && ionic cap open android",
+    "sync:deploy": "npx cap sync --deployment",
     "build": "ionic build && ionic cap copy",
     "build:ios": "ionic build --platform=ios",
     "build:android": "ionic build --platform=android",
@@ -60,7 +60,8 @@
     "react-router-dom": "^5.3.4",
     "swiper": "^11.2.5",
     "tailwind-merge": "^2.6.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "vietqr": "^1.1.9"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.0",

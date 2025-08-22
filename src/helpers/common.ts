@@ -68,3 +68,8 @@ export const createDebounce = <T extends any[]>(
     timeoutId = setTimeout(() => func(...args), delay);
   };
 };
+
+
+export const sleep = (ms: number) => {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}

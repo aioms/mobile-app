@@ -1,4 +1,6 @@
 import { IHttpResponse } from "@/types";
+import { PayDebtRequestDto } from "@/types/payment.type";
+import { TransactionListResponse } from "@/types/transaction.type";
 import { request } from "../../helpers/axios";
 
 const PREFIX_PATH = "receipt-debt";
@@ -37,12 +39,38 @@ const useReceiptDebt = () => {
     return response.data;
   };
 
+  const updateInventoryForNewPeriod = async (id: string, payload: any) => {
+    const response: IHttpResponse = await request.patch(`/${PREFIX_PATH}/${id}/inventory/update`, payload);
+    return response;
+  };
+
+  const payDebt = async (id: string, paymentData: PayDebtRequestDto) => {
+    try {
+      const response: IHttpResponse = await request.post(`/${PREFIX_PATH}/${id}/payment`, paymentData);
+      return response;
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : "Payment failed");
+    }
+  };
+
+  const getPaymentTransactions = async (id: string): Promise<TransactionListResponse> => {
+    try {
+      const response: IHttpResponse = await request.get(`/${PREFIX_PATH}/${id}/payment`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : "Failed to fetch payment transactions");
+    }
+  };
+
   return {
     getList,
     getDetail,
     create,
     update,
     remove,
+    updateInventoryForNewPeriod,
+    payDebt,
+    getPaymentTransactions,
   };
 };
 

@@ -71,7 +71,7 @@ const OrderItem: FC<Props> = memo(
 
     const totalPrice = newPrice * newQuantity;
 
-    const isOrderPaid = orderStatus === OrderStatus.PAID;
+    const isOrderPaid = true; // Always disabled for order updates - only VAT and notes can be edited
 
     return (
       <div className="border-b border-gray-200 py-3" {...attrs}>

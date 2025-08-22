@@ -31,6 +31,7 @@ import ReceiptCheckDetailScreen from "@/pages/Receipt/ReceiptCheck/ReceiptCheckD
 import ReceiptDebtCreateScreen from "@/pages/Receipt/ReceiptDebt/ReceiptDebtCreate";
 import ReceiptDebtDetailScreen from "@/pages/Receipt/ReceiptDebt/ReceiptDebtDetail";
 import ReceiptDebtUpdateScreen from "@/pages/Receipt/ReceiptDebt/ReceiptDebtUpdate";
+import ReceiptDebtPeriodScreen from "@/pages/Receipt/ReceiptDebt/ReceiptDebtPeriod";
 
 import OrderCreateScreen from "@/pages/Order/OrderCreate";
 import OrderDetailScreen from "@/pages/Order/OrderDetail";
@@ -104,6 +105,11 @@ const TabBar: React.FC = () => {
           exact
           path="/tabs/debt/update/:id"
           component={ReceiptDebtUpdateScreen}
+        />
+        <Route
+          exact
+          path="/tabs/debt/period/:id"
+          component={ReceiptDebtPeriodScreen}
         />
 
         {/* Product Screens */}

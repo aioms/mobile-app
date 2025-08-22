@@ -211,6 +211,7 @@ const ProductDetail: React.FC = () => {
           <IonButtons slot="start">
             <IonButton routerLink="/tabs/products" className="text-gray-600">
               <IonIcon slot="icon-only" icon={chevronBack} />
+              Trở lại
             </IonButton>
           </IonButtons>
           <IonTitle className="font-medium text-gray-800">

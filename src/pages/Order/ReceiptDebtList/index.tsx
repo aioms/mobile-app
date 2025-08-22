@@ -132,6 +132,7 @@ const ReceiptDebtList: FC = () => {
               id: result.id,
               productId: result.id,
               productName: result.productName,
+              productCode: result.productCode,
               code: result.code,
               sellingPrice: result.sellingPrice,
               quantity: 1,

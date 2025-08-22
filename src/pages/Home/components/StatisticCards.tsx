@@ -4,7 +4,7 @@ import { cart, analytics, fileTray } from "ionicons/icons";
 
 import { UserRole } from "@/common/enums/user";
 import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
-import type { User } from "@/types";
+import type { User } from "@/types/index.d";
 
 export interface StatisticCardsProps {
   user: User | null;
@@ -14,8 +14,9 @@ export interface StatisticCardsProps {
     orders: number;
     pendingOrders: number;
     inventory: number;
-    totalProduct: number;
+    totalProducts: number;
     totalImport: number;
+    totalOrders: number;
   };
 }
 
@@ -34,7 +35,7 @@ const StatisticCards: React.FC<StatisticCardsProps> = ({ user, stats }) => {
     <div className="grid grid-cols-3 gap-3 mb-6">
       {(isAdmin || isDeveloper) && (
         <div className="bg-white rounded-xl p-3">
-          <h3 className="text-gray-500 text-xs mb-1">Doanh Thu</h3>
+          <h3 className="text-gray-500 text-xs mb-1">Doanh Thu Hôm Nay</h3>
           <div className="text-lg font-bold flex items-center">
             {formatCurrencyWithoutSymbol(stats.revenue)}
             <IonIcon icon={analytics} color="success" className="ml-1" />
@@ -58,7 +59,7 @@ const StatisticCards: React.FC<StatisticCardsProps> = ({ user, stats }) => {
       <div className="bg-white rounded-xl p-3">
         <h3 className="text-gray-500 text-xs mb-1">Đơn hàng</h3>
         <div className="text-lg font-bold flex items-center">
-          {stats.orders}
+          {stats.totalOrders}
           <IonIcon icon={cart} color="secondary" className="ml-1" />
         </div>
         <div className="text-gray-500 text-xs">
@@ -72,7 +73,7 @@ const StatisticCards: React.FC<StatisticCardsProps> = ({ user, stats }) => {
           {formatCurrencyWithoutSymbol(stats.inventory)}
         </div>
         <div className="text-gray-500 text-xs">
-          Mặt hàng: {formatCurrencyWithoutSymbol(stats.totalProduct)}
+          Mặt hàng: {formatCurrencyWithoutSymbol(stats.totalProducts)}
         </div>
       </div>
     </div>

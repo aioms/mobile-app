@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useHistory, useParams } from "react-router";
 import { Toast } from "@capacitor/toast";
 import {
@@ -21,12 +21,11 @@ import {
 } from "@ionic/react";
 import {
   chevronBack,
-  createOutline,
-  cashOutline,
-  cardOutline,
-  addCircleOutline,
   ellipsisVertical,
-  ellipsisVerticalOutline,
+  // createOutline,
+  // cashOutline,
+  // cardOutline,
+  // ellipsisVerticalOutline,
 } from "ionicons/icons";
 import {
   dayjsFormat,
@@ -35,6 +34,19 @@ import {
 } from "@/helpers/formatters";
 import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
 import { useLoading } from "@/hooks";
+import {
+  getStatusColor,
+  getStatusLabel,
+  TReceiptDebtStatus,
+} from "@/common/constants/receipt";
+import { IProductItem } from "@/types/product.type";
+import { getDate } from "@/helpers/date";
+import { getPaymentMethodLabel, getTransactionStatusLabel, getTransactionStatusColor } from "@/helpers/paymentHelpers";
+import PaymentModal, { PaymentMethod } from "./components/PaymentModal";
+import { PayDebtRequestDto, PaymentTransactionDto } from "@/types/payment.type";
+import { Transaction } from "@/types/transaction.type";
+import { PaymentMethod as PaymentMethodEnum } from "@/common/enums/payment";
+import { TransactionType } from "@/common/enums/transaction";
 
 // Updated interfaces to match API response
 export interface ReceiptDebt {
@@ -53,112 +65,143 @@ export interface ReceiptDebt {
   customerName: string;
 }
 
-interface ReceiptItem {
-  id: string;
-  code: string;
-  productId: string;
-  productCode: number;
-  productName: string;
-  quantity: number;
-  costPrice: number;
-}
-
 interface ResponseData {
   receipt: ReceiptDebt | null;
-  items: ReceiptItem[];
+  items: Record<string, IProductItem[]>;
 }
-
-interface PaymentDetail {
-  id: string;
-  date: string;
-  amount: number;
-  method: "cash" | "transfer";
-  description: string;
-}
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "paid":
-      return "success";
-    case "pending":
-    case "debt":
-      return "warning";
-    case "overdue":
-      return "danger";
-    default:
-      return "medium";
-  }
-};
-
-const getStatusLabel = (status: string) => {
-  switch (status) {
-    case "paid":
-      return "Đã thanh toán";
-    case "pending":
-      return "Chờ thanh toán";
-    case "debt":
-      return "Công nợ";
-    case "overdue":
-      return "Quá hạn";
-    default:
-      return "Không xác định";
-  }
-};
 
 const ReceiptDebtDetail: React.FC = () => {
   const history = useHistory();
   const { id } = useParams<{ id: string }>();
   const [presentToast] = useIonToast();
   const [presentActionSheet] = useIonActionSheet();
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const [receiptData, setReceiptData] = useState<ResponseData>({
     receipt: null,
-    items: [],
+    items: {}, // Fix: Initialize as empty object instead of array
   });
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   const { isLoading, withLoading } = useLoading();
-  const { getDetail } = useReceiptDebt();
+  const { getDetail, payDebt, getPaymentTransactions } = useReceiptDebt();
+
+  // Fetch payment transactions
+  const fetchPaymentTransactions = useCallback(async () => {
+    try {
+      const response = await getPaymentTransactions(id);
+      setTransactions(response.transactions);
+    } catch (err) {
+      console.error("Failed to fetch payment transactions:", err);
+      // Don't show error toast for transactions as it's not critical
+    }
+  }, [id]);
 
   // Fetch receipt data from API
+  const fetchReceiptDetail = useCallback(async () => {
+    await withLoading(async () => {
+      try {
+        const result = await getDetail(id);
+
+        if (!result) {
+          return await Toast.show({
+            text: "Không tìm thấy phiếu",
+            duration: "short",
+            position: "top",
+          });
+        }
+
+        setReceiptData(result);
+        // Also fetch payment transactions
+        await fetchPaymentTransactions();
+      } catch (err) {
+        presentToast({
+          message: (err as Error).message || "Đã có lỗi xảy ra",
+          duration: 2000,
+          position: "top",
+        });
+      }
+    });
+  }, [id]);
+
   useEffect(() => {
-    const fetchReceiptDetail = async () => {
+    id && fetchReceiptDetail();
+  }, [id, fetchReceiptDetail]);
+
+  // Callback handler for payment completion
+  const handlePaymentComplete = useCallback(
+    async (amount: number, method: PaymentMethod) => {
       await withLoading(async () => {
         try {
-          const result = await getDetail(id);
-
-          if (!result) {
-            return await Toast.show({
-              text: "Không tìm thấy phiếu",
-              duration: "short",
-              position: "top",
-            });
+          // Validate input
+          if (!amount || amount <= 0) {
+            throw new Error("Số tiền thanh toán không hợp lệ");
           }
 
-          setReceiptData(result);
-        } catch (err) {
+          if (!receiptData.receipt) {
+            throw new Error("Không tìm thấy thông tin phiếu thu");
+          }
+
+          if (amount > receiptData.receipt?.remainingAmount) {
+            throw new Error("Số tiền thanh toán không được vượt quá số tiền còn lại");
+          }
+
+          // Map payment method from modal to API enum
+          const mapPaymentMethod = (method: PaymentMethod): PaymentMethodEnum => {
+            switch (method) {
+              case "cash":
+                return PaymentMethodEnum.CASH;
+              case "qr":
+                return PaymentMethodEnum.BANK_TRANSFER; // QR is typically bank transfer
+              default:
+                return PaymentMethodEnum.CASH;
+            }
+          };
+
+          // Prepare payment data
+          const paymentTransaction: PaymentTransactionDto = {
+            amount,
+            paymentMethod: mapPaymentMethod(method),
+            type: TransactionType.PAYMENT,
+            note: `Thanh toán cho phiếu thu ${receiptData.receipt.code}`,
+          };
+          console.log({ paymentTransaction })
+
+          const paymentData: PayDebtRequestDto = {
+            transactions: [paymentTransaction],
+            note: `Thanh toán ${formatCurrency(amount)} bằng ${method === "cash" ? "tiền mặt" : "chuyển khoản"
+              }`,
+          };
+          console.log({ paymentData })
+
+          // Call payment API
+          const response = await payDebt(id, paymentData);
+          console.log({ response });
+
+          if (response.success) {
+            await presentToast({
+              message: `Đã ghi nhận thanh toán ${formatCurrency(amount)} bằng ${method === "cash" ? "tiền mặt" : "chuyển khoản"
+                }`,
+              duration: 2000,
+              position: "top",
+            });
+
+            // Refresh the receipt data to show updated payment status
+            await fetchReceiptDetail();
+          } else {
+            throw new Error(response.message || "Thanh toán thất bại");
+          }
+        } catch (error) {
           presentToast({
-            message: (err as Error).message || "Đã có lỗi xảy ra",
-            duration: 2000,
+            message: error instanceof Error ? error.message : "Có lỗi xảy ra khi ghi nhận thanh toán",
+            duration: 3000,
             position: "top",
           });
         }
       });
-    };
-
-    id && fetchReceiptDetail();
-  }, [id]);
-
-  if (isLoading) {
-    return (
-      <IonPage>
-        <IonContent className="ion-padding">
-          <div className="flex justify-center items-center h-full">
-            <div>Đang tải...</div>
-          </div>
-        </IonContent>
-      </IonPage>
-    );
-  }
+    },
+    [id, receiptData.receipt]
+  );
 
   const handleActionSheet = () => {
     presentActionSheet({
@@ -168,11 +211,7 @@ const ReceiptDebtDetail: React.FC = () => {
           text: "Thanh toán",
           role: "selected",
           handler: () => {
-            Toast.show({
-              text: "Tính năng này đang được phát triển",
-              duration: "short",
-              position: "center",
-            });
+            setIsPaymentModalOpen(true);
           },
         },
         {
@@ -199,6 +238,18 @@ const ReceiptDebtDetail: React.FC = () => {
     });
   };
 
+  if (isLoading) {
+    return (
+      <IonPage>
+        <IonContent className="ion-padding">
+          <div className="flex justify-center items-center h-full">
+            <div>Đang tải...</div>
+          </div>
+        </IonContent>
+      </IonPage>
+    );
+  }
+
   const { receipt, items } = receiptData;
 
   return (
@@ -212,10 +263,11 @@ const ReceiptDebtDetail: React.FC = () => {
               className="text-gray-600"
             >
               <IonIcon icon={chevronBack} />
+              Trở lại
             </IonButton>
           </IonButtons>
           <IonTitle className="text-lg font-semibold text-gray-800">
-            Mã Phiếu Thu - {receipt?.code}
+            Chi tiết phiếu thu
           </IonTitle>
           <IonButtons slot="end">
             <IonButton onClick={handleActionSheet}>
@@ -267,10 +319,12 @@ const ReceiptDebtDetail: React.FC = () => {
                   <span className="text-gray-600 text-sm">Trạng Thái:</span>
                   {receipt?.status && (
                     <IonChip
-                      color={getStatusColor(receipt?.status)}
+                      color={getStatusColor(
+                        receipt?.status as TReceiptDebtStatus
+                      )}
                       className="text-xs px-3 py-1 rounded-full"
                     >
-                      {getStatusLabel(receipt?.status)}
+                      {getStatusLabel(receipt?.status as TReceiptDebtStatus)}
                     </IonChip>
                   )}
                 </div>
@@ -286,65 +340,86 @@ const ReceiptDebtDetail: React.FC = () => {
             </IonCardContent>
           </IonCard>
 
-          {/* Product List */}
+          {/* Product List by Period */}
           <div className="bg-white rounded-lg shadow-sm">
             <div className="flex justify-between items-center p-4 border-b border-gray-100">
               <h3 className="text-base font-semibold text-gray-800">
-                Danh Sách Sản Phẩm
+                Danh Sách Sản Phẩm Theo Đợt Thu
               </h3>
-              <IonButton
-                fill="clear"
-                size="small"
-                className="text-green-500 p-0 m-0"
+            </div>
+
+            {/* Display items grouped by period */}
+            {Object.entries(items).map(([period, periodItems]) => (
+              <div
+                key={period}
+                className="border-b border-gray-100 last:border-b-0"
               >
-                <IonIcon icon={addCircleOutline} />
-              </IonButton>
-            </div>
+                {/* Period Header */}
+                <div className="bg-blue-50 px-4 py-2">
+                  <h4 className="text-sm font-medium text-blue-700">
+                    Đợt: {getDate(period).format("DD/MM/YYYY")}
+                  </h4>
+                </div>
 
-            {/* Table Header */}
-            <div className="bg-green-50 px-4 py-3">
-              <IonGrid className="p-0">
-                <IonRow className="text-xs font-medium text-green-700">
-                  <IonCol size="2" className="p-0">
-                    Mã SP
-                  </IonCol>
-                  <IonCol size="4" className="p-0">
-                    Tên SP
-                  </IonCol>
-                  <IonCol size="2" className="p-0 text-center">
-                    SL
-                  </IonCol>
-                  <IonCol size="4" className="p-0 text-right">
-                    Đơn Giá
-                  </IonCol>
-                </IonRow>
-              </IonGrid>
-            </div>
+                {/* Table Header */}
+                <div className="bg-green-50 px-4 py-3">
+                  <IonGrid className="p-0">
+                    <IonRow className="text-xs font-medium text-green-700">
+                      <IonCol size="2" className="p-0">
+                        Mã SP
+                      </IonCol>
+                      <IonCol size="4" className="p-0 text-center">
+                        Tên SP
+                      </IonCol>
+                      <IonCol size="2" className="p-0 text-right">
+                        SL
+                      </IonCol>
+                      <IonCol size="4" className="p-0 text-right">
+                        Đơn Giá
+                      </IonCol>
+                    </IonRow>
+                  </IonGrid>
+                </div>
 
-            {/* Table Content */}
-            {items.map((item) => (
-              <div key={item.id} className="px-4 py-3 border-b border-gray-100">
-                <IonGrid className="p-0">
-                  <IonRow className="text-sm">
-                    <IonCol size="2" className="p-0 text-gray-600">
-                      {item.code}
-                    </IonCol>
-                    <IonCol size="4" className="p-0 text-gray-800">
-                      {item.productName}
-                    </IonCol>
-                    <IonCol size="2" className="p-0 text-center text-gray-800">
-                      {item.quantity}
-                    </IonCol>
-                    <IonCol
-                      size="4"
-                      className="p-0 text-right text-gray-800 font-medium"
-                    >
-                      {formatCurrencyWithoutSymbol(item.costPrice)}đ
-                    </IonCol>
-                  </IonRow>
-                </IonGrid>
+                {/* Table Content for this period */}
+                {periodItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="px-4 py-3 border-b border-gray-100 last:border-b-0"
+                  >
+                    <IonGrid className="p-0">
+                      <IonRow className="text-xs">
+                        <IonCol size="3" className="p-0 text-left text-gray-600">
+                          {item.code}
+                        </IonCol>
+                        <IonCol size="4" className="p-0 text-gray-800">
+                          {item.productName}
+                        </IonCol>
+                        <IonCol
+                          size="1"
+                          className="p-0 text-center text-gray-800"
+                        >
+                          {item.quantity}
+                        </IonCol>
+                        <IonCol
+                          size="4"
+                          className="p-0 text-right text-gray-800 font-medium"
+                        >
+                          {formatCurrencyWithoutSymbol(item.costPrice)}đ
+                        </IonCol>
+                      </IonRow>
+                    </IonGrid>
+                  </div>
+                ))}
               </div>
             ))}
+
+            {/* Show message if no items */}
+            {Object.keys(items).length === 0 && (
+              <div className="p-4 text-center text-gray-500">
+                Chưa có sản phẩm nào
+              </div>
+            )}
           </div>
 
           {/* Payment Details */}
@@ -355,57 +430,70 @@ const ReceiptDebtDetail: React.FC = () => {
               </h3>
             </div>
 
-            {/* Payment Header */}
-            <div className="bg-green-50 px-4 py-3">
-              <IonGrid className="p-0">
-                <IonRow className="text-xs font-medium text-green-700">
-                  <IonCol size="3" className="p-0">
-                    Ngày Thu
-                  </IonCol>
-                  <IonCol size="4" className="p-0">
-                    Số Tiền
-                  </IonCol>
-                  <IonCol size="5" className="p-0">
-                    Hình Thức
-                  </IonCol>
-                </IonRow>
-              </IonGrid>
-            </div>
+            {transactions.length > 0 ? (
+              <>
+                {/* Payment Header */}
+                <div className="bg-green-50 px-4 py-3">
+                  <IonGrid className="p-0">
+                    <IonRow className="text-xs font-medium text-green-700">
+                      <IonCol size="3" className="p-0">
+                        Ngày Thu
+                      </IonCol>
+                      <IonCol size="3" className="p-0">
+                        Số Tiền
+                      </IonCol>
+                      <IonCol size="3" className="p-0 text-center">
+                        Hình Thức
+                      </IonCol>
+                      <IonCol size="3" className="p-0 text-center">
+                        Trạng Thái
+                      </IonCol>
+                    </IonRow>
+                  </IonGrid>
+                </div>
 
-            {/* Payment Content */}
-            {/* {[].map((payment) => (
-              <div
-                key={payment.id}
-                className="px-4 py-3 border-b border-gray-100"
-              >
-                <IonGrid className="p-0">
-                  <IonRow className="text-sm items-center">
-                    <IonCol size="3" className="p-0">
-                      <span className="text-blue-500 font-medium">
-                        {dayjsFormat(payment.date)}
-                      </span>
-                    </IonCol>
-                    <IonCol size="4" className="p-0">
-                      <span className="text-gray-800 font-medium">
-                        {formatCurrencyWithoutSymbol(payment.amount)}đ
-                      </span>
-                    </IonCol>
-                    <IonCol size="5" className="p-0 flex items-center">
-                      <IonIcon
-                        icon={
-                          payment.method === "cash" ? cashOutline : cardOutline
-                        }
-                        className="text-gray-500 mr-2"
-                        size="small"
-                      />
-                      <span className="text-gray-600">
-                        {payment.description}
-                      </span>
-                    </IonCol>
-                  </IonRow>
-                </IonGrid>
+                {/* Payment Content */}
+                {transactions.map((transaction) => (
+                  <div
+                    key={transaction.id}
+                    className="px-4 py-3 border-b border-gray-100 last:border-b-0"
+                  >
+                    <IonGrid className="p-0">
+                      <IonRow className="text-xs">
+                        <IonCol size="3" className="p-0 text-gray-800">
+                          {dayjsFormat(transaction.processedAt)}
+                        </IonCol>
+                        <IonCol size="4" className="p-0 text-gray-800 font-medium">
+                          {formatCurrency(transaction.amount)}
+                        </IonCol>
+                        <IonCol size="3" className="p-0 text-gray-600">
+                          {getPaymentMethodLabel(transaction.paymentMethod)}
+                        </IonCol>
+                        <IonCol size="2" className="p-0">
+                          <IonChip
+                            color={getTransactionStatusColor(transaction.status)}
+                            className="text-xs rounded-full"
+                          >
+                            {getTransactionStatusLabel(transaction.status)}
+                          </IonChip>
+                        </IonCol>
+                      </IonRow>
+                      {transaction.description && (
+                        <IonRow className="text-xs text-gray-500 mt-1">
+                          <IonCol className="p-0">
+                            {transaction.description}
+                          </IonCol>
+                        </IonRow>
+                      )}
+                    </IonGrid>
+                  </div>
+                ))}
+              </>
+            ) : (
+              <div className="p-4 text-center text-gray-500">
+                Chưa có lịch sử thanh toán
               </div>
-            ))} */}
+            )}
           </div>
 
           {/* Summary */}
@@ -439,6 +527,19 @@ const ReceiptDebtDetail: React.FC = () => {
           </IonCard>
         </div>
       </IonContent>
+
+      {/* Add PaymentModal at the end before closing IonPage */}
+      {receipt && (
+        <PaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          receiptData={{
+            code: receipt.code,
+            remainingAmount: receipt.remainingAmount,
+          }}
+          onPaymentComplete={handlePaymentComplete}
+        />
+      )}
     </IonPage>
   );
 };

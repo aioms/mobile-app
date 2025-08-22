@@ -10,21 +10,22 @@ import {
   RefresherEventDetail,
   useIonToast,
 } from "@ionic/react";
-import dayjs from "dayjs";
 import "dayjs/locale/vi";
 
 import StatisticCards, {
   StatisticCardsProps,
 } from "./components/StatisticCards";
 import ImportantUpdates from "./components/ImportantUpdates";
-import QuickActions from "./components/QuickActions";
 import RecentActivities from "./components/RecentActivities";
+import QuickActions from "./components/QuickActions";
 import LoadingScreen from "@/components/Loading/LoadingScreen";
 import { Refresher } from "@/components/Refresher/Refresher";
 
 import { useAuth, useLoading, useStorage } from "@/hooks";
 import useProduct from "@/hooks/apis/useProduct";
 import useReceiptImport from "@/hooks/apis/useReceiptImport";
+import useOrder from "@/hooks/apis/useOrder";
+import useAggregate from "@/hooks/apis/useAggregate";
 
 import { capitalizeFirstLetter, isHasProperty } from "@/helpers/common";
 import { dayjsFormat } from "@/helpers/formatters";
@@ -44,13 +45,16 @@ const HomeScreen: React.FC = () => {
     orders: 0,
     pendingOrders: 0,
     inventory: 0,
-    totalProduct: 0,
+    totalProducts: 0,
     totalImport: 0,
+    totalOrders: 0,
   });
   const { isLoading, withLoading } = useLoading();
 
   const { getTotalProductAndInventory } = useProduct();
   const { getTotalImportsByDateRange } = useReceiptImport();
+  const { getTotalOrderByDateRange } = useOrder();
+  const { getDailyRevenue } = useAggregate();
 
   const registerNotifications = async () => {
     let permStatus = await PushNotifications.checkPermissions();
@@ -128,12 +132,12 @@ const HomeScreen: React.FC = () => {
   const fetchHomeData = () => {
     return withLoading(async () => {
       try {
-        // await requestPushPermission();
-
-        const [totalImport, totalProductAndInventory] =
+        const [totalImport, totalProductAndInventory, totalOrders, dailyRevenue] =
           await Promise.allSettled([
             await getTotalImportsByDateRange(),
             await getTotalProductAndInventory(),
+            await getTotalOrderByDateRange(),
+            await getDailyRevenue(),
           ]);
 
         const statsData: Partial<StatisticCardsProps["stats"]> = {};
@@ -142,11 +146,21 @@ const HomeScreen: React.FC = () => {
           const { totalInventory, totalProduct } =
             totalProductAndInventory.value;
           statsData.inventory = totalInventory;
-          statsData.totalProduct = totalProduct;
+          statsData.totalProducts = totalProduct;
         }
 
         if (totalImport.status === "fulfilled") {
           statsData.totalImport = totalImport.value;
+        }
+
+        if (totalOrders.status === "fulfilled") {
+          statsData.totalOrders = totalOrders.value['totalOrders'];
+        }
+
+        if (dailyRevenue.status === "fulfilled") {
+          statsData.revenue = dailyRevenue.value.totalRevenue;
+          // You can also use the breakdown data if needed
+          // statsData.profit = dailyRevenue.value.breakdown.profit || 0;
         }
 
         if (isHasProperty(statsData)) {
@@ -212,7 +226,7 @@ const HomeScreen: React.FC = () => {
       </div>
 
       <StatisticCards stats={stats} user={user} />
-      <ImportantUpdates lowStockCount={3} />
+      {/* <ImportantUpdates lowStockCount={3} /> */}
       <QuickActions />
       <RecentActivities />
     </IonContent>

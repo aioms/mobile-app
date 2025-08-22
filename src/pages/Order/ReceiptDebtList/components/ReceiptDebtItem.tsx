@@ -8,8 +8,10 @@ import {
   IonItemSliding,
   IonRippleEffect,
   useIonViewDidLeave,
+  useIonToast,
 } from "@ionic/react";
-import { createOutline, printOutline } from "ionicons/icons";
+import { addCircleSharp, createOutline, printOutline } from "ionicons/icons";
+import { useHistory } from "react-router-dom";
 
 import { formatCurrency } from "@/helpers/formatters";
 import { getDate } from "@/helpers/date";
@@ -18,6 +20,7 @@ import {
   getStatusLabel,
   TReceiptDebtStatus,
 } from "@/common/constants/receipt";
+import { useBarcodeScanner } from "@/hooks";
 
 interface ReceiptDebt {
   id: string;
@@ -34,8 +37,35 @@ interface ReceiptDebtItemProps {
 
 const ReceiptDebtItem: React.FC<ReceiptDebtItemProps> = ({ receiptDebt }) => {
   const slidingRef = useRef<HTMLIonItemSlidingElement>(null);
+  const history = useHistory();
+  const [presentToast] = useIonToast();
+
+  // Barcode scanner hook
+  const { startScan, stopScan } = useBarcodeScanner({
+    onBarcodeScanned: (value: string) => {
+      stopScan();
+      // Redirect to ReceiptDebtPeriod page with scanned barcode
+      history.push(`/tabs/debt/period/${receiptDebt.id}?barcode=${value}`);
+    },
+    onError: async (error: Error) => {
+      await presentToast({
+        message: error.message || "Có lỗi xảy ra khi quét mã vạch",
+        duration: 1500,
+        position: "top",
+        color: "danger",
+      });
+    },
+  });
 
   const onPrint = () => {};
+
+  const handleAddPeriod = async () => {
+    // Close the sliding item first
+    slidingRef.current?.close();
+
+    // Start barcode scanning
+    await startScan();
+  };
 
   useIonViewDidLeave(() => {
     slidingRef.current?.close();
@@ -84,16 +114,20 @@ const ReceiptDebtItem: React.FC<ReceiptDebtItemProps> = ({ receiptDebt }) => {
       </IonItem>
 
       <IonItemOptions side="end">
+        <IonItemOption color="warning" onClick={handleAddPeriod}>
+          <IonIcon slot="top" icon={addCircleSharp}></IonIcon>
+          Thêm đợt
+        </IonItemOption>
         <IonItemOption
           color="tertiary"
           routerLink={`/tabs/debt/update/${receiptDebt.id}`}
         >
-          Sửa đơn
-          <IonIcon slot="icon-only" icon={createOutline}></IonIcon>
+          Sửa phiếu
+          <IonIcon slot="top" icon={createOutline}></IonIcon>
         </IonItemOption>
         <IonItemOption color="medium" onClick={onPrint}>
           In phiếu
-          <IonIcon slot="icon-only" icon={printOutline}></IonIcon>
+          <IonIcon slot="top" icon={printOutline}></IonIcon>
         </IonItemOption>
       </IonItemOptions>
     </IonItemSliding>
