@@ -283,20 +283,21 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
         updated[dateKey] = updated[dateKey].map((item, index) => {
           if (index === existingProductIndex) {
             // Add temp_ prefix if it doesn't already have it (marking as edited)
-            const newId = item.id.startsWith("temp_") 
-              ? item.id 
+            const newId = item.id.startsWith("temp_")
+              ? item.id
               : `temp_${item.id}`;
-            
+
             // Store original quantity if not already stored
-            const originalQuantity = item.originalQuantity !== undefined 
-              ? item.originalQuantity 
-              : item.quantity;
-            
-            return { 
-              ...item, 
+            const originalQuantity =
+              item.originalQuantity !== undefined
+                ? item.originalQuantity
+                : item.quantity;
+
+            return {
+              ...item,
               id: newId,
               quantity: item.quantity + 1,
-              originalQuantity
+              originalQuantity,
             };
           }
           return item;
@@ -365,15 +366,16 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
           } else {
             const currentItem = updated[dateKey][itemIndex];
             // Add temp_ prefix if it doesn't already have it (marking as edited)
-            const newId = currentItem.id.startsWith("temp_") 
-              ? currentItem.id 
+            const newId = currentItem.id.startsWith("temp_")
+              ? currentItem.id
               : `temp_${currentItem.id}`;
-            
+
             // Store original quantity if not already stored
-            const originalQuantity = currentItem.originalQuantity !== undefined 
-              ? currentItem.originalQuantity 
-              : currentItem.quantity;
-            
+            const originalQuantity =
+              currentItem.originalQuantity !== undefined
+                ? currentItem.originalQuantity
+                : currentItem.quantity;
+
             updated[dateKey][itemIndex] = {
               ...currentItem,
               id: newId,
@@ -526,7 +528,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
           originalQuantity: item.originalQuantity || 0,
           costPrice: item.costPrice,
           receiptPeriodId: item.periodId,
-        }))
+        })),
       };
 
       const response = await updateInventoryForNewPeriod(id!, payload);
