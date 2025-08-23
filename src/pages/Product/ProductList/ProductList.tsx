@@ -72,6 +72,7 @@ interface LowStockProduct {
   sellingPrice: number;
   inventory: number;
   unit: string;
+  imageUrls?: string[]; // Add imageUrls array property
 }
 
 const LIMIT = 10;
@@ -452,51 +453,75 @@ const ProductListScreen: React.FC = () => {
                 }}
                 className="low-stock-swiper"
               >
-                {lowStockProducts.map((product) => (
-                  <SwiperSlide key={product.id}>
-                    <div className="bg-gray-100 rounded-lg p-4 flex items-center">
-                      <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center mr-4">
-                        <IonIcon
-                          icon={addOutline}
-                          className="text-gray-400 text-2xl"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium">{product.productName}</h4>
-                        <p className="text-sm text-gray-500">{product.code}</p>
-                        <div className="flex gap-2 mt-1">
-                          <p className="text-sm">
-                            Tồn: {product.inventory} {product.unit}
-                          </p>
+                {lowStockProducts.map((product) => {
+                  // Get the first image URL or use fallback
+                  const primaryImageUrl =
+                    product.imageUrls && product.imageUrls.length > 0
+                      ? product.imageUrls[0]
+                      : null;
+
+                  return (
+                    <SwiperSlide key={product.id}>
+                      <div className="bg-gray-100 rounded-lg p-4 flex items-center">
+                        <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center mr-4 overflow-hidden">
+                          {primaryImageUrl ? (
+                            <img
+                              src={primaryImageUrl}
+                              alt={product.productName}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                // Fallback to placeholder if image fails to load
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = "none";
+                                target.parentElement!.innerHTML =
+                                  '<ion-icon name="add-outline" class="text-gray-400 text-2xl"></ion-icon>';
+                              }}
+                            />
+                          ) : (
+                            <IonIcon
+                              icon={addOutline}
+                              className="text-gray-400 text-2xl"
+                            />
+                          )}
                         </div>
-                        <div className="flex justify-between mt-1">
-                          <div>
-                            <p className="text-xs text-gray-500">Giá vốn</p>
-                            <p className="text-sm font-medium">
-                              {formatCurrencyWithoutSymbol(product.costPrice)}
+                        <div className="flex-1">
+                          <h4 className="font-medium">{product.productName}</h4>
+                          <p className="text-sm text-gray-500">{product.code}</p>
+                          <div className="flex gap-2 mt-1">
+                            <p className="text-sm">
+                              Tồn: {product.inventory} {product.unit}
                             </p>
                           </div>
-                          <div>
-                            <p className="text-xs text-gray-500">Giá bán</p>
-                            <p className="text-sm font-medium">
-                              {formatCurrencyWithoutSymbol(
-                                product.sellingPrice
-                              )}
-                            </p>
+                          <div className="flex justify-between mt-1">
+                            <div>
+                              <p className="text-xs text-gray-500">Giá vốn</p>
+                              <p className="text-sm font-medium">
+                                {formatCurrencyWithoutSymbol(product.costPrice)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">Giá bán</p>
+                              <p className="text-sm font-medium">
+                                {formatCurrencyWithoutSymbol(
+                                  product.sellingPrice
+                                )}
+                              </p>
+                            </div>
                           </div>
                         </div>
+                        <IonButton
+                          fill="solid"
+                          size="small"
+                          className="bg-blue-600 rounded text-white"
+                          routerLink="/tabs/receipt-import/create"
+                        >
+                          Nhập thêm
+                        </IonButton>
                       </div>
-                      <IonButton
-                        fill="solid"
-                        size="small"
-                        className="bg-blue-600 rounded text-white"
-                        routerLink="/tabs/receipt-import/create"
-                      >
-                        Nhập thêm
-                      </IonButton>
-                    </div>
-                  </SwiperSlide>
-                ))}
+                    </SwiperSlide>
+                  );
+                })
+                })
               </Swiper>
             ) : (
               <div className="text-center text-gray-500 py-4">
