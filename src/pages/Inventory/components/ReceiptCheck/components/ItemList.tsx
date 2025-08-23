@@ -11,11 +11,16 @@ import {
   IonLabel,
   IonText,
 } from "@ionic/react";
-import { createOutline, playOutline, printOutline } from "ionicons/icons";
+import { createOutline, playOutline } from "ionicons/icons";
 
 import useReceiptCheck from "@/hooks/apis/useReceiptCheck";
-import { useBarcodeScanner } from "@/hooks";
-import { RECEIPT_CHECK_STATUS } from "@/common/constants/receipt";
+import { useAuth, useBarcodeScanner } from "@/hooks";
+import {
+  getStatusColor,
+  getStatusLabel,
+  RECEIPT_CHECK_STATUS,
+  TReceiptCheckStatus,
+} from "@/common/constants/receipt";
 import { formatDate } from "@/helpers/formatters";
 
 const getDifferenceColor = (difference: number) => {
@@ -27,36 +32,6 @@ const getDifferenceColor = (difference: number) => {
 const getDifferencePrefix = (difference: number) => {
   if (difference > 0) return "+";
   return "";
-};
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case RECEIPT_CHECK_STATUS.PENDING:
-      return {
-        label: "Cần xử lý",
-        color: "warning",
-      };
-    case RECEIPT_CHECK_STATUS.PROCESSING:
-      return {
-        label: "Đang xử lý",
-        color: "tertiary",
-      };
-    case RECEIPT_CHECK_STATUS.BALANCING_REQUIRED:
-      return {
-        label: "Cần cân đối",
-        color: "danger",
-      };
-    case RECEIPT_CHECK_STATUS.BALANCED:
-      return {
-        label: "Đã cân đối",
-        color: "success",
-      };
-    default:
-      return {
-        label: "",
-        color: "dark",
-      };
-  }
 };
 
 interface ReceiptItem {
@@ -75,8 +50,12 @@ interface Receipt {
   actualInventory: number;
   totalDifference: number;
   totalItems: number;
+  checker: {
+    id: string;
+    fullname: string;
+  };
   date: string;
-  status: string;
+  status: TReceiptCheckStatus;
   items: ReceiptItem[];
 }
 
@@ -87,6 +66,7 @@ type Props = {
 export const ItemList: FC<Props> = ({ receipt }) => {
   const history = useHistory();
 
+  const { user } = useAuth();
   const { update: updateReceiptCheck, incrementActualInventory } =
     useReceiptCheck();
 
@@ -113,6 +93,10 @@ export const ItemList: FC<Props> = ({ receipt }) => {
   const { startScan } = useBarcodeScanner({
     onBarcodeScanned: handleBarcodeScanned,
     onError: handleError,
+    onStop: () => {
+      history.push(`/tabs/receipt-check/${receipt.id}`);
+    },
+    delay: 4000,
   });
 
   const handleCheckInventory = () => {
@@ -139,6 +123,16 @@ export const ItemList: FC<Props> = ({ receipt }) => {
     return receipt.status;
   }, [receipt.status, totalValueDifference]);
 
+  const isShowCheckButton = useMemo(() => {
+    if (!user || !receipt) return false;
+
+    return (
+      receipt.status !== RECEIPT_CHECK_STATUS.BALANCED &&
+      receipt.status !== RECEIPT_CHECK_STATUS.BALANCING_REQUIRED &&
+      receipt.checker?.id === user.id
+    );
+  }, [receipt, user]);
+
   const differenceColor = getDifferenceColor(totalValueDifference);
   const differencePrefix = getDifferencePrefix(totalValueDifference);
 
@@ -152,15 +146,16 @@ export const ItemList: FC<Props> = ({ receipt }) => {
         >
           <IonLabel className="ml-4">
             <div className="md:flex md:items-center mb-2">
-              <div>
+              <div className="flex items-center">
                 <IonText>
                   <span className="font-semibold text-sm mr-1">
-                    Mã phiếu: {receipt.receiptNumber}
+                    Mã: {receipt.receiptNumber}
                   </span>
                 </IonText>
-                <IonChip color={getStatusColor(receiptStatus).color}>
+
+                <IonChip color={getStatusColor(receipt.status)}>
                   <span className="text-sm">
-                    {getStatusColor(receiptStatus).label}
+                    {getStatusLabel(receiptStatus)}
                   </span>
                 </IonChip>
               </div>
@@ -212,18 +207,15 @@ export const ItemList: FC<Props> = ({ receipt }) => {
         </IonItem>
 
         <IonItemOptions slot="end">
-          <IonItemOption
-            color="warning"
-            onClick={handleCheckInventory}
-            disabled={receiptStatus === RECEIPT_CHECK_STATUS.BALANCED}
-          >
-            <IonIcon slot="icon-only" icon={playOutline}></IonIcon>
-          </IonItemOption>
+          {isShowCheckButton && (
+            <IonItemOption color="warning" onClick={handleCheckInventory}>
+              <IonIcon slot="icon-only" icon={playOutline}></IonIcon>
+              Kiểm
+            </IonItemOption>
+          )}
           <IonItemOption>
             <IonIcon slot="icon-only" icon={createOutline}></IonIcon>
-          </IonItemOption>
-          <IonItemOption color="dark" expandable={true}>
-            <IonIcon slot="icon-only" icon={printOutline}></IonIcon>
+            Cập nhật
           </IonItemOption>
         </IonItemOptions>
       </IonItemSliding>

@@ -1,4 +1,4 @@
-import { IHttpResponse } from "@/types";
+import { IHttpResponse } from "@/types/index.d";
 import { request } from "../../helpers/axios";
 
 const useOrder = () => {
@@ -31,11 +31,20 @@ const useOrder = () => {
     return response.data;
   };
 
+  const getTotalOrderByDateRange = async (params?: Record<string, string>) => {
+    const query = new URLSearchParams(params);
+    const response = await request.get(
+      `/orders/total?${query.toString()}`
+    );
+    return response.data;
+  };
+
   return {
     getList,
     getDetail,
     create,
     update,
+    getTotalOrderByDateRange,
   };
 };
 

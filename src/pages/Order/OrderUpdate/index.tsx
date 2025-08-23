@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useHistory, useParams } from "react-router";
 import { IonTextareaCustomEvent, TextareaChangeEventDetail } from "@ionic/core";
 import { Dialog } from "@capacitor/dialog";
+import { Toast } from "@capacitor/toast";
 import {
   IonPage,
   IonHeader,
@@ -21,8 +22,6 @@ import {
   useIonModal,
   useIonToast,
   IonFooter,
-  IonSelect,
-  IonSelectOption,
   IonRippleEffect,
   InputCustomEvent,
   useIonViewWillEnter,
@@ -30,6 +29,7 @@ import {
 import {
   checkmarkCircle,
   checkmarkCircleOutline,
+  chevronBack,
   chevronDownOutline,
   removeCircleOutline,
   scanOutline,
@@ -37,7 +37,7 @@ import {
 } from "ionicons/icons";
 import { OverlayEventDetail } from "@ionic/react/dist/types/components/react-component-lib/interfaces";
 
-import { useLoading, useBarcodeScanner, useStorage } from "@/hooks";
+import { useLoading, useBarcodeScanner } from "@/hooks";
 import useOrder from "@/hooks/apis/useOrder";
 import useProduct from "@/hooks/apis/useProduct";
 
@@ -107,7 +107,7 @@ const OrderUpdate: React.FC = () => {
   const [orderItems, setOrderItems] = useState<IOrderItem[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showDownArrow, setShowDownArrow] = useState(false);
-  
+
   // Add customer name state
   const [selectedCustomerName, setSelectedCustomerName] =
     useState<string>("Khách lẻ");
@@ -115,13 +115,12 @@ const OrderUpdate: React.FC = () => {
   const [presentToast] = useIonToast();
   const orderItemsListRef = useRef<HTMLDivElement>(null);
 
-  const { addItem, getItem, removeItem } = useStorage();
   const { isLoading, withLoading } = useLoading();
   const { getDetail: getOrderDetail, update: updateOrder } = useOrder();
   const { getDetail: getProductDetail } = useProduct();
 
   const isOrderPaid = useMemo(() => {
-    return formData.status === OrderStatus.PAID;
+    return formData.status === OrderStatus.COMPLETED;
   }, [formData.status]);
 
   const addProductToCartItem = async (productCode: string) => {
@@ -200,13 +199,21 @@ const OrderUpdate: React.FC = () => {
         const { role, data } = event.detail;
 
         if (role === "confirm" && data) {
-          setOrderItems((prev) => [
-            ...prev,
-            {
-              ...data,
-              quantity: 1,
-            },
-          ]);
+          if (data.inventory === 0) {
+            await Toast.show({
+              text: "Sản phẩm đã hết hàng",
+              duration: "short",
+              position: "center",
+            });
+          } else {
+            setOrderItems((prev) => [
+              ...prev,
+              {
+                ...data,
+                quantity: 1,
+              },
+            ]);
+          }
         }
       },
     });
@@ -346,10 +353,6 @@ const OrderUpdate: React.FC = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    // if (!formData.customer) {
-    //   newErrors.customer = "Vui lòng chọn khách hàng";
-    // }
-
     if (!orderItems.length) {
       newErrors.items = "Vui lòng thêm ít nhất một sản phẩm";
     }
@@ -487,10 +490,10 @@ const OrderUpdate: React.FC = () => {
     if (!value) return;
 
     const orderData = {
-      customer: formData.customer,
-      paymentMethod: formData.paymentMethod,
+      // customer: formData.customer,
+      // paymentMethod: formData.paymentMethod,
+      // discountAmount: calculateDiscount(),
       note: formData.note,
-      discountAmount: calculateDiscount(),
       vatEnabled: formData.vatEnabled,
       vatInfo: formData.vatEnabled
         ? {
@@ -517,6 +520,12 @@ const OrderUpdate: React.FC = () => {
   };
 
   const handlePaidOrder = async () => {
+    return presentToast({
+      message: "Tính năng này đang phát triển",
+      duration: 2000,
+      position: "top",
+      color: "warning",
+    });
     const { value } = await Dialog.confirm({
       title: "Xác nhận thanh toán đơn hàng",
       message: "Bạn có chắc chắn muốn thanh toán đơn hàng này không?",
@@ -526,7 +535,7 @@ const OrderUpdate: React.FC = () => {
 
     const status =
       formData.paymentMethod === PaymentMethod.CASH
-        ? OrderStatus.PAID
+        ? OrderStatus.COMPLETED
         : OrderStatus.PENDING;
 
     const orderData = {
@@ -694,7 +703,15 @@ const OrderUpdate: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/tabs/orders"></IonBackButton>
+            <IonButton
+              className="text-gray-600"
+              onClick={() => {
+                history.goBack();
+              }}
+            >
+              <IonIcon slot="icon-only" icon={chevronBack} />
+              Trở lại
+            </IonButton>
           </IonButtons>
           <IonTitle>Cập nhật đơn hàng</IonTitle>
         </IonToolbar>
@@ -734,33 +751,26 @@ const OrderUpdate: React.FC = () => {
               </div>
             )}
 
-            {/* Barcode Scanner Section */}
+            {/* Barcode Scanner Section - Disabled */}
             {!isOrderPaid && (
               <>
-                <div
-                  className="ion-activatable bg-teal-50 border-2 border-dashed border-teal-200 rounded-lg p-6 mb-4 text-center cursor-pointer hover:bg-teal-100 transition-colors"
-                  onClick={() => startScan()}
-                >
+                <div className="ion-activatable bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg p-6 mb-4 text-center opacity-65 cursor-not-allowed">
                   <div className="flex flex-col items-center justify-center space-y-3">
-                    <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
                       <IonIcon
                         icon={scanOutline}
-                        className="text-3xl text-teal-600"
+                        className="text-3xl text-gray-400"
                       />
                     </div>
-                    <p className="text-teal-700 font-medium text-base">
+                    <p className="text-gray-500 font-medium text-base">
                       Quét mã vạch để thêm sản phẩm
                     </p>
                   </div>
                 </div>
 
-                <div
-                  className="ion-activatable receipt-import-ripple-parent mb-3"
-                  onClick={() => openModalSelectProduct()}
-                >
-                  <IonIcon icon={search} className="text-2xl" />
+                <div className="ion-activatable receipt-import-ripple-parent mb-3 opacity-65 cursor-not-allowed">
+                  <IonIcon icon={search} className="text-2xl text-gray-400" />
                   Tìm kiếm hàng hóa
-                  <IonRippleEffect className="custom-ripple"></IonRippleEffect>
                 </div>
               </>
             )}
@@ -814,31 +824,36 @@ const OrderUpdate: React.FC = () => {
             <div className="mb-4">
               <IonRadioGroup
                 value={formData.discountType || "percentage"}
-                onIonChange={handleDiscountTypeChange}
+                onIonChange={() => {}} // Disabled - no action
               >
-                <div className="flex gap-4 mb-3">
+                <div className="flex gap-4 mb-3 opacity-65">
                   <IonItem
                     lines="none"
                     className={cn(`rounded-lg transition-colors`, {
-                      "bg-custom-primary border border-custom-primary":
+                      "bg-gray-200 border border-gray-300":
                         formData.discountType === "percentage" ||
                         !formData.discountType,
-                      border: formData.discountType === "fixed",
+                      "border border-gray-300":
+                        formData.discountType === "fixed",
                     })}
                   >
-                    <IonRadio value="percentage">Theo %</IonRadio>
+                    <IonRadio value="percentage" disabled={true}>
+                      Theo %
+                    </IonRadio>
                   </IonItem>
                   <IonItem
                     lines="none"
                     className={cn(`rounded-lg transition-colors`, {
-                      "bg-custom-primary border border-custom-primary":
+                      "bg-gray-200 border border-gray-300":
                         formData.discountType === "fixed",
-                      border:
+                      "border border-gray-300":
                         formData.discountType === "percentage" ||
                         !formData.discountType,
                     })}
                   >
-                    <IonRadio value="fixed">Theo VND</IonRadio>
+                    <IonRadio value="fixed" disabled={true}>
+                      Theo VND
+                    </IonRadio>
                   </IonItem>
                 </div>
               </IonRadioGroup>
@@ -853,9 +868,10 @@ const OrderUpdate: React.FC = () => {
                   max={100}
                   placeholder="Nhập % giảm giá"
                   name="discountPercentage"
-                  className="custom-padding border rounded-lg"
+                  className="custom-padding border rounded-lg opacity-65"
                   value={formData.discountPercentage}
                   onIonChange={handleDiscountChange}
+                  disabled={true}
                 ></IonInput>
               ) : (
                 <IonInput
@@ -864,9 +880,10 @@ const OrderUpdate: React.FC = () => {
                   fill="solid"
                   placeholder="Nhập số tiền giảm giá"
                   name="discountAmount"
-                  className="custom-padding border rounded-lg"
+                  className="custom-padding border rounded-lg opacity-65"
                   value={formData.discountAmountFormatted || 0}
                   onIonInput={handleDiscountChange}
+                  disabled={true}
                 ></IonInput>
               )}
             </div>
@@ -881,13 +898,12 @@ const OrderUpdate: React.FC = () => {
                 Khách hàng
               </h2>
               <div className="mb-4">
-                <div
-                  className="ion-activatable receipt-import-ripple-parent break-normal p-2"
-                  onClick={() => openModalSelectCustomer()}
-                >
-                  <IonIcon icon={search} className="text-2xl mr-2" />
+                <div className="ion-activatable receipt-import-ripple-parent break-normal p-2 opacity-65 cursor-not-allowed">
+                  <IonIcon
+                    icon={search}
+                    className="text-2xl mr-2 text-gray-400"
+                  />
                   {selectedCustomerName}
-                  <IonRippleEffect className="custom-ripple"></IonRippleEffect>
                 </div>
                 <ErrorMessage message={errors.customer} />
               </div>
@@ -904,27 +920,39 @@ const OrderUpdate: React.FC = () => {
                 <div className="flex gap-4">
                   <IonItem
                     lines="none"
-                    className={cn(`rounded-lg transition-colors`, {
-                      "bg-custom-primary border border-custom-primary":
-                        formData.paymentMethod === PaymentMethod.CASH ||
-                        !formData.paymentMethod,
-                      border:
-                        formData.paymentMethod === PaymentMethod.BANK_TRANSFER,
-                    })}
+                    className={cn(
+                      `rounded-lg transition-colors opacity-50 cursor-not-allowed`,
+                      {
+                        "bg-custom-primary border border-custom-primary":
+                          formData.paymentMethod === PaymentMethod.CASH ||
+                          !formData.paymentMethod,
+                        border:
+                          formData.paymentMethod ===
+                          PaymentMethod.BANK_TRANSFER,
+                      }
+                    )}
                   >
-                    <IonRadio value={PaymentMethod.CASH}>Tiền mặt</IonRadio>
+                    <IonRadio value={PaymentMethod.CASH} disabled={true}>
+                      Tiền mặt
+                    </IonRadio>
                   </IonItem>
                   <IonItem
                     lines="none"
-                    className={cn(`rounded-lg transition-colors`, {
-                      "bg-custom-primary border border-custom-primary":
-                        formData.paymentMethod ===
-                          PaymentMethod.BANK_TRANSFER ||
-                        !formData.paymentMethod,
-                      border: formData.paymentMethod === PaymentMethod.CASH,
-                    })}
+                    className={cn(
+                      `rounded-lg transition-colors opacity-50 cursor-not-allowed`,
+                      {
+                        "bg-custom-primary border border-custom-primary":
+                          formData.paymentMethod ===
+                            PaymentMethod.BANK_TRANSFER ||
+                          !formData.paymentMethod,
+                        border: formData.paymentMethod === PaymentMethod.CASH,
+                      }
+                    )}
                   >
-                    <IonRadio value={PaymentMethod.BANK_TRANSFER}>
+                    <IonRadio
+                      value={PaymentMethod.BANK_TRANSFER}
+                      disabled={true}
+                    >
                       Chuyển khoản
                     </IonRadio>
                   </IonItem>

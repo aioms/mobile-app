@@ -29,8 +29,17 @@ const QuickActions: React.FC = () => {
         color: "danger",
       });
     },
+    delay: 300,
   });
 
+  /**
+   * Handles the result of a barcode scan by retrieving product details and performing an action based on the specified type.
+   *
+   * If the scanned product is not found, displays a toast notification. For type `"product"`, navigates to the product detail page. For type `"order"`, adds the product to a draft order (creating one if necessary), handles out-of-stock cases, and navigates to the order creation page. Displays error messages via toast notifications for unsupported types or other errors.
+   *
+   * @param value - The scanned barcode value.
+   * @param data - Optional metadata specifying the action type to perform.
+   */
   async function handleBarcodeScanned(
     value: string,
     data?: Record<string, unknown>

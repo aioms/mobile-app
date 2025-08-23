@@ -1,0 +1,150 @@
+.custom-toast-container {
+  position: fixed;
+  z-index: 100002 !important;
+  pointer-events: none;
+}
+
+.custom-toast {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  max-width: 90vw;
+  min-width: 200px;
+  pointer-events: auto;
+  transition: all 0.3s ease-out;
+  opacity: 0;
+}
+
+.custom-toast-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.custom-toast-removing {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-100%);
+}
+
+/* Position variants */
+.custom-toast-top {
+  top: 20px;
+}
+
+.custom-toast-center {
+  top: 50%;
+  transform: translateX(-50%) translateY(-50%);
+}
+
+.custom-toast-center.custom-toast-visible {
+  transform: translateX(-50%) translateY(-50%);
+}
+
+.custom-toast-center.custom-toast-removing {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-60%);
+}
+
+.custom-toast-bottom {
+  bottom: 20px;
+  transform: translateX(-50%) translateY(100%);
+}
+
+.custom-toast-bottom.custom-toast-visible {
+  transform: translateX(-50%) translateY(0);
+}
+
+.custom-toast-bottom.custom-toast-removing {
+  transform: translateX(-50%) translateY(100%);
+}
+
+/* Type variants */
+.custom-toast-success {
+  background: rgba(40, 167, 69, 0.95);
+}
+
+.custom-toast-error {
+  background: rgba(235, 68, 90, 0.95);
+}
+
+.custom-toast-warning {
+  background: rgba(255, 196, 9, 0.95);
+  color: #000;
+}
+
+.custom-toast-info {
+  background: rgba(23, 162, 184, 0.95);
+}
+
+/* Content layout */
+.custom-toast-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.custom-toast-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.custom-toast-message {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.custom-toast-close {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 8px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.custom-toast-close:hover {
+  opacity: 1;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .custom-toast {
+    max-width: calc(100vw - 32px);
+    font-size: 14px;
+    padding: 10px 16px;
+  }
+  
+  .custom-toast-icon {
+    font-size: 16px;
+  }
+}
+
+/* Animation for better visibility over camera */
+@keyframes slideInFromTop {
+  from {
+    transform: translateX(-50%) translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+.custom-toast-visible {
+  animation: slideInFromTop 0.3s ease-out;
+}

@@ -21,7 +21,7 @@ import {
 import { useAuth } from "../../hooks";
 import { useHistory } from "react-router";
 
-import './MenuBar.css';
+import "./MenuBar.css";
 
 const routes = [
   {
@@ -41,25 +41,27 @@ const routes = [
   },
 ];
 
-const user = {
-  name: "Ngân Kim",
-  email: "user@aios.com",
-  avatar:
-    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-};
+// Default avatar for fallback
+const defaultAvatar =
+  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80";
 
 const MenuBar: React.FC = () => {
   const history = useHistory();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const handleLogout = async () => {
     await logout();
     history.replace("/login");
   };
 
+  // Get user data with fallbacks
+  const displayName = user?.fullname || user?.username || "Người dùng";
+  const displayEmail = user?.username || "user@aios.com";
+  const displayAvatar = defaultAvatar; // You can add user.avatar if available in the User type
+
   return (
     <IonMenu type="push" contentId="main-content">
-      <IonHeader>
+      <IonHeader translucent>
         <IonToolbar>
           <IonTitle>
             <IonItem lines="none" className="menu-logo">
@@ -69,7 +71,7 @@ const MenuBar: React.FC = () => {
                   className="text-primary w-12 h-12"
                 />
                 <span className="text-xl font-bold ml-2 text-primary">
-                  AIOS
+                  AIOM
                 </span>
               </div>
             </IonItem>
@@ -81,13 +83,13 @@ const MenuBar: React.FC = () => {
           <IonItem lines="none" className="menu-avatar">
             <div className="flex items-center w-full p-4 bg-primary-50">
               <IonAvatar className="w-16 h-16">
-                <img src={user.avatar} alt="Avatar" />
+                <img src={displayAvatar} alt="Avatar" />
               </IonAvatar>
               <div className="ml-4">
                 <h2 className="text-lg font-semibold text-gray-900">
-                  {user.name}
+                  {displayName}
                 </h2>
-                <p className="text-sm text-gray-500">{user.email}</p>
+                <p className="text-sm text-gray-500">{displayEmail}</p>
               </div>
             </div>
           </IonItem>

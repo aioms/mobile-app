@@ -17,8 +17,10 @@ import {
   useIonViewDidEnter,
   useIonToast,
 } from "@ionic/react";
+import * as Sentry from "@sentry/capacitor";
 import { useHistory } from "react-router-dom";
 import { useAuth } from "../../../hooks";
+import { defaultConfig } from "@/helpers/axios";
 
 import "./Login.css";
 
@@ -35,6 +37,33 @@ const Login: React.FC = () => {
 
   const handleLogin = async () => {
     try {
+      // const {
+      //   VITE_ENV,
+      //   VITE_API_VERSION,
+
+      //   VITE_API_URL_DEV,
+      //   VITE_SERVER_URL_DEV,
+
+      //   VITE_API_URL_STG,
+      //   VITE_SERVER_URL_STG,
+
+      //   VITE_API_URL_PROD,
+      //   VITE_SERVER_URL_PROD,
+      // } = import.meta.env;
+
+      // Sentry.captureMessage(JSON.stringify(defaultConfig), {
+      //   extra: {
+      //     environment: VITE_ENV,
+      //     apiVersion: VITE_API_VERSION,
+      //     apiUrl: VITE_API_URL_DEV,
+      //     serverUrl: VITE_SERVER_URL_DEV,
+      //     apiUrlStg: VITE_API_URL_STG,
+      //     serverUrlStg: VITE_SERVER_URL_STG,
+      //     apiUrlProd: VITE_API_URL_PROD,
+      //     serverUrlProd: VITE_SERVER_URL_PROD,
+      //   },
+      // });
+
       const { username, password } = formData;
 
       if (!username || !password) {
@@ -44,7 +73,13 @@ const Login: React.FC = () => {
       const response = await login(username, password);
 
       if (response.statusCode !== 200 || !response.data) {
-        return setError(JSON.stringify(response));
+        await presentToast({
+          message: response.message,
+          duration: 1000,
+          position: "top",
+          color: "danger",
+        });
+        return;
       }
 
       await presentToast({
@@ -55,13 +90,17 @@ const Login: React.FC = () => {
       });
 
       setFormData({ username: "", password: "" });
-      setError("");
 
       setTimeout(() => {
         history.replace("/tabs/home");
       }, 500);
     } catch (error: any) {
-      setError(error.message);
+      presentToast({
+        message: error.message,
+        duration: 1000,
+        position: "top",
+        color: "danger",
+      });
     }
   };
 
@@ -69,11 +108,11 @@ const Login: React.FC = () => {
     if (isAuthenticated) {
       history.replace("/tabs/home");
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated]);
 
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader translucent>
         <IonToolbar>
           <IonTitle>Welcome back</IonTitle>
         </IonToolbar>

@@ -18,6 +18,7 @@ import {
   IonToolbar,
   RefresherEventDetail,
   useIonModal,
+  useIonToast,
 } from "@ionic/react";
 import {
   checkmarkCircle,
@@ -30,6 +31,7 @@ import { OverlayEventDetail } from "@ionic/react/dist/types/components/react-com
 
 import useReceiptImport from "@/hooks/apis/useReceiptImport";
 import { useAuth, useBarcodeScanner, useLoading } from "@/hooks";
+import { useCustomToast } from "@/hooks/useCustomToast";
 
 import { UserRole } from "@/common/enums/user";
 import { ReceiptImportStatus } from "@/common/enums/receipt";
@@ -80,10 +82,7 @@ interface ReceiptImport {
   items: ReceiptItem[];
 }
 
-type IFormData = Pick<
-  ReceiptImport,
-  "note" | "importDate" | "paymentDate"
-> & {
+type IFormData = Pick<ReceiptImport, "note" | "importDate" | "paymentDate"> & {
   supplier: string;
 };
 
@@ -107,6 +106,9 @@ const ReceiptImportDetail: React.FC = () => {
     importQuick,
     update: updateReceiptImport,
   } = useReceiptImport();
+
+  const { showError } = useCustomToast();
+  const [presentToast] = useIonToast();
 
   // OPEN MODAL SELECT SUPPLIERS
   const [presentModalSupplier, dismissModalSupplier] = useIonModal(
@@ -133,56 +135,57 @@ const ReceiptImportDetail: React.FC = () => {
   };
 
   const handleBarcodeScanned = (value: string) => {
-    stopScan();
-    handleUpdateInventory(value);
+    handleImport(value);
   };
 
-  const { startScan, stopScan } = useBarcodeScanner({
+  const { startScan } = useBarcodeScanner({
     onBarcodeScanned: handleBarcodeScanned,
-    onError: (error: Error) => {
-      Toast.show({
-        text: error.message,
-        duration: "long",
-        position: "center",
-      });
-    },
+    onError: (error: Error) => showError(error.message),
+    delay: 4000,
   });
 
-  const { showRequestApproval, showComplete, showUpdate } = useMemo(() => {
-    if (!user || !receipt)
-      return {
-        showRequestApproval: false,
-        showComplete: false,
-      };
+  const { showScanProduct, showRequestApproval, showComplete, showUpdate } =
+    useMemo(() => {
+      if (!user || !receipt)
+        return {
+          showRequestApproval: false,
+          showComplete: false,
+        };
 
-    const userRole = user.role;
-    const receiptStatus = receipt.status;
+      const userRole = user.role;
+      const receiptStatus = receipt.status;
 
-    const isUserCreated = user.id === receipt.userCreated;
-    const isEmployee = userRole === UserRole.EMPLOYEE;
-    const canApprove = (
-      [UserRole.ADMIN, UserRole.MANAGER, UserRole.DEVELOPER] as string[]
-    ).includes(userRole);
-
-    const showRequestApproval =
-      receiptStatus === ReceiptImportStatus.PROCESSING &&
-      isEmployee &&
-      isUserCreated;
-
-    const showComplete =
-      receiptStatus === ReceiptImportStatus.WAITING && canApprove;
-
-    const showUpdate =
-      (
+      const isUserCreated = user.id === receipt.userCreated;
+      const isEmployee = userRole === UserRole.EMPLOYEE;
+      const isAdmin = (
         [UserRole.ADMIN, UserRole.MANAGER, UserRole.DEVELOPER] as string[]
-      ).includes(userRole) && receiptStatus !== ReceiptImportStatus.COMPLETED;
+      ).includes(userRole);
 
-    return {
-      showRequestApproval,
-      showComplete,
-      showUpdate,
-    };
-  }, [user, receipt?.userCreated, receipt?.status]);
+      const showScanProduct =
+        receiptStatus === ReceiptImportStatus.PROCESSING &&
+        (isAdmin || (isEmployee && isUserCreated));
+
+      const showRequestApproval =
+        receiptStatus === ReceiptImportStatus.PROCESSING &&
+        isEmployee &&
+        isUserCreated;
+
+      const showComplete =
+        isAdmin &&
+        [ReceiptImportStatus.PROCESSING, ReceiptImportStatus.WAITING].includes(
+          receiptStatus as ReceiptImportStatus
+        );
+
+      const showUpdate =
+        isAdmin && receiptStatus !== ReceiptImportStatus.COMPLETED;
+
+      return {
+        showScanProduct,
+        showRequestApproval,
+        showComplete,
+        showUpdate,
+      };
+    }, [user, receipt?.userCreated, receipt?.status]);
 
   const fetchReceiptImport = async () => {
     await withLoading(async () => {
@@ -190,10 +193,11 @@ const ReceiptImportDetail: React.FC = () => {
         const result = await getDetail(id);
 
         if (!result || !result.receipt) {
-          await Toast.show({
-            text: "Không tìm thấy phiếu nhập",
-            duration: "short",
+          await presentToast({
+            message: "Không tìm thấy phiếu nhập",
+            duration: 3000,
             position: "top",
+            color: "danger",
           });
           return;
         }
@@ -205,10 +209,11 @@ const ReceiptImportDetail: React.FC = () => {
 
         setReceipt(receipt);
       } catch (error) {
-        await Toast.show({
-          text: (error as Error).message,
-          duration: "short",
+        await presentToast({
+          message: (error as Error).message,
+          duration: 3000,
           position: "top",
+          color: "danger",
         });
       }
     });
@@ -246,27 +251,29 @@ const ReceiptImportDetail: React.FC = () => {
       });
 
       if (!result || !result.id) {
-        await Toast.show({
-          text: "Cập nhật phiếu nhập thất bại",
-          duration: "short",
+        await presentToast({
+          message: "Cập nhật phiếu nhập thất bại",
+          duration: 3000,
           position: "top",
+          color: "warning",
         });
         return;
       }
 
+      presentToast({
+        message: "Đã cập nhật phiếu nhập",
+        duration: 3000,
+        position: "top",
+        color: "success",
+      });
       setFormData(initialFormData);
       fetchReceiptImport();
-
-      await Toast.show({
-        text: "Đã cập nhật phiếu nhập",
-        duration: "short",
-        position: "top",
-      });
     } catch (error) {
-      await Toast.show({
-        text: (error as Error).message,
-        duration: "short",
+      await presentToast({
+        message: (error as Error).message,
+        duration: 3000,
         position: "top",
+        color: "danger",
       });
     }
   };
@@ -287,17 +294,19 @@ const ReceiptImportDetail: React.FC = () => {
       await updateReceiptImport(receipt.id, {
         status: ReceiptImportStatus.WAITING,
       });
-      await Toast.show({
-        text: "Đã gửi yêu cầu duyệt",
-        duration: "short",
+      await presentToast({
+        message: "Đã gửi yêu cầu duyệt",
+        duration: 3000,
         position: "top",
+        color: "success",
       });
       fetchReceiptImport();
     } catch (error) {
-      await Toast.show({
-        text: (error as Error).message,
-        duration: "short",
+      await presentToast({
+        message: (error as Error).message,
+        duration: 3000,
         position: "top",
+        color: "danger",
       });
     }
   };
@@ -317,29 +326,34 @@ const ReceiptImportDetail: React.FC = () => {
       await updateReceiptImport(receipt.id, {
         status: ReceiptImportStatus.COMPLETED,
       });
-      await Toast.show({
-        text: "Đã hoàn thành phiếu nhập",
-        duration: "short",
+
+      await presentToast({
+        message: "Đã hoàn thành phiếu nhập",
+        duration: 2000,
         position: "top",
+        color: "success",
       });
       fetchReceiptImport();
     } catch (error) {
-      await Toast.show({
-        text: (error as Error).message,
-        duration: "short",
+      await presentToast({
+        message: (error as Error).message,
+        duration: 3000,
         position: "top",
+        color: "danger",
       });
     }
   };
 
-  const handleUpdateInventory = async (receiptNumber: string) => {
+  const handleImport = async (receiptNumber: string) => {
     try {
       if (!receiptNumber) {
-        return await Toast.show({
-          text: "Không tìm thấy phiếu",
-          duration: "short",
+        await presentToast({
+          message: "Không tìm thấy phiếu",
+          duration: 3000,
           position: "top",
+          color: "warning",
         });
+        return;
       }
 
       const response = await importQuick({ code: receiptNumber });
@@ -348,19 +362,12 @@ const ReceiptImportDetail: React.FC = () => {
       if (!receiptId) {
         throw new Error("Cập nhật thất bại");
       }
-
-      await Toast.show({
-        text: "Cập nhật thành công",
-        duration: "short",
-        position: "top",
-      });
-
-      fetchReceiptImport();
     } catch (error) {
-      await Toast.show({
-        text: (error as Error).message,
-        duration: "long",
-        position: "center",
+      await presentToast({
+        message: (error as Error).message,
+        duration: 3000,
+        position: "top",
+        color: "danger",
       });
     }
   };
@@ -545,7 +552,7 @@ const ReceiptImportDetail: React.FC = () => {
             </IonButton>
           </IonButtons>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center justify-between space-x-2">
             <div className="mr-2">
               <h1 className="font-semibold">{receipt?.receiptNumber}</h1>
               <p className="text-sm text-gray-500">
@@ -576,7 +583,7 @@ const ReceiptImportDetail: React.FC = () => {
           <div className="bg-white rounded-lg p-4 shadow-sm">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold">Thông tin phiếu nhập</h2>
-              {showRequestApproval && (
+              {showScanProduct && (
                 <IonButtons slot="end">
                   <IonButton color="primary" onClick={() => startScan()}>
                     <IonIcon icon={scanOutline} slot="icon-only" />

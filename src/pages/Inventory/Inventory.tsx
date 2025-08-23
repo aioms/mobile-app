@@ -12,7 +12,6 @@ import {
   IonSegment,
   IonSegmentButton,
   IonLabel,
-  IonMenuButton,
 } from "@ionic/react";
 import { Toast } from "@capacitor/toast";
 import { scanOutline, add } from "ionicons/icons";

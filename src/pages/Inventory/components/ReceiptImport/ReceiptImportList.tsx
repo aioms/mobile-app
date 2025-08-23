@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { IonList, RefresherEventDetail } from "@ionic/react";
+import { IonList, IonButton, RefresherEventDetail } from "@ionic/react";
 import { Toast } from "@capacitor/toast";
 import { Dialog } from "@capacitor/dialog";
 
@@ -25,32 +25,56 @@ type Props = {
   keyword: string;
 };
 
+const pageSize = 10;
+
 const ReceiptImportList: React.FC<Props> = ({ keyword }) => {
   const [receiptImports, setReceiptImports] = useState<ItemList[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   const { getList: getListReceiptImport, update: updateReceiptImport } =
     useReceiptImport();
 
-  const fetchReceiptImports = async () => {
+  const fetchReceiptImports = async (page = 1, isLoadMore = false) => {
     try {
-      setLoading(true);
+      if (isLoadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+        setCurrentPage(1);
+        setHasMore(true);
+      }
+
       const response = await getListReceiptImport(
         {
           keyword,
         },
-        1,
-        3
+        page,
+        pageSize
       );
 
-      if (!response.length) {
-        await Toast.show({
-          text: "Không tìm thấy kết quả",
-          duration: "short",
-          position: "top",
-        });
+      if (isLoadMore) {
+        if (response.length < pageSize) {
+          setHasMore(false);
+        }
+        setReceiptImports((prev) => [...prev, ...response]);
       } else {
+        if (response.length < pageSize) {
+          setHasMore(false);
+        } else {
+          setHasMore(true);
+        }
         setReceiptImports(response);
+
+        if (!response.length) {
+          await Toast.show({
+            text: "Không tìm thấy kết quả",
+            duration: "short",
+            position: "top",
+          });
+        }
       }
     } catch (error) {
       await Toast.show({
@@ -60,12 +84,19 @@ const ReceiptImportList: React.FC<Props> = ({ keyword }) => {
       });
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   useEffect(() => {
     fetchReceiptImports();
   }, [keyword]);
+
+  const handleLoadMore = () => {
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    fetchReceiptImports(nextPage, true);
+  };
 
   const handleRefresh = (event: CustomEvent<RefresherEventDetail>) => {
     fetchReceiptImports().finally(() => {
@@ -155,13 +186,26 @@ const ReceiptImportList: React.FC<Props> = ({ keyword }) => {
         )}
       </IonList>
 
-      {/* <IonInfiniteScroll
-        onIonInfinite={(ev) => {
-          setTimeout(() => ev.target.complete(), 500);
-        }}
-      >
-        <IonInfiniteScrollContent></IonInfiniteScrollContent>
-      </IonInfiniteScroll> */}
+      {/* Load More Button */}
+      {hasMore && receiptImports.length > 0 && (
+        <div className="text-center py-4">
+          <IonButton
+            fill="outline"
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+          >
+            {loadingMore ? "Đang tải..." : "Xem thêm"}
+          </IonButton>
+        </div>
+      )}
+
+      {/* Show loading skeleton when loading more */}
+      {loadingMore && (
+        <IonList>
+          <ReceiptListSkeleton />
+          <ReceiptListSkeleton />
+        </IonList>
+      )}
     </>
   );
 };

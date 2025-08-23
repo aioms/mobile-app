@@ -18,6 +18,7 @@ type Props = {
   inventory: number;
   costPrice: number;
   discount: number;
+  quantity?: number; // Add quantity prop
   onRowChange?: (data: any) => void;
   onRemoveItem?: (id: string) => void;
 };
@@ -30,10 +31,11 @@ const ReceiptItem: FC<Props> = ({
   inventory,
   costPrice,
   discount,
+  quantity: initialQuantity = 1, // Accept quantity prop with default value
   onRowChange,
   onRemoveItem,
 }) => {
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(initialQuantity);
   const [formattedCostPrice, setformattedCostPrice] = useState<string>(
     formatCurrency(costPrice)
   );
@@ -66,6 +68,11 @@ const ReceiptItem: FC<Props> = ({
       setQuantity(newQuantity);
     }
   };
+
+  // Add useEffect to sync internal state with prop changes
+  useEffect(() => {
+    setQuantity(initialQuantity);
+  }, [initialQuantity]);
 
   useEffect(() => {
     if (typeof newCostPrice === "number" && typeof newDiscount === "number") {

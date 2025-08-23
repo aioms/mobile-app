@@ -14,7 +14,7 @@ const DatePicker: FC<Props> = ({ value, onChange, presentation = 'date-time', at
     <>
       <IonDatetimeButton className={extraClassName} datetime={attrs.id}></IonDatetimeButton>
 
-      <IonModal keepContentsMounted={true}>
+      <IonModal keepContentsMounted={true} trigger={attrs.id}>
         <IonDatetime
           id={attrs.id}
           presentation={presentation}

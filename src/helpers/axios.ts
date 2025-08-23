@@ -1,24 +1,32 @@
 import { Toast } from "@capacitor/toast";
+import * as Sentry from "@sentry/capacitor";
 import axios from "axios";
 import type { IExtraConfig, IHttpRequestConfig } from "../types";
-import { initStorage } from "../hooks";
+import { storage } from "../hooks";
 
 const {
   VITE_ENV,
-  VITE_API_URL,
-  VITE_SERVER_URL,
   VITE_API_VERSION,
+
   VITE_API_URL_DEV,
   VITE_SERVER_URL_DEV,
+
+  VITE_API_URL_STG,
+  VITE_SERVER_URL_STG,
+
+  VITE_API_URL_PROD,
+  VITE_SERVER_URL_PROD,
 } = import.meta.env;
 
 const serverUrl: Record<string, string> = {
   development: VITE_SERVER_URL_DEV!,
-  production: VITE_SERVER_URL!,
+  staging: VITE_SERVER_URL_STG!,
+  production: VITE_SERVER_URL_PROD!,
 };
 const apiUrl: Record<string, string> = {
   development: VITE_API_URL_DEV!,
-  production: VITE_API_URL!,
+  staging: VITE_API_URL_STG!,
+  production: VITE_API_URL_PROD!,
 };
 
 export const defaultConfig: IHttpRequestConfig = {
@@ -31,6 +39,10 @@ export const defaultConfig: IHttpRequestConfig = {
     },
   },
 };
+Sentry.setTag("api", defaultConfig.server.api);
+Sentry.setTag("baseUrl", defaultConfig.server.baseUrl);
+Sentry.setTag("version", defaultConfig.server.version);
+Sentry.captureMessage(JSON.stringify(defaultConfig), "debug");
 
 export class HttpRequest {
   private config: Partial<IExtraConfig> = {};
@@ -74,7 +86,6 @@ export class HttpRequest {
 
     instance.interceptors.request.use(
       async function (config) {
-        const storage = await initStorage();
         const token = await storage.get("token"); // Retrieve the token from localStorage
 
         if (token) {
@@ -93,6 +104,8 @@ export class HttpRequest {
         //     "interceptors.request.error": error,
         //   })
         // );
+
+        Sentry.captureException(error);
 
         if (error.message) {
           Toast.show({
@@ -126,6 +139,8 @@ export class HttpRequest {
         const resp = error.response;
         const data = resp?.data;
 
+        Sentry.captureException(error);
+
         // console.error(
         //   JSON.stringify({
         //     "interceptors.response.error": error,
@@ -133,7 +148,6 @@ export class HttpRequest {
         // );
 
         if (resp.status === 401 || resp.statusText === "Unauthorized") {
-          const storage = await initStorage();
           await Promise.allSettled([
             storage.remove("token"),
             storage.remove("user"),

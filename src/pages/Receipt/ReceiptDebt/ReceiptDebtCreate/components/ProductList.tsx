@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Toast } from "@capacitor/toast";
 import {
   IonIcon,
   IonRippleEffect,
@@ -97,10 +98,18 @@ const ProductList: React.FC<Props> = ({
         const { role, data } = event.detail;
 
         if (role === "confirm" && data) {
-          onAddItem({
-            ...data,
-            quantity: 1,
-          });
+          if (data.inventory === 0) {
+            await Toast.show({
+              text: "Sản phẩm đã hết hàng",
+              duration: "short",
+              position: "center",
+            });
+          } else {
+            onAddItem({
+              ...data,
+              quantity: 1,
+            });
+          }
         }
       },
     });

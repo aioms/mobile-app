@@ -54,13 +54,13 @@ const InventoryHistory: React.FC<Props> = ({
           onIonChange={onChangeTab}
         >
           <IonSegmentButton value="import">
-            <IonLabel>Lịch sử nhập</IonLabel>
+            <IonLabel className="text-xs text-wrap">Lịch sử nhập</IonLabel>
           </IonSegmentButton>
           <IonSegmentButton value="return">
-            <IonLabel>Lịch sử xuất</IonLabel>
+            <IonLabel className="text-xs text-wrap">Lịch sử xuất</IonLabel>
           </IonSegmentButton>
           <IonSegmentButton value="check">
-            <IonLabel>Lịch sử kiểm</IonLabel>
+            <IonLabel className="text-xs text-wrap">Lịch sử kiểm</IonLabel>
           </IonSegmentButton>
         </IonSegment>
 

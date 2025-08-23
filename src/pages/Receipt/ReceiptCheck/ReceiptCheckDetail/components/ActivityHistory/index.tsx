@@ -1,4 +1,5 @@
 import { dayjsFormat } from "@/helpers/formatters";
+import { useState } from "react";
 
 export interface ActivityLog {
   user: string;
@@ -10,7 +11,18 @@ type Props = {
   activityLog: ActivityLog[];
 };
 
+const LIMIT = 5;
+
 export default function ActivityHistory({ activityLog }: Props) {
+  const [displayLimit, setDisplayLimit] = useState(LIMIT);
+
+  const displayedLogs = activityLog.slice(0, displayLimit);
+  const hasMore = activityLog.length > displayLimit;
+
+  const handleLoadMore = () => {
+    setDisplayLimit((prev) => prev + LIMIT);
+  };
+
   return (
     <>
       {/* Table Header */}
@@ -30,7 +42,7 @@ export default function ActivityHistory({ activityLog }: Props) {
 
       {/* Table Content */}
       <div className="divide-y">
-        {activityLog.map((activity, index) => (
+        {displayedLogs.map((activity, index) => (
           <div
             key={index}
             className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-gray-50"
@@ -51,6 +63,18 @@ export default function ActivityHistory({ activityLog }: Props) {
           </div>
         ))}
       </div>
+
+      {/* Load More Button */}
+      {hasMore && (
+        <div className="flex justify-center py-4">
+          <button
+            onClick={handleLoadMore}
+            className="px-4 py-2 text-sm font-medium text-blue-600 bg-white border border-blue-600 rounded-md hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Xem thêm
+          </button>
+        </div>
+      )}
     </>
   );
 }

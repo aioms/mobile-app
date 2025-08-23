@@ -16,3 +16,20 @@ export interface IProduct {
     costPrice: number;
   }>;
 }
+
+export interface IProductItem {
+  id: string;
+  code: string;
+  receiptId: string;
+  productId: string;
+  productName: string;
+  productCode: number;
+  actualInventory?: string;
+  inventory?: string;
+  quantity: number;
+  costPrice: number;
+  discount?: number;
+  createdAt: string;
+  periodId?: string;
+  originalQuantity?: number;
+}

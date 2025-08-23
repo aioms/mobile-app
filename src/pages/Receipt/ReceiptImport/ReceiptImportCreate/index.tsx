@@ -30,15 +30,16 @@ import dayjs from "dayjs";
 import clsx from "clsx";
 import { ChevronDown } from "lucide-react";
 import { OverlayEventDetail } from "@ionic/react/dist/types/components/react-component-lib/interfaces";
-import { BarcodeScanner } from "@capacitor-mlkit/barcode-scanning";
 
 import { formatCurrency } from "@/helpers/formatters";
+import { useBarcodeScanner } from "@/hooks/useBarcodeScanner";
 import useReceiptImport from "@/hooks/apis/useReceiptImport";
+import useProduct from "@/hooks/apis/useProduct";
 
 import DatePicker from "@/components/DatePicker";
+import ModalSelectSupplier from "@/components/ModalSelectSupplier";
 import ModalSelectProduct from "../../components/ModalSelectProduct";
 import ReceiptItem from "../../components/ReceiptItem";
-import ModalSelectSupplier from "@/components/ModalSelectSupplier";
 
 import "./ReceiptImportCreate.css";
 
@@ -60,7 +61,81 @@ const ReceiptImportCreate: React.FC = () => {
   const history = useHistory();
 
   const { create: createReceipt } = useReceiptImport();
+  const { getDetail: getProductDetail } = useProduct();
   const [formData, setFormData] = useState(initialDefaultItem);
+
+  // Add product to receipt items from barcode scan
+  const addProductToReceiptItem = async (productCode: string) => {
+    try {
+      const product = await getProductDetail(productCode);
+
+      const productData = {
+        id: product.id,
+        productId: product.id,
+        productName: product.productName,
+        productCode: product.productCode,
+        code: product.code,
+        costPrice: product.costPrice,
+        totalPrice: product.costPrice,
+        quantity: 1,
+        discount: 0,
+      };
+
+      // Check if item already exists in receiptItems, then increase quantity
+      const existingItem = receiptItems.find((item) => item.id === product.id);
+      if (existingItem) {
+        setReceiptItems((prev) =>
+          prev.map((item) =>
+            item.id === product.id
+              ? {
+                  ...item,
+                  quantity: item.quantity + 1,
+                  totalPrice: (item.quantity + 1) * item.costPrice,
+                }
+              : item
+          )
+        );
+
+        await Toast.show({
+          text: `Đã tăng số lượng ${product.productName} lên ${
+            existingItem.quantity + 1
+          }`,
+          duration: "short",
+          position: "center",
+        });
+      } else {
+        setReceiptItems((prev) => [...prev, productData]);
+
+        await Toast.show({
+          text: `Đã thêm ${product.productName} vào phiếu nhập`,
+          duration: "short",
+          position: "center",
+        });
+      }
+    } catch (error) {
+      await Toast.show({
+        text: (error as Error).message || "Không tìm thấy sản phẩm",
+        duration: "long",
+        position: "center",
+      });
+    }
+  };
+
+  const handleBarcodeScanned = (value: string) => {
+    stopScan();
+    addProductToReceiptItem(value);
+  };
+
+  const { startScan, stopScan } = useBarcodeScanner({
+    onBarcodeScanned: handleBarcodeScanned,
+    onError: (error: Error) => {
+      Toast.show({
+        text: error.message,
+        duration: "long",
+        position: "center",
+      });
+    },
+  });
 
   // OPEN MODAL SELECT PRODUCT
   const [presentModalProduct, dismissModalProduct] = useIonModal(
@@ -120,40 +195,6 @@ const ReceiptImportCreate: React.FC = () => {
       return total + row.quantity;
     }, 0);
   }, [receiptItems]);
-
-  const scanBarcode = async () => {
-    try {
-      const granted = await requestPermissions();
-      if (!granted) {
-        return await Toast.show({
-          text: "Bạn cần cấp quyền truy cập camera để quét mã vạch",
-          duration: "short",
-          position: "center",
-        });
-      }
-
-      const { barcodes } = await BarcodeScanner.scan();
-
-      const barcodeValue = barcodes.find((barcode) => barcode.rawValue);
-
-      await Toast.show({
-        text: JSON.stringify(barcodeValue),
-        duration: "long",
-        position: "top",
-      });
-    } catch (error: any) {
-      await Toast.show({
-        text: (error as Error).message,
-        duration: "long",
-        position: "top",
-      });
-    }
-  };
-
-  const requestPermissions = async () => {
-    const { camera } = await BarcodeScanner.requestPermissions();
-    return camera === "granted" || camera === "limited";
-  };
 
   const clearErrors = (key: string) => {
     setErrors((prev) => ({
@@ -297,7 +338,7 @@ const ReceiptImportCreate: React.FC = () => {
             </div>
 
             <IonButtons slot="end" className="ml-2">
-              <IonButton color="primary" onClick={scanBarcode}>
+              <IonButton color="primary" onClick={() => startScan()}>
                 <IonIcon icon={scanOutline} slot="icon-only" />
               </IonButton>
             </IonButtons>
@@ -314,10 +355,7 @@ const ReceiptImportCreate: React.FC = () => {
 
             {/* Import date selection */}
             <IonItem
-              className={clsx(
-                "mt-3",
-                errors.importDate ? "ion-invalid" : ""
-              )}
+              className={clsx("mt-3", errors.importDate ? "ion-invalid" : "")}
             >
               <IonLabel position="stacked">Ngày nhập dự kiến *</IonLabel>
               <DatePicker
@@ -365,7 +403,9 @@ const ReceiptImportCreate: React.FC = () => {
               <IonLabel position="stacked">Chọn nhà cung cấp *</IonLabel>
               <button className="w-full p-4 rounded-lg border border-gray-300 text-left flex items-center justify-between">
                 <span className="text-gray-500">
-                  {formData.supplier ? formData.supplier.split("__")[1] : "Nhà cung cấp"}
+                  {formData.supplier
+                    ? formData.supplier.split("__")[1]
+                    : "Nhà cung cấp"}
                 </span>
                 <ChevronDown className="h-5 w-5 text-gray-400" />
               </button>
@@ -382,6 +422,7 @@ const ReceiptImportCreate: React.FC = () => {
               <ReceiptItem
                 key={index}
                 {...item}
+                quantity={item.quantity} // Pass quantity prop
                 onRowChange={(data) => {
                   setReceiptItems((prev) => {
                     const newItems = [...prev];

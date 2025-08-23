@@ -12,6 +12,8 @@ import {
 } from "@ionic/react";
 import { refreshOutline, bugOutline } from "ionicons/icons";
 import { FallbackProps } from "react-error-boundary";
+import { env } from "@/helpers/common";
+import { Environment } from "@/common/enums";
 
 const FallbackError: React.FC<FallbackProps> = ({
   error,
@@ -54,7 +56,7 @@ const FallbackError: React.FC<FallbackProps> = ({
                 </p>
               </IonText>
 
-              {process.env.NODE_ENV === "development" && (
+              {env === Environment.DEVELOPMENT && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
                   <IonText>
                     <p className="text-sm font-semibold text-red-800 mb-2">
