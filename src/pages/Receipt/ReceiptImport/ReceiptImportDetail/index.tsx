@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useHistory, useParams } from "react-router";
 
-import { Toast } from "@capacitor/toast";
 import { Dialog } from "@capacitor/dialog";
 import {
   IonButton,
@@ -177,7 +176,9 @@ const ReceiptImportDetail: React.FC = () => {
         );
 
       const showUpdate =
-        isAdmin && receiptStatus !== ReceiptImportStatus.COMPLETED;
+        isAdmin &&
+        receiptStatus !== ReceiptImportStatus.COMPLETED &&
+        receiptStatus !== ReceiptImportStatus.CANCELLED;
 
       return {
         showScanProduct,

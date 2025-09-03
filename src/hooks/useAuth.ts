@@ -28,7 +28,6 @@ export const useAuth = () => {
       try {
         setIsLoading(true);
         const token = await getItem("token");
-        console.log({ token });
 
         if (!token) {
           setIsAuthenticated(false);

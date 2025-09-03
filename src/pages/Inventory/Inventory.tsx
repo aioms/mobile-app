@@ -124,13 +124,13 @@ const InventoryScreen = () => {
         <ReceiptCheckList />
       )}
 
-      {selectedSegment === "receipt-import" && (
+      {/* {selectedSegment === "receipt-import" && (
         <IonFab vertical="bottom" horizontal="end" slot="fixed">
           <IonFabButton routerLink={`/tabs/${selectedSegment}/create`}>
             <IonIcon icon={add} />
           </IonFabButton>
         </IonFab>
-      )}
+      )} */}
     </IonContent>
   );
 };

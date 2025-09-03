@@ -14,6 +14,7 @@ import PaymentOptions from "./PaymentOptions";
 import AmountInput from "./AmountInput";
 import QRCodeDisplay from "./QRCodeDisplay";
 import PaymentCompletion from "./PaymentCompletion";
+import { getDate } from "@/helpers/date";
 
 export type PaymentMethod = "cash" | "qr" | null;
 export type PaymentStep = "options" | "amount" | "qr" | "completion";
@@ -131,7 +132,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         {currentStep === "qr" && (
           <QRCodeDisplay
             amount={paymentAmount}
-            orderCode={`ORDER-${Date.now()}`}
+            orderCode={getDate(new Date()).format("DDMMYYYY HHmmss")}
             onBack={handleBack}
             onContinue={() => setCurrentStep("completion")}
           />

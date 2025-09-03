@@ -1,4 +1,4 @@
-import { formatCurrency } from "@/helpers/formatters";
+import { formatCurrency, parseCurrencyInput } from "@/helpers/formatters";
 import {
   IonButton,
   IonFabButton,
@@ -41,11 +41,6 @@ const ReceiptItem: FC<Props> = ({
   );
   const [newCostPrice, setNewCostPrice] = useState<number>(costPrice);
   const [newDiscount, setNewDiscount] = useState<number>(discount);
-
-  const parseCurrencyInput = (value: string): number => {
-    // Remove all non-digit characters and parse to number
-    return parseInt(value.replace(/\D/g, "")) || 0;
-  };
 
   const handleCostPriceChange = (value: string | null | undefined) => {
     if (value !== null && value !== undefined) {

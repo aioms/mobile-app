@@ -521,7 +521,7 @@ const ProductListScreen: React.FC = () => {
                     </SwiperSlide>
                   );
                 })
-                })
+                }
               </Swiper>
             ) : (
               <div className="text-center text-gray-500 py-4">

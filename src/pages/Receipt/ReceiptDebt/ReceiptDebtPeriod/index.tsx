@@ -138,7 +138,6 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
       }
 
       const { customerName, dueDate, note } = response.receipt;
-      console.log({ response });
 
       setReceiptDebt(response.receipt);
       setProductItems(response.items);
@@ -186,25 +185,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
 
       await addNewCollectionPeriod(product);
 
-      // const currentDate = new Date().toISOString();
-      // const dateKey = getDate(currentDate).format("YYYY-MM-DD");
-
-      // // Check if product already exists in current period
-      // const existingProduct = productItems[dateKey]?.find(
-      //   (item) => item.productId === product.id
-      // );
-
-      // if (existingProduct) {
-      //   // Product exists, use handleQuantityChange to increment quantity
-      //   handleQuantityChange(
-      //     dateKey,
-      //     existingProduct.id,
-      //     existingProduct.quantity + 1
-      //   );
-      // } else {
-      // }
-
-      await presentToast({
+      presentToast({
         message: `Đã tự động thêm ${product.productName} từ mã vạch quét`,
         duration: 3000,
         position: "top",
@@ -444,7 +425,8 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
     );
 
     return editedOrAddedItems.reduce((total, product) => {
-      return total + product.costPrice * product.quantity;
+      const originalQuantity = product.originalQuantity || 0;
+      return total + product.costPrice * (product.quantity - originalQuantity);
     }, 0);
   }, [productItems]);
 

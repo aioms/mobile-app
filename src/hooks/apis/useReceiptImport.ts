@@ -47,6 +47,11 @@ const useReceiptImport = () => {
     return response.data;
   };
 
+  const cancelReceiptImport = async (id: string) => {
+    const response = await request.put(`/receipt-imports/${id}/cancel`);
+    return response.data;
+  };
+
   return {
     getList,
     getDetail,
@@ -55,6 +60,7 @@ const useReceiptImport = () => {
     update,
     remove,
     getTotalImportsByDateRange,
+    cancelReceiptImport,
   };
 };
 
