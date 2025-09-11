@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { IonList, IonButton, RefresherEventDetail } from "@ionic/react";
+import {
+  IonList,
+  IonButton,
+  RefresherEventDetail,
+  useIonToast,
+} from "@ionic/react";
 import { Toast } from "@capacitor/toast";
 import { Dialog } from "@capacitor/dialog";
 
 import useReceiptImport from "@/hooks/apis/useReceiptImport";
-import ItemListItem from "./components/ItemList";
+import ImportItemList from "./components/ItemList";
 import { ReceiptListSkeleton } from "./components/ReceiptListSkeleton";
 import { Refresher } from "@/components/Refresher/Refresher";
 import { ReceiptImportStatus } from "@/common/enums/receipt";
@@ -34,8 +39,13 @@ const ReceiptImportList: React.FC<Props> = ({ keyword }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  const { getList: getListReceiptImport, update: updateReceiptImport } =
-    useReceiptImport();
+  const [presentToast] = useIonToast();
+
+  const {
+    getList: getListReceiptImport,
+    update: updateReceiptImport,
+    cancelReceiptImport,
+  } = useReceiptImport();
 
   const fetchReceiptImports = async (page = 1, isLoadMore = false) => {
     try {
@@ -157,6 +167,40 @@ const ReceiptImportList: React.FC<Props> = ({ keyword }) => {
     }
   };
 
+  const handleCancel = async (id: string) => {
+    try {
+      // Show confirmation dialog
+      const { value } = await Dialog.confirm({
+        title: "Xác nhận hủy phiếu",
+        message: "Bạn có chắc chắn muốn hủy phiếu nhập này không?",
+      });
+
+      if (!value) return;
+
+      const response = await cancelReceiptImport(id);
+
+      if (!response?.id) {
+        throw new Error("Hủy phiếu nhập thất bại");
+      }
+
+      presentToast({
+        message: "Đã hủy phiếu nhập",
+        duration: 2000,
+        position: "top",
+        color: "success",
+      });
+
+      fetchReceiptImports();
+    } catch (error) {
+      presentToast({
+        message: (error as Error).message,
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+    }
+  };
+
   return (
     <>
       <Refresher onRefresh={handleRefresh} />
@@ -170,11 +214,12 @@ const ReceiptImportList: React.FC<Props> = ({ keyword }) => {
           </>
         ) : (
           receiptImports.map((item) => (
-            <ItemListItem
+            <ImportItemList
               key={item.id}
               {...item}
               onRequestApproval={handleRequestApproval}
               onComplete={handleComplete}
+              onCancel={handleCancel}
             />
           ))
         )}

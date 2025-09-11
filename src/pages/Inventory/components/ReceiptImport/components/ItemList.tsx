@@ -13,6 +13,7 @@ import {
   cube,
   checkmarkOutline,
   arrowUpOutline,
+  closeOutline,
 } from "ionicons/icons";
 import { formatDate } from "@/helpers/formatters";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,6 +33,7 @@ interface ItemListProps {
   createdAt: string;
   onRequestApproval?: (id: string) => void;
   onComplete?: (id: string) => void;
+  onCancel?: (id: string) => void;
 }
 
 const ItemList: React.FC<ItemListProps> = ({
@@ -45,6 +47,7 @@ const ItemList: React.FC<ItemListProps> = ({
   createdAt,
   onRequestApproval,
   onComplete,
+  onCancel,
 }) => {
   const { user } = useAuth();
   const userRole = user?.role || "";
@@ -58,6 +61,9 @@ const ItemList: React.FC<ItemListProps> = ({
   const showRequestApproval =
     status === ReceiptImportStatus.PROCESSING && isEmployee && isUserCreated;
   const showComplete = status === ReceiptImportStatus.WAITING && canApprove;
+  const showCancel =
+    (status === ReceiptImportStatus.PROCESSING || status === ReceiptImportStatus.WAITING) &&
+    (canApprove || (isEmployee && isUserCreated));
 
   return (
     <IonItemSliding>
@@ -110,6 +116,15 @@ const ItemList: React.FC<ItemListProps> = ({
           >
             <IonIcon slot="icon-only" icon={checkmarkOutline}></IonIcon>
             Hoàn thành
+          </IonItemOption>
+        )}
+        {showCancel && (
+          <IonItemOption
+            color="danger"
+            onClick={() => onCancel?.(id)}
+          >
+            <IonIcon slot="icon-only" icon={closeOutline}></IonIcon>
+            Hủy
           </IonItemOption>
         )}
       </IonItemOptions>

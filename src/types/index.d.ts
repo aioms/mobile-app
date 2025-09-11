@@ -30,6 +30,9 @@ export interface User {
   fullname: string;
   role: UserRole;
   storeCode: string;
+  bankAccountName?: string;
+  bankAccountNumber?: string;
+  bankCode?: string;
 }
 
 export interface IBaseItem {

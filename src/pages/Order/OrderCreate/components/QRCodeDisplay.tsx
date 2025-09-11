@@ -9,6 +9,10 @@ import {
 import { chevronBack, copy, checkmark, download } from "ionicons/icons";
 import { formatCurrency } from "@/helpers/formatters";
 import { VietQR } from "vietqr";
+import { useAuth } from "@/hooks/useAuth";
+import useUser from "@/hooks/apis/useUser";
+import { useLoading } from "@/hooks/useLoading";
+import { useIonToast } from "@ionic/react";
 
 interface QRCodeDisplayProps {
   amount: number;
@@ -17,18 +21,17 @@ interface QRCodeDisplayProps {
   onContinue: () => void;
 }
 
-// Bank account configuration - replace with actual values
-const BANK_CONFIG = {
-  accountNumber: "1234567890",
-  accountName: "CONG TY AIOM SYSTEM",
-  bankCode: "970415", // VCB - Vietcombank
-};
-
-// VietQR API configuration - replace with your actual credentials
+// VietQR API configuration
 const VIETQR_CONFIG = {
   clientID: import.meta.env.VITE_VIETQR_CLIENT_ID,
   apiKey: import.meta.env.VITE_VIETQR_API_KEY,
 };
+
+interface BankConfig {
+  accountNumber: string;
+  accountName: string;
+  bankCode: string;
+}
 
 const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   amount,
@@ -36,16 +39,86 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   onBack,
   onContinue,
 }) => {
+  const { user } = useAuth();
+  const { getDetail } = useUser();
+  const { withLoading } = useLoading();
+  const [presentToast] = useIonToast();
+
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [isCopied, setIsCopied] = useState(false);
+  const [bankConfig, setBankConfig] = useState<BankConfig | null>(null);
 
   useEffect(() => {
-    generateQRCode();
-  }, [amount, orderCode]);
+    if (user?.id) {
+      fetchUserBankInfo();
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (bankConfig) {
+      generateQRCode();
+    }
+  }, [amount, orderCode, bankConfig]);
+
+  const fetchUserBankInfo = async () => {
+    if (!user?.id) return;
+
+    await withLoading(async () => {
+      try {
+        const userData = await getDetail(user.id);
+
+        if (userData) {
+          setBankConfig({
+            accountNumber: userData.bankAccountNumber || "",
+            accountName: userData.bankAccountName || "",
+            bankCode: userData.bankCode || "",
+          });
+        } else {
+          throw new Error("Không tìm thấy thông tin tài khoản ngân hàng");
+        }
+      } catch (error) {
+        await presentToast({
+          message:
+            (error as Error).message || "Không thể tải thông tin ngân hàng",
+          duration: 3000,
+          position: "top",
+          color: "danger",
+        });
+        setError("Không thể tải thông tin ngân hàng");
+      }
+    });
+  };
+
+  const handleRetry = async () => {
+    setError("");
+    setQrCodeUrl("");
+
+    // Re-fetch bank info if it's missing
+    if (!bankConfig && user?.id) {
+      await fetchUserBankInfo();
+    } else if (bankConfig) {
+      // If bank config exists, just regenerate QR
+      await generateQRCode();
+    }
+  };
 
   const generateQRCode = async () => {
+    if (!bankConfig) {
+      setError("Thông tin ngân hàng chưa được tải");
+      return;
+    }
+
+    if (
+      !bankConfig.accountNumber ||
+      !bankConfig.accountName ||
+      !bankConfig.bankCode
+    ) {
+      setError("Thông tin ngân hàng không đầy đủ");
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError("");
@@ -60,9 +133,9 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
 
       // Generate QR code using the correct API
       const { data: result } = await vietQR.genQRCodeBase64({
-        bank: BANK_CONFIG.bankCode,
-        accountNumber: BANK_CONFIG.accountNumber,
-        accountName: BANK_CONFIG.accountName,
+        bank: bankConfig.bankCode,
+        accountNumber: bankConfig.accountNumber,
+        accountName: bankConfig.accountName,
         amount: amount.toString(),
         memo: transferContent,
         template: "compact2", // Options: 'qr_only', 'compact', 'compact2'
@@ -82,11 +155,13 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   };
 
   const copyAccountInfo = async () => {
+    if (!bankConfig) return;
+
     const accountInfo = `Số tài khoản: ${
-      BANK_CONFIG.accountNumber
-    }\nTên tài khoản: ${BANK_CONFIG.accountName}\nSố tiền: ${formatCurrency(
+      bankConfig.accountNumber
+    }\nTên tài khoản: ${bankConfig.accountName}\nSố tiền: ${formatCurrency(
       amount
-    )}\nNội dung: Thanh toan don hang`;
+    )}\nNội dung: Thanh toan ${orderCode}`;
 
     try {
       await navigator.clipboard.writeText(accountInfo);
@@ -144,7 +219,7 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
             ) : error ? (
               <div className="flex flex-col justify-center items-center h-64 text-red-500">
                 <p className="mb-4">{error}</p>
-                <IonButton fill="outline" onClick={generateQRCode}>
+                <IonButton fill="outline" onClick={handleRetry}>
                   Thử lại
                 </IonButton>
               </div>
@@ -174,11 +249,15 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Số tài khoản:</span>
-                <span className="font-medium">{BANK_CONFIG.accountNumber}</span>
+                <span className="font-medium">
+                  {bankConfig?.accountNumber || "--"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Tên tài khoản:</span>
-                <span className="font-medium">{BANK_CONFIG.accountName}</span>
+                <span className="font-medium">
+                  {bankConfig?.accountName || "--"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Số tiền:</span>

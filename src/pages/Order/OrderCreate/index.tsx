@@ -70,6 +70,7 @@ interface IOrderItem {
   code: string;
   quantity: number;
   sellingPrice: number;
+  vatRate?: number;
 }
 
 interface IFormData {
@@ -217,6 +218,7 @@ const OrderCreate: React.FC = () => {
         code: product.code,
         sellingPrice: product.sellingPrice,
         quantity: 1,
+        vatRate: 0,
       };
 
       // Write function check if item is exists in orderItems, then increase quantity of item
@@ -286,6 +288,7 @@ const OrderCreate: React.FC = () => {
               {
                 ...data,
                 quantity: 1,
+                vatRate: 0,
               },
             ]);
           }
@@ -437,6 +440,14 @@ const OrderCreate: React.FC = () => {
     }, 0);
   };
 
+  const calculateTotalVat = () => {
+    return orderItems.reduce((totalVat, item) => {
+      const itemPrice = item.sellingPrice * item.quantity;
+      const vatAmount = (itemPrice * (item.vatRate || 0)) / 100;
+      return totalVat + vatAmount;
+    }, 0);
+  };
+
   const calculateDiscount = () => {
     const subtotal = calculateTotal();
     if (formData.discountType === "percentage" && formData.discountPercentage) {
@@ -448,7 +459,10 @@ const OrderCreate: React.FC = () => {
   };
 
   const calculateFinalTotal = () => {
-    const finalTotal = calculateTotal() - calculateDiscount();
+    const subtotal = calculateTotal();
+    const discount = calculateDiscount();
+    const vat = calculateTotalVat();
+    const finalTotal = subtotal - discount + vat;
     return finalTotal > 0 ? finalTotal : 0;
   };
 
@@ -578,14 +592,15 @@ const OrderCreate: React.FC = () => {
         code: item.code,
         quantity: item.quantity,
         price: item.sellingPrice,
+        vatRate: item.vatRate || 0,
       })),
       vatInfo: formData.vatEnabled
         ? {
-            companyName: formData.companyName,
-            taxCode: formData.taxCode,
-            email: formData.email,
-            remark: formData.remark,
-          }
+          companyName: formData.companyName,
+          taxCode: formData.taxCode,
+          email: formData.email,
+          remark: formData.remark,
+        }
         : null,
     };
 
@@ -675,6 +690,7 @@ const OrderCreate: React.FC = () => {
                     <OrderItem
                       key={item.id}
                       {...item}
+                      vatRate={item.vatRate || 0}
                       attrs={{ "data-order-item": "true" }}
                       onRowChange={(data) => handleItemChange(item.id, data)}
                       onRemoveItem={() => handleRemoveItem(item.id)}
@@ -818,7 +834,7 @@ const OrderCreate: React.FC = () => {
                     className={cn(`rounded-lg transition-colors`, {
                       "bg-custom-primary border border-custom-primary":
                         formData.paymentMethod ===
-                          PaymentMethod.BANK_TRANSFER ||
+                        PaymentMethod.BANK_TRANSFER ||
                         !formData.paymentMethod,
                       border: formData.paymentMethod === PaymentMethod.CASH,
                     })}
@@ -936,8 +952,16 @@ const OrderCreate: React.FC = () => {
             </div>
             <div className="flex justify-between items-center mb-2">
               <span className="text-muted-foreground">Giảm giá</span>
+              <span className={cn("text-foreground", {
+                "text-red-600": calculateDiscount() > 0
+              })}>
+                {calculateDiscount() > 0 ? `-${formatCurrency(calculateDiscount())}` : 0}
+              </span>
+            </div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-muted-foreground">Tổng VAT</span>
               <span className="text-foreground">
-                {formatCurrency(calculateDiscount())}
+                {formatCurrency(calculateTotalVat())}
               </span>
             </div>
             <div className="flex justify-between items-center font-bold pt-2 border-t border-border">

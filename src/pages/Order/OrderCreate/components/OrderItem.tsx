@@ -14,6 +14,7 @@ type Props = {
   code: string;
   quantity: number;
   sellingPrice: number;
+  vatRate?: number;
   attrs?: any;
   onRowChange?: (data: any) => void;
   onRemoveItem?: () => void;
@@ -26,6 +27,7 @@ const OrderItem: FC<Props> = memo(
     code,
     quantity,
     sellingPrice,
+    vatRate = 0,
     onRowChange,
     onRemoveItem,
   }) => {
@@ -34,6 +36,7 @@ const OrderItem: FC<Props> = memo(
       formatCurrencyWithoutSymbol(sellingPrice)
     );
     const [newPrice, setNewPrice] = useState<number>(sellingPrice);
+    const [newVatRate, setNewVatRate] = useState<number>(vatRate);
 
     const handleQuantityChange = (value: number | null) => {
       if (value !== null && value >= 1) {
@@ -51,6 +54,15 @@ const OrderItem: FC<Props> = memo(
       }
     };
 
+    const handleVatRateChange = (value: string | null | undefined) => {
+      if (value !== null && value !== undefined) {
+        const numericValue = Number(value) || 0;
+        if (numericValue >= 0 && numericValue <= 100) {
+          setNewVatRate(numericValue);
+        }
+      }
+    };
+
     useEffect(() => {
       if (quantity !== newQuantity) {
         setNewQuantity(quantity);
@@ -62,11 +74,14 @@ const OrderItem: FC<Props> = memo(
         onRowChange({
           quantity: newQuantity,
           sellingPrice: newPrice,
+          vatRate: newVatRate,
         });
       }
-    }, [newQuantity, newPrice]);
+    }, [newQuantity, newPrice, newVatRate]);
 
     const totalPrice = newPrice * newQuantity;
+    const vatAmount = (totalPrice * newVatRate) / 100;
+    const totalWithVat = totalPrice + vatAmount;
 
     return (
       <div className="border-b border-gray-200 py-3" {...attrs}>
@@ -114,11 +129,23 @@ const OrderItem: FC<Props> = memo(
             </div>
           </div>
           {/* Price Block */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-500 min-w-max">Đơn giá</span>
             <IonInput
               value={formattedPrice}
               onIonInput={(e) => handlePriceChange(e.detail.value)}
+              className="border rounded-lg text-sm w-28 custom-padding"
+            />
+          </div>
+          {/* VAT Rate Block */}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-500 min-w-max">VAT (%)</span>
+            <IonInput
+              value={newVatRate}
+              onIonInput={(e) => handleVatRateChange(e.detail.value)}
+              type="number"
+              min="0"
+              max="100"
               className="border rounded-lg text-sm w-28 custom-padding"
             />
           </div>
@@ -129,8 +156,16 @@ const OrderItem: FC<Props> = memo(
             <div className="text-xs text-gray-500">
               {formatCurrency(newPrice)} × {newQuantity}
             </div>
+            <div className="text-xs text-gray-500">
+              Tiền hàng: {formatCurrency(totalPrice)}
+            </div>
+            {newVatRate > 0 && (
+              <div className="text-xs text-gray-500">
+                VAT ({newVatRate}%): {formatCurrency(vatAmount)}
+              </div>
+            )}
             <div className="font-medium text-green-600">
-              {formatCurrency(totalPrice)}
+              Tổng: {formatCurrency(totalWithVat)}
             </div>
           </div>
         </div>

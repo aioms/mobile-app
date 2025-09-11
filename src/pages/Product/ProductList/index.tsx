@@ -19,6 +19,9 @@ import {
   IonHeader,
   IonToolbar,
   IonTitle,
+  IonFab,
+  IonFabButton,
+  RefresherEventDetail,
 } from "@ionic/react";
 import {
   filterOutline,
@@ -26,6 +29,7 @@ import {
   scanOutline,
   close,
   chevronForward,
+  add,
 } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
 
@@ -38,6 +42,7 @@ import ContentSkeleton from "@/components/Loading/ContentSkeleton";
 import ProductCard from "./components/ProductCard";
 import CategoriesModal from "./components/CategoriesModal";
 import FilterModal, { FilterValues } from "./components/FilterModal";
+import { Refresher } from "@/components/Refresher/Refresher";
 
 import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
 import useProduct from "@/hooks/apis/useProduct";
@@ -72,6 +77,7 @@ interface LowStockProduct {
   sellingPrice: number;
   inventory: number;
   unit: string;
+  imageUrls?: string[]; // Add imageUrls array property
 }
 
 const LIMIT = 10;
@@ -118,7 +124,7 @@ const ProductListScreen: React.FC = () => {
       }
 
       // Navigate to product detail page
-      history.push(`/tabs/products/${product.id}`);
+      history.push(`/tabs/products/detail/${product.id}`);
     } catch (error) {
       await Toast.show({
         text: (error as Error).message,
@@ -191,6 +197,20 @@ const ProductListScreen: React.FC = () => {
     setPage(1);
     fetchProducts(1);
   }, [filters]);
+
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    try {
+      // Reset page and fetch fresh data
+      setPage(1);
+      await Promise.all([
+        fetchProducts(1, false),
+        fetchTotalProductAndInventory(),
+        fetchLowStockProducts(1, false)
+      ]);
+    } finally {
+      event.detail.complete();
+    }
+  };
 
   useIonViewWillEnter(() => {
     fetchTotalProductAndInventory();
@@ -291,6 +311,7 @@ const ProductListScreen: React.FC = () => {
       </IonHeader>
 
       <IonContent className="ion-padding">
+        <Refresher onRefresh={handleRefresh} />
         <div className="">
           <div className="flex items-center gap-2 mb-2">
             <IonSearchbar
@@ -452,51 +473,76 @@ const ProductListScreen: React.FC = () => {
                 }}
                 className="low-stock-swiper"
               >
-                {lowStockProducts.map((product) => (
-                  <SwiperSlide key={product.id}>
-                    <div className="bg-gray-100 rounded-lg p-4 flex items-center">
-                      <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center mr-4">
-                        <IonIcon
-                          icon={addOutline}
-                          className="text-gray-400 text-2xl"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium">{product.productName}</h4>
-                        <p className="text-sm text-gray-500">{product.code}</p>
-                        <div className="flex gap-2 mt-1">
-                          <p className="text-sm">
-                            Tồn: {product.inventory} {product.unit}
+                {lowStockProducts.map((product) => {
+                  // Get the first image URL or use fallback
+                  const primaryImageUrl =
+                    product.imageUrls && product.imageUrls.length > 0
+                      ? product.imageUrls[0]
+                      : null;
+
+                  return (
+                    <SwiperSlide key={product.id}>
+                      <div className="bg-gray-100 rounded-lg p-4 flex items-center">
+                        <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center mr-4 overflow-hidden">
+                          {primaryImageUrl ? (
+                            <img
+                              src={primaryImageUrl}
+                              alt={product.productName}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                // Fallback to placeholder if image fails to load
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = "none";
+                                target.parentElement!.innerHTML =
+                                  '<ion-icon name="add-outline" class="text-gray-400 text-2xl"></ion-icon>';
+                              }}
+                            />
+                          ) : (
+                            <IonIcon
+                              icon={addOutline}
+                              className="text-gray-400 text-2xl"
+                            />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium">{product.productName}</h4>
+                          <p className="text-sm text-gray-500">
+                            {product.code}
                           </p>
-                        </div>
-                        <div className="flex justify-between mt-1">
-                          <div>
-                            <p className="text-xs text-gray-500">Giá vốn</p>
-                            <p className="text-sm font-medium">
-                              {formatCurrencyWithoutSymbol(product.costPrice)}
+                          <div className="flex gap-2 mt-1">
+                            <p className="text-sm">
+                              Tồn: {product.inventory} {product.unit}
                             </p>
                           </div>
-                          <div>
-                            <p className="text-xs text-gray-500">Giá bán</p>
-                            <p className="text-sm font-medium">
-                              {formatCurrencyWithoutSymbol(
-                                product.sellingPrice
-                              )}
-                            </p>
+                          <div className="flex justify-between mt-1">
+                            <div>
+                              <p className="text-xs text-gray-500">Giá vốn</p>
+                              <p className="text-sm font-medium">
+                                {formatCurrencyWithoutSymbol(product.costPrice)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">Giá bán</p>
+                              <p className="text-sm font-medium">
+                                {formatCurrencyWithoutSymbol(
+                                  product.sellingPrice
+                                )}
+                              </p>
+                            </div>
                           </div>
                         </div>
+                        <IonButton
+                          fill="solid"
+                          size="small"
+                          className="bg-blue-600 rounded text-white"
+                          routerLink="/tabs/receipt-import/create"
+                        >
+                          Nhập thêm
+                        </IonButton>
                       </div>
-                      <IonButton
-                        fill="solid"
-                        size="small"
-                        className="bg-blue-600 rounded text-white"
-                        routerLink="/tabs/receipt-import/create"
-                      >
-                        Nhập thêm
-                      </IonButton>
-                    </div>
-                  </SwiperSlide>
-                ))}
+                    </SwiperSlide>
+                  );
+                })}
               </Swiper>
             ) : (
               <div className="text-center text-gray-500 py-4">
@@ -506,6 +552,13 @@ const ProductListScreen: React.FC = () => {
           </div>
         </div>
       </IonContent>
+
+      {/* Floating Action Button */}
+      <IonFab vertical="bottom" horizontal="end" slot="fixed">
+        <IonFabButton routerLink="/tabs/products/create">
+          <IonIcon icon={add} />
+        </IonFabButton>
+      </IonFab>
     </IonPage>
   );
 };

@@ -13,15 +13,20 @@ import {
   bagHandleOutline,
   cartOutline,
 } from "ionicons/icons";
-import { Redirect, Route } from "react-router-dom";
+import { Redirect as RouterRedirect, Route as RouterRoute } from "react-router-dom";
+
+// Type assertion to fix React Router v5 compatibility with React 18
+const Route = RouterRoute as any;
+const Redirect = RouterRedirect as any;
 
 /* Screens */
 import MenuLayout from "../Layout/MenuLayout";
 import NotFound from "@/pages/Error/NotFound";
 
 import HomeScreen from "@/pages/Home/Home";
-import ProductListScreen from "@/pages/Product/ProductList/ProductList";
-import ProductDetailScreen from "@/pages/Product/ProductDetail/ProductDetail";
+import ProductListScreen from "@/pages/Product/ProductList";
+import ProductDetailScreen from "@/pages/Product/ProductDetail";
+import ProductCreateScreen from "@/pages/Product/ProductCreate";
 
 import InventoryScreen from "@/pages/Inventory/Inventory";
 
@@ -116,7 +121,12 @@ const TabBar: React.FC = () => {
         <Route exact path="/tabs/products" component={ProductListScreen} />
         <Route
           exact
-          path="/tabs/products/:id"
+          path="/tabs/products/create"
+          component={ProductCreateScreen}
+        />
+        <Route
+          exact
+          path="/tabs/products/detail/:id"
           component={ProductDetailScreen}
         />
 

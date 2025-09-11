@@ -204,6 +204,12 @@ const ProductDetail: React.FC = () => {
     });
   };
 
+  // Get the first image URL or use fallback
+  const primaryImageUrl =
+    product?.imageUrls && product.imageUrls.length > 0
+      ? product.imageUrls[0]
+      : null;
+
   return (
     <IonPage>
       <IonHeader className="ion-no-border">
@@ -231,10 +237,28 @@ const ProductDetail: React.FC = () => {
       <IonContent fullscreen className="ion-padding">
         {/* Product Image Section */}
         <div className="mb-6">
-          <div className="relative w-full h-48 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden">
-            <IonIcon icon={image} className="text-6xl text-gray-400" />
+          <div className="relative w-full h-48 bg-gray-100 rounded-xl overflow-hidden">
+            {primaryImageUrl ? (
+              <img
+                src={primaryImageUrl}
+                alt={product?.productName || "Product image"}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback to placeholder if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = "none";
+                  target.parentElement!.innerHTML =
+                    '<div class="w-full h-full flex items-center justify-center"><ion-icon name="image" class="text-6xl text-gray-400"></ion-icon></div>';
+                }}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <IonIcon icon={image} className="text-6xl text-gray-400" />
+              </div>
+            )}
           </div>
         </div>
+
         {/* Basic Info Card */}
         <IonCard className="rounded-xl shadow-sm">
           <IonCardContent className="p-4">

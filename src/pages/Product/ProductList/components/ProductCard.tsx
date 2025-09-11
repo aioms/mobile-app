@@ -1,6 +1,7 @@
 import { FC } from "react";
 import { useHistory } from "react-router";
 import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
+import NotImage from "@/components/NotImage";
 
 interface ProductCardProps {
   product: {
@@ -14,6 +15,7 @@ interface ProductCardProps {
     category: string;
     inventory?: number;
     unit?: string;
+    imageUrls?: string[]; // Add imageUrls property
   };
 }
 
@@ -21,7 +23,7 @@ const ProductCard: FC<ProductCardProps> = ({ product }) => {
   const history = useHistory();
 
   const handleClick = () => {
-    history.push(`/tabs/products/${product.id}`);
+    history.push(`/tabs/products/detail/${product.id}`);
   };
 
   const getInventoryStatus = (inventory: number = 0) => {
@@ -33,11 +35,34 @@ const ProductCard: FC<ProductCardProps> = ({ product }) => {
 
   const inventoryStatus = getInventoryStatus(product.inventory);
 
+  // Get the first image URL or use fallback
+  const primaryImageUrl =
+    product.imageUrls && product.imageUrls.length > 0
+      ? product.imageUrls[0]
+      : null;
+
   return (
     <div className="bg-white rounded-2xl p-4 flex gap-4" onClick={handleClick}>
-      {/* Image placeholder */}
-      <div className="w-20 h-20 bg-gray-100 rounded-xl flex-shrink-0 flex items-center justify-center">
-        <span className="text-2xl text-gray-400">+</span>
+      {/* Product Image */}
+      <div className="w-20 h-20 bg-gray-100 rounded-xl flex-shrink-0 overflow-hidden">
+        {primaryImageUrl ? (
+          <img
+            src={primaryImageUrl}
+            alt={product.productName}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              // Fallback to placeholder if image fails to load
+              const target = e.target as HTMLImageElement;
+              target.style.display = "none";
+              target.parentElement!.innerHTML =
+                '<div class="w-full h-full flex items-center justify-center"><span class="text-2xl text-gray-400">+</span></div>';
+            }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="text-2xl text-gray-400">+</span>
+          </div>
+        )}
       </div>
 
       {/* Product details */}

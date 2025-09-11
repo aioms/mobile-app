@@ -10,6 +10,7 @@ export interface IProduct {
   inventory: number;
   unit: string;
   description: string;
+  imageUrls?: string[]; // Add imageUrls array property
   suppliers: Array<{
     id: string;
     name: string;
