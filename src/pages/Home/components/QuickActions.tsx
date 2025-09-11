@@ -59,7 +59,7 @@ const QuickActions: React.FC = () => {
 
       switch (data?.type) {
         case "product":
-          history.push(`/tabs/products/${result.id}`);
+          history.push(`/tabs/products/detail/${result.id}`);
           break;
         case "order":
           if (result.inventory === 0) {

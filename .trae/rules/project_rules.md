@@ -65,3 +65,8 @@ presentToast({
   position: 'top'
 });
 ```
+
+## 4. Package Manager
+
+* Use `yarn` as the package manager for the project.
+* **Do not** use `npm` or `pnpm` for package management.

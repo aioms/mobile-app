@@ -3,12 +3,14 @@ import { IonIcon } from "@ionic/react";
 import { cardOutline } from "ionicons/icons";
 
 import { formatCurrency } from "@/helpers/formatters";
+import { IOrderItem } from "@/types";
 
 interface PaymentInfoSectionProps {
   subtotal: number;
   discount: number;
   total: number;
   paymentMethod: string;
+  items: IOrderItem[];
 }
 
 const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
@@ -16,7 +18,14 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
   discount,
   total,
   paymentMethod,
+  items,
 }) => {
+  const totalVat = items.reduce((acc, item) => {
+    const itemTotal = item.price * item.quantity;
+    const itemVat = (itemTotal * (item.vatRate || 0)) / 100;
+    return acc + itemVat;
+  }, 0);
+
   return (
     <div className="bg-card rounded-lg shadow-sm mb-4">
       <div className="p-4 border-b border-border">
@@ -31,13 +40,17 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
       <div className="p-4">
         <div className="flex justify-between items-center mb-2">
           <span className="text-muted-foreground">Tổng tiền hàng:</span>
-          <span>{formatCurrency(subtotal)}</span>
+          <span>{formatCurrency(subtotal - totalVat)}</span>
         </div>
         <div className="flex justify-between items-center mb-2">
           <span className="text-muted-foreground">Giảm giá:</span>
           {discount && (
             <span className="text-red-500">-{formatCurrency(discount)}</span>
           )}
+        </div>
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-muted-foreground">Tổng VAT:</span>
+          <span>{formatCurrency(totalVat)}</span>
         </div>
         <div className="flex justify-between items-center mb-2">
           <span className="text-muted-foreground">Phương thức thanh toán:</span>

@@ -19,6 +19,9 @@ import {
   IonHeader,
   IonToolbar,
   IonTitle,
+  IonFab,
+  IonFabButton,
+  RefresherEventDetail,
 } from "@ionic/react";
 import {
   filterOutline,
@@ -26,6 +29,7 @@ import {
   scanOutline,
   close,
   chevronForward,
+  add,
 } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
 
@@ -38,6 +42,7 @@ import ContentSkeleton from "@/components/Loading/ContentSkeleton";
 import ProductCard from "./components/ProductCard";
 import CategoriesModal from "./components/CategoriesModal";
 import FilterModal, { FilterValues } from "./components/FilterModal";
+import { Refresher } from "@/components/Refresher/Refresher";
 
 import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
 import useProduct from "@/hooks/apis/useProduct";
@@ -119,7 +124,7 @@ const ProductListScreen: React.FC = () => {
       }
 
       // Navigate to product detail page
-      history.push(`/tabs/products/${product.id}`);
+      history.push(`/tabs/products/detail/${product.id}`);
     } catch (error) {
       await Toast.show({
         text: (error as Error).message,
@@ -192,6 +197,20 @@ const ProductListScreen: React.FC = () => {
     setPage(1);
     fetchProducts(1);
   }, [filters]);
+
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    try {
+      // Reset page and fetch fresh data
+      setPage(1);
+      await Promise.all([
+        fetchProducts(1, false),
+        fetchTotalProductAndInventory(),
+        fetchLowStockProducts(1, false)
+      ]);
+    } finally {
+      event.detail.complete();
+    }
+  };
 
   useIonViewWillEnter(() => {
     fetchTotalProductAndInventory();
@@ -292,6 +311,7 @@ const ProductListScreen: React.FC = () => {
       </IonHeader>
 
       <IonContent className="ion-padding">
+        <Refresher onRefresh={handleRefresh} />
         <div className="">
           <div className="flex items-center gap-2 mb-2">
             <IonSearchbar
@@ -486,7 +506,9 @@ const ProductListScreen: React.FC = () => {
                         </div>
                         <div className="flex-1">
                           <h4 className="font-medium">{product.productName}</h4>
-                          <p className="text-sm text-gray-500">{product.code}</p>
+                          <p className="text-sm text-gray-500">
+                            {product.code}
+                          </p>
                           <div className="flex gap-2 mt-1">
                             <p className="text-sm">
                               Tồn: {product.inventory} {product.unit}
@@ -520,8 +542,7 @@ const ProductListScreen: React.FC = () => {
                       </div>
                     </SwiperSlide>
                   );
-                })
-                }
+                })}
               </Swiper>
             ) : (
               <div className="text-center text-gray-500 py-4">
@@ -531,6 +552,13 @@ const ProductListScreen: React.FC = () => {
           </div>
         </div>
       </IonContent>
+
+      {/* Floating Action Button */}
+      <IonFab vertical="bottom" horizontal="end" slot="fixed">
+        <IonFabButton routerLink="/tabs/products/create">
+          <IonIcon icon={add} />
+        </IonFabButton>
+      </IonFab>
     </IonPage>
   );
 };

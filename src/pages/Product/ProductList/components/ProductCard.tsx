@@ -23,7 +23,7 @@ const ProductCard: FC<ProductCardProps> = ({ product }) => {
   const history = useHistory();
 
   const handleClick = () => {
-    history.push(`/tabs/products/${product.id}`);
+    history.push(`/tabs/products/detail/${product.id}`);
   };
 
   const getInventoryStatus = (inventory: number = 0) => {

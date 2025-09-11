@@ -4,6 +4,7 @@ export interface IOrderItem {
   code: string;
   quantity: number;
   price: number;
+  vatRate?: number;
 }
 
 export interface IVatInfo {
