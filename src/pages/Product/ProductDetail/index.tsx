@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Toast } from "@capacitor/toast";
 import {
   IonContent,
@@ -31,10 +31,12 @@ import { useParams } from "react-router";
 import useProduct from "@/hooks/apis/useProduct";
 import BarcodeModal from "./components/BarcodeModal";
 import InventoryHistory from "./components/InventoryHistory";
-
-import "./ProductDetail.css";
 import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
 import type { IProduct } from "@/types/product.type";
+import { useAuth } from "@/hooks";
+import { UserRole } from "@/common/enums/user";
+
+import "./ProductDetail.css";
 
 interface HistoryItem {
   receiptNumber: string;
@@ -51,6 +53,7 @@ interface HistoryData {
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const [product, setProduct] = useState<IProduct | null>(null);
 
   const [showActionSheet, setShowActionSheet] = useState(false);
@@ -210,6 +213,11 @@ const ProductDetail: React.FC = () => {
       ? product.imageUrls[0]
       : null;
 
+  const isShowCostPrice = useMemo(() => {
+    const roles = [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.MANAGER];
+    return user?.role ? roles.includes(user.role) : false;
+  }, [user?.role])
+
   return (
     <IonPage>
       <IonHeader className="ion-no-border">
@@ -334,18 +342,20 @@ const ProductDetail: React.FC = () => {
             </div>
 
             {/* Prices */}
-            {/* <div className="flex justify-between items-center mb-2">
-              <IonLabel className="text-sm text-gray-500 block mb-2">
-                Giá vốn
-              </IonLabel>
-              <IonText>
-                <p className="text-sm">
-                  {product?.costPrice
-                    ? formatCurrencyWithoutSymbol(product?.costPrice)
-                    : "--"}
-                </p>
-              </IonText>
-            </div> */}
+            {isShowCostPrice ? (
+              <div className="flex justify-between items-center mb-2">
+                <IonLabel className="text-sm text-gray-500 block mb-2">
+                  Giá vốn
+                </IonLabel>
+                <IonText>
+                  <p className="text-sm">
+                    {product?.costPrice
+                      ? formatCurrencyWithoutSymbol(product?.costPrice)
+                      : "--"}
+                  </p>
+                </IonText>
+              </div>
+            ) : null}
             <div className="flex justify-between items-center mb-2">
               <IonLabel className="text-sm text-gray-500 block mb-2">
                 Giá bán
