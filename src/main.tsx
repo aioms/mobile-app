@@ -5,10 +5,10 @@ import { addIcons } from "ionicons";
 import { flashlight, stop, search } from "ionicons/icons";
 import App from "./App";
 
-import * as Sentry from "@sentry/capacitor";
-import * as SentryReact from "@sentry/react";
+// import * as Sentry from "@sentry/capacitor";
+// import * as SentryReact from "@sentry/react";
 import { envConfig, getEnvironment } from "./helpers/common";
-import { Environment } from "./common/enums";
+// import { Environment } from "./common/enums";
 
 addIcons({ flashlight, stop, search });
 
@@ -25,30 +25,30 @@ if (!container) {
 const root = createRoot(container!);
 const environment = getEnvironment();
 
-if ([Environment.PRODUCTION, Environment.STAGING].includes(environment)) {
-  Sentry.init(
-    {
-      dsn: envConfig.VITE_SENTRY_DSN,
-      sendDefaultPii: true,
-      // Set your release version, such as "getsentry@1.0.0"
-      release: "aiom-mobile@1.0.0",
-      integrations: [Sentry.browserTracingIntegration()],
-      // Tracing
-      tracesSampleRate: 1.0, //  Capture 100% of the transactions
+// if ([Environment.PRODUCTION, Environment.STAGING].includes(environment)) {
+//   Sentry.init(
+//     {
+//       dsn: envConfig.VITE_SENTRY_DSN,
+//       sendDefaultPii: true,
+//       // Set your release version, such as "getsentry@1.0.0"
+//       release: "aiom-mobile@1.0.0",
+//       integrations: [Sentry.browserTracingIntegration()],
+//       // Tracing
+//       tracesSampleRate: 1.0, //  Capture 100% of the transactions
 
-      environment,
-      tracePropagationTargets: [
-        "localhost",
-        /^https:\/\/aioms-api\.deno\.dev/,
-        /^https:\/\/aioms-api\.deno\.dev\/api\/v1/,
-        /^https:\/\/aioms-api-stg\.deno\.dev/,
-        /^https:\/\/aioms-api-stg\.deno\.dev\/api\/v1/,
-      ],
-    },
-    // Forward the init method from @sentry/react
-    SentryReact.init
-  );
-}
+//       environment,
+//       tracePropagationTargets: [
+//         "localhost",
+//         /^https:\/\/aioms-api\.deno\.dev/,
+//         /^https:\/\/aioms-api\.deno\.dev\/api\/v1/,
+//         /^https:\/\/aioms-api-stg\.deno\.dev/,
+//         /^https:\/\/aioms-api-stg\.deno\.dev\/api\/v1/,
+//       ],
+//     },
+//     // Forward the init method from @sentry/react
+//     SentryReact.init
+//   );
+// }
 
 root.render(
   <React.StrictMode>

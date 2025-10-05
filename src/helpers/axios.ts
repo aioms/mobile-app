@@ -1,7 +1,7 @@
 import { Toast } from "@capacitor/toast";
-import * as Sentry from "@sentry/capacitor";
+// import * as Sentry from "@sentry/capacitor";
 import axios from "axios";
-import type { IExtraConfig, IHttpRequestConfig } from "../types";
+import type { IExtraConfig, IHttpRequestConfig } from "../types/index.d";
 import { storage } from "../hooks";
 
 const {
@@ -39,10 +39,10 @@ export const defaultConfig: IHttpRequestConfig = {
     },
   },
 };
-Sentry.setTag("api", defaultConfig.server.api);
-Sentry.setTag("baseUrl", defaultConfig.server.baseUrl);
-Sentry.setTag("version", defaultConfig.server.version);
-Sentry.captureMessage(JSON.stringify(defaultConfig), "debug");
+// Sentry.setTag("api", defaultConfig.server.api);
+// Sentry.setTag("baseUrl", defaultConfig.server.baseUrl);
+// Sentry.setTag("version", defaultConfig.server.version);
+// Sentry.captureMessage(JSON.stringify(defaultConfig), "debug");
 
 export class HttpRequest {
   private config: Partial<IExtraConfig> = {};
@@ -105,7 +105,7 @@ export class HttpRequest {
         //   })
         // );
 
-        Sentry.captureException(error);
+        // Sentry.captureException(error);
 
         if (error.message) {
           Toast.show({
@@ -139,7 +139,7 @@ export class HttpRequest {
         const resp = error.response;
         const data = resp?.data;
 
-        Sentry.captureException(error);
+        // Sentry.captureException(error);
 
         // console.error(
         //   JSON.stringify({
