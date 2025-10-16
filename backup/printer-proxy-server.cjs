@@ -24,6 +24,7 @@ const PORT = 8080;
 
 /**
  * Generate thermal printer commands for dual barcode layout using node-thermal-printer
+ * Enhanced to support BarcodeModal single product printing with improved layout
  */
 async function generateDualBarcodeLayout(barcode1, barcode2 = null, printerIP, printerPort) {
   let printer = new ThermalPrinter({
@@ -38,121 +39,135 @@ async function generateDualBarcodeLayout(barcode1, barcode2 = null, printerIP, p
     }
   });
 
-  // Clear any previous content
-  printer.clear();
+  try {
+    // Clear any previous content
+    printer.clear();
 
-  if (barcode2) {
-    // Dual label layout - side by side
-    
-    // === PRODUCT NAMES ROW ===
-    printer.alignLeft();
-    
-    // Product Name (left label) - Bold and normal font
-    if (barcode1.productName && barcode1.productName.trim()) {
-      printer.bold(true);
-      const truncatedName = barcode1.productName.length > 14 ? 
-        barcode1.productName.substring(0, 14) + '...' : barcode1.productName;
-      printer.print(truncatedName.padEnd(20, ' ')); // Pad to ensure spacing
-      printer.bold(false);
-    } else {
-      printer.print(''.padEnd(20, ' ')); // Empty space for alignment
+    // Validate barcode data
+    if (!barcode1 || !barcode1.productCode || barcode1.productCode.trim() === '') {
+      throw new Error('Invalid barcode data: productCode is required');
     }
-    
-    // Product Name (right label) - Bold and normal font
-    if (barcode2.productName && barcode2.productName.trim()) {
-      printer.bold(true);
-      const truncatedName = barcode2.productName.length > 14 ? 
-        barcode2.productName.substring(0, 14) + '...' : barcode2.productName;
-      printer.print(truncatedName);
-      printer.bold(false);
-    }
-    
-    printer.newLine();
-    
-    // === PRODUCT CODES ROW ===
-    printer.alignLeft();
-    
-    // Product Code (left label)
-    if (barcode1.productCode && barcode1.productCode.trim()) {
-      printer.setTextSize(0, 0); // Small font
-      printer.print(barcode1.productCode.padEnd(20, ' ')); // Pad to ensure spacing
-    } else {
-      printer.print(''.padEnd(20, ' ')); // Empty space for alignment
-    }
-    
-    // Product Code (right label)
-    if (barcode2.productCode && barcode2.productCode.trim()) {
-      printer.setTextSize(0, 0); // Small font
-      printer.print(barcode2.productCode);
-    }
-    
-    printer.newLine();
-    
-    // === BARCODES ROW ===
-    printer.alignLeft();
-    
-    // Left Barcode
-    if (barcode1.productCode && barcode1.productCode.trim()) {
-      printer.code128(barcode1.productCode, {
-        width: "SMALL",
-        height: 40,
-        includeParity: false
-      });
+
+    if (barcode2) {
+      // Dual label layout - side by side with improved spacing
       
-      // Add spacing for right barcode positioning
-      printer.print(''.padEnd(10, ' '));
-    }
-    
-    // Right Barcode - we need to handle this differently due to thermal printer limitations
-    if (barcode2.productCode && barcode2.productCode.trim()) {
-      // For dual layout, we'll print the second barcode on the same line if possible
-      // Otherwise, we'll use a workaround with positioning
-      printer.code128(barcode2.productCode, {
-        width: "SMALL", 
-        height: 40,
-        includeParity: false
-      });
-    }
-    
-  } else {
-    // Single label layout - centered with better spacing
-    printer.alignCenter();
-    
-    // Product Name - Bold and larger font
-    if (barcode1.productName && barcode1.productName.trim()) {
-      printer.bold(true);
-      printer.setTextSize(1, 1); // Double height font for prominence
-      const truncatedName = barcode1.productName.length > 18 ? 
-        barcode1.productName.substring(0, 18) + '...' : barcode1.productName;
-      printer.println(truncatedName);
+      // === PRODUCT NAMES ROW ===
+      printer.alignLeft();
+      
+      // Product Name (left label) - Bold and normal font
+      if (barcode1.productName && barcode1.productName.trim()) {
+        printer.bold(true);
+        const truncatedName = barcode1.productName.length > 14 ? 
+          barcode1.productName.substring(0, 14) + '...' : barcode1.productName;
+        printer.print(truncatedName.padEnd(20, ' ')); // Pad to ensure spacing
+        printer.bold(false);
+      } else {
+        printer.print(''.padEnd(20, ' ')); // Empty space for alignment
+      }
+      
+      // Product Name (right label) - Bold and normal font
+      if (barcode2.productName && barcode2.productName.trim()) {
+        printer.bold(true);
+        const truncatedName = barcode2.productName.length > 14 ? 
+          barcode2.productName.substring(0, 14) + '...' : barcode2.productName;
+        printer.print(truncatedName);
+        printer.bold(false);
+      }
+      
       printer.newLine();
-      printer.bold(false);
-    }
-    
-    // Product Code - Medium font with spacing
-    if (barcode1.productCode && barcode1.productCode.trim()) {
-      printer.setTextSize(0, 1); // Medium font
-      printer.println(barcode1.productCode);
+      
+      // === PRODUCT CODES ROW ===
+      printer.alignLeft();
+      
+      // Product Code (left label)
+      if (barcode1.productCode && barcode1.productCode.trim()) {
+        printer.setTextSize(0, 0); // Small font
+        printer.print(barcode1.productCode.padEnd(20, ' ')); // Pad to ensure spacing
+      } else {
+        printer.print(''.padEnd(20, ' ')); // Empty space for alignment
+      }
+      
+      // Product Code (right label)
+      if (barcode2.productCode && barcode2.productCode.trim()) {
+        printer.setTextSize(0, 0); // Small font
+        printer.print(barcode2.productCode);
+      }
+      
       printer.newLine();
+      
+      // === BARCODES ROW ===
+      printer.alignLeft();
+      
+      // Left Barcode
+      if (barcode1.productCode && barcode1.productCode.trim()) {
+        printer.code128(barcode1.productCode, {
+          width: "SMALL",
+          height: 40,
+          includeParity: false
+        });
+        
+        // Add spacing for right barcode positioning
+        printer.print(''.padEnd(10, ' '));
+      }
+      
+      // Right Barcode - we need to handle this differently due to thermal printer limitations
+      if (barcode2.productCode && barcode2.productCode.trim()) {
+        // For dual layout, we'll print the second barcode on the same line if possible
+        // Otherwise, we'll use a workaround with positioning
+        printer.code128(barcode2.productCode, {
+          width: "SMALL", 
+          height: 40,
+          includeParity: false
+        });
+      }
+      
+    } else {
+      // Single label layout - centered with better spacing for BarcodeModal
+      printer.alignCenter();
+      
+      // Product Name - Bold and larger font
+      if (barcode1.productName && barcode1.productName.trim()) {
+        printer.bold(true);
+        printer.setTextSize(1, 1); // Double height font for prominence
+        const truncatedName = barcode1.productName.length > 18 ? 
+          barcode1.productName.substring(0, 18) + '...' : barcode1.productName;
+        printer.println(truncatedName);
+        printer.newLine();
+        printer.bold(false);
+      }
+      
+      // Product Code - Medium font with spacing
+      if (barcode1.productCode && barcode1.productCode.trim()) {
+        printer.setTextSize(0, 1); // Medium font
+        printer.println(barcode1.productCode);
+        printer.newLine();
+      }
+      
+      // Barcode - Larger for single label with better quality
+      if (barcode1.productCode && barcode1.productCode.trim()) {
+        printer.code128(barcode1.productCode, {
+          width: "LARGE",
+          height: 80,
+          includeParity: false
+        });
+      }
+      
+      printer.alignLeft(); // Reset alignment
     }
-    
-    // Barcode - Larger for single label
-    if (barcode1.productCode && barcode1.productCode.trim()) {
-      printer.code128(barcode1.productCode, {
-        width: "LARGE",
-        height: 80,
-        includeParity: false
-      });
-    }
-    
-    printer.alignLeft(); // Reset alignment
-  }
   
   // Final formatting with proper spacing
-  printer.newLine();
-  printer.newLine();
-  printer.newLine();
   printer.partialCut();
+
+  // Execute print command
+  await printer.execute();
+  console.log("Print done!");
+  
+  } catch (error) {
+    console.error("Print failed:", error);
+    throw error; // Re-throw to be handled by calling function
+  }
+
+  console.log('Dual barcode layout generated successfully');
   
   return printer;
 }
@@ -262,9 +277,31 @@ app.post('/generate-and-print', async (req, res) => {
 
   } catch (error) {
     console.error('Generate and print error:', error);
-    res.status(500).json({
+    
+    // Enhanced error handling for BarcodeModal integration
+    let errorMessage = 'Unknown error occurred';
+    let statusCode = 500;
+    
+    if (error.message) {
+      errorMessage = error.message;
+      
+      // Specific error handling for common printer issues
+      if (error.message.includes('ECONNREFUSED') || error.message.includes('connection refused')) {
+        errorMessage = 'Cannot connect to printer. Please check printer IP and port.';
+        statusCode = 503; // Service Unavailable
+      } else if (error.message.includes('timeout') || error.message.includes('ETIMEDOUT')) {
+        errorMessage = 'Printer connection timeout. Please check network connection.';
+        statusCode = 408; // Request Timeout
+      } else if (error.message.includes('Invalid barcode data')) {
+        errorMessage = error.message;
+        statusCode = 400; // Bad Request
+      }
+    }
+    
+    res.status(statusCode).json({
       success: false,
-      message: error.message
+      message: `❌ Print failed: ${errorMessage}`,
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
@@ -434,7 +471,6 @@ app.post('/print', async (req, res) => {
     const result = await sendToPrinter(printerIP, printerPort, printData);
     
     res.json(result);
-
   } catch (error) {
     console.error('Print error:', error);
     res.status(500).json({

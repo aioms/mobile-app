@@ -1,7 +1,6 @@
 import { FC } from "react";
 import { useHistory } from "react-router";
 import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
-import NotImage from "@/components/NotImage";
 
 interface ProductCardProps {
   product: {
@@ -22,7 +21,6 @@ interface ProductCardProps {
 
 const ProductCard: FC<ProductCardProps> = ({ product, isShowCostPrice }) => {
   const history = useHistory();
-  console.log({ isShowCostPrice });
 
   const handleClick = () => {
     history.push(`/tabs/products/detail/${product.id}`);

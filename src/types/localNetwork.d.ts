@@ -4,6 +4,7 @@ export interface PrinterDevice {
   name?: string;
   status: 'online' | 'offline' | 'unknown';
   model?: string;
+  isOnline?: boolean;
 }
 
 export interface LocalNetworkPermissionStatus {

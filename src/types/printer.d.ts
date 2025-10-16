@@ -4,6 +4,12 @@ export interface PrinterConfig {
   timeout: number;
 }
 
+export const DEFAULT_XPRINTER_CONFIG: PrinterConfig = {
+  ipAddress: "192.168.0.220",
+  port: 9100,
+  timeout: 5000
+};
+
 export interface PrintJob {
   productName: string;
   productCode: string;
