@@ -1,7 +1,6 @@
 import { FC } from "react";
 import { useHistory } from "react-router";
 import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
-import NotImage from "@/components/NotImage";
 
 interface ProductCardProps {
   product: {
@@ -17,9 +16,10 @@ interface ProductCardProps {
     unit?: string;
     imageUrls?: string[]; // Add imageUrls property
   };
+  isShowCostPrice: boolean;
 }
 
-const ProductCard: FC<ProductCardProps> = ({ product }) => {
+const ProductCard: FC<ProductCardProps> = ({ product, isShowCostPrice }) => {
   const history = useHistory();
 
   const handleClick = () => {
@@ -89,12 +89,14 @@ const ProductCard: FC<ProductCardProps> = ({ product }) => {
         <p className="text-gray-500 text-sm mt-1">{product.code}</p>
         {/* Prices */}
         <div className="flex gap-4 mt-2">
-          <div>
-            <p className="text-gray-500 text-xs">Giá vốn</p>
-            <p className="font-medium">
-              {formatCurrencyWithoutSymbol(product.costPrice)}
-            </p>
-          </div>
+          {isShowCostPrice ? (
+            <div>
+              <p className="text-gray-500 text-xs">Giá vốn</p>
+              <p className="font-medium">
+                {formatCurrencyWithoutSymbol(product.costPrice)}
+              </p>
+            </div>
+          ) : null}
           <div>
             <p className="text-gray-500 text-xs">Giá bán</p>
             <p className="font-medium">

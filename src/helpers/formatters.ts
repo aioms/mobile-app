@@ -8,7 +8,7 @@ export const dayjsFormat = (
   let datetime = dayjs(date || new Date());
 
   if (locale) {
-    datetime =  datetime.locale(locale);
+    datetime = datetime.locale(locale);
   }
   return datetime.format(format || "DD/MM/YYYY");
 };

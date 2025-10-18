@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Toast } from "@capacitor/toast";
 import {
   IonContent,
@@ -43,10 +43,11 @@ import ProductCard from "./components/ProductCard";
 import CategoriesModal from "./components/CategoriesModal";
 import FilterModal, { FilterValues } from "./components/FilterModal";
 import { Refresher } from "@/components/Refresher/Refresher";
+import { UserRole } from "@/common/enums/user";
 
 import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
 import useProduct from "@/hooks/apis/useProduct";
-import { useBarcodeScanner, useLoading } from "@/hooks";
+import { useAuth, useBarcodeScanner, useLoading } from "@/hooks";
 
 import "./ProductList.css";
 
@@ -85,6 +86,7 @@ const LIMIT = 10;
 const ProductListScreen: React.FC = () => {
   const history = useHistory();
   const { isLoading, withLoading } = useLoading();
+  const { user } = useAuth();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [dataTotal, setDataTotal] = useState<Total>({
@@ -108,6 +110,11 @@ const ProductListScreen: React.FC = () => {
   const [lowStockLoading, setLowStockLoading] = useState(false);
   const [hasMoreLowStock, setHasMoreLowStock] = useState(true);
   const { getList, getDetail, getTotalProductAndInventory } = useProduct();
+
+  const isShowCostPrice = useMemo(() => {
+    const roles = [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.MANAGER];
+    return user?.role ? roles.includes(user.role) : false;
+  }, [user?.role])
 
   const handleBarcodeScanned = async (value: string) => {
     try {
@@ -411,7 +418,7 @@ const ProductListScreen: React.FC = () => {
           <div className="space-y-4">
             {products.length ? (
               products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={product} isShowCostPrice={isShowCostPrice} />
               ))
             ) : (
               <ContentSkeleton lines={3} />
@@ -515,12 +522,14 @@ const ProductListScreen: React.FC = () => {
                             </p>
                           </div>
                           <div className="flex justify-between mt-1">
-                            <div>
-                              <p className="text-xs text-gray-500">Giá vốn</p>
-                              <p className="text-sm font-medium">
-                                {formatCurrencyWithoutSymbol(product.costPrice)}
-                              </p>
-                            </div>
+                            {isShowCostPrice ? (
+                              <div>
+                                <p className="text-xs text-gray-500">Giá vốn</p>
+                                <p className="text-sm font-medium">
+                                  {formatCurrencyWithoutSymbol(product.costPrice)}
+                                </p>
+                              </div>
+                            ) : null}
                             <div>
                               <p className="text-xs text-gray-500">Giá bán</p>
                               <p className="text-sm font-medium">

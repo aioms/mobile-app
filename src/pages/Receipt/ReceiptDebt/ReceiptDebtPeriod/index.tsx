@@ -370,6 +370,56 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
     });
   };
 
+  // Function to handle price changes (only for current date items)
+  const handlePriceChange = (
+    dateKey: string,
+    itemId: string,
+    newPrice: number
+  ) => {
+    const currentDateKey = getDate(new Date()).format("YYYY-MM-DD");
+
+    // Only allow changes to current date items
+    if (dateKey !== currentDateKey) {
+      presentToast({
+        message: "Không thể thay đổi giá của đợt thu cũ",
+        duration: 2000,
+        position: "top",
+        color: "warning",
+      });
+      return;
+    }
+
+    setProductItems((prev) => {
+      const updated = { ...prev };
+      if (updated[dateKey]) {
+        const itemIndex = updated[dateKey].findIndex(
+          (item) => item.id === itemId
+        );
+        if (itemIndex !== -1) {
+          const currentItem = updated[dateKey][itemIndex];
+          // Add temp_ prefix if it doesn't already have it (marking as edited)
+          const newId = currentItem.id.startsWith("temp_")
+            ? currentItem.id
+            : `temp_${currentItem.id}`;
+
+          // Store original quantity if not already stored
+          const originalQuantity =
+            currentItem.originalQuantity !== undefined
+              ? currentItem.originalQuantity
+              : currentItem.quantity;
+
+          updated[dateKey][itemIndex] = {
+            ...currentItem,
+            id: newId,
+            costPrice: newPrice,
+            originalQuantity,
+          };
+        }
+      }
+      return updated;
+    });
+  };
+
   // Function to remove product (only for current date items)
   const handleRemoveProduct = (dateKey: string, itemId: string) => {
     const currentDateKey = getDate(new Date()).format("YYYY-MM-DD");
@@ -508,7 +558,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
           productCode: item.productCode,
           quantity: item.quantity,
           originalQuantity: item.originalQuantity || 0,
-          costPrice: item.costPrice,
+          costPrice: item.costPrice, // This will now include any price changes
           receiptPeriodId: item.periodId,
         })),
       };
@@ -620,6 +670,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
               onAddPeriod={handleAddProduct}
               onScanBarcode={startScan}
               onQuantityChange={handleQuantityChange}
+              onPriceChange={handlePriceChange}
               onRemoveProduct={handleRemoveProduct}
             />
 

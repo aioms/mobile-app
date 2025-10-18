@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { FC } from "react";
 import { IonButton, IonIcon, IonRippleEffect } from "@ionic/react";
-import { addOutline, scanOutline, search } from "ionicons/icons";
+import { scanOutline, search } from "ionicons/icons";
 
 import { IProductItem } from "@/types/product.type";
 import PurchasePeriod from "./PurchasePeriod";
@@ -16,6 +16,11 @@ type Props = {
     itemId: string,
     newQuantity: number
   ) => void;
+  onPriceChange?: (
+    dateKey: string,
+    itemId: string,
+    newPrice: number
+  ) => void;
   onRemoveProduct?: (dateKey: string, itemId: string) => void;
 };
 
@@ -24,6 +29,7 @@ const PurchasePeriodList: FC<Props> = ({
   onAddPeriod,
   onScanBarcode,
   onQuantityChange,
+  onPriceChange,
   onRemoveProduct,
 }) => {
   const [showDownArrow, setShowDownArrow] = useState(false);
@@ -146,6 +152,9 @@ const PurchasePeriodList: FC<Props> = ({
                   editable={isCurrentDatePeriod(date)}
                   onQuantityChange={(itemId, newQuantity) =>
                     onQuantityChange?.(date, itemId, newQuantity)
+                  }
+                  onPriceChange={(itemId, newPrice) =>
+                    onPriceChange?.(date, itemId, newPrice)
                   }
                   onRemove={(itemId) => onRemoveProduct?.(date, itemId)}
                 />

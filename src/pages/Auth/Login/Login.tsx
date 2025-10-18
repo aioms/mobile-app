@@ -17,10 +17,10 @@ import {
   useIonViewDidEnter,
   useIonToast,
 } from "@ionic/react";
-import * as Sentry from "@sentry/capacitor";
+// import * as Sentry from "@sentry/capacitor";
 import { useHistory } from "react-router-dom";
 import { useAuth } from "../../../hooks";
-import { defaultConfig } from "@/helpers/axios";
+// import { defaultConfig } from "@/helpers/axios";
 
 import "./Login.css";
 

@@ -2,6 +2,9 @@
 
 # dependencies
 /node_modules
+/node_modules*
+**/node_modules
+**/logs/*
 /.pnp
 .pnp.js
 
@@ -10,6 +13,7 @@
 
 # production
 /dist
+/build
 
 # misc
 .DS_Store
@@ -29,3 +33,5 @@ yarn-error.log*
 
 # Optional eslint cache
 .eslintcache
+
+.env

@@ -17,7 +17,9 @@
     "build:android": "ionic build --platform=android",
     "start:ios": "ionic cap run ios --livereload --external --open",
     "start:android": "ionic cap run android --livereload --external --open",
-    "clean": "xcodebuild clean -project ios/App/App.xcodeproj"
+    "clean": "xcodebuild clean -project ios/App/App.xcodeproj",
+    "printer-proxy": "node printer-proxy-server.cjs",
+    "printer-proxy:dev": "nodemon printer-proxy-server.cjs"
   },
   "dependencies": {
     "@capacitor-mlkit/barcode-scanning": "^7.2.1",
@@ -37,8 +39,6 @@
     "@ionic/react": "^8.0.0",
     "@ionic/react-router": "^8.0.0",
     "@ionic/storage": "^4.0.0",
-    "@sentry/capacitor": "^1.4.0",
-    "@sentry/react": "^8.55.0",
     "@types/react-router": "^5.1.20",
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.7.9",

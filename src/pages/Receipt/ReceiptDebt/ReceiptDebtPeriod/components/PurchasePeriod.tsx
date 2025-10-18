@@ -1,17 +1,18 @@
 import { FC, useState, useEffect, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { IonButton, IonIcon } from "@ionic/react";
-import { trashOutline } from "ionicons/icons";
+import { IonButton, IonIcon, IonInput } from "@ionic/react";
+import { trashOutline, createOutline } from "ionicons/icons";
 
 import Counter from "@/components/Counter";
 import { IProductItem } from "@/types/product.type";
 import { getDate } from "@/helpers/date";
-import { formatCurrency } from "@/helpers/formatters";
+import { formatCurrency, formatCurrencyWithoutSymbol, parseCurrencyInput } from "@/helpers/formatters";
 
 type Props = {
   items: IProductItem[]; // Changed to accept array of items
   periodDate?: string;
   onQuantityChange?: (itemId: string, newQuantity: number) => void;
+  onPriceChange?: (itemId: string, newPrice: number) => void;
   onRemove?: (itemId: string) => void;
   editable?: boolean;
 };
@@ -20,10 +21,13 @@ const PurchasePeriod: FC<Props> = ({
   items,
   periodDate,
   onQuantityChange,
+  onPriceChange,
   onRemove,
   editable = true,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [editingPrice, setEditingPrice] = useState(false);
+  const [priceInputValue, setPriceInputValue] = useState("");
 
   // Memoize initial quantities calculation
   const initialQuantities = useMemo(() => {
@@ -33,17 +37,27 @@ const PurchasePeriod: FC<Props> = ({
     }, {} as Record<string, number>);
   }, [items]);
 
+  // Memoize initial prices calculation
+  const initialPrices = useMemo(() => {
+    return items.reduce((acc, item) => {
+      acc[item.id] = item.costPrice;
+      return acc;
+    }, {} as Record<string, number>);
+  }, [items]);
+
   const [quantities, setQuantities] =
     useState<Record<string, number>>(initialQuantities);
+  const [prices, setPrices] = useState<Record<string, number>>(initialPrices);
 
-  // Update quantities when items change
+  // Update quantities and prices when items change
   useEffect(() => {
     setQuantities(initialQuantities);
+    setPrices(initialPrices);
     // Reset current index if it's out of bounds
     if (currentIndex >= items.length && items.length > 0) {
       setCurrentIndex(0);
     }
-  }, [initialQuantities, currentIndex, items.length]);
+  }, [initialQuantities, initialPrices, currentIndex, items.length]);
 
   // Memoize current item and total items
   const currentItem = useMemo(() => items[currentIndex], [items, currentIndex]);
@@ -64,8 +78,11 @@ const PurchasePeriod: FC<Props> = ({
     const quantity = editable
       ? quantities[currentItem.id] || currentItem.quantity
       : currentItem.quantity;
-    return currentItem.costPrice * quantity;
-  }, [currentItem, editable, quantities]);
+    const price = editable
+      ? prices[currentItem.id] || currentItem.costPrice
+      : currentItem.costPrice;
+    return price * quantity;
+  }, [currentItem, editable, quantities, prices]);
 
   const handlePrevious = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -88,6 +105,36 @@ const PurchasePeriod: FC<Props> = ({
       [itemId]: newQuantity,
     }));
     onQuantityChange?.(itemId, newQuantity);
+  };
+
+  const handlePriceChange = (newPrice: number) => {
+    const itemId = currentItem.id;
+    setPrices((prev) => ({
+      ...prev,
+      [itemId]: newPrice,
+    }));
+    onPriceChange?.(itemId, newPrice);
+  };
+
+  const handlePriceEdit = () => {
+    const currentPrice = prices[currentItem.id] || currentItem.costPrice;
+    setPriceInputValue(formatCurrencyWithoutSymbol(currentPrice));
+    setEditingPrice(true);
+  };
+
+  const handlePriceInputChange = (value: string) => {
+    // Format the input value for display
+    const numericValue = parseCurrencyInput(value);
+    const formattedValue = formatCurrencyWithoutSymbol(numericValue);
+    setPriceInputValue(formattedValue);
+    
+    // Update the actual price
+    handlePriceChange(numericValue);
+  };
+
+  const handlePriceBlur = () => {
+    setEditingPrice(false);
+    setPriceInputValue("");
   };
 
   const handleRemove = () => {
@@ -159,9 +206,34 @@ const PurchasePeriod: FC<Props> = ({
             {currentItem.code}
           </span>
           <div className="flex items-center">
-            <span className="text-sm text-gray-500 mr-2 min-w-max">
-              {formatCurrency(currentItem.costPrice)}
-            </span>
+            {editable && editingPrice ? (
+              <IonInput
+                type="text"
+                value={priceInputValue}
+                onIonInput={(e) => {
+                  handlePriceInputChange(e.detail.value!);
+                }}
+                onIonBlur={handlePriceBlur}
+                className="text-sm border border-gray-300 rounded px-2 py-1 w-32"
+                placeholder="0"
+              />
+            ) : (
+              <div className="flex items-center">
+                <span className="text-sm text-gray-500 mr-1 min-w-max">
+                  {formatCurrency(prices[currentItem.id] || currentItem.costPrice)}
+                </span>
+                {editable && (
+                  <IonButton
+                    fill="clear"
+                    size="small"
+                    onClick={handlePriceEdit}
+                    className="ml-1"
+                  >
+                    <IonIcon icon={createOutline} className="text-xs" />
+                  </IonButton>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
