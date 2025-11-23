@@ -2,7 +2,7 @@ import React from "react";
 import { IonCard, IonCardContent, IonButton, IonIcon } from "@ionic/react";
 import { chevronBack, checkmarkCircle, cash, qrCode } from "ionicons/icons";
 import { formatCurrency } from "@/helpers/formatters";
-import { PaymentMethod } from "./PaymentModal";
+import { PaymentMethod } from "./index";
 
 interface PaymentCompletionProps {
   amount: number;

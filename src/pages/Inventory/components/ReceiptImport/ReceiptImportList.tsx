@@ -4,45 +4,44 @@ import {
   IonButton,
   RefresherEventDetail,
   useIonToast,
+  IonSearchbar,
+  IonButtons,
+  IonIcon,
+  IonToolbar,
 } from "@ionic/react";
-import { Toast } from "@capacitor/toast";
 import { Dialog } from "@capacitor/dialog";
+
+import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
 
 import useReceiptImport from "@/hooks/apis/useReceiptImport";
 import ImportItemList from "./components/ItemList";
 import { ReceiptListSkeleton } from "./components/ReceiptListSkeleton";
 import { Refresher } from "@/components/Refresher/Refresher";
 import { ReceiptImportStatus } from "@/common/enums/receipt";
+import { useHistory } from "react-router";
+import { useBarcodeScanner } from "@/hooks";
+import { scanOutline } from "ionicons/icons";
+import { ReceiptImportItemList } from "./types/receipt-import.type";
 
-interface ItemList {
-  id: string;
-  receiptNumber: string;
-  importDate: string;
-  quantity: number;
-  status: string;
-  warehouse: string;
-  note: string;
-  userCreated: string;
-  createdAt: string;
-}
-
-type Props = {
-  keyword: string;
-};
+type Props = {};
 
 const pageSize = 10;
 
-const ReceiptImportList: React.FC<Props> = ({ keyword }) => {
-  const [receiptImports, setReceiptImports] = useState<ItemList[]>([]);
+const ReceiptImportList: React.FC<Props> = () => {
+  const history = useHistory();
+
+  const [receiptImports, setReceiptImports] = useState<ReceiptImportItemList[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [keyword, setKeyword] = useState("");
 
   const [presentToast] = useIonToast();
 
   const {
     getList: getListReceiptImport,
+    createWithProductCode,
     update: updateReceiptImport,
     cancelReceiptImport,
   } = useReceiptImport();
@@ -62,7 +61,7 @@ const ReceiptImportList: React.FC<Props> = ({ keyword }) => {
           keyword,
         },
         page,
-        pageSize
+        pageSize,
       );
 
       if (isLoadMore) {
@@ -79,18 +78,25 @@ const ReceiptImportList: React.FC<Props> = ({ keyword }) => {
         setReceiptImports(response);
 
         if (!response.length) {
-          await Toast.show({
-            text: "Không tìm thấy kết quả",
-            duration: "short",
+          presentToast({
+            message: "Không tìm thấy kết quả",
+            duration: 2000,
             position: "top",
           });
         }
       }
     } catch (error) {
-      await Toast.show({
-        text: (error as Error).message,
-        duration: "short",
+      captureException(error as Error, createExceptionContext(
+        'Inventory',
+        'ReceiptImportList',
+        'fetchReceiptImports'
+      ));
+
+      presentToast({
+        message: (error as Error).message || "Có lỗi xảy ra",
+        duration: 2000,
         position: "top",
+        color: "danger",
       });
     } finally {
       setLoading(false);
@@ -126,17 +132,26 @@ const ReceiptImportList: React.FC<Props> = ({ keyword }) => {
       if (!value) return;
 
       await updateReceiptImport(id, { status: ReceiptImportStatus.WAITING });
-      await Toast.show({
-        text: "Đã gửi yêu cầu duyệt",
-        duration: "short",
+
+      presentToast({
+        message: "Đã gửi yêu cầu duyệt",
+        duration: 2000,
         position: "top",
+        color: "success",
       });
       fetchReceiptImports();
     } catch (error) {
-      await Toast.show({
-        text: (error as Error).message,
-        duration: "short",
+      captureException(error as Error, createExceptionContext(
+        'Inventory',
+        'ReceiptImportList',
+        'handleRequestApproval'
+      ));
+
+      presentToast({
+        message: (error as Error).message || "Có lỗi xảy ra",
+        duration: 2000,
         position: "top",
+        color: "danger",
       });
     }
   };
@@ -152,17 +167,25 @@ const ReceiptImportList: React.FC<Props> = ({ keyword }) => {
       if (!value) return;
 
       await updateReceiptImport(id, { status: ReceiptImportStatus.COMPLETED });
-      await Toast.show({
-        text: "Đã hoàn thành phiếu nhập",
-        duration: "short",
+      
+      presentToast({
+        message: "Đã hoàn thành phiếu nhập",
+        duration: 2000,
         position: "top",
       });
       fetchReceiptImports();
     } catch (error) {
-      await Toast.show({
-        text: (error as Error).message,
-        duration: "short",
+      captureException(error as Error, createExceptionContext(
+        'Inventory',
+        'ReceiptImportList',
+        'handleComplete'
+      ));
+
+      presentToast({
+        message: (error as Error).message || "Có lỗi xảy ra",
+        duration: 2000,
         position: "top",
+        color: "danger",
       });
     }
   };
@@ -184,7 +207,7 @@ const ReceiptImportList: React.FC<Props> = ({ keyword }) => {
       }
 
       presentToast({
-        message: "Đã hủy phiếu nhập",
+        message: "đã hủy phiếu nhập",
         duration: 2000,
         position: "top",
         color: "success",
@@ -192,6 +215,12 @@ const ReceiptImportList: React.FC<Props> = ({ keyword }) => {
 
       fetchReceiptImports();
     } catch (error) {
+      captureException(error as Error, createExceptionContext(
+        'Inventory',
+        'ReceiptImportList',
+        'handleCancel'
+      ));
+
       presentToast({
         message: (error as Error).message,
         duration: 2000,
@@ -201,9 +230,90 @@ const ReceiptImportList: React.FC<Props> = ({ keyword }) => {
     }
   };
 
+  const handleSearch = (e: any) => setKeyword(e.detail.value || "");
+
+  const createReceipt = async (receiptNumber: string) => {
+    try {
+      if (!receiptNumber) {
+        presentToast({
+          message: "Không tìm thấy phiếu",
+          duration: 1000,
+          position: "top",
+        });
+        return;
+      }
+
+      const response = await createWithProductCode({ code: receiptNumber });
+      const receiptId = response?.id;
+
+      if (!receiptId) {
+        throw new Error("Cập nhật thất bại");
+      }
+
+      history.push(`/tabs/receipt-import/detail/${receiptId}`);
+      presentToast({
+        message: 'Cập nhật thành công',
+        duration: 1000,
+        position: "top",
+      });
+    } catch (error) {
+      captureException(error as Error, createExceptionContext(
+        'Inventory',
+        'ReceiptCreation',
+        'createReceipt'
+      ));
+      presentToast({
+        message: (error as Error).message || "Có lỗi xảy ra",
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+    }
+  };
+
+  const handleBarcodeScanned = async (value: string) => {
+    stopScan();
+    createReceipt(value);
+  };
+
+  const handleError = async (error: Error) => {
+    captureException(error, createExceptionContext(
+      'Inventory',
+      'BarcodeScanner',
+      'handleError'
+    ));
+    presentToast({
+      message: error.message || "Có lỗi xảy ra",
+      duration: 2000,
+      position: "top",
+      color: "danger",
+    });
+  };
+
+  const { startScan, stopScan } = useBarcodeScanner({
+    onBarcodeScanned: handleBarcodeScanned,
+    onError: handleError,
+    toastTimeout: 800,
+    delay: 1000,
+  });
+
   return (
     <>
       <Refresher onRefresh={handleRefresh} />
+
+      <IonToolbar className="mt-2">
+        <IonSearchbar
+          placeholder="Tìm kiếm..."
+          onIonInput={handleSearch}
+          showClearButton="focus"
+          debounce={300}
+        />
+        <IonButtons slot="end">
+          <IonButton color="primary" onClick={() => startScan()}>
+            <IonIcon icon={scanOutline} slot="icon-only" />
+          </IonButton>
+        </IonButtons>
+      </IonToolbar>
 
       <IonList>
         {loading ? (

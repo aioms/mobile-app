@@ -24,6 +24,7 @@ import { useHistory } from "react-router-dom";
 
 import { useStorage } from "@/hooks";
 import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
+import { RECEIPT_DEBT_TYPE } from "@/common/constants/receipt-debt.constant";
 import { isHasProperty } from "@/helpers/common";
 import { getDate } from "@/helpers/date";
 import { formatCurrency } from "@/helpers/formatters";
@@ -42,6 +43,7 @@ interface IProductItem {
   code: string;
   quantity: number;
   sellingPrice: number;
+  inventory?: number; // Add inventory field
 }
 
 const initialFormData = {
@@ -147,7 +149,7 @@ const ReceiptDebtCreate: React.FC = () => {
 
     try {
       const payload = {
-        type: "customer_debt",
+        type: RECEIPT_DEBT_TYPE.CUSTOMER_DEBT,
         customerId: formData.customer,
         dueDate: formData.estimatedDate,
         totalAmount,
@@ -272,7 +274,7 @@ const ReceiptDebtCreate: React.FC = () => {
                     : item
                 );
               } else {
-                return [...prev, { ...product }];
+                return [{ ...product }, ...prev];
               }
             });
           }}

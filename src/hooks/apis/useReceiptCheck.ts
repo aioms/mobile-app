@@ -21,12 +21,22 @@ const useReceiptCheck = () => {
   };
 
   const create = async (data: any) => {
-    const response = await request.post(`/receipt-check`, data);
+    const response: IHttpResponse = await request.post(`/receipt-check`, data);
+
+    if (!response.success) {
+      throw new Error(response.message || "Failed to create receipt check");
+    }
+
     return response.data;
   };
 
   const update = async (id: string, data: any) => {
-    const response = await request.put(`/receipt-check/${id}`, data);
+    const response: IHttpResponse = await request.put(`/receipt-check/${id}`, data);
+    
+    if (!response.success) {
+      throw new Error(response.message || "Failed to update receipt check");
+    }
+
     return response.data;
   };
 
@@ -36,15 +46,25 @@ const useReceiptCheck = () => {
   };
 
   const incrementActualInventory = async (id: string, productCode: string) => {
-    const response = await request.patch(`/receipt-check/${id}/receipt-items/${productCode}`);
-    return response;
+    const response: IHttpResponse = await request.patch(`/receipt-check/${id}/receipt-items/${productCode}`);
+    
+    if (response.statusCode !== 200 || !response.success) {
+      throw new Error(response.message || "Failed to increment actual inventory");
+    }
+    
+    return response.data;
   };
 
   const updateBalanceInventory = async (id: string, items: any[]) => {
     const response: IHttpResponse = await request.patch(`/receipt-check/${id}/balance`, {
       items,
     });
-    return response;
+    
+    if (response.statusCode !== 200 || !response.success) {
+      throw new Error(response.message || "Failed to update balance inventory");
+    }
+    
+    return response.data;
   };
 
   return {

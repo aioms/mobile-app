@@ -43,6 +43,7 @@
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.7.9",
     "barcode-detector": "^3.0.1",
+    "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cordova-sqlite-storage": "^7.0.0",

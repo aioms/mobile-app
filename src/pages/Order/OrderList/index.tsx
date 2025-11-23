@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Toast } from "@capacitor/toast";
 import {
   IonSpinner,
   IonButton,
@@ -7,6 +6,7 @@ import {
   RefresherEventDetail,
   IonIcon,
   IonRippleEffect,
+  useIonViewWillEnter,
 } from "@ionic/react";
 import { scanOutline } from "ionicons/icons";
 import { useHistory } from "react-router";
@@ -24,6 +24,8 @@ import OrderItem from "./components/OrderItem";
 
 import "./OrderList.css";
 import { capitalizeFirstLetter } from "@/helpers/common";
+
+import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
 
 const LIMIT = 10;
 
@@ -62,25 +64,27 @@ const OrderList: React.FC = () => {
    * @param value - The scanned barcode value
    */
   async function handleBarcodeScanned(value: string) {
-    stopScan();
-
     try {
+      stopScan();
       const result = await getProductDetail(value);
 
       if (!result) {
-        return await Toast.show({
-          text: `Không tìm thấy sản phẩm với mã vạch ${value}`,
-          duration: "short",
-          position: "center",
+        await presentToast({
+          message: `Không tìm thấy sản phẩm với mã vạch ${value}`,
+          duration: 2000,
+          position: "top",
         });
+        return
       }
 
       if (result.inventory === 0) {
-        return await Toast.show({
-          text: "Sản phẩm này đã hết hàng",
-          duration: "short",
-          position: "center",
+        await presentToast({
+          message: "Sản phẩm này đã hết hàng",
+          duration: 2000,
+          position: "top",
+          color: "warning",
         });
+        return
       }
 
       const draftOrder = await getItem("order_draft");
@@ -121,10 +125,17 @@ const OrderList: React.FC = () => {
 
       history.push(`/tabs/orders/create`);
     } catch (error) {
-      await Toast.show({
-        text: (error as Error).message,
-        duration: "short",
+      captureException(error as Error, createExceptionContext(
+        'OrderList',
+        'BarcodeScanner',
+        'handleBarcodeScanned'
+      ));
+
+      presentToast({
+        message: (error as Error).message || "Có lỗi xảy ra",
+        duration: 2000,
         position: "top",
+        color: "danger",
       });
     }
   }
@@ -152,7 +163,13 @@ const OrderList: React.FC = () => {
           }
         }
       } catch (error) {
-        await presentToast({
+        captureException(error as Error, createExceptionContext(
+          'Order',
+          'OrderList',
+          'fetchOrders'
+        ));
+
+        presentToast({
           message: (error as Error).message || "Có lỗi xảy ra",
           duration: 2000,
           position: "top",
@@ -162,6 +179,13 @@ const OrderList: React.FC = () => {
     });
   };
 
+  // Always call fetchOrders when redirect to this view
+  // useIonViewWillEnter(() => {
+  //   setPage(1);
+  //   fetchOrders(1, false);
+  // }, [filters]);
+
+  // Only call once when first enter this view
   useEffect(() => {
     setPage(1);
     fetchOrders(1, false);

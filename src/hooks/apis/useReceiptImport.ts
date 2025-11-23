@@ -1,3 +1,4 @@
+import { IHttpResponse } from "@/types";
 import { request } from "../../helpers/axios";
 
 const useReceiptImport = () => {
@@ -20,7 +21,12 @@ const useReceiptImport = () => {
   };
 
   const importQuick = async (data: any) => {
-    const response = await request.post(`/receipt-imports/quick`, data);
+    const response: IHttpResponse = await request.post(`/receipt-imports/quick`, data);
+    return response.data;
+  };
+
+  const createWithProductCode = async (data: any) => {
+    const response = await request.post(`/receipt-imports/product-code`, data);
     return response.data;
   };
 
@@ -59,6 +65,7 @@ const useReceiptImport = () => {
     create,
     update,
     remove,
+    createWithProductCode,
     getTotalImportsByDateRange,
     cancelReceiptImport,
   };

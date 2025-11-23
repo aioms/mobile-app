@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import useUser from "@/hooks/apis/useUser";
 import { useLoading } from "@/hooks/useLoading";
 import { useIonToast } from "@ionic/react";
+import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
 
 interface QRCodeDisplayProps {
   amount: number;
@@ -63,10 +64,12 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   }, [amount, orderCode, bankConfig]);
 
   const fetchUserBankInfo = async () => {
-    if (!user?.id) return;
-
     await withLoading(async () => {
       try {
+        if (!user?.id) {
+          throw new Error("Không tìm thấy thông tin người dùng");
+        }
+
         const userData = await getDetail(user.id);
 
         if (userData) {
@@ -79,6 +82,11 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
           throw new Error("Không tìm thấy thông tin tài khoản ngân hàng");
         }
       } catch (error) {
+        captureException(error as Error, createExceptionContext(
+          'OrderCreate',
+          'QRCodeDisplay',
+          'fetchUserBankInfo'
+        ));
         await presentToast({
           message:
             (error as Error).message || "Không thể tải thông tin ngân hàng",
@@ -147,6 +155,11 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
 
       setQrCodeUrl(result.data.qrDataURL);
     } catch (err) {
+      captureException(err as Error, createExceptionContext(
+        'OrderCreate',
+        'QRCodeDisplay',
+        'generateQRCode'
+      ));
       console.error("Error generating QR code:", err);
       setError("Không thể tạo mã QR. Vui lòng thử lại.");
     } finally {
@@ -168,6 +181,11 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {
+      captureException(err as Error, createExceptionContext(
+        'OrderCreate',
+        'QRCodeDisplay',
+        'copyAccountInfo'
+      ));
       console.error("Failed to copy:", err);
     }
   };
@@ -183,6 +201,11 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
       link.click();
       document.body.removeChild(link);
     } catch (err) {
+      captureException(err as Error, createExceptionContext(
+        'OrderCreate',
+        'QRCodeDisplay',
+        'downloadQRCode'
+      ));
       console.error("Failed to download QR code:", err);
     }
   };

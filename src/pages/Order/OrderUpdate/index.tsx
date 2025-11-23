@@ -2,22 +2,18 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useHistory, useParams } from "react-router";
 import { IonTextareaCustomEvent, TextareaChangeEventDetail } from "@ionic/core";
 import { Dialog } from "@capacitor/dialog";
-import { Toast } from "@capacitor/toast";
 import {
   IonPage,
   IonHeader,
   IonToolbar,
   IonButtons,
-  IonBackButton,
   IonTitle,
   IonContent,
   IonItem,
   IonInput,
   IonButton,
-  IonTextarea,
   IonRadioGroup,
   IonRadio,
-  IonToggle,
   IonIcon,
   useIonModal,
   useIonToast,
@@ -34,6 +30,7 @@ import {
   removeCircleOutline,
   scanOutline,
   search,
+  createOutline,
 } from "ionicons/icons";
 import { OverlayEventDetail } from "@ionic/react/dist/types/components/react-component-lib/interfaces";
 
@@ -42,7 +39,6 @@ import useOrder from "@/hooks/apis/useOrder";
 import useProduct from "@/hooks/apis/useProduct";
 
 import {
-  formatCurrency,
   formatCurrencyWithoutSymbol,
   parseCurrencyInput,
 } from "@/helpers/formatters";
@@ -57,6 +53,15 @@ import OrderItem from "./components/OrderItem";
 import ModalSelectProduct from "../components/ModalSelectProduct";
 import ModalSelectCustomer from "../components/ModalSelectCustomer";
 import ErrorMessage from "@/components/ErrorMessage";
+import PaymentModal, {
+  PaymentMethod as PaymentModalMethod,
+} from "@/components/PaymentModal";
+import { PaymentTransactionDto } from "@/types/payment.type";
+import { PaymentMethod as PaymentMethodEnum } from "@/common/enums/payment";
+import { TransactionType } from "@/common/enums/transaction";
+import OrderSummarySection from "./components/OrderSummarySection";
+import VATSection from "./components/VATSection";
+import OrderNotesSection from "./components/OrderNotesSection";
 
 import "./OrderUpdate.css";
 
@@ -67,6 +72,7 @@ interface IOrderItem {
   code: string;
   quantity: number;
   sellingPrice: number;
+  vatRate?: number;
 }
 
 interface IFormData {
@@ -107,6 +113,10 @@ const OrderUpdate: React.FC = () => {
   const [orderItems, setOrderItems] = useState<IOrderItem[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showDownArrow, setShowDownArrow] = useState(false);
+  
+  // Add payment modal state management
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [pendingOrderData, setPendingOrderData] = useState<any>(null);
 
   // Add customer name state
   const [selectedCustomerName, setSelectedCustomerName] =
@@ -119,38 +129,76 @@ const OrderUpdate: React.FC = () => {
   const { getDetail: getOrderDetail, update: updateOrder } = useOrder();
   const { getDetail: getProductDetail } = useProduct();
 
-  const isOrderPaid = useMemo(() => {
-    return formData.status === OrderStatus.COMPLETED;
+  // Individual status checks
+  const isOrderDraft = useMemo(() => {
+    return formData.status === OrderStatus.DRAFT;
   }, [formData.status]);
 
+  const isOrderPending = useMemo(() => {
+    return formData.status === OrderStatus.PENDING;
+  }, [formData.status]);
+
+  const canUpdateOrder = useMemo(() => {
+    return isOrderDraft || isOrderPending;
+  }, [isOrderDraft, isOrderPending]);
+
+  // Determine if we're in edit mode (DRAFT orders are editable)
+  const isEditMode = canUpdateOrder;
+  const isOrderPaid = formData.status === OrderStatus.COMPLETED
+
+  const addItemToOrderItems = (productId: string, product: Record<string, any>) => {
+    if (product.inventory <= 0) {
+      presentToast({
+        message: "Sản phẩm đã hết hàng",
+        duration: 2000,
+        position: "top",
+        color: "warning",
+      });
+      return
+    }
+
+    const productData = {
+      id: product.id,
+      productId: product.id,
+      productName: product.productName,
+      code: product.code,
+      sellingPrice: product.sellingPrice,
+      quantity: 1,
+      inventory: product.inventory, // Add inventory data
+    };
+
+    // Write function check if item is exists in orderItems, then increase quantity of item
+    const existingItem = orderItems.find((item) => item.productId === productId);
+    if (existingItem) {
+      handleItemChange(existingItem.id, {
+        quantity: existingItem.quantity + 1,
+      });
+      return;
+    } else {
+      setOrderItems((prev) => [
+        {
+          ...productData,
+        },
+        ...prev,
+      ]);
+    }
+  };
+
   const addProductToCartItem = async (productCode: string) => {
+    if (!isEditMode) {
+      await presentToast({
+        message: "Chỉ có thể chỉnh sửa đơn hàng ở trạng thái nháp",
+        duration: 2000,
+        position: "top",
+        color: "warning",
+      });
+      return;
+    }
+
     try {
       const product = await getProductDetail(productCode);
 
-      const productData = {
-        id: product.id,
-        productId: product.id,
-        productName: product.productName,
-        code: product.code,
-        sellingPrice: product.sellingPrice,
-        quantity: 1,
-      };
-
-      // Write function check if item is exists in orderItems, then increase quantity of item
-      const existingItem = orderItems.find((item) => item.id === product.id);
-      if (existingItem) {
-        handleItemChange(existingItem.id, {
-          quantity: existingItem.quantity + 1,
-        });
-        return;
-      } else {
-        setOrderItems((prev) => [
-          ...prev,
-          {
-            ...productData,
-          },
-        ]);
-      }
+      addItemToOrderItems(product.id, product);
     } catch (error) {
       await presentToast({
         message: (error as Error).message || "Có lỗi xảy ra",
@@ -161,16 +209,16 @@ const OrderUpdate: React.FC = () => {
     }
   };
 
-  // Barcode scanner hook
+  // Barcode scanner hook - only enabled for DRAFT orders
   const { startScan, stopScan } = useBarcodeScanner({
     onBarcodeScanned: (value: string) => {
       stopScan();
       addProductToCartItem(value);
     },
     onError: async (error: Error) => {
-      await presentToast({
+      presentToast({
         message: error.message || "Có lỗi xảy ra khi quét mã vạch",
-        duration: 1500,
+        duration: 2000,
         position: "top",
         color: "danger",
       });
@@ -194,32 +242,38 @@ const OrderUpdate: React.FC = () => {
   );
 
   const openModalSelectProduct = () => {
+    if (!isEditMode) {
+      presentToast({
+        message: "Chỉ có thể chỉnh sửa đơn hàng ở trạng thái nháp",
+        duration: 2000,
+        position: "top",
+        color: "warning",
+      });
+      return;
+    }
+
     presentModalProduct({
       onWillDismiss: async (event: CustomEvent<OverlayEventDetail>) => {
         const { role, data } = event.detail;
 
         if (role === "confirm" && data) {
-          if (data.inventory === 0) {
-            await Toast.show({
-              text: "Sản phẩm đã hết hàng",
-              duration: "short",
-              position: "center",
-            });
-          } else {
-            setOrderItems((prev) => [
-              ...prev,
-              {
-                ...data,
-                quantity: 1,
-              },
-            ]);
-          }
+          addItemToOrderItems(data.id, data);
         }
       },
     });
   };
 
   const openModalSelectCustomer = () => {
+    if (!isEditMode) {
+      presentToast({
+        message: "Chỉ có thể chỉnh sửa đơn hàng ở trạng thái nháp",
+        duration: 2000,
+        position: "top",
+        color: "warning",
+      });
+      return;
+    }
+
     presentModalCustomer({
       onWillDismiss: async (event: CustomEvent<OverlayEventDetail>) => {
         const { role, data } = event.detail;
@@ -306,14 +360,6 @@ const OrderUpdate: React.FC = () => {
     }));
   };
 
-  const handleCustomerChange = (e: CustomEvent) => {
-    const { value } = e.detail;
-    setFormData((prev) => ({
-      ...prev,
-      customer: value,
-    }));
-  };
-
   const handlePaymentMethodChange = (e: CustomEvent) => {
     const { value } = e.detail;
     setFormData((prev) => ({
@@ -341,12 +387,16 @@ const OrderUpdate: React.FC = () => {
   };
 
   const handleItemChange = (id: string, data: Partial<IOrderItem>) => {
+    if (!isEditMode) return;
+    
     setOrderItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, ...data } : item))
     );
   };
 
   const handleRemoveItem = (id: string) => {
+    if (!isEditMode) return;
+    
     setOrderItems((prev) => prev.filter((item) => item.id !== id));
   };
 
@@ -370,27 +420,38 @@ const OrderUpdate: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const calculateTotal = () => {
+  const calculateTotal = useMemo(() => {
     return orderItems.reduce((total, item) => {
       const itemPrice = item.sellingPrice * item.quantity;
       return total + itemPrice;
     }, 0);
-  };
+  }, [orderItems]);
 
-  const calculateDiscount = () => {
-    const subtotal = calculateTotal();
+  const calculateTotalVat = useMemo(() => {
+    return orderItems.reduce((totalVat, item) => {
+      const itemPrice = item.sellingPrice * item.quantity;
+      const vatAmount = (itemPrice * (item.vatRate || 0)) / 100;
+      return totalVat + vatAmount;
+    }, 0);
+  }, [orderItems]);
+
+  const calculateDiscount = useMemo(() => {
+    const subtotal = calculateTotal;
     if (formData.discountType === "percentage" && formData.discountPercentage) {
       return (subtotal * Number(formData.discountPercentage)) / 100;
     } else if (formData.discountType === "fixed" && formData.discountAmount) {
       return formData.discountAmount;
     }
     return 0;
-  };
+  }, [formData.discountType, formData.discountPercentage, formData.discountAmount, calculateTotal]);
 
-  const calculateFinalTotal = () => {
-    const finalTotal = calculateTotal() - calculateDiscount();
+  const calculateFinalTotal = useMemo(() => {
+    const subtotal = calculateTotal;
+    const discount = calculateDiscount;
+    const vat = calculateTotalVat;
+    const finalTotal = subtotal - discount + vat;
     return finalTotal > 0 ? finalTotal : 0;
-  };
+  }, [calculateTotal, calculateDiscount, calculateTotalVat]);
 
   // Show/hide down arrow based on scroll position
   useEffect(() => {
@@ -482,101 +543,127 @@ const OrderUpdate: React.FC = () => {
     }
   };
 
-  const handleUpdate = async () => {
-    const { value } = await Dialog.confirm({
-      title: "Xác nhận cập nhật đơn hàng",
-      message: "Bạn có chắc chắn muốn cập nhật đơn hàng này không?",
-    });
-    if (!value) return;
-
-    const orderData = {
-      // customer: formData.customer,
-      // paymentMethod: formData.paymentMethod,
-      // discountAmount: calculateDiscount(),
-      note: formData.note,
-      vatEnabled: formData.vatEnabled,
-      vatInfo: formData.vatEnabled
-        ? {
-            companyName: formData.companyName,
-            taxCode: formData.taxCode,
-            email: formData.email,
-            remark: formData.remark,
-          }
-        : null,
-    };
-
-    const orderUpdated = await updateOrder(id, orderData);
-
-    if (!orderUpdated?.id) {
-      throw new Error("Cập nhật đơn hàng thất bại");
+  // Handle order update for DRAFT and PENDING orders (without changing status)
+  const handleOrderUpdate = async () => {
+    const isValid = validateForm();
+    if (!isValid) {
+      presentToast({
+        message: "Vui lòng kiểm tra lại thông tin đơn hàng",
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+      return;
     }
 
-    presentToast({
-      message: "Cập nhật đơn hàng thành công",
-      duration: 2000,
-      position: "top",
-      color: "success",
-    });
+    try {
+      // Show confirmation prompt
+      const { value } = await Dialog.confirm({
+        title: "Cập nhật đơn hàng",
+        message: "Bạn có chắc chắn muốn cập nhật thông tin đơn hàng này không?",
+      });
+      if (!value) return;
+
+      await withLoading(async () => {
+        const orderData = {
+          ...buildOrderData(),
+        };
+
+        const orderUpdated = await updateOrder(id, orderData);
+
+        if (!orderUpdated?.id) {
+          throw new Error("Cập nhật đơn hàng thất bại");
+        }
+
+        presentToast({
+          message: "Cập nhật đơn hàng thành công",
+          duration: 2000,
+          position: "top",
+          color: "success",
+        });
+
+        // Refresh order data
+        await fetchOrderDetail();
+      });
+    } catch (error) {
+      presentToast({
+        message: (error as Error).message || "Có lỗi xảy ra khi cập nhật đơn hàng",
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+    }
   };
 
-  const handlePaidOrder = async () => {
-    return presentToast({
-      message: "Tính năng này đang phát triển",
-      duration: 2000,
-      position: "top",
-      color: "warning",
-    });
-    const { value } = await Dialog.confirm({
-      title: "Xác nhận thanh toán đơn hàng",
-      message: "Bạn có chắc chắn muốn thanh toán đơn hàng này không?",
-    });
-
-    if (!value) return;
-
-    const status =
-      formData.paymentMethod === PaymentMethod.CASH
-        ? OrderStatus.COMPLETED
-        : OrderStatus.PENDING;
-
-    const orderData = {
-      status,
-      customer: formData.customer,
-      paymentMethod: formData.paymentMethod,
-      note: formData.note,
-      discountAmount: calculateDiscount(),
-      items: orderItems.map((item) => ({
-        productId: item.id,
-        productName: item.productName,
-        code: item.code,
-        quantity: item.quantity,
-        price: item.sellingPrice,
-      })),
-      vatEnabled: formData.vatEnabled,
-      vatInfo: formData.vatEnabled
-        ? {
-            companyName: formData.companyName,
-            taxCode: formData.taxCode,
-            email: formData.email,
-            remark: formData.remark,
-          }
-        : null,
-    };
-
-    const orderUpdated = await updateOrder(id, orderData);
-
-    if (!orderUpdated?.id) {
-      throw new Error("Thanh toán đơn hàng thất bại");
+  const handlePaymentComplete = async (
+    amount: number,
+    method: PaymentModalMethod
+  ) => {
+    if (!pendingOrderData) {
+      presentToast({
+        message: "Không tìm thấy thông tin đơn hàng",
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+      return;
     }
 
-    presentToast({
-      message: "Thanh toán đơn hàng thành công",
-      duration: 2000,
-      position: "top",
-      color: "success",
-    });
+    try {
+      // Map PaymentModalMethod to PaymentMethodEnum
+      const paymentMethodEnum = method === "cash" 
+        ? PaymentMethodEnum.CASH 
+        : PaymentMethodEnum.BANK_TRANSFER;
+
+      // Create transaction data
+      const transactionData: PaymentTransactionDto = {
+        amount,
+        paymentMethod: paymentMethodEnum,
+        type: TransactionType.PAYMENT,
+        note: `Thanh toán đơn hàng ${formData.code}`,
+      };
+
+      // Prepare order data with transaction and status
+      const orderData = {
+        ...pendingOrderData,
+        transaction: transactionData,
+      };
+      console.log({ orderData });
+
+      // Update order with payment information
+      const orderUpdated = await updateOrder(id, orderData);
+      console.log({ orderUpdated });
+
+      if (!orderUpdated?.id) {
+        throw new Error("Cập nhật đơn hàng thất bại");
+      }
+
+      // Close payment modal
+      setIsPaymentModalOpen(false);
+      setPendingOrderData(null);
+
+      presentToast({
+        message: "Thanh toán đơn hàng thành công",
+        duration: 2000,
+        position: "top",
+        color: "success",
+      });
+
+      // Navigate back
+      history.goBack();
+    } catch (error) {
+      console.error({ error });
+      
+      presentToast({
+        message: (error as Error).message || "Có lỗi xảy ra khi thanh toán",
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+    }
   };
 
-  const handleSubmit = async () => {
+  const handleConfirmOrder = async () => {
     const isValid = validateForm();
 
     if (!isValid) {
@@ -589,24 +676,23 @@ const OrderUpdate: React.FC = () => {
       return;
     }
 
-    await withLoading(async () => {
-      try {
-        if (isOrderPaid) {
-          await handleUpdate();
-        } else {
-          await handlePaidOrder();
-        }
-
-        history.goBack();
-      } catch (error) {
-        presentToast({
-          message: (error as Error).message || "Có lỗi xảy ra",
-          duration: 2000,
-          position: "top",
-          color: "danger",
-        });
-      }
+    // For DRAFT orders, open payment modal for confirmation
+    const { value } = await Dialog.confirm({
+      title: "Xác nhận đơn hàng",
+      message: "Bạn có chắc chắn muốn xác nhận và thanh toán đơn hàng này không?",
     });
+
+    if (!value) return;
+
+    // Prepare order data for payment
+    const orderData = {
+      ...buildOrderData(),
+      status: OrderStatus.COMPLETED
+    };
+
+    // Store pending order data and open payment modal
+    setPendingOrderData(orderData);
+    setIsPaymentModalOpen(true);
   };
 
   const fetchOrderDetail = async () => {
@@ -625,15 +711,31 @@ const OrderUpdate: React.FC = () => {
           return;
         }
 
-        // Map order items to component format
-        const items = orderDetail.items.map((item: any) => ({
-          id: item.productId,
-          productId: item.productId,
-          productName: item.productName,
-          code: item.code,
-          quantity: item.quantity,
-          sellingPrice: item.price,
-        }));
+        // Map order items to component format and fetch inventory data
+        const items = await Promise.all(
+          orderDetail.items?.map(async (item: any) => {
+            let inventory = undefined;
+            try {
+              // Fetch product detail to get inventory data
+              const productDetail = await getProductDetail(item.code);
+              inventory = productDetail.inventory;
+            } catch (error) {
+              // If product detail fetch fails, continue without inventory data
+              console.warn(`Failed to fetch inventory for product ${item.code}:`, error);
+            }
+            
+            return {
+              id: item.productId,
+              productId: item.productId,
+              productName: item.productName,
+              code: item.code,
+              quantity: item.quantity,
+              sellingPrice: item.price,
+              vatRate: item.vatRate || 0,
+              inventory: inventory,
+            };
+          }) || []
+        );
 
         setOrderItems(items);
 
@@ -656,7 +758,6 @@ const OrderUpdate: React.FC = () => {
           }
         }
 
-        console.log({ orderDetail });
         // Set form data
         setFormData({
           code: orderDetail.code,
@@ -692,10 +793,32 @@ const OrderUpdate: React.FC = () => {
     });
   };
 
+  const buildOrderData = () => ({
+    customer: formData.customer,
+    paymentMethod: formData.paymentMethod,
+    discountAmount: calculateDiscount,
+    note: formData.note,
+    items: orderItems.map((item) => ({
+      productId: item.id,
+      productName: item.productName,
+      code: item.code,
+      quantity: item.quantity,
+      price: item.sellingPrice,
+      vatRate: item.vatRate || 0,
+    })),
+    vatEnabled: formData.vatEnabled,
+    vatInfo: formData.vatEnabled
+      ? {
+          companyName: formData.companyName,
+          taxCode: formData.taxCode,
+          email: formData.email,
+          remark: formData.remark,
+        }
+      : null,
+  });
+
   useIonViewWillEnter(() => {
-    if (id) {
-      fetchOrderDetail();
-    }
+    id && fetchOrderDetail();
   }, [id]);
 
   return (
@@ -751,8 +874,40 @@ const OrderUpdate: React.FC = () => {
               </div>
             )}
 
-            {/* Barcode Scanner Section - Disabled */}
-            {!isOrderPaid && (
+            {/* Barcode Scanner Section - Enabled for DRAFT */}
+            {isEditMode && (
+              <>
+                {/* Barcode Scanner Section */}
+                <div
+                  className="ion-activatable bg-teal-50 border-2 border-dashed border-teal-200 rounded-lg p-6 mb-4 text-center cursor-pointer hover:bg-teal-100 transition-colors"
+                  onClick={() => startScan()}
+                >
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center">
+                      <IonIcon
+                        icon={scanOutline}
+                        className="text-3xl text-teal-600"
+                      />
+                    </div>
+                    <p className="text-teal-700 font-medium text-base">
+                      Quét mã vạch để thêm sản phẩm
+                    </p>
+                  </div>
+                </div>
+
+                <div 
+                  className="ion-activatable receipt-import-ripple-parent mb-3 cursor-pointer hover:bg-gray-50 transition-colors p-2 rounded-lg"
+                  onClick={openModalSelectProduct}
+                >
+                  <IonIcon icon={search} className="text-2xl text-blue-600 mr-2" />
+                  <span className="text-blue-700 font-medium">Tìm kiếm hàng hóa</span>
+                  <IonRippleEffect></IonRippleEffect>
+                </div>
+              </>
+            )}
+
+            {/* Disabled state for non-DRAFT orders */}
+            {!isEditMode && (
               <>
                 <div className="ion-activatable bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg p-6 mb-4 text-center opacity-65 cursor-not-allowed">
                   <div className="flex flex-col items-center justify-center space-y-3">
@@ -824,34 +979,33 @@ const OrderUpdate: React.FC = () => {
             <div className="mb-4">
               <IonRadioGroup
                 value={formData.discountType || "percentage"}
-                onIonChange={() => {}} // Disabled - no action
+                onIonChange={isEditMode ? handleDiscountTypeChange : () => {}}
               >
-                <div className="flex gap-4 mb-3 opacity-65">
+                <div className={cn("flex gap-4 mb-3", { "opacity-65": !isEditMode })}>
                   <IonItem
                     lines="none"
                     className={cn(`rounded-lg transition-colors`, {
-                      "bg-gray-200 border border-gray-300":
+                      "bg-custom-primary border border-custom-primary":
                         formData.discountType === "percentage" ||
                         !formData.discountType,
-                      "border border-gray-300":
-                        formData.discountType === "fixed",
+                      border: formData.discountType === "fixed",
                     })}
                   >
-                    <IonRadio value="percentage" disabled={true}>
+                    <IonRadio value="percentage" disabled={!isEditMode}>
                       Theo %
                     </IonRadio>
                   </IonItem>
                   <IonItem
                     lines="none"
                     className={cn(`rounded-lg transition-colors`, {
-                      "bg-gray-200 border border-gray-300":
+                      "bg-custom-primary border border-custom-primary":
                         formData.discountType === "fixed",
-                      "border border-gray-300":
+                      border:
                         formData.discountType === "percentage" ||
                         !formData.discountType,
                     })}
                   >
-                    <IonRadio value="fixed" disabled={true}>
+                    <IonRadio value="fixed" disabled={!isEditMode}>
                       Theo VND
                     </IonRadio>
                   </IonItem>
@@ -868,10 +1022,10 @@ const OrderUpdate: React.FC = () => {
                   max={100}
                   placeholder="Nhập % giảm giá"
                   name="discountPercentage"
-                  className="custom-padding border rounded-lg opacity-65"
+                  className={cn("custom-padding border rounded-lg", { "opacity-65": !isEditMode })}
                   value={formData.discountPercentage}
                   onIonChange={handleDiscountChange}
-                  disabled={true}
+                  disabled={!isEditMode}
                 ></IonInput>
               ) : (
                 <IonInput
@@ -880,10 +1034,10 @@ const OrderUpdate: React.FC = () => {
                   fill="solid"
                   placeholder="Nhập số tiền giảm giá"
                   name="discountAmount"
-                  className="custom-padding border rounded-lg opacity-65"
+                  className={cn("custom-padding border rounded-lg", { "opacity-65": !isEditMode })}
                   value={formData.discountAmountFormatted || 0}
                   onIonInput={handleDiscountChange}
-                  disabled={true}
+                  disabled={!isEditMode}
                 ></IonInput>
               )}
             </div>
@@ -898,12 +1052,27 @@ const OrderUpdate: React.FC = () => {
                 Khách hàng
               </h2>
               <div className="mb-4">
-                <div className="ion-activatable receipt-import-ripple-parent break-normal p-2 opacity-65 cursor-not-allowed">
+                <div 
+                  className={cn("ion-activatable receipt-import-ripple-parent break-normal p-2", {
+                    "opacity-65 cursor-not-allowed": !isEditMode,
+                    "cursor-pointer hover:bg-gray-50 transition-colors": isEditMode
+                  })}
+                  onClick={isEditMode ? openModalSelectCustomer : undefined}
+                >
                   <IonIcon
                     icon={search}
-                    className="text-2xl mr-2 text-gray-400"
+                    className={cn("text-2xl mr-2", {
+                      "text-gray-400": !isEditMode,
+                      "text-blue-600": isEditMode
+                    })}
                   />
-                  {selectedCustomerName}
+                  <span className={cn({
+                    "text-gray-500": !isEditMode,
+                    "text-blue-700": isEditMode
+                  })}>
+                    {selectedCustomerName}
+                  </span>
+                  {isEditMode && <IonRippleEffect></IonRippleEffect>}
                 </div>
                 <ErrorMessage message={errors.customer} />
               </div>
@@ -914,14 +1083,14 @@ const OrderUpdate: React.FC = () => {
               </h2>
               <IonRadioGroup
                 value={formData.paymentMethod}
-                onIonChange={handlePaymentMethodChange}
+                onIonChange={isEditMode ? handlePaymentMethodChange : () => {}}
                 className="mt-2"
               >
                 <div className="flex gap-4">
                   <IonItem
                     lines="none"
                     className={cn(
-                      `rounded-lg transition-colors opacity-50 cursor-not-allowed`,
+                      `rounded-lg transition-colors`,
                       {
                         "bg-custom-primary border border-custom-primary":
                           formData.paymentMethod === PaymentMethod.CASH ||
@@ -929,29 +1098,31 @@ const OrderUpdate: React.FC = () => {
                         border:
                           formData.paymentMethod ===
                           PaymentMethod.BANK_TRANSFER,
+                        "opacity-50 cursor-not-allowed": !isEditMode,
                       }
                     )}
                   >
-                    <IonRadio value={PaymentMethod.CASH} disabled={true}>
+                    <IonRadio value={PaymentMethod.CASH} disabled={!isEditMode}>
                       Tiền mặt
                     </IonRadio>
                   </IonItem>
                   <IonItem
                     lines="none"
                     className={cn(
-                      `rounded-lg transition-colors opacity-50 cursor-not-allowed`,
+                      `rounded-lg transition-colors`,
                       {
                         "bg-custom-primary border border-custom-primary":
                           formData.paymentMethod ===
                             PaymentMethod.BANK_TRANSFER ||
                           !formData.paymentMethod,
                         border: formData.paymentMethod === PaymentMethod.CASH,
+                        "opacity-50 cursor-not-allowed": !isEditMode,
                       }
                     )}
                   >
                     <IonRadio
                       value={PaymentMethod.BANK_TRANSFER}
-                      disabled={true}
+                      disabled={!isEditMode}
                     >
                       Chuyển khoản
                     </IonRadio>
@@ -963,120 +1134,29 @@ const OrderUpdate: React.FC = () => {
         </div>
 
         {/* 4. VAT Information Section */}
-        <div className="bg-card rounded-lg shadow-sm mb-4">
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-medium text-foreground">
-                Xuất hóa đơn VAT
-              </h2>
-              <IonToggle
-                checked={formData.vatEnabled}
-                onIonChange={handleVatToggle}
-                className="text-primary"
-              ></IonToggle>
-            </div>
-
-            {formData.vatEnabled && (
-              <div className="mt-3 space-y-3">
-                <IonInput
-                  className={cn("custom-padding border rounded-lg", {
-                    "ion-valid": !errors.companyName,
-                    "ion-invalid ion-touched": errors.companyName,
-                  })}
-                  label="Tên công ty"
-                  labelPlacement="floating"
-                  fill="solid"
-                  placeholder="Nhập tên công ty"
-                  name="companyName"
-                  value={formData.companyName}
-                  onIonChange={handleInputChange}
-                  errorText={errors.companyName}
-                ></IonInput>
-
-                <IonInput
-                  className={cn("custom-padding border rounded-lg", {
-                    "ion-valid": !errors.taxCode,
-                    "ion-invalid ion-touched": errors.taxCode,
-                  })}
-                  label="Mã số thuế"
-                  labelPlacement="floating"
-                  fill="solid"
-                  placeholder="Nhập mã số thuế"
-                  name="taxCode"
-                  value={formData.taxCode}
-                  onIonChange={handleInputChange}
-                  errorText={errors.taxCode}
-                ></IonInput>
-
-                <IonInput
-                  label="Email"
-                  labelPlacement="floating"
-                  fill="solid"
-                  name="email"
-                  type="email"
-                  placeholder="Nhập email"
-                  className="custom-padding border rounded-lg"
-                  value={formData.email}
-                  onIonChange={handleInputChange}
-                  errorText={errors.email}
-                ></IonInput>
-
-                <IonTextarea
-                  label="Ghi chú"
-                  labelPlacement="floating"
-                  name="remark"
-                  value={formData.remark}
-                  onIonChange={handleTextAreaChange}
-                  placeholder="Nhập ghi chú"
-                  rows={2}
-                  fill="outline"
-                  className="border border-input rounded-lg px-2"
-                ></IonTextarea>
-              </div>
-            )}
-          </div>
-        </div>
+        <VATSection
+          formData={formData}
+          isEditMode={isEditMode}
+          errors={errors}
+          onVatToggle={handleVatToggle}
+          onInputChange={handleInputChange}
+          onTextAreaChange={handleTextAreaChange}
+        />
 
         {/* 5. Order Notes Section */}
-        <div className="bg-card rounded-lg shadow-sm mb-4">
-          <div className="p-4">
-            <h2 className="text-lg font-medium text-foreground mb-3">
-              Ghi chú
-            </h2>
-            <IonTextarea
-              name="note"
-              value={formData.note}
-              onIonChange={handleTextAreaChange}
-              placeholder="Nhập ghi chú đơn hàng"
-              rows={3}
-              className="border border-input rounded-lg px-2"
-            ></IonTextarea>
-          </div>
-        </div>
+        <OrderNotesSection
+          note={formData.note}
+          isEditMode={isEditMode}
+          onTextAreaChange={handleTextAreaChange}
+        />
 
         {/* 6. Order Summary Section */}
-        <div className="bg-card rounded-lg shadow-sm mb-4">
-          <div className="p-4">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-muted-foreground">Tổng tiền hàng</span>
-              <span className="text-foreground">
-                {formatCurrency(calculateTotal())}
-              </span>
-            </div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-muted-foreground">Giảm giá</span>
-              <span className="text-foreground">
-                {formatCurrency(calculateDiscount())}
-              </span>
-            </div>
-            <div className="flex justify-between items-center font-bold pt-2 border-t border-border">
-              <span className="text-foreground"> Thành tiền </span>
-              <span className="text-green-600">
-                {formatCurrency(calculateFinalTotal())}
-              </span>
-            </div>
-          </div>
-        </div>
+        <OrderSummarySection
+          subtotal={calculateTotal}
+          discount={calculateDiscount}
+          vatTotal={calculateTotalVat}
+          finalTotal={calculateFinalTotal}
+        />
 
         {/* 7. Cancel order Section */}
         {formData.status !== OrderStatus.CANCELLED && (
@@ -1102,24 +1182,74 @@ const OrderUpdate: React.FC = () => {
       </IonContent>
 
       <IonFooter className="ion-no-border">
-        <div className="flex justify-between p-2 bg-card">
-          <IonButton
-            expand="block"
-            className="rounded-lg grow"
-            onClick={handleSubmit}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              "Đang xử lý..."
-            ) : (
-              <>
-                <IonIcon icon={checkmarkCircleOutline} slot="start" />
-                {!isOrderPaid ? "Xác nhận đơn hàng" : "Cập nhật đơn hàng"}
-              </>
-            )}
-          </IonButton>
+        <div className="flex justify-between p-3 bg-card">
+          
+          {/* Confirm Order Button - only for non-paid orders */}
+          {!isOrderPaid && (
+            <IonButton
+              expand="block"
+              className={cn("rounded-lg grow", {
+                "grow": !isEditMode,
+              })}
+              onClick={handleConfirmOrder}
+              disabled={isLoading}
+              color="primary"
+            >
+              {isLoading ? (
+                "Đang xử lý..."
+              ) : (
+                <>
+                  <IonIcon 
+                    icon={checkmarkCircleOutline} 
+                    slot="start" 
+                  />
+                  Xác nhận đơn hàng
+                </>
+              )}
+            </IonButton>
+          )}
+
+          {/* Update Button - for DRAFT and PENDING orders */}
+          {isEditMode && (
+            <IonButton
+              expand="block"
+              className={cn("rounded-lg grow", {
+                "grow": isOrderPaid,
+              })}
+              onClick={handleOrderUpdate}
+              disabled={isLoading}
+              color="primary"
+              fill="outline"
+            >
+              {isLoading ? (
+                "Đang xử lý..."
+              ) : (
+                <>
+                  <IonIcon 
+                    icon={createOutline} 
+                    slot="start" 
+                  />
+                  Cập nhật
+                </>
+              )}
+            </IonButton>
+          )}
         </div>
       </IonFooter>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => {
+          setIsPaymentModalOpen(false);
+          setPendingOrderData(null);
+        }}
+        orderData={{
+          totalAmount: calculateFinalTotal,
+        }}
+        onPaymentComplete={handlePaymentComplete}
+      />
+
     </IonPage>
   );
 };

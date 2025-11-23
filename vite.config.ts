@@ -15,6 +15,9 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "auto",
+      workbox: {
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MB
+      },
       manifest: {
         name: "All-In-One System",
         short_name: "AIOM",
@@ -50,4 +53,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // build: {
+  //   sourcemap: true,
+  // }
 });

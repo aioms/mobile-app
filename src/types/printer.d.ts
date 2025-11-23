@@ -5,7 +5,7 @@ export interface PrinterConfig {
 }
 
 export const DEFAULT_XPRINTER_CONFIG: PrinterConfig = {
-  ipAddress: "192.168.0.220",
+  ipAddress: "192.168.1.220",
   port: 9100,
   timeout: 5000
 };

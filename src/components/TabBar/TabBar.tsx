@@ -32,7 +32,9 @@ import InventoryScreen from "@/pages/Inventory/Inventory";
 
 import ReceiptImportCreateScreen from "@/pages/Receipt/ReceiptImport/ReceiptImportCreate";
 import ReceiptImportDetailScreen from "@/pages/Receipt/ReceiptImport/ReceiptImportDetail";
+
 import ReceiptCheckDetailScreen from "@/pages/Receipt/ReceiptCheck/ReceiptCheckDetail";
+
 import ReceiptDebtCreateScreen from "@/pages/Receipt/ReceiptDebt/ReceiptDebtCreate";
 import ReceiptDebtDetailScreen from "@/pages/Receipt/ReceiptDebt/ReceiptDebtDetail";
 import ReceiptDebtUpdateScreen from "@/pages/Receipt/ReceiptDebt/ReceiptDebtUpdate";

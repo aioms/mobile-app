@@ -1,7 +1,7 @@
 import { PrinterConfig, PrinterStatus, PrinterResponse, DEFAULT_XPRINTER_CONFIG } from '@/types/printer.d';
 
 // Proxy server configuration
-const PROXY_SERVER_URL = 'http://localhost:3001';
+const PROXY_SERVER_URL = 'https://desktop-0au7em7.tail0c14cf.ts.net';
 
 export class XprinterService {
   private config: PrinterConfig;
@@ -131,6 +131,7 @@ export class XprinterService {
     quantity: number = 1
   ): Promise<PrinterResponse> {
     try {
+      console.log({ url: this.baseUrl, productData, quantity  });
       const response = await fetch(`${this.baseUrl}/api/printer/print-horizontal-barcode`, {
         method: 'POST',
         headers: {
@@ -142,6 +143,7 @@ export class XprinterService {
           printerConfig: this.config,
         }),
       });
+      console.log({ response });
 
       const result = await response.json();
       return result;

@@ -9,7 +9,6 @@ import {
   IonContent,
   IonHeader,
   IonIcon,
-  IonItem,
   IonLabel,
   IonList,
   IonPage,
@@ -28,6 +27,8 @@ import {
 import { ChevronDown } from "lucide-react";
 import { OverlayEventDetail } from "@ionic/react/dist/types/components/react-component-lib/interfaces";
 
+import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
+
 import useReceiptImport from "@/hooks/apis/useReceiptImport";
 import { useAuth, useBarcodeScanner, useLoading } from "@/hooks";
 import { useCustomToast } from "@/hooks/useCustomToast";
@@ -39,7 +40,7 @@ import {
   getStatusLabel,
   RECEIPT_IMPORT_STATUS,
   TReceiptImportStatus,
-} from "@/common/constants/receipt";
+} from "@/common/constants/receipt-import.constant";
 
 import { dayjsFormat, formatCurrency } from "@/helpers/formatters";
 import { toISODateTime } from "@/helpers/date";
@@ -98,6 +99,11 @@ const ReceiptImportDetail: React.FC = () => {
   const [receipt, setReceipt] = useState<ReceiptImport | null>(null);
   const [formData, setFormData] = useState<IFormData>(initialFormData);
 
+  // New state for barcode scanning functionality
+  const [isScanning, setIsScanning] = useState<boolean>(false);
+  const [scannedItems, setScannedItems] = useState<Map<string, number>>(new Map());
+  const [pendingImports, setPendingImports] = useState<string[]>([]);
+
   const { isLoading, withLoading } = useLoading();
   const { user } = useAuth();
   const {
@@ -134,14 +140,114 @@ const ReceiptImportDetail: React.FC = () => {
   };
 
   const handleBarcodeScanned = (value: string) => {
-    handleImport(value);
+    console.log({ value });
+    
+    // if (!isScanning) return;
+    
+    // Add to scanned items map and increment quantity
+    setScannedItems(prev => {
+      const newMap = new Map(prev);
+      const currentCount = newMap.get(value) || 0;
+      newMap.set(value, currentCount + 1);
+      return newMap;
+    });
+
+    // Add to pending imports if not already there
+    setPendingImports(prev => {
+      if (!prev.includes(value)) {
+        return [...prev, value];
+      }
+      return prev;
+    });
+
+    // Show toast for successful scan
+    presentToast({
+      message: `Đã quét: ${value} (Số lượng: ${(scannedItems.get(value) || 0) + 1})`,
+      duration: 1500,
+      position: "top",
+      color: "success",
+    });
+  };
+
+  const stopScanningAndImport = async () => {
+    setIsScanning(false);
+    
+    if (pendingImports.length === 0) {
+      await presentToast({
+        message: "Không có sản phẩm nào được quét",
+        duration: 2000,
+        position: "top",
+        color: "warning",
+      });
+      return;
+    }
+
+    // Process all scanned items
+    await withLoading(async () => {
+      try {
+        const products = [];
+
+        for (const productCode of pendingImports) {
+          const quantity = scannedItems.get(productCode) || 1;
+
+          products.push({
+            code: productCode,
+            quantity,
+          });
+        }
+
+        await handleImport(products);
+
+        presentToast({
+          message: `Đã nhập ${pendingImports.length} sản phẩm thành công`,
+          duration: 2000,
+          position: "top",
+          color: "success",
+        });
+
+        // Clear scanning state
+        setScannedItems(new Map());
+        setPendingImports([]);
+        
+        // Refresh the receipt data
+        await fetchReceiptImport();
+      } catch (error) {
+        captureException(error as Error, createExceptionContext(
+          'ReceiptImport',
+          'ReceiptImportDetail',
+          'stopScanningAndImport'
+        ));
+
+        presentToast({
+          message: (error as Error).message || "Có lỗi xảy ra khi nhập sản phẩm",
+          duration: 2000,
+          position: "top",
+          color: "danger",
+        });
+      }
+    });
   };
 
   const { startScan } = useBarcodeScanner({
     onBarcodeScanned: handleBarcodeScanned,
-    onError: (error: Error) => showError(error.message),
-    delay: 4000,
+    onError: (error: Error) => {
+      captureException(error, createExceptionContext(
+        'ReceiptImport',
+        'ReceiptImportDetail',
+        'useBarcodeScanner.onError'
+      ));
+      showError(error.message);
+    },
+    toastTimeout: 1000,
+    delay: 2000, // Reduced delay for faster scanning
   });
+
+  const startScanning = () => {
+    setIsScanning(true);
+    setScannedItems(new Map());
+    setPendingImports([]);
+    startScan();
+  };
 
   const { showScanProduct, showRequestApproval, showComplete, showUpdate } =
     useMemo(() => {
@@ -210,9 +316,15 @@ const ReceiptImportDetail: React.FC = () => {
 
         setReceipt(receipt);
       } catch (error) {
-        await presentToast({
+        captureException(error as Error, createExceptionContext(
+          'ReceiptImport',
+          'ReceiptImportDetail',
+          'fetchReceiptImport'
+        ));
+
+        presentToast({
           message: (error as Error).message,
-          duration: 3000,
+          duration: 2000,
           position: "top",
           color: "danger",
         });
@@ -267,12 +379,19 @@ const ReceiptImportDetail: React.FC = () => {
         position: "top",
         color: "success",
       });
+
       setFormData(initialFormData);
       fetchReceiptImport();
     } catch (error) {
-      await presentToast({
+      captureException(error as Error, createExceptionContext(
+        'ReceiptImport',
+        'ReceiptImportDetail',
+        'handleUpdate'
+      ));
+
+      presentToast({
         message: (error as Error).message,
-        duration: 3000,
+        duration: 2000,
         position: "top",
         color: "danger",
       });
@@ -295,6 +414,7 @@ const ReceiptImportDetail: React.FC = () => {
       await updateReceiptImport(receipt.id, {
         status: ReceiptImportStatus.WAITING,
       });
+
       await presentToast({
         message: "Đã gửi yêu cầu duyệt",
         duration: 3000,
@@ -303,9 +423,15 @@ const ReceiptImportDetail: React.FC = () => {
       });
       fetchReceiptImport();
     } catch (error) {
-      await presentToast({
+      captureException(error as Error, createExceptionContext(
+        'ReceiptImport',
+        'ReceiptImportDetail',
+        'handleRequestApproval'
+      ));
+
+      presentToast({
         message: (error as Error).message,
-        duration: 3000,
+        duration: 2000,
         position: "top",
         color: "danger",
       });
@@ -324,32 +450,19 @@ const ReceiptImportDetail: React.FC = () => {
 
       if (!value) return;
 
-      await updateReceiptImport(receipt.id, {
+      if (formData.supplier) {
+        formData.supplier = formData.supplier.split("__")[0];
+      }
+
+      const result = await updateReceiptImport(receipt.id, {
+        ...formData,
+        items: receipt?.items,
         status: ReceiptImportStatus.COMPLETED,
       });
 
-      await presentToast({
-        message: "Đã hoàn thành phiếu nhập",
-        duration: 2000,
-        position: "top",
-        color: "success",
-      });
-      fetchReceiptImport();
-    } catch (error) {
-      await presentToast({
-        message: (error as Error).message,
-        duration: 3000,
-        position: "top",
-        color: "danger",
-      });
-    }
-  };
-
-  const handleImport = async (receiptNumber: string) => {
-    try {
-      if (!receiptNumber) {
+      if (!result || !result.id) {
         await presentToast({
-          message: "Không tìm thấy phiếu",
+          message: "Cập nhật phiếu nhập thất bại",
           duration: 3000,
           position: "top",
           color: "warning",
@@ -357,16 +470,58 @@ const ReceiptImportDetail: React.FC = () => {
         return;
       }
 
-      const response = await importQuick({ code: receiptNumber });
+      await presentToast({
+        message: "Đã hoàn thành phiếu nhập",
+        duration: 2000,
+        position: "top",
+        color: "success",
+      });
+
+      fetchReceiptImport();
+    } catch (error) {
+      captureException(error as Error, createExceptionContext(
+        'ReceiptImport',
+        'ReceiptImportDetail',
+        'handleComplete'
+      ));
+
+      presentToast({
+        message: (error as Error).message,
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+    }
+  };
+
+  const handleImport = async (products: { code: string; quantity: number }[]) => {
+    try {
+      if (!products.length) {
+        await presentToast({
+          message: "Không tìm thấy phiếu",
+          duration: 2000,
+          position: "top",
+          color: "warning",
+        });
+        return;
+      }
+
+      const response = await importQuick({ receiptId: id, products });
       const receiptId = response?.id;
 
       if (!receiptId) {
         throw new Error("Cập nhật thất bại");
       }
     } catch (error) {
-      await presentToast({
+      captureException(error as Error, createExceptionContext(
+        'ReceiptImport',
+        'ReceiptImportDetail',
+        'handleImport'
+      ));
+
+      presentToast({
         message: (error as Error).message,
-        duration: 3000,
+        duration: 2000,
         position: "top",
         color: "danger",
       });
@@ -493,33 +648,68 @@ const ReceiptImportDetail: React.FC = () => {
     );
   }, [user?.role, supplierName, receipt, formData]);
 
+  // Calculate total amount from items
+  const calculatedTotalAmount = useMemo(() => {
+    if (!receipt?.items || receipt.items.length === 0) return 0;
+
+    return receipt.items.reduce((total, item) => {
+      const itemTotal = item.quantity * item.costPrice * (1 - (item.discount || 0) / 100);
+      return total + itemTotal;
+    }, 0);
+  }, [receipt?.items]);
+
+  // Calculate total quantity from items
+  const calculatedTotalQuantity = useMemo(() => {
+    if (!receipt?.items || receipt.items.length === 0) return 0;
+
+    return receipt.items.reduce((total, item) => {
+      return total + item.quantity;
+    }, 0);
+  }, [receipt?.items]);
+
   const renderReceiptItems = useMemo(() => {
     if (!receipt || !user) return null;
 
     const userRole = user?.role;
     const isEmployee = userRole === UserRole.EMPLOYEE;
+    const isReceiptCancelled = receipt.status === RECEIPT_IMPORT_STATUS.CANCELLED;
+    // const isUserCreated = user.id === receipt.userCreated;
 
-    if (receipt.status === RECEIPT_IMPORT_STATUS.COMPLETED || isEmployee) {
-      return receipt?.items?.map((item) => (
-        <IonItem key={item.id} className="py-2">
-          <IonLabel>
-            <h2 className="font-medium">{item.productName}</h2>
-            <p className="text-gray-500 text-sm">Mã: {item.code}</p>
-            <div className="flex justify-between mt-2">
-              <span className="text-sm">SL: {item.quantity}</span>
-              <span className="text-sm">
-                Đơn giá: {formatCurrency(item.costPrice)}
-              </span>
-            </div>
-          </IonLabel>
-        </IonItem>
-      ));
-    }
+    // Show read-only view for completed receipts or employees who didn't create the receipt
+    // if (receipt.status === RECEIPT_IMPORT_STATUS.COMPLETED || (isEmployee && !isUserCreated)) {
+    //   return receipt?.items?.map((item) => {
+    //     const itemTotal = item.quantity * item.costPrice * (1 - (item.discount || 0) / 100);
+    //     return (
+    //       <IonItem key={item.id} className="py-2">
+    //         <IonLabel>
+    //           <h2 className="font-medium">{item.productName}</h2>
+    //           <p className="text-gray-500 text-sm">Mã: {item.code}</p>
+    //           <div className="flex justify-between mt-2">
+    //             <span className="text-sm">SL: {item.quantity}</span>
+    //             <span className="text-sm">
+    //               Đơn giá: {formatCurrency(item.costPrice)}
+    //             </span>
+    //           </div>
+    //           {item.discount > 0 && (
+    //             <div className="flex justify-between mt-1">
+    //               <span className="text-sm text-orange-600">Chiết khấu: {item.discount}%</span>
+    //               <span className="text-sm font-medium">
+    //                 Thành tiền: {formatCurrency(itemTotal)}
+    //               </span>
+    //             </div>
+    //           )}
+    //         </IonLabel>
+    //       </IonItem>
+    //     );
+    //   });
+    // }
 
     return receipt?.items?.map((item, index) => {
       return (
         <ReceiptItem
           key={index}
+          isEmployee={isEmployee}
+          disabled={isReceiptCancelled}
           {...item}
           onRowChange={(data) => {
             setReceipt((prev): ReceiptImport | null => {
@@ -528,7 +718,6 @@ const ReceiptImportDetail: React.FC = () => {
               if (!newReceipt.items) {
                 newReceipt.items = [];
               }
-
               newReceipt.items[index] = data;
               return newReceipt as ReceiptImport;
             });
@@ -536,7 +725,7 @@ const ReceiptImportDetail: React.FC = () => {
         />
       );
     });
-  }, [user?.role, receipt?.status, receipt?.items]);
+  }, [user?.role, receipt]);
 
   return (
     <IonPage>
@@ -585,13 +774,72 @@ const ReceiptImportDetail: React.FC = () => {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold">Thông tin phiếu nhập</h2>
               {showScanProduct && (
-                <IonButtons slot="end">
-                  <IonButton color="primary" onClick={() => startScan()}>
-                    <IonIcon icon={scanOutline} slot="icon-only" />
-                  </IonButton>
-                </IonButtons>
+                <div className="flex items-center space-x-2">
+                  {!isScanning ? (
+                    // <IonButton 
+                    //   color="primary" 
+                    //   onClick={startScanning}
+                    //   size="small"
+                    // >
+                    //   <IonIcon icon={scanOutline} slot="start" />
+                    //   Quét mã
+                    // </IonButton>
+                    <IonButtons slot="end">
+                      <IonButton color="primary" onClick={startScanning}>
+                        <IonIcon icon={scanOutline} slot="icon-only" />
+                      </IonButton>
+                    </IonButtons>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <IonButton 
+                        color="success" 
+                        onClick={stopScanningAndImport}
+                        size="small"
+                      >
+                        Hoàn thành ({pendingImports.length})
+                      </IonButton>
+                      <IonButton 
+                        color="medium" 
+                        fill="outline"
+                        onClick={() => setIsScanning(false)}
+                        size="small"
+                      >
+                        Hủy
+                      </IonButton>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
+
+            {/* Scanning Status */}
+            {isScanning && (
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span className="text-blue-700 font-medium">Đang quét mã vạch...</span>
+                  </div>
+                  <span className="text-blue-600 text-sm">
+                    {pendingImports.length} sản phẩm
+                  </span>
+                </div>
+                
+                {/* Show scanned items */}
+                {pendingImports.length > 0 && (
+                  <div className="mt-3 space-y-1">
+                    <p className="text-sm text-blue-600 font-medium">Đã quét:</p>
+                    {Array.from(scannedItems.entries()).map(([code, quantity]) => (
+                      <div key={code} className="flex justify-between text-sm text-blue-700">
+                        <span>{code}</span>
+                        <span>x{quantity}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {renderReceiptSummary}
           </div>
 
@@ -608,12 +856,12 @@ const ReceiptImportDetail: React.FC = () => {
           <div className="bg-white rounded-lg p-4 shadow-sm">
             <div className="flex justify-between items-center">
               <span className="font-medium">Tổng số lượng:</span>
-              <span>{receipt?.quantity}</span>
+              <span className="font-semibold">{calculatedTotalQuantity}</span>
             </div>
             <div className="flex justify-between items-center mt-2">
               <span className="font-medium">Tổng tiền:</span>
-              <span className="font-bold text-lg">
-                {formatCurrency(receipt?.totalAmount || 0)}
+              <span className="font-bold text-lg text-blue-600">
+                {formatCurrency(calculatedTotalAmount)}
               </span>
             </div>
           </div>
@@ -638,7 +886,7 @@ const ReceiptImportDetail: React.FC = () => {
                 onClick={handleComplete}
               >
                 <IonIcon icon={checkmarkCircle} className="text-white mr-1" />
-                <span className="text-white">Hoàn thành </span>
+                <span className="text-white"> Hoàn thành </span>
               </IonButton>
             )}
 

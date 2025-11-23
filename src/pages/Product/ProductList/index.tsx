@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Toast } from "@capacitor/toast";
 import {
   IonContent,
   IonSearchbar,
@@ -22,6 +21,7 @@ import {
   IonFab,
   IonFabButton,
   RefresherEventDetail,
+  useIonToast,
 } from "@ionic/react";
 import {
   filterOutline,
@@ -50,6 +50,8 @@ import useProduct from "@/hooks/apis/useProduct";
 import { useAuth, useBarcodeScanner, useLoading } from "@/hooks";
 
 import "./ProductList.css";
+
+import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
 
 interface Product {
   id: string;
@@ -88,6 +90,8 @@ const ProductListScreen: React.FC = () => {
   const { isLoading, withLoading } = useLoading();
   const { user } = useAuth();
 
+  const [presentToast] = useIonToast();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [dataTotal, setDataTotal] = useState<Total>({
     totalProduct: 0,
@@ -122,10 +126,11 @@ const ProductListScreen: React.FC = () => {
       const product = await getDetail(value);
 
       if (!product || !product.id) {
-        await Toast.show({
-          text: "Không tìm thấy sản phẩm với mã vạch này",
-          duration: "short",
-          position: "center",
+        presentToast({
+          message: "Không tìm thấy sản phẩm với mã vạch này",
+          duration: 2000,
+          position: "top",
+          color: "danger",
         });
         return;
       }
@@ -133,10 +138,17 @@ const ProductListScreen: React.FC = () => {
       // Navigate to product detail page
       history.push(`/tabs/products/detail/${product.id}`);
     } catch (error) {
-      await Toast.show({
-        text: (error as Error).message,
-        duration: "short",
+      captureException(error as Error, createExceptionContext(
+        'ProductList',
+        'BarcodeScanner',
+        'handleBarcodeScanned'
+      ));
+      
+      presentToast({
+        message: (error as Error).message || "Có lỗi xảy ra",
+        duration: 2000,
         position: "top",
+        color: "danger",
       });
     }
   };
@@ -144,10 +156,17 @@ const ProductListScreen: React.FC = () => {
   const { startScan, stopScan } = useBarcodeScanner({
     onBarcodeScanned: handleBarcodeScanned,
     onError: async (error: Error) => {
-      await Toast.show({
-        text: error.message,
-        duration: "long",
+      captureException(error as Error, createExceptionContext(
+        'ProductList',
+        'BarcodeScanner',
+        'onError'
+      ));
+
+      await presentToast({
+        message: error.message || "Có lỗi xảy ra",
+        duration: 2000,
         position: "top",
+        color: "danger",
       });
     },
   });
@@ -165,9 +184,9 @@ const ProductListScreen: React.FC = () => {
           setHasMore(false);
 
           if (!isLoadMore) {
-            await Toast.show({
-              text: "Không tìm thấy kết quả",
-              duration: "short",
+            presentToast({
+              message: "Không tìm thấy kết quả",
+              duration: 2000,
               position: "top",
             });
           }
@@ -178,10 +197,17 @@ const ProductListScreen: React.FC = () => {
           setHasMore(response.length === LIMIT);
         }
       } catch (error) {
-        await Toast.show({
-          text: (error as Error).message,
-          duration: "short",
+        captureException(error as Error, createExceptionContext(
+          'ProductList',
+          'ProductList',
+          'fetchProducts'
+        ));
+        
+        presentToast({
+          message: (error as Error).message || "Có lỗi xảy ra",
+          duration: 2000,
           position: "top",
+          color: "danger",
         });
       }
     });
@@ -192,10 +218,17 @@ const ProductListScreen: React.FC = () => {
       const response = await getTotalProductAndInventory();
       setDataTotal(response);
     } catch (error) {
-      await Toast.show({
-        text: (error as Error).message,
-        duration: "short",
+      captureException(error as Error, createExceptionContext(
+        'ProductList',
+        'ProductList',
+        'fetchTotalProductAndInventory'
+      ));
+
+      presentToast({
+        message: (error as Error).message || "Có lỗi xảy ra",
+        duration: 2000,
         position: "top",
+        color: "danger",
       });
     }
   };
@@ -246,10 +279,17 @@ const ProductListScreen: React.FC = () => {
         setHasMoreLowStock(response.length === 5);
       }
     } catch (error) {
-      await Toast.show({
-        text: (error as Error).message,
-        duration: "short",
+      captureException(error as Error, createExceptionContext(
+        'ProductList',
+        'ProductList',
+        'fetchLowStockProducts'
+      ));
+
+      presentToast({
+        message: (error as Error).message || "Có lỗi xảy ra",
+        duration: 2000,
         position: "top",
+        color: "danger",
       });
     } finally {
       setLowStockLoading(false);
@@ -319,11 +359,11 @@ const ProductListScreen: React.FC = () => {
 
       <IonContent className="ion-padding">
         <Refresher onRefresh={handleRefresh} />
-        <div className="">
+
+        <div>
           <div className="flex items-center gap-2 mb-2">
             <IonSearchbar
-              value={filters.keyword}
-              onIonChange={(e) => {
+              onIonInput={(e) => {
                 setFilters((prev) => ({
                   ...prev,
                   keyword: e.detail.value ?? "",
@@ -418,11 +458,11 @@ const ProductListScreen: React.FC = () => {
           <div className="space-y-4">
             {products.length ? (
               products.map((product) => (
-                <ProductCard key={product.id} product={product} isShowCostPrice={isShowCostPrice} />
+                <ProductCard key={`product-${product.id}`} product={product} isShowCostPrice={isShowCostPrice} />
               ))
-            ) : (
+            ) : isLoading ? (
               <ContentSkeleton lines={3} />
-            )}
+            ) : null}
 
             {!hasMore && products.length === 0 && (
               <div className="text-center text-gray-500">
@@ -488,7 +528,7 @@ const ProductListScreen: React.FC = () => {
                       : null;
 
                   return (
-                    <SwiperSlide key={product.id}>
+                    <SwiperSlide key={`lowstock-${product.id}`}>
                       <div className="bg-gray-100 rounded-lg p-4 flex items-center">
                         <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center mr-4 overflow-hidden">
                           {primaryImageUrl ? (

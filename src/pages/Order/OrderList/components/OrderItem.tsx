@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useMemo, useRef } from "react";
 import { Dialog } from "@capacitor/dialog";
 import {
   IonChip,
@@ -9,6 +9,7 @@ import {
   IonItemSliding,
   IonRippleEffect,
   useIonToast,
+  useIonViewDidLeave,
 } from "@ionic/react";
 import { createOutline, trashBinOutline } from "ionicons/icons";
 
@@ -32,6 +33,10 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onCancelOrder }) => {
   const [presentToast] = useIonToast();
   const { update: updateOrder } = useOrder();
   const slidingRef = useRef<HTMLIonItemSlidingElement>(null);
+
+  const isOrderPaid = useMemo(() => {
+    return order.status === OrderStatus.COMPLETED;
+  }, [order.status]);
 
   const handleCancelOrder = async () => {
     try {
@@ -70,6 +75,10 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onCancelOrder }) => {
       });
     }
   };
+
+  useIonViewDidLeave(() => {
+    slidingRef.current?.close();
+  });
 
   return (
     <IonItemSliding ref={slidingRef}>
@@ -123,13 +132,15 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onCancelOrder }) => {
 
       {order.status !== OrderStatus.CANCELLED && (
         <IonItemOptions side="end">
-          <IonItemOption
-            color="tertiary"
-            routerLink={`/tabs/orders/update/${order.id}`}
-          >
-            Sửa đơn
-            <IonIcon slot="icon-only" icon={createOutline}></IonIcon>
-          </IonItemOption>
+          {!isOrderPaid && (
+            <IonItemOption
+              color="tertiary"
+              routerLink={`/tabs/orders/update/${order.id}`}
+            >
+              Sửa đơn
+              <IonIcon slot="icon-only" icon={createOutline}></IonIcon>
+            </IonItemOption>
+          )}
           <IonItemOption color="danger" onClick={handleCancelOrder}>
             Hủy đơn
             <IonIcon slot="icon-only" icon={trashBinOutline}></IonIcon>

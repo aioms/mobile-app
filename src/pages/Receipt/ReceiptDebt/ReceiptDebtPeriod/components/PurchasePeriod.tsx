@@ -3,13 +3,12 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { IonButton, IonIcon, IonInput } from "@ionic/react";
 import { trashOutline, createOutline } from "ionicons/icons";
 
-import Counter from "@/components/Counter";
-import { IProductItem } from "@/types/product.type";
+import { IReceiptItemPeriod } from "@/types/receipt-debt.type";
 import { getDate } from "@/helpers/date";
 import { formatCurrency, formatCurrencyWithoutSymbol, parseCurrencyInput } from "@/helpers/formatters";
 
 type Props = {
-  items: IProductItem[]; // Changed to accept array of items
+  items: IReceiptItemPeriod[]; // Changed to accept array of items
   periodDate?: string;
   onQuantityChange?: (itemId: string, newQuantity: number) => void;
   onPriceChange?: (itemId: string, newPrice: number) => void;
@@ -28,6 +27,8 @@ const PurchasePeriod: FC<Props> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [editingPrice, setEditingPrice] = useState(false);
   const [priceInputValue, setPriceInputValue] = useState("");
+  const [quantityInputValue, setQuantityInputValue] = useState("");
+  const [quantityError, setQuantityError] = useState("");
 
   // Memoize initial quantities calculation
   const initialQuantities = useMemo(() => {
@@ -49,6 +50,49 @@ const PurchasePeriod: FC<Props> = ({
     useState<Record<string, number>>(initialQuantities);
   const [prices, setPrices] = useState<Record<string, number>>(initialPrices);
 
+  // Memoize current item and total items
+  const currentItem = useMemo(() => items[currentIndex], [items, currentIndex]);
+  const totalItems = useMemo(() => items.length, [items.length]);
+
+  // Get available inventory for current item
+  const getAvailableInventory = (item: IReceiptItemPeriod): number => {
+    const inventory = item.inventory || 0;
+    return Math.max(0, inventory);
+  };
+
+  // Maximum quantity constraint based on inventory
+  const maxQuantity = useMemo(() => {
+    if (!currentItem) return 0;
+    return getAvailableInventory(currentItem);
+  }, [currentItem]);
+
+  const minQuantity = 1;
+
+  const validateQuantity = (value: number): { isValid: boolean; error?: string } => {
+    if (isNaN(value)) {
+      return { isValid: false, error: "Vui lòng nhập số hợp lệ" };
+    }
+    if (value < minQuantity) {
+      return { isValid: false, error: `Số lượng tối thiểu là ${minQuantity}` };
+    }
+    if (value > maxQuantity) {
+      return { isValid: false, error: `Số lượng tối đa là ${maxQuantity} (tồn kho)` };
+    }
+    return { isValid: true };
+  };
+
+  const updateQuantity = (value: number) => {
+    const validation = validateQuantity(value);
+    
+    if (validation.isValid) {
+      setQuantityError("");
+      return true;
+    } else {
+      setQuantityError(validation.error || "");
+      return false;
+    }
+  };
+
   // Update quantities and prices when items change
   useEffect(() => {
     setQuantities(initialQuantities);
@@ -59,9 +103,14 @@ const PurchasePeriod: FC<Props> = ({
     }
   }, [initialQuantities, initialPrices, currentIndex, items.length]);
 
-  // Memoize current item and total items
-  const currentItem = useMemo(() => items[currentIndex], [items, currentIndex]);
-  const totalItems = useMemo(() => items.length, [items.length]);
+  // Update quantity input value when current item changes
+  useEffect(() => {
+    if (currentItem) {
+      const currentQuantity = quantities[currentItem.id] || currentItem.quantity;
+      setQuantityInputValue(currentQuantity.toString());
+      setQuantityError("");
+    }
+  }, [currentItem, quantities]);
 
   // Memoize display date calculation
   const displayDate = useMemo(() => {
@@ -95,6 +144,61 @@ const PurchasePeriod: FC<Props> = ({
     e.stopPropagation();
     if (currentIndex < totalItems - 1) {
       setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const handleQuantityInputChange = (value: string | null | undefined) => {
+    if (value !== null && value !== undefined) {
+      setQuantityInputValue(value);
+      const numericValue = parseInt(value, 10);
+      
+      if (value === "" || isNaN(numericValue)) {
+        setQuantityError("Vui lòng nhập số hợp lệ");
+        return;
+      }
+      
+      if (numericValue < 0) {
+        setQuantityError("Số lượng không thể âm");
+        return;
+      }
+      
+      if (updateQuantity(numericValue)) {
+        handleQuantityChange(numericValue);
+      }
+    }
+  };
+
+  // Handle decrement button with special case for quantity 1 -> 0
+  const handleDecrement = () => {
+    const currentQty = quantities[currentItem.id] || currentItem.quantity;
+    const newQuantity = currentQty > minQuantity ? currentQty - 1 : minQuantity;
+    
+    if (newQuantity === 0 && currentQty === 1 && totalItems === 1) {
+      // This is the last item and user is trying to set quantity to 0
+      // Let the parent component handle the confirmation modal
+      handleQuantityChange(0);
+    } else if (updateQuantity(newQuantity)) {
+      handleQuantityChange(newQuantity);
+    }
+  };
+
+  const handleQuantityInputBlur = () => {
+    if (quantityInputValue === "" || isNaN(parseInt(quantityInputValue, 10))) {
+      // Reset to current valid quantity
+      const currentQuantity = quantities[currentItem.id] || currentItem.quantity;
+      setQuantityInputValue(currentQuantity.toString());
+      setQuantityError("");
+    }
+  };
+
+  const handleQuantityInputKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const numericValue = parseInt(quantityInputValue, 10);
+      if (!isNaN(numericValue) && updateQuantity(numericValue)) {
+        handleQuantityChange(numericValue);
+      }
+      (e.target as HTMLInputElement).blur();
     }
   };
 
@@ -189,16 +293,76 @@ const PurchasePeriod: FC<Props> = ({
           </span>
           <div className="flex items-center">
             {editable ? (
-              <Counter
-                value={quantities[currentItem.id] || currentItem.quantity}
-                onChange={handleQuantityChange}
-                disabled={false}
-              />
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${
+                    (quantities[currentItem.id] || currentItem.quantity) <= minQuantity
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-gray-100 text-teal-400 hover:bg-gray-200"
+                  }`}
+                  onClick={handleDecrement}
+                  disabled={(quantities[currentItem.id] || currentItem.quantity) <= minQuantity}
+                  style={{ border: "none" }}
+                  aria-label="Giảm số lượng"
+                >
+                  –
+                </button>
+                <input
+                  type="number"
+                  value={quantityInputValue}
+                  onChange={(e) => handleQuantityInputChange(e.target.value)}
+                  onBlur={handleQuantityInputBlur}
+                  onKeyDown={handleQuantityInputKeyPress}
+                  min={minQuantity}
+                  max={maxQuantity}
+                  className={`quantity-input w-12 h-8 mx-1 text-center text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent ${
+                    quantityError ? 'border-red-400 bg-red-50' : 'border-gray-300'
+                  }`}
+                  aria-label="Số lượng sản phẩm"
+                  autoComplete="off"
+                />
+                <button
+                  type="button"
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${
+                    (quantities[currentItem.id] || currentItem.quantity) >= maxQuantity
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-gray-100 text-teal-400 hover:bg-gray-200"
+                  }`}
+                  onClick={() => {
+                    const currentQty = quantities[currentItem.id] || currentItem.quantity;
+                    if (updateQuantity(currentQty + 1)) {
+                      handleQuantityChange(currentQty + 1);
+                    }
+                  }}
+                  disabled={(quantities[currentItem.id] || currentItem.quantity) >= maxQuantity}
+                  style={{ border: "none" }}
+                  aria-label="Tăng số lượng"
+                >
+                  +
+                </button>
+              </div>
             ) : (
               <span>SL: {currentItem.quantity || 0}</span>
             )}
           </div>
         </div>
+
+        {/* Inventory Display */}
+        {editable && (
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-xs text-gray-500">
+              Tồn kho: {maxQuantity}
+            </span>
+          </div>
+        )}
+
+        {/* Quantity Error */}
+        {quantityError && (
+          <div className="mb-2">
+            <span className="text-xs text-red-600">{quantityError}</span>
+          </div>
+        )}
 
         {/* Product Code and Price */}
         <div className="flex items-center justify-between mb-2">
@@ -214,7 +378,7 @@ const PurchasePeriod: FC<Props> = ({
                   handlePriceInputChange(e.detail.value!);
                 }}
                 onIonBlur={handlePriceBlur}
-                className="text-sm border border-gray-300 rounded px-2 py-1 w-32"
+                className="text-sm border border-gray-300 rounded w-32"
                 placeholder="0"
               />
             ) : (

@@ -1,7 +1,11 @@
 import { Route, Redirect, RouteProps } from 'react-router-dom';
+
+// Type workaround for React 18 + react-router v5 compatibility
+const RouteCompat = Route as any;
+const RedirectCompat = Redirect as any;
 import { useAuth } from '../hooks';
 
-interface PrivateRouteProps extends RouteProps {
+interface PrivateRouteProps extends Omit<RouteProps, 'component'> {
   component: React.ComponentType<any>;
 }
 
@@ -12,13 +16,13 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({
   const { isAuthenticated } = useAuth();
 
   return (
-    <Route
+    <RouteCompat
       {...rest}
-      render={(props) =>
+      render={(props: any) =>
         isAuthenticated ? (
           <Component {...props} />
         ) : (
-          <Redirect to={{ pathname: '/login', state: { from: props.location } }} />
+          <RedirectCompat to={{ pathname: '/login', state: { from: props.location } }} />
         )
       }
     />

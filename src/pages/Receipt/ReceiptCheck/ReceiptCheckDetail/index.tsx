@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useHistory, useParams } from "react-router";
 
-import { Toast } from "@capacitor/toast";
 import { Dialog } from "@capacitor/dialog";
 import {
   IonButton,
@@ -27,7 +26,7 @@ import {
   RECEIPT_CHECK_REASONS,
   RECEIPT_CHECK_STATUS,
   TReceiptCheckStatus,
-} from "@/common/constants/receipt";
+} from "@/common/constants/receipt-check.constant";
 import { dayjsFormat, formatCurrency } from "@/helpers/formatters";
 
 import { Refresher } from "@/components/Refresher/Refresher";
@@ -35,6 +34,8 @@ import LoadingScreen from "@/components/Loading/LoadingScreen";
 import SlideableReceiptItem from "./components/SlideableReceiptItemV2";
 import ActivityHistory, { ActivityLog } from "./components/ActivityHistory";
 import { UserRole } from "@/common/enums/user";
+
+import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
 
 interface ReceiptItem {
   id: string;
@@ -105,10 +106,11 @@ const ReceiptCheckDetail: React.FC = () => {
         await updateReceiptCheck(receipt.id, { reason });
         console.log("Reason updated successfully");
       } catch (error) {
-        await Toast.show({
-          text: `Failed to update reason: ${(error as Error).message}`,
-          duration: "short",
+        presentToast({
+          message: `Failed to update reason: ${(error as Error).message}`,
+          duration: 1000,
           position: "top",
+          color: "danger",
         });
       }
     }, 500),
@@ -124,10 +126,11 @@ const ReceiptCheckDetail: React.FC = () => {
         await updateReceiptCheck(receipt.id, { note });
         console.log("Note updated successfully");
       } catch (error) {
-        await Toast.show({
-          text: `Failed to update note: ${(error as Error).message}`,
-          duration: "short",
+        presentToast({
+          message: `Failed to update note: ${(error as Error).message}`,
+          duration: 1000,
           position: "top",
+          color: "danger",
         });
       }
     }, 500),
@@ -167,11 +170,12 @@ const ReceiptCheckDetail: React.FC = () => {
         const result = await getDetail(id);
 
         if (!result) {
-          return await Toast.show({
-            text: "Không tìm thấy phiếu kiểm",
-            duration: "short",
+          presentToast({
+            message: "Không tìm thấy phiếu kiểm",
+            duration: 1000,
             position: "top",
           });
+          return;
         }
 
         const { receipt, items } = result;
@@ -198,10 +202,16 @@ const ReceiptCheckDetail: React.FC = () => {
           setNote(receipt.note);
         }
       } catch (error) {
-        await Toast.show({
-          text: (error as Error).message,
-          duration: "short",
+        captureException(error as Error, createExceptionContext(
+          'ReceiptCheckDetail',
+          'ReceiptCheckDetail',
+          'fetchReceiptCheck'
+        ));
+        presentToast({
+          message: (error as Error).message || "Có lỗi xảy ra",
+          duration: 2000,
           position: "top",
+          color: "danger",
         });
       }
     });
@@ -230,9 +240,9 @@ const ReceiptCheckDetail: React.FC = () => {
 
     try {
       if (!receipt?.id) {
-        await Toast.show({
-          text: "Không tìm thấy sản phẩm để cân đối",
-          duration: "short",
+        presentToast({
+          message: "Không tìm thấy phiếu kiểm",
+          duration: 1000,
           position: "top",
         });
         return;
@@ -280,9 +290,9 @@ const ReceiptCheckDetail: React.FC = () => {
 
     try {
       if (!receipt?.id) {
-        await Toast.show({
-          text: "Không tìm thấy phiếu",
-          duration: "short",
+        presentToast({
+          message: "Không tìm thấy phiếu kiểm",
+          duration: 1000,
           position: "top",
         });
         return;
@@ -319,19 +329,31 @@ const ReceiptCheckDetail: React.FC = () => {
 
       await incrementActualInventory(receipt?.id, value);
     } catch (error) {
-      await Toast.show({
-        text: (error as Error).message,
-        duration: "short",
+      captureException(error as Error, createExceptionContext(
+        'ReceiptCheckDetail',
+        'BarcodeScanner',
+        'handleBarcodeScanned'
+      ));
+      presentToast({
+        message: (error as Error).message || "Có lỗi xảy ra",
+        duration: 2000,
         position: "top",
+        color: "danger",
       });
     }
   };
 
   const handleError = async (error: Error) => {
-    await Toast.show({
-      text: error.message,
-      duration: "long",
-      position: "center",
+    captureException(error, createExceptionContext(
+      'ReceiptCheckDetail',
+      'BarcodeScanner',
+      'handleError'
+    ));
+    await presentToast({
+      message: error.message,
+      duration: 2000,
+      position: "top",
+      color: "danger",
     });
   };
 
@@ -431,8 +453,8 @@ const ReceiptCheckDetail: React.FC = () => {
               </p>
             </div>
 
-            <IonChip color={getStatusColor(receiptStatus)}>
-              <span className="text-sm">{getStatusLabel(receiptStatus)}</span>
+            <IonChip color={receiptStatus !== "unknown" ? getStatusColor(receiptStatus) : "medium"}>
+              <span className="text-sm">{receiptStatus !== "unknown" ? getStatusLabel(receiptStatus) : "Unknown"}</span>
             </IonChip>
           </div>
 

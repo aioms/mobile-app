@@ -11,10 +11,7 @@ import {
   IonItem,
   IonLabel,
   IonInput,
-  IonSelect,
-  IonSelectOption,
   IonTextarea,
-  IonNote,
   IonIcon,
   useIonToast,
   useIonModal,
@@ -30,13 +27,14 @@ import {
   parseCurrencyInput,
 } from "@/helpers/formatters";
 import ModalSelectSupplier from "@/components/ModalSelectSupplier";
+import ModalSelectCategory from "@/components/ModalSelectCategory";
 import ErrorMessage from "@/components/ErrorMessage";
 
 import type {
   IProductCreateForm,
   IProductCreateFormErrors,
   IProductCreatePayload,
-} from "./productCreate";
+} from "./productCreate.d";
 
 const initialFormData: IProductCreateForm = {
   name: "",
@@ -54,11 +52,26 @@ const ProductCreate: React.FC = () => {
   const history = useHistory();
   const [presentToast] = useIonToast();
   const { withLoading, isLoading } = useLoading();
-  const { create, getCategories } = useProduct();
+  const { create } = useProduct();
 
   const [formData, setFormData] = useState<IProductCreateForm>(initialFormData);
   const [errors, setErrors] = useState<IProductCreateFormErrors>({});
-  const [categories, setCategories] = useState<string[]>([]);
+  // Category selection via modal
+  const [presentCategoryModal, dismissCategoryModal] = useIonModal(
+    ModalSelectCategory,
+    {
+      dismiss: (data: any, role?: string) => {
+        if (data && role === "confirm") {
+          setFormData((prev) => ({
+            ...prev,
+            categoryId: data,
+          }));
+          clearError("categoryId");
+        }
+        dismissCategoryModal();
+      },
+    }
+  );
 
   // Modal for supplier selection
   const [presentSupplierModal, dismissSupplierModal] = useIonModal(
@@ -77,22 +90,10 @@ const ProductCreate: React.FC = () => {
     }
   );
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  // No initial categories fetch; modal handles category loading
 
-  const fetchCategories = async () => {
-    try {
-      const response = await getCategories({}, 1, 100);
-      setCategories(response || []);
-    } catch (error) {
-      await presentToast({
-        message: "Không thể tải danh sách nhóm hàng",
-        duration: 2000,
-        position: "top",
-        color: "danger",
-      });
-    }
+  const openCategoryModal = () => {
+    presentCategoryModal();
   };
 
   const openSupplierModal = () => {
@@ -300,21 +301,23 @@ const ProductCreate: React.FC = () => {
         </div>
 
         {/* Category Selection */}
-        <div className="mb-4">
-          <IonItem className={clsx(errors.categoryId && "ion-invalid")}>
-            <IonLabel position="stacked">Nhóm hàng *</IonLabel>
-            <IonSelect
-              placeholder="Chọn nhóm hàng"
-              value={formData.categoryId}
-              onIonChange={(e) => handleInputChange("categoryId", e.detail.value)}
+        <div className={clsx("mb-4", errors.categoryId && "border-red-500")}>
+          <IonLabel className="text-sm font-medium text-gray-700 mb-2 block">
+            Nhóm hàng *
+          </IonLabel>
+          <button
+            className="w-full p-3 border border-gray-300 rounded-lg text-left flex items-center justify-between bg-white"
+            onClick={openCategoryModal}
+          >
+            <span
+              className={clsx(
+                formData.categoryId ? "text-gray-900" : "text-gray-500"
+              )}
             >
-              {categories.map((category) => (
-                <IonSelectOption key={category} value={category}>
-                  {category}
-                </IonSelectOption>
-              ))}
-            </IonSelect>
-          </IonItem>
+              {formData.categoryId || "Chọn nhóm hàng"}
+            </span>
+            <IonIcon icon={chevronDown} className="text-gray-400" />
+          </button>
           <ErrorMessage message={errors.categoryId || ""} />
         </div>
 

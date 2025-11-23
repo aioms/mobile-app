@@ -1,7 +1,7 @@
 /**
  * Creates a debounced function that delays invoking func until after wait milliseconds
  * have elapsed since the last time the debounced function was invoked.
- * 
+ *
  * @param func - The function to debounce
  * @param wait - The number of milliseconds to delay
  * @returns The debounced function with cancel method
@@ -37,7 +37,7 @@ export function debounce<T extends (...args: any[]) => any>(
 
 /**
  * Creates a debounced function with immediate execution option
- * 
+ *
  * @param func - The function to debounce
  * @param wait - The number of milliseconds to delay
  * @param immediate - If true, trigger the function on the leading edge instead of trailing

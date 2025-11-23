@@ -27,18 +27,18 @@ import { checkmarkCircleOutline, printOutline } from "ionicons/icons";
 
 import { getDate } from "@/helpers/date";
 import { formatCurrency } from "@/helpers/formatters";
-import { getStatusLabel, getStatusColor } from "@/common/constants/receipt";
-import { IProductItem } from "@/types/product.type";
+import { getStatusLabel, getStatusColor, TReceiptDebtStatus, TReceiptDebtType } from "@/common/constants/receipt-debt.constant";
+import { IReceiptItemPeriod } from "@/types/receipt-debt.type";
 import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
 import useProduct from "@/hooks/apis/useProduct";
 import { useBarcodeScanner, useLoading } from "@/hooks";
 
 import DatePicker from "@/components/DatePicker";
 import ContentSkeleton from "@/components/Loading/ContentSkeleton";
-import LoadingScreen from "@/components/Loading/LoadingScreen";
-import EmptyPage from "@/components/EmptyPage";
 import ModalSelectProduct from "@/components/ModalSelectProduct";
 import PurchasePeriodList from "./components/PurchasePeriodList";
+
+import "./ReceiptDebtPeriod.css";
 
 const initialFormData = {
   customer: "",
@@ -49,11 +49,11 @@ const initialFormData = {
 interface IReceiptDebtDetail {
   id: string;
   code: string;
-  type: string;
+  type: TReceiptDebtType;
   totalAmount: number;
   paidAmount: number;
   remainingAmount: number;
-  status: string;
+  status: TReceiptDebtStatus;
   dueDate: string;
   paymentDate: string | null;
   note: string;
@@ -67,7 +67,7 @@ interface IReceiptDebtDetail {
 
 interface ReceiptDebtDetailResponse {
   receipt: IReceiptDebtDetail;
-  items: Record<string, IProductItem[]>;
+  items: Record<string, IReceiptItemPeriod[]>;
 }
 
 const ReceiptDebtPeriod: React.FC<{}> = () => {
@@ -81,7 +81,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
     null
   );
   const [productItems, setProductItems] = useState<
-    Record<string, IProductItem[]>
+    Record<string, IReceiptItemPeriod[]>
   >({});
 
   const { withLoading, isLoading } = useLoading();
@@ -151,7 +151,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
   };
 
   useEffect(() => {
-    fetchReceiptDebtDetails();
+    id && fetchReceiptDebtDetails();
   }, [id]);
 
   // New useEffect to handle barcode parameter
@@ -243,6 +243,17 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
 
   // Add new collection period for a product
   const addNewCollectionPeriod = async (product: any) => {
+    // Check if product has available inventory
+    if (product.inventory <= 0) {
+      presentToast({
+        message: "Sản phẩm đã hết hàng",
+        duration: 2000,
+        position: "top",
+        color: "warning",
+      });
+      return;
+    }
+
     const currentDate = new Date().toISOString();
     const dateKey = getDate(currentDate).format("YYYY-MM-DD");
 
@@ -285,16 +296,20 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
         });
       } else {
         // Product doesn't exist, add new item
-        const newProductItem: IProductItem = {
+        const newProductItem: IReceiptItemPeriod = {
           id: `temp_${Date.now()}`,
           code: product.code,
           receiptId: id!,
+          receiptPeriodId: `temp_period_${Date.now()}`, // Temporary period ID
           productId: product.id,
           productName: product.productName,
           productCode: product.productCode,
           quantity: 1,
           costPrice: product.costPrice,
+          inventory: product.inventory || 0,
+          discount: 0,
           createdAt: currentDate,
+          updatedAt: currentDate,
           originalQuantity: 0, // New item, so original quantity is 0
         };
         updated[dateKey] = [...updated[dateKey], newProductItem];
@@ -311,8 +326,8 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
     });
   };
 
-  // Function to handle quantity changes (only for current date items)
-  const handleQuantityChange = (
+  // Enhanced function to handle quantity changes with validation and calculation
+  const handleQuantityChange = async (
     dateKey: string,
     itemId: string,
     newQuantity: number
@@ -330,13 +345,27 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
       return;
     }
 
+    // Validate quantity input
+    if (isNaN(newQuantity) || newQuantity < 0) {
+      presentToast({
+        message: "Số lượng phải là số không âm",
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+      return;
+    }
+
     setProductItems((prev) => {
       const updated = { ...prev };
       if (updated[dateKey]) {
         const itemIndex = updated[dateKey].findIndex(
-          (item) => item.id === itemId
+          (item) => item.id === itemId || item.id === `temp_${itemId}`
         );
+        
         if (itemIndex !== -1) {
+          const currentItem = updated[dateKey][itemIndex];
+          
           if (newQuantity <= 0) {
             // Remove item if quantity is 0 or less
             updated[dateKey].splice(itemIndex, 1);
@@ -345,7 +374,6 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
               delete updated[dateKey];
             }
           } else {
-            const currentItem = updated[dateKey][itemIndex];
             // Add temp_ prefix if it doesn't already have it (marking as edited)
             const newId = currentItem.id.startsWith("temp_")
               ? currentItem.id
@@ -393,7 +421,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
       const updated = { ...prev };
       if (updated[dateKey]) {
         const itemIndex = updated[dateKey].findIndex(
-          (item) => item.id === itemId
+          (item) => item.id === itemId || item.id === `temp_${itemId}`
         );
         if (itemIndex !== -1) {
           const currentItem = updated[dateKey][itemIndex];
@@ -439,7 +467,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
       const updated = { ...prev };
       if (updated[dateKey]) {
         const itemIndex = updated[dateKey].findIndex(
-          (item) => item.id === itemId
+          (item) => item.id === itemId || item.id === `temp_${itemId}`
         );
         if (itemIndex !== -1) {
           updated[dateKey].splice(itemIndex, 1);
@@ -464,6 +492,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
     });
   };
 
+  // Enhanced total amount calculation with precise financial standards
   const totalAmount = useMemo(() => {
     const currentDate = new Date().toISOString();
     const currentDateKey = getDate(currentDate).format("YYYY-MM-DD");
@@ -476,7 +505,11 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
 
     return editedOrAddedItems.reduce((total, product) => {
       const originalQuantity = product.originalQuantity || 0;
-      return total + product.costPrice * (product.quantity - originalQuantity);
+      const quantityDifference = product.quantity - originalQuantity;
+      const itemTotal = product.costPrice * quantityDifference;
+      
+      // Round to 2 decimal places for financial precision
+      return total + Math.round(itemTotal * 100) / 100;
     }, 0);
   }, [productItems]);
 
@@ -539,55 +572,90 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
     if (!value) return;
 
     await withLoading(async () => {
-      // Get current date key to filter only new period items
-      const currentDate = new Date().toISOString();
-      const currentDateKey = getDate(currentDate).format("YYYY-MM-DD");
+      try {
+        // Get current date key to filter only new period items
+        const currentDate = new Date().toISOString();
+        const currentDateKey = getDate(currentDate).format("YYYY-MM-DD");
 
-      // Only get items from current period that were edited or added (have temp_ IDs)
-      const currentPeriodItems = productItems[currentDateKey] || [];
-      const editedOrAddedItems = currentPeriodItems.filter((item) =>
-        item.id.startsWith("temp_")
-      );
+        // Only get items from current period that were edited or added (have temp_ IDs)
+        const currentPeriodItems = productItems[currentDateKey] || [];
+        const editedOrAddedItems = currentPeriodItems.filter((item) =>
+          item.id.startsWith("temp_")
+        );
 
-      const payload = {
-        dueDate: formData.dueDate,
-        note: formData.note,
-        items: editedOrAddedItems.map((item) => ({
-          productId: item.productId,
-          productName: item.productName,
-          productCode: item.productCode,
-          quantity: item.quantity,
-          originalQuantity: item.originalQuantity || 0,
-          costPrice: item.costPrice, // This will now include any price changes
-          receiptPeriodId: item.periodId,
-        })),
-      };
+        // Validate that we have items to update
+        if (editedOrAddedItems.length === 0) {
+          presentToast({
+            message: "Không có sản phẩm nào được chỉnh sửa để cập nhật",
+            duration: 2000,
+            position: "top",
+            color: "warning",
+          });
+          return;
+        }
 
-      const response = await updateInventoryForNewPeriod(id!, payload);
+        // Validate quantities and prices
+        for (const item of editedOrAddedItems) {
+          if (item.quantity <= 0) {
+            presentToast({
+              message: `Số lượng sản phẩm ${item.productName} phải lớn hơn 0`,
+              duration: 2000,
+              position: "top",
+              color: "danger",
+            });
+            return;
+          }
+          if (item.costPrice < 0) {
+            presentToast({
+              message: `Giá sản phẩm ${item.productName} không thể âm`,
+              duration: 2000,
+              position: "top",
+              color: "danger",
+            });
+            return;
+          }
+        }
 
-      if (response.success) {
-        await presentToast({
-          message: "Cập nhật Phiếu Thu thành công",
-          duration: 2000,
+        const payload = {
+          dueDate: formData.dueDate,
+          note: formData.note,
+          items: editedOrAddedItems.map((item) => ({
+            productId: item.productId,
+            productName: item.productName,
+            productCode: item.productCode,
+            quantity: item.quantity,
+            originalQuantity: item.originalQuantity || 0,
+            costPrice: item.costPrice, // This will now include any price changes
+            receiptPeriodId: item.receiptPeriodId,
+          })),
+        };
+
+        const response = await updateInventoryForNewPeriod(id!, payload);
+
+        if (response.success) {
+          await presentToast({
+            message: "Cập nhật Phiếu Thu thành công",
+            duration: 2000,
+            position: "top",
+            color: "success",
+          });
+        }
+
+        history.goBack();
+      } catch (error) {
+        console.error("Error updating receipt debt:", error);
+        presentToast({
+          message: (error as Error).message || "Có lỗi xảy ra khi cập nhật phiếu. Vui lòng thử lại.",
+          duration: 3000,
           position: "top",
-          color: "success",
+          color: "danger",
         });
       }
-
-      history.goBack();
     });
   };
 
-  if (isLoading) {
-    return <LoadingScreen message="Đang tải dữ liệu..." />;
-  }
-
-  if (!receiptDebt) {
-    return <EmptyPage />;
-  }
-
   return (
-    <IonPage>
+    <IonPage id="main-content">
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">

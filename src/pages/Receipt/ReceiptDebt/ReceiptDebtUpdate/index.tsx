@@ -11,8 +11,6 @@ import {
   IonIcon,
   IonTextarea,
   useIonToast,
-  IonRefresher,
-  IonRefresherContent,
   IonChip,
   IonLabel,
 } from "@ionic/react";
@@ -26,65 +24,50 @@ import { useHistory, useParams } from "react-router-dom";
 
 import { getDate } from "@/helpers/date";
 import { formatCurrency } from "@/helpers/formatters";
-import { getStatusLabel, getStatusColor } from "@/common/constants/receipt";
+import { getStatusLabel, getStatusColor, TReceiptDebtStatus, RECEIPT_DEBT_STATUS } from "@/common/constants/receipt-debt.constant";
 import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
 
 import DatePicker from "@/components/DatePicker";
 import ContentSkeleton from "@/components/Loading/ContentSkeleton";
-import PurchasePeriodList from "./components/PurchasePeriodList";
-import { IProductItem } from "@/types/product.type";
+import EnhancedPurchasePeriodList from "./components/EnhancedPurchasePeriodList";
 import { useLoading } from "@/hooks";
 import { Dialog } from "@capacitor/dialog";
-import { Toast } from "@capacitor/toast";
 import LoadingScreen from "@/components/Loading/LoadingScreen";
-import EmptyPage from "@/components/EmptyPage";
+import { 
+  IReceiptDebtDetail, 
+  ReceiptDebtDetailResponse, 
+  IEditableProductItem,
+  IReceiptDebtUpdateForm,
+  IReceiptDebtUpdateErrors
+} from "./receiptDebtUpdate.d";
+import useReceiptCalculations from "./hooks/useReceiptCalculations";
+import { Refresher } from "@/components/Refresher/Refresher";
 
-const initialFormData = {
+const initialFormData: IReceiptDebtUpdateForm = {
   customer: "",
   dueDate: "",
   note: "",
 };
-
-interface IReceiptDebtDetail {
-  id: string;
-  code: string;
-  type: string;
-  totalAmount: number;
-  paidAmount: number;
-  remainingAmount: number;
-  status: string;
-  dueDate: string;
-  paymentDate: string | null;
-  note: string;
-  receiptImportId: string | null;
-  receiptReturnId: string | null;
-  createdAt: string;
-  updatedAt: string;
-  supplierName: string | null;
-  customerName: string | null;
-}
-
-interface ReceiptDebtDetailResponse {
-  receipt: IReceiptDebtDetail;
-  items: Record<string, IProductItem[]>;
-}
 
 const ReceiptDebtUpdate: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
   const [presentToast] = useIonToast();
   const [formData, setFormData] = useState(initialFormData);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<IReceiptDebtUpdateErrors>({});
   const [receiptDebt, setReceiptDebt] = useState<IReceiptDebtDetail | null>(
     null
   );
   const [productItems, setProductItems] = useState<
-    Record<string, IProductItem[]>
+    Record<string, IEditableProductItem[]>
   >({});
 
   const { withLoading, isLoading } = useLoading();
 
   const { getDetail, update } = useReceiptDebt();
+
+  // Calculate totals using the custom hook
+  const calculations = useReceiptCalculations(productItems);
 
   const fetchReceiptDebtDetails = async () => {
     if (!id) {
@@ -101,10 +84,11 @@ const ReceiptDebtUpdate: React.FC = () => {
       const response: ReceiptDebtDetailResponse = await getDetail(id);
 
       if (!response.receipt) {
-        Toast.show({
-          text: "Không tìm thấy thông tin phiếu",
-          duration: "short",
-          position: "center",
+        await presentToast({
+          message: "Không tìm thấy thông tin phiếu",
+          duration: 1000,
+          position: "top",
+          color: "warning",
         });
         history.goBack();
         return;
@@ -124,16 +108,16 @@ const ReceiptDebtUpdate: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchReceiptDebtDetails();
+    id && fetchReceiptDebtDetails();
   }, [id]);
 
-  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+  const handleRefresh = (event: CustomEvent<RefresherEventDetail>) => {
     fetchReceiptDebtDetails().then(() => {
       event.detail.complete();
     });
   };
 
-  const handleFormChange = (field: string, value: any) => {
+  const handleFormChange = (field: keyof IReceiptDebtUpdateForm, value: any) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -143,13 +127,18 @@ const ReceiptDebtUpdate: React.FC = () => {
     if (errors[field]) {
       setErrors((prev) => ({
         ...prev,
-        [field]: "",
+        [field]: undefined,
       }));
     }
   };
 
+  // Handle items change from enhanced component
+  const handleItemsChange = (updatedItems: Record<string, IEditableProductItem[]>) => {
+    setProductItems(updatedItems);
+  };
+
   const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+    const newErrors: IReceiptDebtUpdateErrors = {};
 
     if (!formData.dueDate) {
       newErrors.dueDate = "Vui lòng chọn ngày dự kiến thu";
@@ -185,28 +174,22 @@ const ReceiptDebtUpdate: React.FC = () => {
         note: formData.note,
       };
 
-      const response = await update(id!, payload);
+      await update(id!, payload);
 
-      if (response.id) {
-        await presentToast({
-          message: "Cập nhật Phiếu Thu thành công",
-          duration: 2000,
-          position: "top",
-          color: "success",
-        });
-      }
+      await presentToast({
+        message: "Cập nhật Phiếu Thu thành công",
+        duration: 1000,
+        position: "top",
+        color: "success",
+      });
 
       history.goBack();
     });
   };
 
-  if (isLoading) {
-    return <LoadingScreen message="Đang tải dữ liệu..." />;
-  }
-
-  if (!receiptDebt) {
-    return <EmptyPage />;
-  }
+  // Check if editing is disabled based on receipt status
+  const isEditingDisabled = receiptDebt?.status === RECEIPT_DEBT_STATUS.CANCELLED || 
+                           receiptDebt?.status === RECEIPT_DEBT_STATUS.COMPLETED;
 
   return (
     <IonPage>
@@ -234,9 +217,8 @@ const ReceiptDebtUpdate: React.FC = () => {
       </IonHeader>
 
       <IonContent className="ion-padding">
-        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-          <IonRefresherContent></IonRefresherContent>
-        </IonRefresher>
+        {isLoading && <LoadingScreen message="Đang tải dữ liệu..." />}
+        <Refresher onRefresh={handleRefresh} />
 
         {isLoading ? (
           <ContentSkeleton lines={5} />
@@ -266,10 +248,22 @@ const ReceiptDebtUpdate: React.FC = () => {
                 <h2 className="text-lg font-semibold text-foreground mb-3">
                   Tổng tiền
                 </h2>
+                <div className="text-base text-blue-600 font-semibold">
+                  {formatCurrency(calculations.totalAmount)}
+                </div>
+                <div className="text-sm text-gray-500 mt-1">
+                  Tổng {calculations.totalQuantity} sản phẩm
+                </div>
+              </div>
+
+              {/* <div className="px-4 mt-4">
+                <h2 className="text-lg font-semibold text-foreground mb-3">
+                  Tổng tiền (Hệ thống)
+                </h2>
                 <div className="text-base">
                   {formatCurrency(receiptDebt?.totalAmount || 0)}
                 </div>
-              </div>
+              </div> */}
 
               <div className="px-4 mt-4">
                 <h2 className="text-lg font-semibold text-foreground mb-3">
@@ -300,7 +294,12 @@ const ReceiptDebtUpdate: React.FC = () => {
               </div>
             </div>
 
-            <PurchasePeriodList items={productItems} />
+            <EnhancedPurchasePeriodList 
+              items={productItems} 
+              receiptStatus={receiptDebt?.status as TReceiptDebtStatus}
+              onItemsChange={handleItemsChange}
+              calculations={calculations}
+            />
 
             {/* <div className="bg-card rounded-lg shadow-sm p-4 mt-3">
               <IonText className="text-xl font-semibold">Tổng Tiền Phải Thu: </IonText>
@@ -324,7 +323,7 @@ const ReceiptDebtUpdate: React.FC = () => {
                     onChange={(e) =>
                       handleFormChange("dueDate", e.detail.value)
                     }
-                    attrs={{ id: "estimated-date" }}
+                    attrs={{ id: "estimated-date", disabled: isEditingDisabled }}
                     extraClassName="w-full flex items-center justify-start"
                   />
                 </div>
@@ -347,6 +346,7 @@ const ReceiptDebtUpdate: React.FC = () => {
                   placeholder="Nhập ghi chú đơn hàng"
                   rows={3}
                   className="border border-input rounded-lg px-2"
+                  disabled={isEditingDisabled}
                 ></IonTextarea>
               </div>
             </div>
@@ -354,9 +354,10 @@ const ReceiptDebtUpdate: React.FC = () => {
         )}
       </IonContent>
 
+      {/* Footer */}
       <IonFooter>
         <div className="ion-padding">
-          <IonButton expand="block" size="default" onClick={handleSubmit}>
+          <IonButton expand="block" size="default" onClick={handleSubmit} disabled={isEditingDisabled}>
             <IonIcon icon={checkmarkCircleOutline} slot="start" />
             Cập nhật
           </IonButton>
