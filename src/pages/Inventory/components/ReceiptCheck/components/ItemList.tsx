@@ -1,4 +1,4 @@
-import { FC, useMemo } from "react";
+import { FC, useMemo, useRef } from "react";
 import { useHistory } from "react-router";
 import { Toast } from "@capacitor/toast";
 import {
@@ -10,6 +10,7 @@ import {
   IonItemSliding,
   IonLabel,
   IonText,
+  useIonViewDidLeave,
 } from "@ionic/react";
 import { createOutline, playOutline } from "ionicons/icons";
 
@@ -20,7 +21,7 @@ import {
   getStatusLabel,
   RECEIPT_CHECK_STATUS,
   TReceiptCheckStatus,
-} from "@/common/constants/receipt";
+} from "@/common/constants/receipt-check.constant";
 import { formatDate } from "@/helpers/formatters";
 
 const getDifferenceColor = (difference: number) => {
@@ -64,6 +65,7 @@ type Props = {
 };
 
 export const ItemList: FC<Props> = ({ receipt }) => {
+  const slidingRef = useRef<HTMLIonItemSlidingElement>(null);
   const history = useHistory();
 
   const { user } = useAuth();
@@ -136,9 +138,13 @@ export const ItemList: FC<Props> = ({ receipt }) => {
   const differenceColor = getDifferenceColor(totalValueDifference);
   const differencePrefix = getDifferencePrefix(totalValueDifference);
 
+  useIonViewDidLeave(() => {
+    slidingRef.current?.close();
+  });
+
   return (
     <>
-      <IonItemSliding>
+      <IonItemSliding ref={slidingRef}>
         <IonItem
           className="py-2"
           lines="full"

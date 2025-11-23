@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Toast } from "@capacitor/toast";
 import {
   IonIcon,
   IonRippleEffect,
@@ -23,6 +22,7 @@ interface IProductItem {
   code: string;
   quantity: number;
   sellingPrice: number;
+  inventory?: number; // Add inventory field
 }
 
 type Props = {
@@ -48,6 +48,15 @@ const ProductList: React.FC<Props> = ({
   const addProductToCartItem = async (productCode: string) => {
     try {
       const product = await getProductDetail(productCode);
+      if (product.inventory <= 0) {
+        presentToast({
+          message: "Sản phẩm đã hết hàng",
+          duration: 2000,
+          position: "top",
+          color: "warning",
+        });
+        return
+      }
 
       const productData = {
         id: product.id,
@@ -56,6 +65,7 @@ const ProductList: React.FC<Props> = ({
         code: product.code,
         sellingPrice: product.sellingPrice,
         quantity: 1,
+        inventory: product.inventory,
       };
       onAddItem(productData);
     } catch (error) {
@@ -98,16 +108,18 @@ const ProductList: React.FC<Props> = ({
         const { role, data } = event.detail;
 
         if (role === "confirm" && data) {
-          if (data.inventory === 0) {
-            await Toast.show({
-              text: "Sản phẩm đã hết hàng",
-              duration: "short",
-              position: "center",
+          if (data.inventory <= 0) {
+            presentToast({
+              message: "Sản phẩm đã hết hàng",
+              duration: 2000,
+              position: "top",
+              color: "warning",
             });
           } else {
             onAddItem({
               ...data,
               quantity: 1,
+              inventory: data.inventory,
             });
           }
         }

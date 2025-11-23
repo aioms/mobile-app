@@ -20,7 +20,7 @@ import { useBarcodeScanner, useLoading, useStorage } from "@/hooks";
 import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
 import useProduct from "@/hooks/apis/useProduct";
 
-import { TReceiptDebtStatus } from "@/common/constants/receipt";
+import { TReceiptDebtStatus } from "@/common/constants/receipt-debt.constant";
 import { capitalizeFirstLetter } from "@/helpers/common";
 import { dayjsFormat, formatCurrencyWithoutSymbol } from "@/helpers/formatters";
 

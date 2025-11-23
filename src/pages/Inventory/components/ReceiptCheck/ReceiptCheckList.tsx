@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Toast } from "@capacitor/toast";
 import {
   IonList,
   IonSearchbar,
@@ -12,16 +11,17 @@ import {
   IonInfiniteScrollContent,
   IonSpinner,
   IonItem,
+  useIonToast,
 } from "@ionic/react";
 import DatePicker from "@/components/DatePicker";
 
 import useReceiptCheck from "@/hooks/apis/useReceiptCheck";
 
-import { RECEIPT_CHECK_STATUS, TReceiptCheckStatus } from "@/common/constants/receipt";
+import { RECEIPT_CHECK_STATUS, TReceiptCheckStatus } from "@/common/constants/receipt-check.constant";
 import { Refresher } from "@/components/Refresher/Refresher";
 import { ItemList } from "./components/ItemList";
 
-import "./ReceiptCheckList.css";
+import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
 
 interface ReceiptItem {
   id: string;
@@ -80,6 +80,8 @@ const ReceiptCheckScreen = () => {
     totalPages: 0,
   });
 
+  const [presentToast] = useIonToast();
+
   const { getList: getListReceiptCheck } = useReceiptCheck();
 
   const fetchReceiptChecks = async (
@@ -107,10 +109,17 @@ const ReceiptCheckScreen = () => {
       setReceipts((prev) => (isLoadMore ? [...prev, ...data] : data));
       setPagination(metadata);
     } catch (error) {
-      await Toast.show({
-        text: (error as Error).message,
-        duration: "short",
+      captureException(error as Error, createExceptionContext(
+        'Inventory',
+        'ReceiptCheckList',
+        'fetchReceiptChecks'
+      ));
+      
+      presentToast({
+        message: (error as Error).message || "Có lỗi xảy ra",
+        duration: 2000,
         position: "top",
+        color: "danger",
       });
     } finally {
       setIsLoading(false);
@@ -162,7 +171,7 @@ const ReceiptCheckScreen = () => {
       <IonSearchbar
         value={searchText}
         onIonChange={(e) => handleSearch(e.detail.value!)}
-        placeholder="Search"
+        placeholder="Tìm kiếm"
         debounce={300}
       />
 

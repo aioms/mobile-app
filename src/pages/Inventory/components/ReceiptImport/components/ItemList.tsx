@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import {
   IonItem,
   IonLabel,
@@ -7,6 +7,7 @@ import {
   IonItemSliding,
   IonItemOptions,
   IonItemOption,
+  useIonViewDidLeave,
 } from "@ionic/react";
 import {
   calendar,
@@ -19,18 +20,10 @@ import { formatDate } from "@/helpers/formatters";
 import { useAuth } from "@/hooks/useAuth";
 import { UserRole } from "@/common/enums/user";
 import { ReceiptImportStatus } from "@/common/enums/receipt";
-import { getStatusColor, getStatusLabel, TReceiptImportStatus } from "@/common/constants/receipt";
+import { getStatusColor, getStatusLabel, TReceiptImportStatus } from "@/common/constants/receipt-import.constant";
+import { ReceiptImportItemList } from "../types/receipt-import.type";
 
-interface ItemListProps {
-  id: string;
-  receiptNumber: string;
-  importDate: string;
-  quantity: number;
-  status: string;
-  warehouse: string;
-  note: string;
-  userCreated: string;
-  createdAt: string;
+interface ItemListProps extends ReceiptImportItemList {
   onRequestApproval?: (id: string) => void;
   onComplete?: (id: string) => void;
   onCancel?: (id: string) => void;
@@ -39,20 +32,21 @@ interface ItemListProps {
 const ItemList: React.FC<ItemListProps> = ({
   id,
   receiptNumber,
-  importDate,
   quantity,
   status,
-  warehouse,
-  userCreated,
+  user: userCreate,
   createdAt,
   onRequestApproval,
   onComplete,
   onCancel,
+  supplier,
+  items,
 }) => {
+  const slidingRef = useRef<HTMLIonItemSlidingElement>(null);
   const { user } = useAuth();
   const userRole = user?.role || "";
 
-  const isUserCreated = user?.id === userCreated;
+  const isUserCreated = user?.id === userCreate?.id;
   const isEmployee = userRole === UserRole.EMPLOYEE;
   const canApprove = (
     [UserRole.ADMIN, UserRole.MANAGER, UserRole.DEVELOPER] as string[]
@@ -62,11 +56,17 @@ const ItemList: React.FC<ItemListProps> = ({
     status === ReceiptImportStatus.PROCESSING && isEmployee && isUserCreated;
   const showComplete = status === ReceiptImportStatus.WAITING && canApprove;
   const showCancel =
-    (status === ReceiptImportStatus.PROCESSING || status === ReceiptImportStatus.WAITING) &&
+    (status === ReceiptImportStatus.PROCESSING || 
+     status === ReceiptImportStatus.WAITING || 
+     status === ReceiptImportStatus.COMPLETED) &&
     (canApprove || (isEmployee && isUserCreated));
 
+  useIonViewDidLeave(() => {
+    slidingRef.current?.close();
+  });
+
   return (
-    <IonItemSliding>
+    <IonItemSliding ref={slidingRef}>
       <IonItem
         lines="full"
         className="py-2"
@@ -84,7 +84,8 @@ const ItemList: React.FC<ItemListProps> = ({
               <span className="text-sm">{getStatusLabel(status as TReceiptImportStatus)}</span>
             </IonChip>
           </p>
-          <p className="text-gray-500 text-sm">Cửa hàng: {warehouse || "--"}</p>
+          <p className="text-gray-500 text-sm" style={{ marginTop: 10 }}>Nhà cung cấp: {supplier ? supplier.name : "--"}</p>
+          <p className="text-gray-500 text-sm" style={{ marginTop: 10 }}>Sản phẩm: {items?.length ? items[0].productName : "--"}</p>
           <div className="flex justify-start items-center mt-5">
             <div className="flex items-center text-gray-600 mr-3">
               <IonIcon icon={calendar} className="mr-2" />

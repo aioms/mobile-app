@@ -1,5 +1,9 @@
 import React from "react";
 import { Redirect, Route } from "react-router-dom";
+
+// Type workaround for React 18 + react-router v5 compatibility
+const RouteCompat = Route as any;
+const RedirectCompat = Redirect as any;
 import { IonRouterOutlet, IonTabs } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
 
@@ -38,16 +42,16 @@ export const Routes: React.FC = () => {
           <PrivateRoute path="/tabs" component={TabBar} />
 
           {/* Default redirect based on authentication status */}
-          <Route exact path="/">
+          <RouteCompat exact path="/">
             {isAuthenticated ? (
-              <Redirect to="/tabs/home" />
+              <RedirectCompat to="/tabs/home" />
             ) : (
-              <Redirect to="/login" />
+              <RedirectCompat to="/login" />
             )}
-          </Route>
+          </RouteCompat>
 
           {/* Catch all route */}
-          <Route component={NotFound} />
+          <RouteCompat component={NotFound} />
         </IonRouterOutlet>
       </IonTabs>
     </IonReactRouter>

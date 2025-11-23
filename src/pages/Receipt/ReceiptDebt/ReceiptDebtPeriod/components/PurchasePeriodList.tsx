@@ -3,12 +3,12 @@ import { FC } from "react";
 import { IonButton, IonIcon, IonRippleEffect } from "@ionic/react";
 import { scanOutline, search } from "ionicons/icons";
 
-import { IProductItem } from "@/types/product.type";
+import { IReceiptItemPeriod } from "@/types/receipt-debt.type";
 import PurchasePeriod from "./PurchasePeriod";
 import { getDate } from "@/helpers/date";
 
 type Props = {
-  items: Record<string, IProductItem[]>;
+  items: Record<string, IReceiptItemPeriod[]>;
   onAddPeriod?: () => void;
   onScanBarcode?: () => void;
   onQuantityChange?: (
@@ -138,29 +138,34 @@ const PurchasePeriodList: FC<Props> = ({
             </p>
           </div>
         ) : (
-          /* Render items grouped by date */
-          Object.entries(items).map(([date, dateItems]) => (
-            <div
-              key={date}
-              className="border-b border-gray-100 last:border-b-0 mb-1"
-            >
-              {/* Render only one PurchasePeriod component per date group */}
-              <div data-product-item="true">
-                <PurchasePeriod
-                  items={dateItems} // Pass all items for this date
-                  periodDate={date}
-                  editable={isCurrentDatePeriod(date)}
-                  onQuantityChange={(itemId, newQuantity) =>
-                    onQuantityChange?.(date, itemId, newQuantity)
-                  }
-                  onPriceChange={(itemId, newPrice) =>
-                    onPriceChange?.(date, itemId, newPrice)
-                  }
-                  onRemove={(itemId) => onRemoveProduct?.(date, itemId)}
-                />
+          /* Render items grouped by date, sorted with newest dates first */
+          Object.entries(items)
+            .sort(([dateA], [dateB]) => {
+              // Sort dates in descending order (newest first)
+              return new Date(dateB).getTime() - new Date(dateA).getTime();
+            })
+            .map(([date, dateItems]) => (
+              <div
+                key={date}
+                className="border-b border-gray-100 last:border-b-0 mb-1"
+              >
+                {/* Render only one PurchasePeriod component per date group */}
+                <div data-product-item="true">
+                  <PurchasePeriod
+                    items={dateItems} // Pass all items for this date
+                    periodDate={date}
+                    editable={isCurrentDatePeriod(date)}
+                    onQuantityChange={(itemId, newQuantity) =>
+                      onQuantityChange?.(date, itemId, newQuantity)
+                    }
+                    onPriceChange={(itemId, newPrice) =>
+                      onPriceChange?.(date, itemId, newPrice)
+                    }
+                    onRemove={(itemId) => onRemoveProduct?.(date, itemId)}
+                  />
+                </div>
               </div>
-            </div>
-          ))
+            ))
         )}
       </div>
 

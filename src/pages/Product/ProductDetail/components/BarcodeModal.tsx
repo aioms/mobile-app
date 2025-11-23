@@ -24,14 +24,14 @@ import {
   IonBadge,
   IonProgressBar,
 } from "@ionic/react";
-import { 
-  close, 
-  printOutline, 
-  barcode, 
-  settings, 
-  wifi, 
-  search, 
-  checkmark, 
+import {
+  close,
+  printOutline,
+  barcode,
+  settings,
+  wifi,
+  search,
+  checkmark,
   copyOutline
 } from "ionicons/icons";
 import { useLoading } from "@/hooks";
@@ -48,10 +48,10 @@ interface BarcodeModalProps {
   productCode?: string;
 }
 
-const BarcodeModal: React.FC<BarcodeModalProps> = ({ 
-  isOpen, 
-  onDidDismiss, 
-  productName, 
+const BarcodeModal: React.FC<BarcodeModalProps> = ({
+  isOpen,
+  onDidDismiss,
+  productName,
   productCode
 }) => {
   const barcodeRef = useRef<HTMLDivElement>(null);
@@ -63,17 +63,17 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
   const [useNetworkPrinter, setUseNetworkPrinter] = useState<boolean>(false);
   const [showPrinterSettings, setShowPrinterSettings] = useState<boolean>(false);
   const [showDiscovery, setShowDiscovery] = useState<boolean>(false);
-  
+
   const [printingStatus, setPrintingStatus] = useState<PrintingStatus>({
     status: 'idle',
     progress: { current: 0, total: 0, message: '' }
   });
-  
+
   // Printer configuration state
   const [printerConfig, setPrinterConfig] = useState<PrinterConfig>({
-    ipAddress: "192.168.0.220",
-    port: 9100,
-    timeout: 5000,
+    ipAddress: DEFAULT_XPRINTER_CONFIG.ipAddress || '192.168.1.135',
+    port: DEFAULT_XPRINTER_CONFIG.port || 9100,
+    timeout: DEFAULT_XPRINTER_CONFIG.timeout || 5000,
   });
 
   const [discoveredPrinters, setDiscoveredPrinters] = useState<PrinterDevice[]>([]);
@@ -102,7 +102,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
     await withLoading(async () => {
       try {
         const printerService = createXprinterService(printerConfig);
-        
+
         // Update printing status
         setPrintingStatus({
           status: 'preparing',
@@ -114,7 +114,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
           status: 'printing',
           progress: { current: 1, total: 1, message: `Đang in ${productName || productCode}...` }
         });
-        
+
         const product = {
           productCode: productCode,
           productName: productName || productCode
@@ -347,7 +347,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
         status: 'error',
         progress: { current: 0, total: 0, message: 'Lỗi khi in' }
       });
-      
+
       await presentToast({
         message: `Lỗi in mã vạch: ${(error as Error).message}`,
         duration: 3000,
@@ -414,7 +414,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
     try {
       // Request permission first
       const hasPermission = await LocalNetworkService.requestLocalNetworkPermission();
-      
+
       if (!hasPermission) {
         await presentToast({
           message: "Cần quyền truy cập mạng local để tìm kiếm máy in",
@@ -442,7 +442,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
       }
 
       // Remove duplicates based on IP
-      const uniquePrinters = allPrinters.filter((printer, index, self) => 
+      const uniquePrinters = allPrinters.filter((printer, index, self) =>
         index === self.findIndex(p => p.ip === printer.ip)
       );
 
@@ -479,7 +479,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
   const handleSelectPrinter = async (printer: PrinterDevice) => {
     try {
       const connected = await LocalNetworkService.connectToPrinter(printer);
-      
+
       if (connected) {
         setSelectedPrinter(printer);
         setPrinterConfig(prev => ({
@@ -489,7 +489,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
         }));
         setUseNetworkPrinter(true);
         setShowDiscovery(false);
-        
+
         await presentToast({
           message: `Đã chọn máy in ${printer.name || printer.ip}`,
           duration: 2000,
@@ -561,7 +561,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
                 <p className="font-medium">{printingStatus.progress.message}</p>
               </IonText>
               {printingStatus.progress.total > 0 && (
-                <IonProgressBar 
+                <IonProgressBar
                   value={printingStatus.progress.current / printingStatus.progress.total}
                   color={getStatusColor()}
                   className="mt-2"
@@ -693,7 +693,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
                       <IonInput
                         value={printerConfig.ipAddress}
                         onIonInput={(e) => handlePrinterConfigChange('ipAddress', e.detail.value!)}
-                        placeholder="192.168.1.135"
+                        placeholder="192.168.1.220"
                       />
                     </IonItem>
 

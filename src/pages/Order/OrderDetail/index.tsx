@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useParams, useHistory } from "react-router";
 import { Toast } from "@capacitor/toast";
 import {
@@ -78,32 +78,40 @@ const OrderDetail: React.FC = () => {
     event.detail.complete();
   };
 
+  const buttons = useMemo(() => {
+    if (!order || order?.status === OrderStatus.COMPLETED) {
+      return [];
+    }
+
+    return [
+      {
+        text: "Chỉnh sửa",
+        handler: () => {
+          history.push(`/tabs/orders/update/${id}`);
+        },
+      },
+      {
+        text: "Xóa",
+        role: "destructive",
+        handler: () => {
+          Toast.show({
+            text: "Tính năng này đang được phát triển",
+            duration: "short",
+            position: "center",
+          });
+        },
+      },
+      {
+        text: "Hủy",
+        role: "cancel",
+      },
+    ]
+  }, [order?.status])
+
   const handleActionSheet = () => {
     presentActionSheet({
       header: "Tùy chọn",
-      buttons: [
-        {
-          text: "Chỉnh sửa",
-          handler: () => {
-            history.push(`/tabs/orders/update/${id}`);
-          },
-        },
-        {
-          text: "Xóa",
-          role: "destructive",
-          handler: () => {
-            Toast.show({
-              text: "Tính năng này đang được phát triển",
-              duration: "short",
-              position: "center",
-            });
-          },
-        },
-        {
-          text: "Hủy",
-          role: "cancel",
-        },
-      ],
+      buttons,
     });
   };
 

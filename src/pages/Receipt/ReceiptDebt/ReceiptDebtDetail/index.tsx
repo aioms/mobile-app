@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useHistory, useParams } from "react-router";
-import { Toast } from "@capacitor/toast";
 import {
   IonButton,
   IonButtons,
@@ -19,44 +18,49 @@ import {
   useIonToast,
   useIonActionSheet,
 } from "@ionic/react";
-import {
-  chevronBack,
-  ellipsisVertical,
-  // createOutline,
-  // cashOutline,
-  // cardOutline,
-  // ellipsisVerticalOutline,
-} from "ionicons/icons";
+import { chevronBack, ellipsisVertical, removeCircleOutline } from "ionicons/icons";
+import CancelConfirmationModal from "./components/CancelConfirmationModal";
 import {
   dayjsFormat,
   formatCurrency,
   formatCurrencyWithoutSymbol,
 } from "@/helpers/formatters";
+import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
 import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
 import { useLoading } from "@/hooks";
 import {
   getStatusColor,
   getStatusLabel,
+  RECEIPT_DEBT_STATUS,
+  RECEIPT_DEBT_TYPE,
   TReceiptDebtStatus,
-} from "@/common/constants/receipt";
+  TReceiptDebtType,
+} from "@/common/constants/receipt-debt.constant";
 import { IProductItem } from "@/types/product.type";
 import { getDate } from "@/helpers/date";
-import { getPaymentMethodLabel, getTransactionStatusLabel, getTransactionStatusColor } from "@/helpers/paymentHelpers";
+import {
+  getPaymentMethodLabel,
+  getTransactionStatusLabel,
+  getTransactionStatusColor,
+} from "@/helpers/paymentHelpers";
 import PaymentModal, { PaymentMethod } from "./components/PaymentModal";
 import { PayDebtRequestDto, PaymentTransactionDto } from "@/types/payment.type";
 import { Transaction } from "@/types/transaction.type";
 import { PaymentMethod as PaymentMethodEnum } from "@/common/enums/payment";
 import { TransactionType } from "@/common/enums/transaction";
+import LoadingScreen from "@/components/Loading/LoadingScreen";
+import EmptyPage from "@/components/EmptyPage";
+import { Refresher } from "@/components/Refresher/Refresher";
 
 // Updated interfaces to match API response
 export interface ReceiptDebt {
   id: string;
   code: string;
-  type: "customer_debt" | "supplier_debt";
+  type: TReceiptDebtType;
   totalAmount: number;
   paidAmount: number;
   remainingAmount: number;
-  status: "pending" | "paid" | "overdue" | "debt";
+  status: TReceiptDebtStatus;
   dueDate: Date;
   paymentDate: Date | null;
   note?: string | null;
@@ -76,6 +80,7 @@ const ReceiptDebtDetail: React.FC = () => {
   const [presentToast] = useIonToast();
   const [presentActionSheet] = useIonActionSheet();
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
   const [receiptData, setReceiptData] = useState<ResponseData>({
     receipt: null,
@@ -84,15 +89,24 @@ const ReceiptDebtDetail: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   const { isLoading, withLoading } = useLoading();
-  const { getDetail, payDebt, getPaymentTransactions } = useReceiptDebt();
+  const { getDetail, payDebt, getPaymentTransactions, cancelReceiptDebt } = useReceiptDebt();
 
   // Fetch payment transactions
   const fetchPaymentTransactions = useCallback(async () => {
     try {
       const response = await getPaymentTransactions(id);
-      setTransactions(response.transactions);
+      console.log({ response });
+
+      if (response.transactions && response.transactions.length > 0) {
+        setTransactions(response.transactions);
+      }
     } catch (err) {
       console.error("Failed to fetch payment transactions:", err);
+      captureException(err as Error, createExceptionContext(
+        'ReceiptDebtDetail',
+        'PaymentTransactions',
+        'fetchPaymentTransactions'
+      ));
       // Don't show error toast for transactions as it's not critical
     }
   }, [id]);
@@ -104,17 +118,23 @@ const ReceiptDebtDetail: React.FC = () => {
         const result = await getDetail(id);
 
         if (!result) {
-          return await Toast.show({
-            text: "Không tìm thấy phiếu",
-            duration: "short",
+          presentToast({
+            message: "Không tìm thấy phiếu",
+            duration: 1000,
             position: "top",
           });
+          return;
         }
 
         setReceiptData(result);
         // Also fetch payment transactions
         await fetchPaymentTransactions();
       } catch (err) {
+        captureException(err as Error, createExceptionContext(
+          'ReceiptDebtDetail',
+          'ReceiptDebtDetail',
+          'fetchReceiptDetail'
+        ));
         presentToast({
           message: (err as Error).message || "Đã có lỗi xảy ra",
           duration: 2000,
@@ -126,7 +146,12 @@ const ReceiptDebtDetail: React.FC = () => {
 
   useEffect(() => {
     id && fetchReceiptDetail();
-  }, [id, fetchReceiptDetail]);
+  }, [id]);
+
+  const handleRefresh = async (event: CustomEvent) => {
+    await fetchReceiptDetail();
+    event.detail.complete();
+  };
 
   // Callback handler for payment completion
   const handlePaymentComplete = useCallback(
@@ -143,11 +168,15 @@ const ReceiptDebtDetail: React.FC = () => {
           }
 
           if (amount > receiptData.receipt?.remainingAmount) {
-            throw new Error("Số tiền thanh toán không được vượt quá số tiền còn lại");
+            throw new Error(
+              "Số tiền thanh toán không được vượt quá số tiền còn lại"
+            );
           }
 
           // Map payment method from modal to API enum
-          const mapPaymentMethod = (method: PaymentMethod): PaymentMethodEnum => {
+          const mapPaymentMethod = (
+            method: PaymentMethod
+          ): PaymentMethodEnum => {
             switch (method) {
               case "cash":
                 return PaymentMethodEnum.CASH;
@@ -165,18 +194,15 @@ const ReceiptDebtDetail: React.FC = () => {
             type: TransactionType.PAYMENT,
             note: `Thanh toán cho phiếu thu ${receiptData.receipt.code}`,
           };
-          console.log({ paymentTransaction })
 
           const paymentData: PayDebtRequestDto = {
             transactions: [paymentTransaction],
             note: `Thanh toán ${formatCurrency(amount)} bằng ${method === "cash" ? "tiền mặt" : "chuyển khoản"
               }`,
           };
-          console.log({ paymentData })
 
           // Call payment API
           const response = await payDebt(id, paymentData);
-          console.log({ response });
 
           if (response.success) {
             await presentToast({
@@ -192,8 +218,16 @@ const ReceiptDebtDetail: React.FC = () => {
             throw new Error(response.message || "Thanh toán thất bại");
           }
         } catch (error) {
+          captureException(error as Error, createExceptionContext(
+            'ReceiptDebtDetail',
+            'PaymentModal',
+            'handlePaymentComplete'
+          ));
           presentToast({
-            message: error instanceof Error ? error.message : "Có lỗi xảy ra khi ghi nhận thanh toán",
+            message:
+              error instanceof Error
+                ? error.message
+                : "Có lỗi xảy ra khi ghi nhận thanh toán",
             duration: 3000,
             position: "top",
           });
@@ -202,6 +236,45 @@ const ReceiptDebtDetail: React.FC = () => {
     },
     [id, receiptData.receipt]
   );
+
+  // Handler for cancel confirmation
+  const handleCancelConfirm = async (note: string) => {
+    await withLoading(async () => {
+      try {
+        if (!receiptData.receipt) {
+          throw new Error("Không tìm thấy thông tin phiếu thu");
+        }
+
+        await cancelReceiptDebt(id, note);
+
+        await presentToast({
+          message: "Đã hủy phiếu thu thành công",
+          duration: 2000,
+          position: "top",
+        });
+
+        // Refresh the receipt data to show updated status
+        await fetchReceiptDetail();
+
+        // Close the modal
+        setIsCancelModalOpen(false);
+      } catch (error) {
+        captureException(error as Error, createExceptionContext(
+          'ReceiptDebtDetail',
+          'CancelConfirmationModal',
+          'handleCancelConfirm'
+        ));
+        presentToast({
+          message:
+            error instanceof Error
+              ? error.message
+              : "Có lỗi xảy ra khi hủy phiếu thu",
+          duration: 3000,
+          position: "top",
+        });
+      }
+    });
+  };
 
   const handleActionSheet = () => {
     presentActionSheet({
@@ -223,13 +296,21 @@ const ReceiptDebtDetail: React.FC = () => {
         {
           text: "In phiếu",
           handler: () => {
-            Toast.show({
-              text: "Tính năng này đang được phát triển",
-              duration: "short",
-              position: "center",
+            presentToast({
+              message: "Tính năng này đang được phát triển",
+              duration: 2000,
+              position: "top",
             });
           },
         },
+        ...(receipt?.status !== RECEIPT_DEBT_STATUS.CANCELLED ? [
+          {
+            text: "Hủy phiếu",
+            handler: () => {
+              setIsCancelModalOpen(true);
+            },
+          },
+        ] : []),
         {
           text: "Hủy",
           role: "cancel",
@@ -238,16 +319,8 @@ const ReceiptDebtDetail: React.FC = () => {
     });
   };
 
-  if (isLoading) {
-    return (
-      <IonPage>
-        <IonContent className="ion-padding">
-          <div className="flex justify-center items-center h-full">
-            <div>Đang tải...</div>
-          </div>
-        </IonContent>
-      </IonPage>
-    );
+  if (!receiptData) {
+    return <EmptyPage />
   }
 
   const { receipt, items } = receiptData;
@@ -269,15 +342,20 @@ const ReceiptDebtDetail: React.FC = () => {
           <IonTitle className="text-lg font-semibold text-gray-800">
             Chi tiết phiếu thu
           </IonTitle>
-          <IonButtons slot="end">
-            <IonButton onClick={handleActionSheet}>
-              <IonIcon icon={ellipsisVertical} />
-            </IonButton>
-          </IonButtons>
+          {receipt?.status !== RECEIPT_DEBT_STATUS.CANCELLED && (
+            <IonButtons slot="end">
+              <IonButton onClick={handleActionSheet}>
+                <IonIcon icon={ellipsisVertical} />
+              </IonButton>
+            </IonButtons>
+          )}
         </IonToolbar>
       </IonHeader>
 
       <IonContent className="bg-gray-50">
+        {isLoading && <LoadingScreen message="Đang tải dữ liệu..." />}
+        <Refresher onRefresh={handleRefresh} />
+
         <div className="p-4 space-y-4">
           {/* Receipt Information */}
           <IonCard className="shadow-sm">
@@ -305,12 +383,12 @@ const ReceiptDebtDetail: React.FC = () => {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 text-sm">
-                    {receipt?.type === "customer_debt"
+                    {receipt?.type === RECEIPT_DEBT_TYPE.CUSTOMER_DEBT
                       ? "Khách Hàng:"
                       : "Nhà Cung Cấp:"}
                   </span>
                   <span className="text-gray-800 font-medium">
-                    {receipt?.type === "customer_debt"
+                    {receipt?.type === RECEIPT_DEBT_TYPE.CUSTOMER_DEBT
                       ? receipt?.customerName
                       : receipt?.supplierName}
                   </span>
@@ -348,71 +426,79 @@ const ReceiptDebtDetail: React.FC = () => {
               </h3>
             </div>
 
-            {/* Display items grouped by period */}
-            {Object.entries(items).map(([period, periodItems]) => (
-              <div
-                key={period}
-                className="border-b border-gray-100 last:border-b-0"
-              >
-                {/* Period Header */}
-                <div className="bg-blue-50 px-4 py-2">
-                  <h4 className="text-sm font-medium text-blue-700">
-                    Đợt: {getDate(period).format("DD/MM/YYYY")}
-                  </h4>
-                </div>
+            {/* Display items grouped by period, sorted with newest dates first */}
+            {Object.entries(items)
+              .sort(([periodA], [periodB]) => {
+                // Sort periods in descending order (newest first)
+                return new Date(periodB).getTime() - new Date(periodA).getTime();
+              })
+              .map(([period, periodItems]) => (
+                <div
+                  key={period}
+                  className="border-b border-gray-100 last:border-b-0"
+                >
+                  {/* Period Header */}
+                  <div className="bg-blue-50 px-4 py-2">
+                    <h4 className="text-sm font-medium text-blue-700">
+                      Đợt: {getDate(period).format("DD/MM/YYYY")}
+                    </h4>
+                  </div>
 
-                {/* Table Header */}
-                <div className="bg-green-50 px-4 py-3">
-                  <IonGrid className="p-0">
-                    <IonRow className="text-xs font-medium text-green-700">
-                      <IonCol size="2" className="p-0">
-                        Mã SP
-                      </IonCol>
-                      <IonCol size="4" className="p-0 text-center">
-                        Tên SP
-                      </IonCol>
-                      <IonCol size="2" className="p-0 text-right">
-                        SL
-                      </IonCol>
-                      <IonCol size="4" className="p-0 text-right">
-                        Đơn Giá
-                      </IonCol>
-                    </IonRow>
-                  </IonGrid>
-                </div>
-
-                {/* Table Content for this period */}
-                {periodItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="px-4 py-3 border-b border-gray-100 last:border-b-0"
-                  >
+                  {/* Table Header */}
+                  <div className="bg-green-50 px-4 py-3">
                     <IonGrid className="p-0">
-                      <IonRow className="text-xs">
-                        <IonCol size="3" className="p-0 text-left text-gray-600">
-                          {item.code}
+                      <IonRow className="text-xs font-medium text-green-700">
+                        <IonCol size="2" className="p-0">
+                          Mã SP
                         </IonCol>
-                        <IonCol size="4" className="p-0 text-gray-800">
-                          {item.productName}
+                        <IonCol size="4" className="p-0 text-center">
+                          Tên SP
                         </IonCol>
-                        <IonCol
-                          size="1"
-                          className="p-0 text-center text-gray-800"
-                        >
-                          {item.quantity}
+                        <IonCol size="2" className="p-0 text-right">
+                          SL
                         </IonCol>
-                        <IonCol
-                          size="4"
-                          className="p-0 text-right text-gray-800 font-medium"
-                        >
-                          {formatCurrencyWithoutSymbol(item.costPrice)}đ
+                        <IonCol size="4" className="p-0 text-right">
+                          Đơn Giá
                         </IonCol>
                       </IonRow>
                     </IonGrid>
                   </div>
-                ))}
-              </div>
-            ))}
+
+                  {/* Table Content for this period */}
+                  {periodItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="px-4 py-3 border-b border-gray-100 last:border-b-0"
+                    >
+                      <IonGrid className="p-0">
+                        <IonRow className="text-xs">
+                          <IonCol
+                            size="3"
+                            className="p-0 text-left text-gray-600"
+                          >
+                            {item.code}
+                          </IonCol>
+                          <IonCol size="4" className="p-0 text-gray-800">
+                            {item.productName}
+                          </IonCol>
+                          <IonCol
+                            size="1"
+                            className="p-0 text-center text-gray-800"
+                          >
+                            {item.quantity}
+                          </IonCol>
+                          <IonCol
+                            size="4"
+                            className="p-0 text-right text-gray-800 font-medium"
+                          >
+                            {formatCurrencyWithoutSymbol(item.costPrice)}đ
+                          </IonCol>
+                        </IonRow>
+                      </IonGrid>
+                    </div>
+                  ))}
+                </div>
+              ))}
 
             {/* Show message if no items */}
             {Object.keys(items).length === 0 && (
@@ -463,7 +549,10 @@ const ReceiptDebtDetail: React.FC = () => {
                         <IonCol size="3" className="p-0 text-gray-800">
                           {dayjsFormat(transaction.processedAt)}
                         </IonCol>
-                        <IonCol size="4" className="p-0 text-gray-800 font-medium">
+                        <IonCol
+                          size="4"
+                          className="p-0 text-gray-800 font-medium"
+                        >
                           {formatCurrency(transaction.amount)}
                         </IonCol>
                         <IonCol size="3" className="p-0 text-gray-600">
@@ -471,7 +560,9 @@ const ReceiptDebtDetail: React.FC = () => {
                         </IonCol>
                         <IonCol size="2" className="p-0">
                           <IonChip
-                            color={getTransactionStatusColor(transaction.status)}
+                            color={getTransactionStatusColor(
+                              transaction.status
+                            )}
                             className="text-xs rounded-full"
                           >
                             {getTransactionStatusLabel(transaction.status)}
@@ -525,6 +616,30 @@ const ReceiptDebtDetail: React.FC = () => {
               </div>
             </IonCardContent>
           </IonCard>
+
+          {/* Cancel debt receipt section */}
+          {receipt?.status === RECEIPT_DEBT_STATUS.CANCELLED ? (
+            null
+          ) : (
+            <div>
+              <IonButton
+                expand="block"
+                fill="outline"
+                className="rounded-lg text-red-600"
+                onClick={() => setIsCancelModalOpen(true)}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  "Đang xử lý..."
+                ) : (
+                  <>
+                    <IonIcon icon={removeCircleOutline} slot="start" />
+                    Hủy phiếu
+                  </>
+                )}
+              </IonButton>
+            </div>
+          )}
         </div>
       </IonContent>
 
@@ -538,6 +653,17 @@ const ReceiptDebtDetail: React.FC = () => {
             remainingAmount: receipt.remainingAmount,
           }}
           onPaymentComplete={handlePaymentComplete}
+        />
+      )}
+
+      {/* Add CancelConfirmationModal */}
+      {receipt && (
+        <CancelConfirmationModal
+          isOpen={isCancelModalOpen}
+          onClose={() => setIsCancelModalOpen(false)}
+          onConfirm={handleCancelConfirm}
+          isLoading={isLoading}
+          receiptCode={receipt.code}
         />
       )}
     </IonPage>

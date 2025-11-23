@@ -1,5 +1,6 @@
 import { IProduct } from "@/types/product.type";
 import { request } from "../../helpers/axios";
+import { IHttpResponse } from "@/types";
 
 interface ProductFilters {
   keyword?: string;
@@ -25,6 +26,10 @@ const useProduct = () => {
     const query = new URLSearchParams();
 
     if (filters) {
+      if (filters.suppliers && filters.suppliers.length) {
+        query.append("withSuppliers", "true");
+      }
+      
       Object.entries(filters).forEach(([key, value]) => {
         if (value === null || value === undefined || value === "") return;
 
@@ -51,12 +56,22 @@ const useProduct = () => {
   };
 
   const create = async (data: any) => {
-    const response = await request.post(`/products`, data);
+    const response: IHttpResponse<IProduct> = await request.post(`/products`, data);
+
+    if (!response.success) {
+      throw new Error(response.message || "Failed to create product");
+    }
+
     return response.data;
   };
 
   const update = async (id: string, data: any) => {
-    const response = await request.put(`/products/${id}`, data);
+    const response: IHttpResponse = await request.put(`/products/${id}`, data);
+
+    if (!response.success) {
+      throw new Error(response.message || "Failed to update product");
+    }
+
     return response.data;
   };
 

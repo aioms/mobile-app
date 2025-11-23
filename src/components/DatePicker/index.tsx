@@ -5,14 +5,14 @@ type Props = {
   value?: string;
   onChange?: (e: any) => void;
   presentation?: 'date' | 'time' | 'date-time' | 'time-date' | 'month-year' | 'year' | 'month';
-  attrs: HTMLAttributes<HTMLIonDatetimeElement>;
+  attrs: HTMLAttributes<HTMLIonDatetimeElement> & { disabled?: boolean };
   extraClassName?: string;
 }
 
 const DatePicker: FC<Props> = ({ value, onChange, presentation = 'date-time', attrs, extraClassName }) =>  {
   return (
     <>
-      <IonDatetimeButton className={extraClassName} datetime={attrs.id}></IonDatetimeButton>
+      <IonDatetimeButton className={extraClassName} datetime={attrs.id} disabled={attrs.disabled}></IonDatetimeButton>
 
       <IonModal keepContentsMounted={true} trigger={attrs.id}>
         <IonDatetime

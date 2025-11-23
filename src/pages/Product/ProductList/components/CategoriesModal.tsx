@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   IonContent,
   IonHeader,
@@ -42,7 +42,7 @@ const CategoriesModal: React.FC<Props> = ({
     );
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await getCategories({ keyword: searchText });

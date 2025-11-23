@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { IonApp, setupIonicReact, useIonToast } from "@ionic/react";
-import { ErrorBoundary } from "react-error-boundary";
+import { PostHogErrorBoundary, usePostHog } from "posthog-js/react";
 
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/react/css/core.css";
@@ -37,34 +37,43 @@ import "./theme/common.css";
 /* Components */
 import { Routes } from "./routes";
 import FallbackError from "./components/FallbackError";
+import { getEnvironment } from "./helpers/common";
 
 setupIonicReact();
 
 const App: React.FC = () => {
   const [presentToast] = useIonToast();
+  const posthog = usePostHog()
+
+  useEffect(() => {
+    const environment = getEnvironment();
+    posthog?.capture('init', { environment })
+  }, [])
 
   return (
-    <ErrorBoundary
-      FallbackComponent={FallbackError}
-      onReset={(details) => {
-        // Reset the state of your app so the error doesn't happen again
-        console.log("Error boundary reset:", details);
-        presentToast({
-          message: `App has been reset. Please try again. ${details.reason}`,
-          duration: 2000,
-          position: "top",
-          color: "warning",
-        });
-      }}
-      onError={(error, errorInfo) => {
-        // Log error to your error reporting service
-        console.error("Error caught by boundary:", error, errorInfo);
-      }}
+    <PostHogErrorBoundary
+      fallback={({ error }) => (
+        <FallbackError
+          error={error}
+          resetErrorBoundary={() => {
+            console.log("Error boundary reset");
+            presentToast({
+              message: "App has been reset. Please try again.",
+              duration: 2000,
+              position: "top",
+              color: "warning",
+            });
+            if (typeof window !== "undefined") {
+              window.location.reload();
+            }
+          }}
+        />
+      )}
     >
       <IonApp>
         <Routes />
       </IonApp>
-    </ErrorBoundary>
+    </PostHogErrorBoundary>
   );
 };
 

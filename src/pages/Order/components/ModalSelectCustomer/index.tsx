@@ -79,10 +79,9 @@ const ModalSelectCustomer: React.FC<Props> = ({ dismiss }) => {
             </IonItem>
           )} */}
           {customers.map((item) => (
-            <IonItem>
+            <IonItem key={item.id}>
               <IonRadio
                 slot="start"
-                key={item.id}
                 value={`${item.id}__${item.name}`}
               >
                 {item.name}

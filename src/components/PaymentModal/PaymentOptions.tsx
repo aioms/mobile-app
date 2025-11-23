@@ -1,7 +1,7 @@
 import React from "react";
 import { IonCard, IonCardContent, IonIcon } from "@ionic/react";
 import { cash, qrCode } from "ionicons/icons";
-import { PaymentMethod } from "./PaymentModal";
+import { PaymentMethod } from "./index";
 
 interface PaymentOptionsProps {
   onMethodSelect: (method: PaymentMethod) => void;

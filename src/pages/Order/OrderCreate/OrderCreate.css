@@ -3,10 +3,22 @@ ion-input.custom-padding {
   --padding-end: 10px;
 }
 
-/* ion-radio.radio-checked::part(container) {
-  border-color: transparent;
-} */
-
 ion-radio.radio-checked::part(mark) {
   border-color: rgb(97,210,204);
 }
+
+/* Quantity input styles for OrderItem component */
+/* .quantity-input::-webkit-inner-spin-button,
+.quantity-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.quantity-input {
+  -moz-appearance: textfield;
+}
+
+.quantity-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.3);
+} */

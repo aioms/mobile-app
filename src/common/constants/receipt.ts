@@ -1,147 +1,47 @@
-export const RECEIPT_IMPORT_STATUS = {
-  DRAFT: "draft",
-  WAITING: "waiting",
-  PROCESSING: "processing",
-  COMPLETED: "completed",
-  CANCELLED: "cancelled",
-  SHORT_RECEIVED: "short_received",
-  OVER_RECEIVED: "over_received",
-} as const;
+/**
+ * @deprecated This file has been separated into type-specific files for better organization.
+ * Please import from the following files instead:
+ * - @/common/constants/receipt-import.constant for import receipts
+ * - @/common/constants/receipt-return.constant for return receipts
+ * - @/common/constants/receipt-check.constant for check receipts
+ * - @/common/constants/receipt-debt.constant for debt receipts
+ * - @/common/constants/receipt-status-helper for unified status functions
+ *
+ * This file is maintained for backward compatibility but will be removed in a future version.
+ */
 
-export const RECEIPT_RETURN_STATUS = {
-  DRAFT: "draft",
-  PROCESSING: "processing",
-  COMPLETED: "completed",
-  CANCELLED: "cancelled",
-} as const;
+// Re-export from type-specific files for backward compatibility
+export {
+  RECEIPT_IMPORT_STATUS,
+  getStatusColor as getImportStatusColor,
+  getStatusLabel as getImportStatusLabel,
+} from './receipt-import.constant';
+export type { TReceiptImportStatus } from './receipt-import.constant';
 
-export const RECEIPT_CHECK_STATUS = {
-  PENDING: "pending",
-  PROCESSING: "processing",
-  BALANCING_REQUIRED: "balancing_required",
-  BALANCED: "balanced",
-} as const;
+export {
+  RECEIPT_RETURN_STATUS,
+  getStatusColor as getReturnStatusColor,
+  getStatusLabel as getReturnStatusLabel,
+} from './receipt-return.constant';
+export type { TReceiptReturnStatus } from './receipt-return.constant';
 
-export const RECEIPT_DEBT_STATUS = {
-  PENDING: "pending",
-  PARTIAL_PAID: "partial_paid",
-  COMPLETED: "completed",
-  OVERDUE: "overdue",
-  CANCELLED: "cancelled",
-} as const;
+export {
+  RECEIPT_CHECK_STATUS,
+  RECEIPT_CHECK_REASONS,
+  getStatusColor as getCheckStatusColor,
+  getStatusLabel as getCheckStatusLabel,
+} from './receipt-check.constant';
+export type { TReceiptCheckStatus } from './receipt-check.constant';
 
-export type TReceiptImportStatus =
-  (typeof RECEIPT_IMPORT_STATUS)[keyof typeof RECEIPT_IMPORT_STATUS];
+export {
+  RECEIPT_DEBT_STATUS,
+  getStatusColor as getDebtStatusColor,
+  getStatusLabel as getDebtStatusLabel,
+} from './receipt-debt.constant';
+export type { TReceiptDebtStatus } from './receipt-debt.constant';
 
-export type TReceiptReturnStatus =
-  (typeof RECEIPT_RETURN_STATUS)[keyof typeof RECEIPT_RETURN_STATUS];
-
-export type TReceiptCheckStatus =
-  (typeof RECEIPT_CHECK_STATUS)[keyof typeof RECEIPT_CHECK_STATUS];
-
-export type TReceiptDebtStatus =
-  (typeof RECEIPT_DEBT_STATUS)[keyof typeof RECEIPT_DEBT_STATUS];
-
-export type ReceiptStatus =
-  | TReceiptImportStatus
-  | TReceiptReturnStatus
-  | TReceiptCheckStatus
-  | TReceiptDebtStatus
-  | "unknown";
-
-export const getStatusColor = (status: ReceiptStatus): string => {
-  switch (status) {
-    case RECEIPT_IMPORT_STATUS.DRAFT:
-    case RECEIPT_RETURN_STATUS.DRAFT:
-      return "medium";
-
-    case RECEIPT_CHECK_STATUS.PENDING:
-    case RECEIPT_IMPORT_STATUS.WAITING:
-    case RECEIPT_DEBT_STATUS.PENDING:
-    case RECEIPT_CHECK_STATUS.BALANCING_REQUIRED:
-      return "warning";
-
-    case RECEIPT_IMPORT_STATUS.PROCESSING:
-    case RECEIPT_RETURN_STATUS.PROCESSING:
-    case RECEIPT_CHECK_STATUS.PROCESSING:
-    case RECEIPT_DEBT_STATUS.PARTIAL_PAID:
-      return "tertiary";
-
-    case RECEIPT_IMPORT_STATUS.COMPLETED:
-    case RECEIPT_RETURN_STATUS.COMPLETED:
-    case RECEIPT_CHECK_STATUS.BALANCED:
-    case RECEIPT_DEBT_STATUS.COMPLETED:
-      return "success";
-
-    case RECEIPT_IMPORT_STATUS.CANCELLED:
-    case RECEIPT_RETURN_STATUS.CANCELLED:
-    case RECEIPT_DEBT_STATUS.CANCELLED:
-      return "danger";
-
-    case RECEIPT_IMPORT_STATUS.SHORT_RECEIVED:
-    case RECEIPT_IMPORT_STATUS.OVER_RECEIVED:
-    case RECEIPT_DEBT_STATUS.OVERDUE:
-      return "dark";
-
-    default:
-      return "medium";
-  }
-};
-
-export const getStatusLabel = (status: ReceiptStatus): string => {
-  switch (status) {
-    case RECEIPT_IMPORT_STATUS.DRAFT:
-    case RECEIPT_RETURN_STATUS.DRAFT:
-      return "Nháp";
-
-    case RECEIPT_CHECK_STATUS.PENDING:
-    case RECEIPT_DEBT_STATUS.PENDING:
-      return "Chờ xử lý";
-
-    case RECEIPT_DEBT_STATUS.PARTIAL_PAID:
-      return "Đã thu 1 nửa";
-
-    case RECEIPT_IMPORT_STATUS.PROCESSING:
-    case RECEIPT_RETURN_STATUS.PROCESSING:
-    case RECEIPT_CHECK_STATUS.PROCESSING:
-      return "Đang xử lý";
-
-    case RECEIPT_IMPORT_STATUS.WAITING:
-      return "Đang chờ duyệt";
-
-    case RECEIPT_IMPORT_STATUS.COMPLETED:
-    case RECEIPT_RETURN_STATUS.COMPLETED:
-    case RECEIPT_DEBT_STATUS.COMPLETED:
-      return "Hoàn thành";
-
-    case RECEIPT_DEBT_STATUS.OVERDUE:
-      return "Trễ hạn";
-
-    case RECEIPT_IMPORT_STATUS.CANCELLED:
-    case RECEIPT_RETURN_STATUS.CANCELLED:
-    case RECEIPT_DEBT_STATUS.CANCELLED:
-      return "Đã hủy";
-
-    case RECEIPT_IMPORT_STATUS.SHORT_RECEIVED:
-      return "Giao thiếu";
-
-    case RECEIPT_IMPORT_STATUS.OVER_RECEIVED:
-      return "Giao dư";
-
-    case RECEIPT_CHECK_STATUS.BALANCING_REQUIRED:
-      return "Cần cân bằng";
-
-    case RECEIPT_CHECK_STATUS.BALANCED:
-      return "Đã cân bằng";
-
-    default:
-      return "Unknown";
-  }
-};
-
-export const RECEIPT_CHECK_REASONS = [
-  { value: "input_error", label: "Sai sót nhập liệu" },
-  { value: "damage", label: "Mất hàng / Hư hỏng" },
-  { value: "wrong_import", label: "Nhập kho sai" },
-  { value: "other", label: "Khác (nhập ghi chú cụ thể)" },
-];
+export {
+  getStatusColor,
+  getStatusLabel,
+} from './receipt-status-helper';
+export type { ReceiptStatus } from './receipt-status-helper';

@@ -33,6 +33,12 @@ export const formatCurrencyWithoutSymbol = (amount: number) => {
   return amount.toLocaleString("vi-VN", { currency: "VND" });
 };
 
+// Format currency input as user types (for real-time formatting)
+export const formatCurrencyInput = (value: string): string => {
+  const numericValue = parseCurrencyInput(value);
+  return formatCurrencyWithoutSymbol(numericValue);
+};
+
 export const parseCurrencyInput = (value: string): number => {
   // Remove all non-digit characters and parse to number
   return parseInt(value.replace(/\D/g, "")) || 0;

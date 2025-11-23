@@ -18,8 +18,9 @@ import { getDate } from "@/helpers/date";
 import {
   getStatusColor,
   getStatusLabel,
+  RECEIPT_DEBT_STATUS,
   TReceiptDebtStatus,
-} from "@/common/constants/receipt";
+} from "@/common/constants/receipt-debt.constant";
 import { useBarcodeScanner } from "@/hooks";
 
 interface ReceiptDebt {
@@ -41,14 +42,14 @@ const ReceiptDebtItem: React.FC<ReceiptDebtItemProps> = ({ receiptDebt }) => {
   const [presentToast] = useIonToast();
 
   // Barcode scanner hook
-  const { startScan, stopScan } = useBarcodeScanner({
+  const { stopScan } = useBarcodeScanner({
     onBarcodeScanned: (value: string) => {
       stopScan();
       // Redirect to ReceiptDebtPeriod page with scanned barcode
       history.push(`/tabs/debt/period/${receiptDebt.id}?barcode=${value}`);
     },
     onError: async (error: Error) => {
-      await presentToast({
+      presentToast({
         message: error.message || "Có lỗi xảy ra khi quét mã vạch",
         duration: 1500,
         position: "top",
@@ -63,8 +64,10 @@ const ReceiptDebtItem: React.FC<ReceiptDebtItemProps> = ({ receiptDebt }) => {
     // Close the sliding item first
     slidingRef.current?.close();
 
+    history.push(`/tabs/debt/period/${receiptDebt.id}`);
+
     // Start barcode scanning
-    await startScan();
+    // await startScan();
   };
 
   useIonViewDidLeave(() => {
@@ -113,23 +116,25 @@ const ReceiptDebtItem: React.FC<ReceiptDebtItemProps> = ({ receiptDebt }) => {
         <IonRippleEffect></IonRippleEffect>
       </IonItem>
 
-      <IonItemOptions side="end">
-        <IonItemOption color="warning" onClick={handleAddPeriod}>
-          <IonIcon slot="top" icon={addCircleSharp}></IonIcon>
-          Thêm đợt
-        </IonItemOption>
-        <IonItemOption
-          color="tertiary"
-          routerLink={`/tabs/debt/update/${receiptDebt.id}`}
-        >
-          Sửa phiếu
-          <IonIcon slot="top" icon={createOutline}></IonIcon>
+      {receiptDebt.status !== RECEIPT_DEBT_STATUS.CANCELLED && (
+        <IonItemOptions side="end">
+          <IonItemOption color="warning" onClick={handleAddPeriod}>
+            <IonIcon slot="top" icon={addCircleSharp}></IonIcon>
+            Thêm đợt
+          </IonItemOption>
+          <IonItemOption
+            color="tertiary"
+            routerLink={`/tabs/debt/update/${receiptDebt.id}`}
+          >
+            Sửa phiếu
+            <IonIcon slot="top" icon={createOutline}></IonIcon>
         </IonItemOption>
         <IonItemOption color="medium" onClick={onPrint}>
           In phiếu
           <IonIcon slot="top" icon={printOutline}></IonIcon>
         </IonItemOption>
       </IonItemOptions>
+      )}
     </IonItemSliding>
   );
 };

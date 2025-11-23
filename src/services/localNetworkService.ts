@@ -202,7 +202,7 @@ export class LocalNetworkService {
       printer.status = 'online';
       
       // Có thể thêm logic để parse response và lấy model name
-      if (printer.ip.includes('192.168.0.220')) {
+      if (printer.ip.includes('192.168.1.220')) {
         printer.model = 'Xprinter 365B';
         printer.name = 'Xprinter 365B';
       }

@@ -24,7 +24,7 @@ import ModalSelectCustomer from "@/components/ModalSelectCustomer";
 import {
   getStatusLabel,
   RECEIPT_DEBT_STATUS,
-} from "@/common/constants/receipt";
+} from "@/common/constants/receipt-debt.constant";
 
 interface FilterModalProps {
   isOpen: boolean;

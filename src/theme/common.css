@@ -1,3 +1,7 @@
+/* .native-input {
+  padding-left: 0.5rem !important;
+} */
+
 /* Updated scanner stop button styles */
 .scanner-stop-button {
   position: fixed !important;
@@ -253,4 +257,8 @@
 @keyframes scanLine {
   0% { transform: translateY(-140px); }
   100% { transform: translateY(140px); }
+}
+
+.quantity-input  {
+  background-color: rgb(245, 245, 245);
 }

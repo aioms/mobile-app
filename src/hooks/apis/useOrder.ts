@@ -22,12 +22,22 @@ const useOrder = () => {
   };
 
   const create = async (data: any) => {
-    const response = await request.post(`/orders`, data);
+    const response: IHttpResponse = await request.post(`/orders`, data);
+
+    if (!response.success) {
+      throw new Error(response.message || "Failed to create order");
+    }
+
     return response.data;
   };
 
   const update = async (id: string, data: any) => {
-    const response = await request.put(`/orders/${id}`, data);
+    const response: IHttpResponse = await request.put(`/orders/${id}`, data);
+
+    if (!response.success) {
+      throw new Error(response.message || "Failed to update order");
+    }
+    
     return response.data;
   };
 

@@ -14,7 +14,7 @@ import {
   formatCurrencyWithoutSymbol,
   parseCurrencyInput,
 } from "@/helpers/formatters";
-import { PaymentMethod } from "./PaymentModal";
+import { PaymentMethod } from "./index";
 
 interface AmountInputProps {
   maxAmount: number;
@@ -51,7 +51,7 @@ const AmountInput: React.FC<AmountInputProps> = ({
   };
 
   const validateAndConfirm = () => {
-    if (!numericAmount || numericAmount <= 0) {
+    if (numericAmount < 0 || isNaN(numericAmount)) {
       setError("Vui lòng nhập số tiền hợp lệ");
       return;
     }
@@ -123,7 +123,7 @@ const AmountInput: React.FC<AmountInputProps> = ({
             <IonButton
               expand="block"
               onClick={validateAndConfirm}
-              disabled={!numericAmount}
+              disabled={numericAmount < 0 || numericAmount > maxAmount}
             >
               Xác nhận
             </IonButton>

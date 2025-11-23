@@ -11,6 +11,10 @@ export interface IProduct {
   unit: string;
   description: string;
   imageUrls?: string[]; // Add imageUrls array property
+  images?: Array<{
+    id: string;
+    path: string;
+  }>;
   suppliers: Array<{
     id: string;
     name: string;

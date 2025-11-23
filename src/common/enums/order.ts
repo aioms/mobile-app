@@ -1,11 +1,3 @@
-// export enum OrderStatus {
-//   DRAFT = "draft",
-//   PENDING = "pending",
-//   PAID = "paid",
-//   CANCELLED = "cancelled",
-//   REFUNDED = "refunded",
-// }
-
 export enum OrderStatus {
   DRAFT = "draft",
   PENDING = "pending",
