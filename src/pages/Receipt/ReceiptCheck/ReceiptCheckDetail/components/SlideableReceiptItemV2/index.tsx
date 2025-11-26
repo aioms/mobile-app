@@ -15,14 +15,28 @@ interface ReceiptItemData {
 interface SlideableReceiptItemProps {
   items: ReceiptItemData[];
   onSelect?: (id: string) => void;
+  isEditable?: boolean;
+  onItemUpdate?: (itemId: string, newInventory: number) => void;
 }
 
 const SlideableReceiptItem: React.FC<SlideableReceiptItemProps> = ({
   items,
   onSelect,
+  isEditable = false,
+  onItemUpdate,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [editingInventory, setEditingInventory] = useState<string>("");
+  const [isEditing, setIsEditing] = useState(false);
   const currentItem = items[currentIndex];
+
+  // Update editing inventory when current item changes
+  useEffect(() => {
+    if (currentItem) {
+      setEditingInventory(currentItem.actualInventory.toString());
+      setIsEditing(false);
+    }
+  }, [currentItem?.id, currentItem?.actualInventory]);
 
   const getDifferenceColor = (difference: number) => {
     if (difference === 0) return "success";
@@ -56,6 +70,46 @@ const SlideableReceiptItem: React.FC<SlideableReceiptItemProps> = ({
     e.stopPropagation();
     if (currentIndex < items.length - 1) {
       setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const handleInventoryClick = () => {
+    if (isEditable) {
+      setIsEditing(true);
+    }
+  };
+
+  const handleInventoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Allow empty string or valid numbers (including negative)
+    if (value === "" || value === "-" || !isNaN(Number(value))) {
+      setEditingInventory(value);
+    }
+  };
+
+  const handleInventoryBlur = () => {
+    setIsEditing(false);
+    const newInventory = parseInt(editingInventory, 10);
+    
+    // Validate the input
+    if (isNaN(newInventory)) {
+      // Reset to current value if invalid
+      setEditingInventory(currentItem.actualInventory.toString());
+      return;
+    }
+
+    // Update local state if the value changed
+    if (newInventory !== currentItem.actualInventory && onItemUpdate) {
+      onItemUpdate(currentItem.id, newInventory);
+    }
+  };
+
+  const handleInventoryKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.currentTarget.blur();
+    } else if (e.key === "Escape") {
+      setEditingInventory(currentItem.actualInventory.toString());
+      setIsEditing(false);
     }
   };
 
@@ -145,9 +199,24 @@ const SlideableReceiptItem: React.FC<SlideableReceiptItemProps> = ({
                 </IonChip>
               </td>
               <td className="px-2 py-3 border-b text-center">
-                <IonChip className="m-0 justify-center w-6 min-w-[2rem]">
-                  {currentItem.actualInventory}
-                </IonChip>
+                {isEditable && isEditing ? (
+                  <input
+                    type="number"
+                    value={editingInventory}
+                    onChange={handleInventoryChange}
+                    onBlur={handleInventoryBlur}
+                    onKeyDown={handleInventoryKeyDown}
+                    autoFocus
+                    className="w-full px-2 py-1 text-center border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  />
+                ) : (
+                  <IonChip 
+                    className={`m-0 justify-center w-6 min-w-[2rem] ${isEditable ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                    onClick={handleInventoryClick}
+                  >
+                    {currentItem.actualInventory}
+                  </IonChip>
+                )}
               </td>
               <td className="px-2 py-3 border-b text-center">
                 <IonChip

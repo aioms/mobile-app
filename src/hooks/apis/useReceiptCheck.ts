@@ -1,16 +1,17 @@
 import { IHttpResponse } from "@/types";
 import { request } from "../../helpers/axios";
+import { CHANGE_QUANTITY_TYPE } from "@/common/constants/product";
 
 const useReceiptCheck = () => {
   const getList = async (
     filters?: Record<string, string>,
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
   ) => {
     const query = new URLSearchParams(filters);
 
     const response: IHttpResponse = await request.get(
-      `/receipt-check?${query.toString()}&page=${page}&limit=${limit}`
+      `/receipt-check?${query.toString()}&page=${page}&limit=${limit}`,
     );
     return response;
   };
@@ -31,8 +32,11 @@ const useReceiptCheck = () => {
   };
 
   const update = async (id: string, data: any) => {
-    const response: IHttpResponse = await request.put(`/receipt-check/${id}`, data);
-    
+    const response: IHttpResponse = await request.put(
+      `/receipt-check/${id}`,
+      data,
+    );
+
     if (!response.success) {
       throw new Error(response.message || "Failed to update receipt check");
     }
@@ -45,26 +49,38 @@ const useReceiptCheck = () => {
     return response.data;
   };
 
-  const incrementActualInventory = async (id: string, productCode: string) => {
-    const response: IHttpResponse = await request.patch(`/receipt-check/${id}/receipt-items/${productCode}`);
-    
-    if (response.statusCode !== 200 || !response.success) {
-      throw new Error(response.message || "Failed to increment actual inventory");
+  const incrementActualInventory = async (
+    id: string,
+    productCode: string,
+    actualInventory: number,
+    changeQuantityType = CHANGE_QUANTITY_TYPE.INCREASE,
+  ) => {
+    const response: IHttpResponse = await request.patch(
+      `/receipt-check/${id}/receipt-items/${productCode}?changeQuantityType=${changeQuantityType}&actualInventory=${actualInventory}`,
+    );
+
+    if (!response.success) {
+      throw new Error(
+        response.message || "Failed to increment actual inventory",
+      );
     }
-    
+
     return response.data;
   };
 
   const updateBalanceInventory = async (id: string, items: any[]) => {
-    const response: IHttpResponse = await request.patch(`/receipt-check/${id}/balance`, {
-      items,
-    });
-    
-    if (response.statusCode !== 200 || !response.success) {
+    const response: IHttpResponse = await request.patch(
+      `/receipt-check/${id}/balance`,
+      {
+        items,
+      },
+    );
+
+    if (!response.success) {
       throw new Error(response.message || "Failed to update balance inventory");
     }
-    
-    return response.data;
+
+    return response;
   };
 
   return {

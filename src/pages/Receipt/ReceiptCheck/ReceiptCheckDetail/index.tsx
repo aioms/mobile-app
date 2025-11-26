@@ -36,6 +36,7 @@ import ActivityHistory, { ActivityLog } from "./components/ActivityHistory";
 import { UserRole } from "@/common/enums/user";
 
 import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
+import { CHANGE_QUANTITY_TYPE } from "@/common/constants/product";
 
 interface ReceiptItem {
   id: string;
@@ -164,6 +165,42 @@ const ReceiptCheckDetail: React.FC = () => {
     setNote(value);
   };
 
+  const handleInventoryChange = async (itemId: string, newInventory: number) => {
+    setItems(prevItems =>
+      prevItems.map(item =>
+        item.id === itemId
+          ? { ...item, actualInventory: newInventory }
+          : item
+      )
+    );
+
+    try {
+      if (!receipt?.id) {
+        throw new Error("Không tìm thấy phiếu kiểm");
+      }
+
+      const productCode = items.find(item => item.id === itemId)?.code;
+
+      if (!productCode) {
+        throw new Error("Không tìm thấy sản phẩm");
+      }
+
+      await incrementActualInventory(
+        receipt?.id,
+        productCode,
+        newInventory,
+        CHANGE_QUANTITY_TYPE.SET
+      );
+    } catch (error) {
+      presentToast({
+        message: (error as Error).message,
+        duration: 1000,
+        position: "top",
+        color: "danger",
+      });
+    }
+  };
+
   const fetchReceiptCheck = async () => {
     await withLoading(async () => {
       try {
@@ -254,13 +291,10 @@ const ReceiptCheckDetail: React.FC = () => {
         actualInventory: item.actualInventory,
       }));
 
-      const { success } = await updateBalanceInventory(
+      await updateBalanceInventory(
         receipt.id,
         updatedItems
       );
-      if (!success) {
-        throw new Error("Cân đối thất bại");
-      }
 
       await presentToast({
         message: "Đã cân đối thành công",
@@ -327,7 +361,12 @@ const ReceiptCheckDetail: React.FC = () => {
         throw new Error("Không tìm thấy phiếu kiểm");
       }
 
-      await incrementActualInventory(receipt?.id, value);
+      await incrementActualInventory(
+        receipt?.id,
+        value,
+        1,
+        CHANGE_QUANTITY_TYPE.INCREASE
+      );
     } catch (error) {
       captureException(error as Error, createExceptionContext(
         'ReceiptCheckDetail',
@@ -406,25 +445,33 @@ const ReceiptCheckDetail: React.FC = () => {
     return receipt?.status;
   }, [receipt?.status]);
 
-  const { isShowBalanceButton, isShowBalanceRequireButton, isAdmin } = useMemo(() => {
+  const { isShowBalanceButton, isShowBalanceRequireButton, isAdmin, isEditable } = useMemo(() => {
     if (!user || !receipt)
       return {
         isShowBalanceButton: false,
         isShowBalanceRequireButton: false,
+        isAdmin: false,
+        isEditable: false,
       };
 
     const roles = [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.MANAGER];
+    const isAdminUser = roles.includes(user.role);
+
     const isShowBalanceButton =
       receipt.status !== RECEIPT_CHECK_STATUS.BALANCED &&
-      roles.includes(user.role);
+      isAdminUser;
 
     const statusAllowed = [RECEIPT_CHECK_STATUS.PROCESSING, RECEIPT_CHECK_STATUS.PENDING] as string[];
-    const isShowBalanceRequireButton = statusAllowed.includes(receipt.status)
+    const isShowBalanceRequireButton = statusAllowed.includes(receipt.status);
+
+    // Only allow editing if user is admin AND receipt is not balanced
+    const isEditable = isAdminUser && receipt.status !== RECEIPT_CHECK_STATUS.BALANCED;
 
     return {
       isShowBalanceButton,
       isShowBalanceRequireButton,
-      isAdmin: roles.includes(user.role)
+      isAdmin: isAdminUser,
+      isEditable,
     };
   }, [receipt, user]);
 
@@ -478,7 +525,12 @@ const ReceiptCheckDetail: React.FC = () => {
           <div className="bg-white rounded-lg p-4 shadow-sm">
             <h2 className="text-lg font-semibold mb-4">Danh sách sản phẩm</h2>
             {items.length > 0 && (
-              <SlideableReceiptItem items={items} onSelect={handleItemSelect} />
+              <SlideableReceiptItem
+                items={items}
+                onSelect={handleItemSelect}
+                isEditable={isEditable}
+                onItemUpdate={handleInventoryChange}
+              />
             )}
           </div>
 
