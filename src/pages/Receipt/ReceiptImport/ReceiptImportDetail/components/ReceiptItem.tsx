@@ -1,7 +1,7 @@
 import { FC, memo, useEffect, useMemo, useState } from "react";
 import { IonInput, IonItem, IonLabel, IonIcon, IonSpinner, useIonToast } from "@ionic/react";
 
-import { formatCurrency, parseCurrencyInput } from "@/helpers/formatters";
+import { formatCurrencyWithoutSymbol, parseCurrencyInput } from "@/helpers/formatters";
 import { createOutline, checkmark, closeOutline } from "ionicons/icons";
 import useReceiptItem from "@/hooks/apis/useReceiptItem";
 
@@ -38,7 +38,7 @@ const ReceiptItem: FC<Props> = memo(
     disabled = false,
   }) => {
     const [formattedCostPrice, setformattedCostPrice] = useState<string>(
-      formatCurrency(costPrice)
+      formatCurrencyWithoutSymbol(costPrice)
     );
     const [newCostPrice, setNewCostPrice] = useState<number>(costPrice);
 
@@ -55,7 +55,7 @@ const ReceiptItem: FC<Props> = memo(
         const numericValue = parseCurrencyInput(value);
         if (numericValue >= 0) {
           setNewCostPrice(numericValue);
-          setformattedCostPrice(formatCurrency(numericValue));
+          setformattedCostPrice(formatCurrencyWithoutSymbol(numericValue));
         }
       }
     };
@@ -209,31 +209,31 @@ const ReceiptItem: FC<Props> = memo(
               <div className="flex-1 mr-2">
                 <IonLabel position="stacked">Giá nhập</IonLabel>
                 <IonInput
-                    type="text"
-                    fill="outline"
-                    color="primary"
-                    labelPlacement="floating"
-                    value={formattedCostPrice}
-                    onIonInput={(e) => handleCostPriceChange(e.detail.value!)}
-                    className="border-solid border-2 border-gray-500/25 rounded-lg ion-padding-start"
-                    disabled={disabled}
-                  />
+                  type="text"
+                  fill="outline"
+                  color="primary"
+                  labelPlacement="floating"
+                  value={formattedCostPrice}
+                  onIonInput={(e) => handleCostPriceChange(e.detail.value!)}
+                  className="border-solid border-2 border-gray-500/25 rounded-lg ion-padding-start"
+                  disabled={disabled}
+                />
               </div>
               <div className="flex-1">
                 <IonLabel position="stacked">Chiết khấu (%)</IonLabel>
                 <IonInput
-                    type="number"
-                    fill="outline"
-                    labelPlacement="floating"
-                    value={newDiscount}
-                    onIonInput={(e) =>
-                      handleDiscountChange(parseFloat(e.detail.value!) || 0)
-                    }
-                    min={0}
-                    max={100}
-                    className="border-solid border-2 border-gray-500/25 rounded-lg ion-padding-start"
-                    disabled={disabled}
-                  />
+                  type="number"
+                  fill="outline"
+                  labelPlacement="floating"
+                  value={newDiscount}
+                  onIonInput={(e) =>
+                    handleDiscountChange(parseFloat(e.detail.value!) || 0)
+                  }
+                  min={0}
+                  max={100}
+                  className="border-solid border-2 border-gray-500/25 rounded-lg ion-padding-start"
+                  disabled={disabled}
+                />
               </div>
             </div>
           )}
@@ -293,7 +293,7 @@ const ReceiptItem: FC<Props> = memo(
                 </div>
               )}
             </div>
-            <div className="text-lg font-medium">{formatCurrency(totalPrice)}</div>
+            <div className="text-lg font-medium">{formatCurrencyWithoutSymbol(totalPrice)}</div>
           </div>
         </div>
       </IonItem>

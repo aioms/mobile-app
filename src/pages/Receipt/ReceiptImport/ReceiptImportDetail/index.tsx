@@ -38,8 +38,8 @@ import { ReceiptImportStatus } from "@/common/enums/receipt";
 import {
   getStatusColor,
   getStatusLabel,
-  RECEIPT_IMPORT_STATUS,
   TReceiptImportStatus,
+  RECEIPT_IMPORT_STATUS,
 } from "@/common/constants/receipt-import.constant";
 
 import { dayjsFormat, formatCurrency } from "@/helpers/formatters";
@@ -141,9 +141,9 @@ const ReceiptImportDetail: React.FC = () => {
 
   const handleBarcodeScanned = (value: string) => {
     console.log({ value });
-    
+
     // if (!isScanning) return;
-    
+
     // Add to scanned items map and increment quantity
     setScannedItems(prev => {
       const newMap = new Map(prev);
@@ -171,7 +171,7 @@ const ReceiptImportDetail: React.FC = () => {
 
   const stopScanningAndImport = async () => {
     setIsScanning(false);
-    
+
     if (pendingImports.length === 0) {
       await presentToast({
         message: "Không có sản phẩm nào được quét",
@@ -208,7 +208,7 @@ const ReceiptImportDetail: React.FC = () => {
         // Clear scanning state
         setScannedItems(new Map());
         setPendingImports([]);
-        
+
         // Refresh the receipt data
         await fetchReceiptImport();
       } catch (error) {
@@ -791,15 +791,15 @@ const ReceiptImportDetail: React.FC = () => {
                     </IonButtons>
                   ) : (
                     <div className="flex items-center space-x-2">
-                      <IonButton 
-                        color="success" 
+                      <IonButton
+                        color="success"
                         onClick={stopScanningAndImport}
                         size="small"
                       >
                         Hoàn thành ({pendingImports.length})
                       </IonButton>
-                      <IonButton 
-                        color="medium" 
+                      <IonButton
+                        color="medium"
                         fill="outline"
                         onClick={() => setIsScanning(false)}
                         size="small"
@@ -824,7 +824,7 @@ const ReceiptImportDetail: React.FC = () => {
                     {pendingImports.length} sản phẩm
                   </span>
                 </div>
-                
+
                 {/* Show scanned items */}
                 {pendingImports.length > 0 && (
                   <div className="mt-3 space-y-1">
