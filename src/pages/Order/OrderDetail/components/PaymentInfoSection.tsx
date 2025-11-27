@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { IonIcon } from "@ionic/react";
 import { cardOutline } from "ionicons/icons";
 
@@ -8,7 +8,6 @@ import { IOrderItem } from "@/types";
 interface PaymentInfoSectionProps {
   subtotal: number;
   discount: number;
-  total: number;
   paymentMethod: string;
   items: IOrderItem[];
 }
@@ -16,16 +15,25 @@ interface PaymentInfoSectionProps {
 const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
   subtotal,
   discount,
-  total,
   paymentMethod,
   items,
 }) => {
-  const totalVat = items.reduce((acc, item) => {
-    const itemTotal = item.price * item.quantity;
-    const itemVat = (itemTotal * (item.vatRate || 0)) / 100;
-    return acc + itemVat;
-  }, 0);
+  // Calculate money using the same logic as OrderUpdate
+  const calculateTotalVat = () => {
+    return items.reduce((totalVat, item) => {
+      const itemPrice = item.price * item.quantity;
+      const vatAmount = (itemPrice * (item.vatRate || 0)) / 100;
+      return totalVat + vatAmount;
+    }, 0);
+  };
 
+  const totalVat = useMemo(() => calculateTotalVat(), [items]);
+
+  const finalTotal = useMemo(() => {
+    const finalTotal = subtotal - discount + totalVat;
+    return finalTotal > 0 ? finalTotal : 0;
+  }, [subtotal, discount, totalVat]);
+  
   return (
     <div className="bg-card rounded-lg shadow-sm mb-4">
       <div className="p-4 border-b border-border">
@@ -40,7 +48,7 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
       <div className="p-4">
         <div className="flex justify-between items-center mb-2">
           <span className="text-muted-foreground">Tổng tiền hàng:</span>
-          <span>{formatCurrency(subtotal - totalVat)}</span>
+          <span>{formatCurrency(subtotal)}</span>
         </div>
         <div className="flex justify-between items-center mb-2">
           <span className="text-muted-foreground">Giảm giá:</span>
@@ -59,7 +67,7 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
         <div className="flex justify-between items-center pt-2 border-t border-border">
           <span className="font-medium">Tổng thanh toán:</span>
           <span className="text-green-500 font-medium">
-            {formatCurrency(total)}
+            {formatCurrency(finalTotal)}
           </span>
         </div>
       </div>
