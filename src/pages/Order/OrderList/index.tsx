@@ -6,7 +6,6 @@ import {
   RefresherEventDetail,
   IonIcon,
   IonRippleEffect,
-  useIonViewWillEnter,
 } from "@ionic/react";
 import { scanOutline } from "ionicons/icons";
 import { useHistory } from "react-router";
@@ -15,17 +14,17 @@ import useOrder from "@/hooks/apis/useOrder";
 import useProduct from "@/hooks/apis/useProduct";
 import { useBarcodeScanner, useLoading, useStorage } from "@/hooks";
 import { dayjsFormat } from "@/helpers/formatters";
-import type { IOrder } from "@/types/order.type";
+import { capitalizeFirstLetter } from "@/helpers/common";
+import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
 
 import { Refresher } from "@/components/Refresher/Refresher";
 import LoadingScreen from "@/components/Loading/LoadingScreen";
 import FilterSection from "./components/FilterSection";
 import OrderItem from "./components/OrderItem";
 
-import "./OrderList.css";
-import { capitalizeFirstLetter } from "@/helpers/common";
+import type { IOrder } from "@/types/order.type";
 
-import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
+import "./OrderList.css";
 
 const LIMIT = 10;
 

@@ -217,9 +217,8 @@ const OrderDetail: React.FC = () => {
 
             {/* Payment Info Section */}
             <PaymentInfoSection
-              subtotal={order.totalAmount + order.discountAmount}
+              subtotal={order.totalAmount}
               discount={order.discountAmount}
-              total={order.totalAmount}
               items={order.items}
               paymentMethod={getPaymentMethodLabel(order.paymentMethod)}
             />

@@ -3,11 +3,25 @@ import { request } from "../../helpers/axios";
 
 const useReceiptImport = () => {
   const getList = async (
-    filters?: Record<string, string>,
+    filters?: Record<string, any>,
     page: number = 1,
     limit: number = 10
   ) => {
-    const query = new URLSearchParams(filters);
+    const query = new URLSearchParams();
+
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value === null || value === undefined || value === "") return;
+
+        if (Array.isArray(value)) {
+          value.forEach((item) => {
+            query.append(key, item);
+          });
+        } else if (value !== undefined && value !== null && value !== "") {
+          query.append(key, value.toString());
+        }
+      });
+    }
 
     const response = await request.get(
       `/receipt-imports?${query.toString()}&page=${page}&limit=${limit}`

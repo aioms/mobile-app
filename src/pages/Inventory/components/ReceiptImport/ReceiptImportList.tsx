@@ -8,8 +8,12 @@ import {
   IonButtons,
   IonIcon,
   IonToolbar,
+  useIonModal,
+  IonChip,
+  IonLabel,
 } from "@ionic/react";
 import { Dialog } from "@capacitor/dialog";
+import { filterOutline, close } from "ionicons/icons";
 
 import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
 
@@ -22,6 +26,9 @@ import { useHistory } from "react-router";
 import { useBarcodeScanner } from "@/hooks";
 import { scanOutline } from "ionicons/icons";
 import { ReceiptImportItemList } from "./types/receipt-import.type";
+import FilterModal from "./components/FilterModal";
+import { ReceiptImportFilterValues, defaultReceiptImportFilters } from "./types/FilterModal.d";
+import { getStatusColor, getStatusLabel } from "@/common/constants/receipt-import.constant";
 
 type Props = {};
 
@@ -36,6 +43,8 @@ const ReceiptImportList: React.FC<Props> = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [keyword, setKeyword] = useState("");
+  const [filterValues, setFilterValues] = useState<ReceiptImportFilterValues>(defaultReceiptImportFilters);
+  const [activeFilters, setActiveFilters] = useState<ReceiptImportFilterValues>(defaultReceiptImportFilters);
 
   const [presentToast] = useIonToast();
 
@@ -56,10 +65,31 @@ const ReceiptImportList: React.FC<Props> = () => {
         setHasMore(true);
       }
 
+      // Build filter parameters
+      const filterParams: any = {
+        keyword,
+      };
+
+      // Add supplier filters
+      if (activeFilters.suppliers.length > 0) {
+        filterParams.suppliers = activeFilters.suppliers.map(s => s.split("__")[0]);
+      }
+
+      // Add status filters
+      if (activeFilters.status.length > 0) {
+        filterParams.statuses = activeFilters.status;
+      }
+
+      // Add date range filters
+      if (activeFilters.dateRange.from) {
+        filterParams.fromDate = activeFilters.dateRange.from;
+      }
+      if (activeFilters.dateRange.to) {
+        filterParams.toDate = activeFilters.dateRange.to;
+      }
+
       const response = await getListReceiptImport(
-        {
-          keyword,
-        },
+        filterParams,
         page,
         pageSize,
       );
@@ -106,7 +136,7 @@ const ReceiptImportList: React.FC<Props> = () => {
 
   useEffect(() => {
     fetchReceiptImports();
-  }, [keyword]);
+  }, [keyword, activeFilters]);
 
   const handleLoadMore = () => {
     const nextPage = currentPage + 1;
@@ -297,6 +327,31 @@ const ReceiptImportList: React.FC<Props> = () => {
     delay: 1000,
   });
 
+  // Filter Modal
+  const [presentFilter, dismissFilter] = useIonModal(FilterModal, {
+    dismiss: (data: ReceiptImportFilterValues, role: string) => dismissFilter(data, role),
+    initialFilters: filterValues,
+  });
+
+  const openFilterModal = () => {
+    presentFilter({
+      onWillDismiss: (ev: CustomEvent) => {
+        if (ev.detail.role === "confirm") {
+          const newFilters = ev.detail.data;
+          setFilterValues(newFilters);
+          setActiveFilters(newFilters);
+        }
+      },
+    });
+  };
+
+  // Count active filters
+  const activeFilterCount = 
+    (activeFilters.suppliers?.length || 0) +
+    (activeFilters.status?.length || 0) +
+    (activeFilters.dateRange.from ? 1 : 0) +
+    (activeFilters.dateRange.to ? 1 : 0);
+
   return (
     <>
       <Refresher onRefresh={handleRefresh} />
@@ -309,11 +364,97 @@ const ReceiptImportList: React.FC<Props> = () => {
           debounce={300}
         />
         <IonButtons slot="end">
+          <IonButton color="primary" onClick={openFilterModal}>
+            <IonIcon icon={filterOutline} slot="icon-only" />
+            {activeFilterCount > 0 && (
+              <IonChip color="primary" className="absolute -top-1 -right-1 h-5 w-5 text-xs">
+                {activeFilterCount}
+              </IonChip>
+            )}
+          </IonButton>
           <IonButton color="primary" onClick={() => startScan()}>
             <IonIcon icon={scanOutline} slot="icon-only" />
           </IonButton>
         </IonButtons>
       </IonToolbar>
+
+      {/* Active Filters Display */}
+      {activeFilterCount > 0 && (
+        <div className="px-4 py-2 bg-gray-50">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-wrap gap-2">
+              {activeFilters.suppliers.map((supplier) => {
+                const [, name] = supplier.split("__");
+                return (
+                  <IonChip key={supplier} className="bg-blue-50 text-blue-600">
+                    <IonLabel>{name}</IonLabel>
+                    <IonIcon 
+                      icon={close} 
+                      onClick={() => {
+                        const newFilters = {
+                          ...activeFilters,
+                          suppliers: activeFilters.suppliers.filter(s => s !== supplier)
+                        };
+                        setFilterValues(newFilters);
+                        setActiveFilters(newFilters);
+                      }}
+                    />
+                  </IonChip>
+                );
+              })}
+              {activeFilters.status.map((status) => (
+                <IonChip key={status} color={getStatusColor(status)}>
+                  <IonLabel>{getStatusLabel(status)}</IonLabel>
+                  <IonIcon 
+                    icon={close} 
+                    onClick={() => {
+                      const newFilters = {
+                        ...activeFilters,
+                        status: activeFilters.status.filter(s => s !== status)
+                      };
+                      setFilterValues(newFilters);
+                      setActiveFilters(newFilters);
+                    }}
+                  />
+                </IonChip>
+              ))}
+              {(activeFilters.dateRange.from || activeFilters.dateRange.to) && (
+                <IonChip className="bg-orange-50 text-orange-600">
+                  <IonLabel>
+                    {activeFilters.dateRange.from && activeFilters.dateRange.to
+                      ? `${new Date(activeFilters.dateRange.from!).toLocaleDateString('vi-VN')} - ${new Date(activeFilters.dateRange.to!).toLocaleDateString('vi-VN')}`
+                      : activeFilters.dateRange.from
+                      ? `Từ ${new Date(activeFilters.dateRange.from).toLocaleDateString('vi-VN')}`
+                      : `Đến ${new Date(activeFilters.dateRange.to!).toLocaleDateString('vi-VN')}`
+                    }
+                  </IonLabel>
+                  <IonIcon 
+                    icon={close} 
+                    onClick={() => {
+                      const newFilters = {
+                        ...activeFilters,
+                        dateRange: { from: null, to: null }
+                      };
+                      setFilterValues(newFilters);
+                      setActiveFilters(newFilters);
+                    }}
+                  />
+                </IonChip>
+              )}
+            </div>
+            <IonButton 
+              fill="clear" 
+              size="small" 
+              onClick={() => {
+                setFilterValues(defaultReceiptImportFilters);
+                setActiveFilters(defaultReceiptImportFilters);
+              }}
+            >
+              Xóa tất cả
+            </IonButton>
+          </div>
+        </div>
+      )}
 
       <IonList>
         {loading ? (
