@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   IonList,
   IonButton,
@@ -30,11 +30,9 @@ import FilterModal from "./components/FilterModal";
 import { ReceiptImportFilterValues, defaultReceiptImportFilters } from "./types/FilterModal.d";
 import { getStatusColor, getStatusLabel } from "@/common/constants/receipt-import.constant";
 
-type Props = {};
-
 const pageSize = 10;
 
-const ReceiptImportList: React.FC<Props> = () => {
+const ReceiptImportList = () => {
   const history = useHistory();
 
   const [receiptImports, setReceiptImports] = useState<ReceiptImportItemList[]>([]);

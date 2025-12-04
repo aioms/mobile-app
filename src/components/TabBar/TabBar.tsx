@@ -30,10 +30,11 @@ import ProductCreateScreen from "@/pages/Product/ProductCreate";
 
 import InventoryScreen from "@/pages/Inventory/Inventory";
 
-import ReceiptImportCreateScreen from "@/pages/Receipt/ReceiptImport/ReceiptImportCreate";
+// import ReceiptImportCreateScreen from "@/pages/Receipt/ReceiptImport/ReceiptImportCreate";
 import ReceiptImportDetailScreen from "@/pages/Receipt/ReceiptImport/ReceiptImportDetail";
 
 import ReceiptCheckDetailScreen from "@/pages/Receipt/ReceiptCheck/ReceiptCheckDetail";
+import ReceiptCheckCreateScreen from "@/pages/Receipt/ReceiptCheck/ReceiptCheckCreate";
 
 import ReceiptDebtCreateScreen from "@/pages/Receipt/ReceiptDebt/ReceiptDebtCreate";
 import ReceiptDebtDetailScreen from "@/pages/Receipt/ReceiptDebt/ReceiptDebtDetail";
@@ -79,11 +80,11 @@ const TabBar: React.FC = () => {
         />
 
         {/* Receipt import Screens */}
-        <Route
+        {/* <Route
           exact
           path="/tabs/receipt-import/create"
           children={<MenuLayout component={<ReceiptImportCreateScreen />} />}
-        />
+        /> */}
         <Route
           exact
           path="/tabs/receipt-import/detail/:id"
@@ -93,7 +94,12 @@ const TabBar: React.FC = () => {
         {/* Receipt check Screens */}
         <Route
           exact
-          path="/tabs/receipt-check/:id"
+          path="/tabs/receipt-check/create"
+          children={<MenuLayout component={<ReceiptCheckCreateScreen />} />}
+        />
+        <Route
+          exact
+          path="/tabs/receipt-check/detail/:id"
           component={ReceiptCheckDetailScreen}
         />
 

@@ -1,4 +1,4 @@
-import { FC, memo, useEffect, useMemo, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import { IonInput, IonItem, IonLabel, IonIcon, IonSpinner, useIonToast } from "@ionic/react";
 
 import { formatCurrencyWithoutSymbol, parseCurrencyInput } from "@/helpers/formatters";
@@ -21,7 +21,7 @@ type Props = {
   disabled?: boolean;
 };
 
-const ReceiptItem: FC<Props> = memo(
+const ReceiptItem: FC<Props> = (
   ({
     id,
     productId,

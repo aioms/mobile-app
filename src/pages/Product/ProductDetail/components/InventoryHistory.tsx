@@ -65,7 +65,7 @@ const InventoryHistory: React.FC<Props> = ({
       case 'import':
         return `/tabs/receipt-import/detail/${item.id}`;
       case 'check':
-        return `/tabs/receipt-check/${item.id}`;
+        return `/tabs/receipt-check/detail/${item.id}`;
       default:
         return '#';
     }
@@ -87,7 +87,7 @@ const InventoryHistory: React.FC<Props> = ({
           </IonText>
         </div>
       )}
-      
+
       {/* Table Header */}
       <div className="grid grid-cols-4 gap-4 px-4 py-2 bg-gray-50 rounded-t-lg">
         <div className="text-sm font-medium text-gray-500">Mã phiếu</div>
@@ -103,7 +103,7 @@ const InventoryHistory: React.FC<Props> = ({
             key={index}
             className="grid grid-cols-4 gap-4 px-4 py-3 border-b border-gray-100"
           >
-            <div 
+            <div
               className="text-sm text-blue-600 cursor-pointer hover:text-blue-800 hover:underline"
               onClick={() => handleReceiptClick(item)}
             >

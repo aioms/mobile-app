@@ -21,10 +21,10 @@ import {
   IonRefresher,
   IonRefresherContent,
   RefresherEventDetail,
+  useIonToast,
 } from "@ionic/react";
 import { useHistory } from "react-router-dom";
 import { checkmark, saveOutline, scanOutline, search } from "ionicons/icons";
-import { Toast } from "@capacitor/toast";
 import { getDate } from "@/helpers/date";
 import dayjs from "dayjs";
 import clsx from "clsx";
@@ -55,10 +55,16 @@ const initialDefaultItem = {
   items: [],
 };
 
+/**
+ * Current not use this component
+ * @deprecated
+ */
 const ReceiptImportCreate: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [receiptItems, setReceiptItems] = useState<any[]>([]);
   const history = useHistory();
+
+  const [presentToast] = useIonToast();
 
   const { create: createReceipt } = useReceiptImport();
   const { getDetail: getProductDetail } = useProduct();
@@ -96,27 +102,30 @@ const ReceiptImportCreate: React.FC = () => {
           )
         );
 
-        await Toast.show({
-          text: `Đã tăng số lượng ${product.productName} lên ${
+        presentToast({
+          message: `Đã tăng số lượng ${product.productName} lên ${
             existingItem.quantity + 1
           }`,
-          duration: "short",
-          position: "center",
+          duration: 2000,
+          position: "top",
+          color: "success", 
         });
       } else {
         setReceiptItems((prev) => [...prev, productData]);
 
-        await Toast.show({
-          text: `Đã thêm ${product.productName} vào phiếu nhập`,
-          duration: "short",
-          position: "center",
+        presentToast({
+          message: `Đã thêm ${product.productName} vào phiếu nhập`,
+          duration: 2000,
+          position: "top",
+          color: "success", 
         });
       }
     } catch (error) {
-      await Toast.show({
-        text: (error as Error).message || "Không tìm thấy sản phẩm",
-        duration: "long",
-        position: "center",
+      presentToast({
+        message: (error as Error).message || "Không tìm thấy sản phẩm",
+        duration: 2000,
+        position: "top",
+        color: "danger", 
       });
     }
   };
@@ -129,10 +138,11 @@ const ReceiptImportCreate: React.FC = () => {
   const { startScan, stopScan } = useBarcodeScanner({
     onBarcodeScanned: handleBarcodeScanned,
     onError: (error: Error) => {
-      Toast.show({
-        text: error.message,
-        duration: "long",
-        position: "center",
+      presentToast({
+        message: error.message || "Lỗi đọc mã vạch",
+        duration: 2000,
+        position: "top",
+        color: "danger", 
       });
     },
   });
@@ -236,10 +246,11 @@ const ReceiptImportCreate: React.FC = () => {
     }
 
     if (receiptItems.length === 0) {
-      await Toast.show({
-        text: "Vui lòng chọn ít nhất 1 mặt hàng",
-        duration: "short",
-        position: "center",
+      presentToast({
+        message: "Vui lòng chọn ít nhất 1 mặt hàng",
+        duration: 2000,
+        position: "top",
+        color: "danger", 
       });
     }
 
@@ -277,25 +288,28 @@ const ReceiptImportCreate: React.FC = () => {
       const result = await createReceipt(newFormData);
 
       if (result.id) {
-        await Toast.show({
-          text: "Tạo phiếu nhập thành công",
-          duration: "short",
+        presentToast({
+          message: "Tạo phiếu nhập thành công",
+          duration: 2000,
           position: "top",
+          color: "success", 
         });
       } else {
-        await Toast.show({
-          text: "Tạo phiếu nhập thất bại",
-          duration: "short",
+        presentToast({
+          message: "Tạo phiếu nhập thất bại",
+          duration: 2000,
           position: "top",
+          color: "danger", 
         });
       }
 
       history.push("/tabs/inventory");
     } catch (error) {
-      await Toast.show({
-        text: (error as Error).message,
-        duration: "short",
+      presentToast({
+        message: (error as Error).message || "Lỗi tạo phiếu nhập",
+        duration: 2000,
         position: "top",
+        color: "danger", 
       });
     }
   };
