@@ -140,8 +140,6 @@ const ReceiptImportDetail: React.FC = () => {
   };
 
   const handleBarcodeScanned = (value: string) => {
-    console.log({ value });
-
     // if (!isScanning) return;
 
     // Add to scanned items map and increment quantity
@@ -673,41 +671,11 @@ const ReceiptImportDetail: React.FC = () => {
     const userRole = user?.role;
     const isEmployee = userRole === UserRole.EMPLOYEE;
     const isReceiptCancelled = receipt.status === RECEIPT_IMPORT_STATUS.CANCELLED;
-    // const isUserCreated = user.id === receipt.userCreated;
-
-    // Show read-only view for completed receipts or employees who didn't create the receipt
-    // if (receipt.status === RECEIPT_IMPORT_STATUS.COMPLETED || (isEmployee && !isUserCreated)) {
-    //   return receipt?.items?.map((item) => {
-    //     const itemTotal = item.quantity * item.costPrice * (1 - (item.discount || 0) / 100);
-    //     return (
-    //       <IonItem key={item.id} className="py-2">
-    //         <IonLabel>
-    //           <h2 className="font-medium">{item.productName}</h2>
-    //           <p className="text-gray-500 text-sm">Mã: {item.code}</p>
-    //           <div className="flex justify-between mt-2">
-    //             <span className="text-sm">SL: {item.quantity}</span>
-    //             <span className="text-sm">
-    //               Đơn giá: {formatCurrency(item.costPrice)}
-    //             </span>
-    //           </div>
-    //           {item.discount > 0 && (
-    //             <div className="flex justify-between mt-1">
-    //               <span className="text-sm text-orange-600">Chiết khấu: {item.discount}%</span>
-    //               <span className="text-sm font-medium">
-    //                 Thành tiền: {formatCurrency(itemTotal)}
-    //               </span>
-    //             </div>
-    //           )}
-    //         </IonLabel>
-    //       </IonItem>
-    //     );
-    //   });
-    // }
-
+  
     return receipt?.items?.map((item, index) => {
       return (
         <ReceiptItem
-          key={index}
+          key={item.id}
           isEmployee={isEmployee}
           disabled={isReceiptCancelled}
           {...item}
@@ -718,6 +686,7 @@ const ReceiptImportDetail: React.FC = () => {
               if (!newReceipt.items) {
                 newReceipt.items = [];
               }
+              
               newReceipt.items[index] = data;
               return newReceipt as ReceiptImport;
             });

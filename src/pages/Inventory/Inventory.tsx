@@ -6,7 +6,11 @@ import {
   IonSegment,
   IonSegmentButton,
   IonLabel,
+  IonFab,
+  IonFabButton,
+  IonIcon,
 } from "@ionic/react";
+import { add } from "ionicons/icons";
 
 import ReceiptImportList from "./components/ReceiptImport/ReceiptImportList";
 import ReceiptCheckList from "./components/ReceiptCheck/ReceiptCheckList";
@@ -56,13 +60,13 @@ const InventoryScreen = () => {
         <ReceiptCheckList />
       )}
 
-      {/* {selectedSegment === "receipt-import" && (
+      {selectedSegment === "receipt-check" && (
         <IonFab vertical="bottom" horizontal="end" slot="fixed">
           <IonFabButton routerLink={`/tabs/${selectedSegment}/create`}>
             <IonIcon icon={add} />
           </IonFabButton>
         </IonFab>
-      )} */}
+      )}
     </IonContent>
   );
 };

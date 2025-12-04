@@ -36,11 +36,21 @@ const useReceiptImport = () => {
 
   const importQuick = async (data: any) => {
     const response: IHttpResponse = await request.post(`/receipt-imports/quick`, data);
+
+    if (!response.success) {
+      throw new Error(response?.message || "Import failed");
+    }
+
     return response.data;
   };
 
   const createWithProductCode = async (data: any) => {
-    const response = await request.post(`/receipt-imports/product-code`, data);
+    const response: IHttpResponse = await request.post(`/receipt-imports/product-code`, data);
+
+    if (!response.success) {
+      throw new Error(response?.message || "Import failed");
+    }
+
     return response.data;
   };
 

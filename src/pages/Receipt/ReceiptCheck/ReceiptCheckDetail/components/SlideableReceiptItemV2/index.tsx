@@ -157,10 +157,10 @@ const SlideableReceiptItem: React.FC<SlideableReceiptItemProps> = ({
       <div className="overflow-x-auto">
         <table className="w-full table-fixed">
           <colgroup>
-            <col className="w-[45%]" /> {/* Product info column */}
-            <col className="w-[18%]" /> {/* System inventory column */}
-            <col className="w-[18%]" /> {/* Actual inventory column */}
-            <col className="w-[19%]" /> {/* Difference column */}
+            <col className="w-[45%]" />
+            <col className="w-[18%]" />
+            <col className="w-[18%]" />
+            <col className="w-[19%]" />
           </colgroup>
           <thead>
             <tr className="bg-gray-50">

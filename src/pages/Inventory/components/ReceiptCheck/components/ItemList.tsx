@@ -23,6 +23,7 @@ import {
   TReceiptCheckStatus,
 } from "@/common/constants/receipt-check.constant";
 import { formatDate } from "@/helpers/formatters";
+import { CHANGE_QUANTITY_TYPE } from "@/common/constants/product";
 
 const getDifferenceColor = (difference: number) => {
   if (difference === 0) return "text-green-500";
@@ -74,7 +75,12 @@ export const ItemList: FC<Props> = ({ receipt }) => {
 
   const handleBarcodeScanned = async (value: string) => {
     try {
-      await incrementActualInventory(receipt.id, value);
+      await incrementActualInventory(
+        receipt.id,
+        value,
+        1,
+        CHANGE_QUANTITY_TYPE.INCREASE
+      );
     } catch (error) {
       await Toast.show({
         text: (error as Error).message,
@@ -96,7 +102,7 @@ export const ItemList: FC<Props> = ({ receipt }) => {
     onBarcodeScanned: handleBarcodeScanned,
     onError: handleError,
     onStop: () => {
-      history.push(`/tabs/receipt-check/${receipt.id}`);
+      history.push(`/tabs/receipt-check/detail/${receipt.id}`);
     },
     delay: 4000,
   });
@@ -148,7 +154,7 @@ export const ItemList: FC<Props> = ({ receipt }) => {
         <IonItem
           className="py-2"
           lines="full"
-          routerLink={`/tabs/receipt-check/${receipt.id}`}
+          routerLink={`/tabs/receipt-check/detail/${receipt.id}`}
         >
           <IonLabel className="ml-4">
             <div className="md:flex md:items-center mb-2">
@@ -186,7 +192,7 @@ export const ItemList: FC<Props> = ({ receipt }) => {
                     <button
                       className="text-blue-600 text-sm mt-1"
                       onClick={() => {
-                        history.push(`/tabs/receipt-check/${receipt.id}`);
+                        history.push(`/tabs/receipt-check/detail/${receipt.id}`);
                       }}
                     >
                       Xem thêm...
