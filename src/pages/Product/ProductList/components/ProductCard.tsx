@@ -1,28 +1,18 @@
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import { useHistory } from "react-router";
 import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
+import { getS3ImageUrl } from "@/helpers/fileHelper";
+import { IProduct } from "@/types";
 
 interface ProductCardProps {
-  product: {
-    id: string;
-    code: string;
-    productCode: string;
-    productName: string;
-    costPrice: number;
-    sellingPrice: number;
-    status: string;
-    category: string;
-    inventory?: number;
-    unit?: string;
-    imageUrls?: string[]; // Add imageUrls property
-  };
+  product: IProduct;
   isShowCostPrice: boolean;
 }
 
 const ProductCard: FC<ProductCardProps> = ({ product, isShowCostPrice }) => {
   const history = useHistory();
 
-  const handleClick = () => {
+  const handleClickToCard = () => {
     history.push(`/tabs/products/detail/${product.id}`);
   };
 
@@ -36,13 +26,20 @@ const ProductCard: FC<ProductCardProps> = ({ product, isShowCostPrice }) => {
   const inventoryStatus = getInventoryStatus(product.inventory);
 
   // Get the first image URL or use fallback
-  const primaryImageUrl =
-    product.imageUrls && product.imageUrls.length > 0
-      ? product.imageUrls[0]
-      : null;
+  const primaryImageUrl = useMemo(() => {
+    if (product?.images && product.images.length > 0) {
+      return getS3ImageUrl(product.images[0].path);
+    }
+
+    if (product?.imageUrls && product.imageUrls.length > 0) {
+      return product.imageUrls[0];
+    }
+
+    return null;
+  }, [product?.images, product?.imageUrls])
 
   return (
-    <div className="bg-white rounded-2xl p-4 flex gap-4" onClick={handleClick}>
+    <div className="bg-white rounded-2xl p-4 flex gap-4" onClick={handleClickToCard}>
       {/* Product Image */}
       <div className="w-20 h-20 bg-gray-100 rounded-xl flex-shrink-0 overflow-hidden">
         {primaryImageUrl ? (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   IonContent,
   IonHeader,
@@ -16,7 +16,7 @@ import {
   useIonToast,
   useIonModal,
 } from "@ionic/react";
-import { cameraOutline, chevronDown } from "ionicons/icons";
+import { chevronDown } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
 import clsx from "clsx";
 
@@ -29,11 +29,14 @@ import {
 import ModalSelectSupplier from "@/components/ModalSelectSupplier";
 import ModalSelectCategory from "@/components/ModalSelectCategory";
 import ErrorMessage from "@/components/ErrorMessage";
+import { ProductImageUpload } from "./components/ProductImageUpload";
+import { PRODUCT_STATUS } from "@/common/constants/product";
 
 import type {
   IProductCreateForm,
   IProductCreateFormErrors,
   IProductCreatePayload,
+  ProductImage,
 } from "./productCreate.d";
 
 const initialFormData: IProductCreateForm = {
@@ -46,6 +49,7 @@ const initialFormData: IProductCreateForm = {
   unit: "",
   description: "",
   notes: "",
+  images: [],
 };
 
 const ProductCreate: React.FC = () => {
@@ -56,7 +60,7 @@ const ProductCreate: React.FC = () => {
 
   const [formData, setFormData] = useState<IProductCreateForm>(initialFormData);
   const [errors, setErrors] = useState<IProductCreateFormErrors>({});
-  // Category selection via modal
+
   const [presentCategoryModal, dismissCategoryModal] = useIonModal(
     ModalSelectCategory,
     {
@@ -102,7 +106,7 @@ const ProductCreate: React.FC = () => {
 
   const handleInputChange = (
     field: keyof IProductCreateForm,
-    value: string
+    value: string | ProductImage[]
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -183,7 +187,7 @@ const ProductCreate: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const createPayload = (status: "draft" | "active"): IProductCreatePayload => {
+  const createPayload = (status: string): IProductCreatePayload => {
     const suppliers = [
       {
         id: formData.supplierId.includes("__")
@@ -204,6 +208,7 @@ const ProductCreate: React.FC = () => {
       description: formData.description?.trim() || undefined,
       note: formData.notes?.trim() || undefined,
       status,
+      images: formData.images.length > 0 ? formData.images.map(img => img.id) : undefined,
     };
   };
 
@@ -218,7 +223,7 @@ const ProductCreate: React.FC = () => {
       return;
     }
 
-    const payload = createPayload("draft");
+    const payload = createPayload(PRODUCT_STATUS.DRAFT);
 
     await withLoading(async () => {
       await create(payload);
@@ -243,7 +248,7 @@ const ProductCreate: React.FC = () => {
       return;
     }
 
-    const payload = createPayload("active");
+    const payload = createPayload(PRODUCT_STATUS.ACTIVE);
 
     await withLoading(async () => {
       await create(payload);
@@ -275,17 +280,12 @@ const ProductCreate: React.FC = () => {
 
       <IonContent className="ion-padding">
         {/* Product Image Upload */}
-        <div className="mb-6">
-          <div className="w-full h-48 border-2 border-dashed border-teal-300 rounded-lg flex flex-col items-center justify-center bg-teal-50">
-            <div className="w-16 h-16 bg-teal-200 rounded-full flex items-center justify-center mb-3">
-              <IonIcon
-                icon={cameraOutline}
-                className="text-2xl text-teal-600"
-              />
-            </div>
-            <p className="text-teal-600 font-medium">Thêm ảnh sản phẩm</p>
-          </div>
-        </div>
+        <ProductImageUpload
+          images={formData.images}
+          onImagesChange={(images) => handleInputChange("images", images)}
+          maxImages={5}
+          disabled={isLoading}
+        />
 
         {/* Product Name */}
         <div className="mb-4">

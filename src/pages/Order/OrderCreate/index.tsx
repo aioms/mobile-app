@@ -25,8 +25,11 @@ import {
   InputCustomEvent,
   useIonViewWillEnter,
   useIonViewWillLeave,
+  IonFab,
+  IonFabButton,
 } from "@ionic/react";
 import {
+  add,
   checkmarkCircleOutline,
   chevronDownOutline,
   removeCircleOutline,
@@ -51,6 +54,7 @@ import { cn } from "@/lib/utils";
 
 import OrderItem from "./components/OrderItem";
 import ModalSelectProduct from "../components/ModalSelectProduct";
+import ModalCreateProduct from "./components/ModalCreateProduct";
 import ModalSelectCustomer from "../components/ModalSelectCustomer";
 import ErrorMessage from "@/components/ErrorMessage";
 import PaymentModal, {
@@ -59,21 +63,13 @@ import PaymentModal, {
 import { PaymentTransactionDto } from "@/types/payment.type";
 import { PaymentMethod as PaymentMethodEnum } from "@/common/enums/payment";
 import { TransactionType } from "@/common/enums/transaction";
+import { IOrderItemEnhanced, IOrderSubmissionData } from "./OrderCreate.d";
 
 import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
 
 import "./OrderCreate.css";
 
-interface IOrderItem {
-  id: string;
-  productId: string;
-  productName: string;
-  code: string;
-  quantity: number;
-  sellingPrice: number;
-  vatRate?: number;
-  inventory?: number; // Add inventory for quantity constraints
-}
+// Replaced with IOrderItemEnhanced from OrderCreate.d.ts
 
 interface IFormData {
   note: string;
@@ -119,7 +115,7 @@ const OrderCreate: React.FC = () => {
   const history = useHistory();
 
   const [formData, setFormData] = useState<IFormData>(initialFormData);
-  const [orderItems, setOrderItems] = useState<IOrderItem[]>([]);
+  const [orderItems, setOrderItems] = useState<IOrderItemEnhanced[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [pendingOrderData, setPendingOrderData] = useState<any>(null);
@@ -223,15 +219,15 @@ const OrderCreate: React.FC = () => {
   const addProductToCartItem = async (productCode: string) => {
     try {
       const product = await getProductDetail(productCode);
-      if (product.inventory <= 0) {
-        presentToast({
-          message: "Sản phẩm đã hết hàng",
-          duration: 2000,
-          position: "top",
-          color: "warning",
-        });
-        return
-      }
+      // if (product.inventory <= 0) {
+      //   presentToast({
+      //     message: "Sản phẩm đã hết hàng",
+      //     duration: 2000,
+      //     position: "top",
+      //     color: "warning",
+      //   });
+      //   return
+      // }
 
       const productData = {
         id: product.id,
@@ -242,6 +238,7 @@ const OrderCreate: React.FC = () => {
         quantity: 1,
         vatRate: 0,
         inventory: product.inventory, // Add inventory data
+        shipNow: false, // Default to false for new items
       };
 
       // Write function check if item is exists in orderItems, then increase quantity of item
@@ -304,24 +301,34 @@ const OrderCreate: React.FC = () => {
         const { role, data } = event.detail;
 
         if (role === "confirm" && data) {
-          if (data.inventory === 0) {
-            await presentToast({
-              message: "Sản phẩm này đã hết hàng",
-              duration: 1500,
-              position: "top",
-              color: "warning",
-            });
-          } else {
-            setOrderItems((prev) => [
-              {
-                ...data,
-                quantity: 1,
-                vatRate: 0,
-                inventory: data.inventory, // Add inventory data
-              },
-              ...prev,
-            ]);
-          }
+          setOrderItems((prev) => [
+            {
+              ...data,
+              quantity: 1,
+              vatRate: 0,
+              inventory: data.inventory, // Add inventory data
+              shipNow: false, // Default to false for new items
+            },
+            ...prev,
+          ]);
+          // if (data.inventory === 0) {
+          //   await presentToast({
+          //     message: "Sản phẩm này đã hết hàng",
+          //     duration: 1500,
+          //     position: "top",
+          //     color: "warning",
+          //   });
+          // } else {
+          //   setOrderItems((prev) => [
+          //     {
+          //       ...data,
+          //       quantity: 1,
+          //       vatRate: 0,
+          //       inventory: data.inventory, // Add inventory data
+          //     },
+          //     ...prev,
+          //   ]);
+          // }
         }
       },
     });
@@ -364,6 +371,69 @@ const OrderCreate: React.FC = () => {
           ...prev,
           customer: customerId,
         }));
+      },
+    });
+  };
+
+  // Modal for creating new product
+  const { create: createProduct } = useProduct();
+
+  const [presentModalCreateProduct, dismissModalCreateProduct] = useIonModal(
+    ModalCreateProduct,
+    {
+      dismiss: (data: any, role: string) => dismissModalCreateProduct(data, role),
+    }
+  );
+
+  const openModalCreateProduct = () => {
+    presentModalCreateProduct({
+      onWillDismiss: async (event: CustomEvent<OverlayEventDetail>) => {
+        const { role, data } = event.detail;
+
+        if (role === "confirm" && data) {
+          try {
+            // Create the product using the API
+            const newProduct = await createProduct(data);
+
+            if (!newProduct) {
+              throw new Error("Không thể tạo sản phẩm");
+            }
+
+            await presentToast({
+              message: "Tạo sản phẩm thành công!",
+              duration: 1500,
+              position: "top",
+              color: "success",
+            });
+
+            // Add the newly created product to the order items
+            const productData = {
+              id: newProduct.id,
+              productId: newProduct.id,
+              productName: newProduct.productName,
+              code: newProduct.code,
+              sellingPrice: newProduct.sellingPrice,
+              quantity: 1,
+              vatRate: 0,
+              inventory: newProduct.inventory || 0,
+              shipNow: false, // Default to false for new items
+            };
+
+            setOrderItems((prev) => [productData, ...prev]);
+          } catch (error) {
+            captureException(error as Error, createExceptionContext(
+              'OrderCreate',
+              'CreateProduct',
+              'openModalCreateProduct'
+            ));
+            await presentToast({
+              message: (error as Error).message || "Có lỗi xảy ra khi tạo sản phẩm",
+              duration: 2000,
+              position: "top",
+              color: "danger",
+            });
+          }
+        }
       },
     });
   };
@@ -453,7 +523,7 @@ const OrderCreate: React.FC = () => {
     }));
   };
 
-  const handleItemChange = (id: string, data: Partial<IOrderItem>) => {
+  const handleItemChange = (id: string, data: Partial<IOrderItemEnhanced>) => {
     setOrderItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, ...data } : item))
     );
@@ -559,6 +629,23 @@ const OrderCreate: React.FC = () => {
       newErrors.items = "Vui lòng thêm ít nhất một sản phẩm";
     }
 
+    // Validate order items for shipNow and quantity constraints
+    const invalidItems = orderItems.filter(item => {
+      // Check if shipNow is checked but quantity is 0
+      if (item.shipNow && item.quantity === 0) {
+        return true;
+      }
+      // Check if regular item (not shipNow) exceeds available stock
+      if (!item.shipNow && item.inventory !== undefined && item.quantity > item.inventory) {
+        return true;
+      }
+      return false;
+    });
+
+    if (invalidItems.length > 0) {
+      newErrors.items = "Có sản phẩm không hợp lệ: Không thể đặt hàng với số lượng 0 khi chọn 'Giao ngay', hoặc vượt quá tồn kho";
+    }
+
     if (formData.vatEnabled) {
       if (!formData.companyName) {
         newErrors.companyName = "Vui lòng nhập tên công ty";
@@ -606,7 +693,7 @@ const OrderCreate: React.FC = () => {
     }
 
     // Prepare order data
-    const orderData = {
+    const orderData: IOrderSubmissionData = {
       status: status || OrderStatus.PENDING,
       customer: formData.customer,
       paymentMethod: formData.paymentMethod,
@@ -619,13 +706,14 @@ const OrderCreate: React.FC = () => {
         quantity: item.quantity,
         price: item.sellingPrice,
         vatRate: item.vatRate || 0,
+        shipNow: item.shipNow || false,
       })),
       vatInfo: formData.vatEnabled
         ? {
-          companyName: formData.companyName,
-          taxCode: formData.taxCode,
-          email: formData.email,
-          remark: formData.remark,
+          companyName: formData.companyName || "",
+          taxCode: formData.taxCode || "",
+          email: formData.email || "",
+          remark: formData.remark || "",
         }
         : null,
     };
@@ -717,13 +805,20 @@ const OrderCreate: React.FC = () => {
               </div>
             </div>
 
-            <div
-              className="ion-activatable receipt-import-ripple-parent mb-3"
-              onClick={() => openModalSelectProduct()}
-            >
-              <IonIcon icon={search} className="text-2xl" />
-              Tìm kiếm hàng hóa
-              <IonRippleEffect className="custom-ripple"></IonRippleEffect>
+            {/* Search and Add Product Section */}
+            <div className="flex items-center gap-2 mb-3">
+              <div
+                className="ion-activatable common-ripple-parent"
+                onClick={() => openModalSelectProduct()}
+              >
+                <IonIcon icon={search} className="text-2xl" />
+                Tìm kiếm hàng hóa
+                <IonRippleEffect className="custom-ripple"></IonRippleEffect>
+              </div>
+
+              <IonButton fill="outline" onClick={() => openModalCreateProduct()}>
+                <IonIcon icon={add}></IonIcon>
+              </IonButton>
             </div>
 
             <div className="relative">
@@ -843,7 +938,7 @@ const OrderCreate: React.FC = () => {
               </h2>
               <div className="mb-4">
                 <div
-                  className="ion-activatable receipt-import-ripple-parent break-normal p-2"
+                  className="ion-activatable common-ripple-parent break-normal p-2"
                   onClick={() => openModalSelectCustomer()}
                 >
                   <IonIcon icon={search} className="text-2xl mr-2" />

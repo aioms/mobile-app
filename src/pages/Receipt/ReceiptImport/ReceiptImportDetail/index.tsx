@@ -19,6 +19,7 @@ import {
   useIonToast,
 } from "@ionic/react";
 import {
+  add,
   checkmarkCircle,
   chevronBack,
   createOutline,
@@ -30,10 +31,12 @@ import { OverlayEventDetail } from "@ionic/react/dist/types/components/react-com
 import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
 
 import useReceiptImport from "@/hooks/apis/useReceiptImport";
+import useSupplier from "@/hooks/apis/useSupplier";
 import { useAuth, useBarcodeScanner, useLoading } from "@/hooks";
 import { useCustomToast } from "@/hooks/useCustomToast";
 
 import { UserRole } from "@/common/enums/user";
+import { DiscountType } from "@/common/enums";
 import { ReceiptImportStatus } from "@/common/enums/receipt";
 import {
   getStatusColor,
@@ -50,6 +53,7 @@ import LoadingScreen from "@/components/Loading/LoadingScreen";
 import DatePicker from "@/components/DatePicker";
 import ModalSelectSupplier from "@/components/ModalSelectSupplier";
 import ReceiptItem from "./components/ReceiptItem";
+import CreateSupplierModal from "./components/CreateSupplierModal";
 
 interface ReceiptItem {
   id: string;
@@ -62,6 +66,7 @@ interface ReceiptItem {
   actualInventory: number;
   costPrice: number;
   discount: number;
+  discountType?: DiscountType;
 }
 
 interface ReceiptImport {
@@ -114,8 +119,8 @@ const ReceiptImportDetail: React.FC = () => {
 
   const { showError } = useCustomToast();
   const [presentToast] = useIonToast();
+  const { create: createSupplier } = useSupplier();
 
-  // OPEN MODAL SELECT SUPPLIERS
   const [presentModalSupplier, dismissModalSupplier] = useIonModal(
     ModalSelectSupplier,
     {
@@ -135,6 +140,65 @@ const ReceiptImportDetail: React.FC = () => {
           ...prev,
           supplier: data,
         }));
+      },
+    });
+  };
+
+  const [presentCreateSupplierModal, dismissCreateSupplierModal] = useIonModal(
+    CreateSupplierModal,
+    {
+      onDismiss: (data?: { name: string; phone: string; note: string }, role?: string) =>
+        dismissCreateSupplierModal(data, role),
+    }
+  );
+
+  const openCreateSupplierModal = () => {
+    presentCreateSupplierModal({
+      onWillDismiss: async (event: CustomEvent<OverlayEventDetail>) => {
+        const { role, data } = event.detail;
+
+        if (role !== "confirm" || !data) return;
+
+        try {
+          // Create the supplier
+          const result = await createSupplier(data);
+
+          if (!result || !result.id) {
+            await presentToast({
+              message: "Tạo nhà cung cấp thất bại",
+              duration: 2000,
+              position: "top",
+              color: "danger",
+            });
+            return;
+          }
+
+          await presentToast({
+            message: "Đã tạo nhà cung cấp mới",
+            duration: 2000,
+            position: "top",
+            color: "success",
+          });
+
+          // Auto-select the newly created supplier
+          setFormData((prev) => ({
+            ...prev,
+            supplier: `${result.id}__${result.name}`,
+          }));
+        } catch (error) {
+          captureException(error as Error, createExceptionContext(
+            'ReceiptImport',
+            'ReceiptImportDetail',
+            'openCreateSupplierModal'
+          ));
+
+          await presentToast({
+            message: (error as Error).message || "Có lỗi xảy ra khi tạo nhà cung cấp",
+            duration: 2000,
+            position: "top",
+            color: "danger",
+          });
+        }
       },
     });
   };
@@ -313,6 +377,12 @@ const ReceiptImportDetail: React.FC = () => {
         };
 
         setReceipt(receipt);
+        setFormData({
+          note: receipt.note,
+          paymentDate: receipt.paymentDate,
+          importDate: receipt.importDate,
+          supplier: receipt.supplier?.id,
+        });
       } catch (error) {
         captureException(error as Error, createExceptionContext(
           'ReceiptImport',
@@ -378,7 +448,7 @@ const ReceiptImportDetail: React.FC = () => {
         color: "success",
       });
 
-      setFormData(initialFormData);
+      // setFormData(initialFormData);
       fetchReceiptImport();
     } catch (error) {
       captureException(error as Error, createExceptionContext(
@@ -534,7 +604,11 @@ const ReceiptImportDetail: React.FC = () => {
     }
 
     if (formData.supplier) {
-      supplierName = formData.supplier.split("__")[1];
+      const supplierSplited = formData.supplier.split("__");
+
+      if (supplierSplited.length === 2) {
+        supplierName = supplierSplited[1];
+      }
     }
 
     return supplierName;
@@ -616,15 +690,25 @@ const ReceiptImportDetail: React.FC = () => {
         {/* Supplier selection */}
         <div className="flex flex-col mt-4">
           <IonLabel position="stacked">Nhà cung cấp</IonLabel>
-          <button
-            className="w-full py-1 px-1.5 rounded-lg border border-solid border-gray-300 text-left flex items-center justify-between"
-            onClick={openModalSelectSupplier}
-          >
-            <span className="text-gray-500">
-              {supplierName || <i className="text-sm">Chọn nhà cung cấp</i>}
-            </span>
-            <ChevronDown className="h-5 w-5 text-gray-400" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              className="flex-1 py-1 px-1.5 rounded-lg border border-solid border-gray-300 text-left flex items-center justify-between"
+              onClick={openModalSelectSupplier}
+            >
+              <span className="text-gray-500">
+                {supplierName || <i className="text-sm">Chọn nhà cung cấp</i>}
+              </span>
+              <ChevronDown className="h-5 w-5 text-gray-400" />
+            </button>
+            <IonButton
+              fill="outline"
+              size="default"
+              onClick={openCreateSupplierModal}
+              className="m-0"
+            >
+              <IonIcon slot="icon-only" icon={add} />
+            </IonButton>
+          </div>
         </div>
 
         <div className="flex flex-col mt-3">
@@ -651,7 +735,15 @@ const ReceiptImportDetail: React.FC = () => {
     if (!receipt?.items || receipt.items.length === 0) return 0;
 
     return receipt.items.reduce((total, item) => {
-      const itemTotal = item.quantity * item.costPrice * (1 - (item.discount || 0) / 100);
+      const subTotal = item.quantity * item.costPrice;
+      let itemTotal = 0;
+
+      if (item.discountType === DiscountType.PERCENTAGE) {
+        itemTotal = subTotal * (1 - (item.discount || 0) / 100);
+      } else {
+        itemTotal = subTotal - (item.discount || 0);
+      }
+
       return total + itemTotal;
     }, 0);
   }, [receipt?.items]);
@@ -671,7 +763,7 @@ const ReceiptImportDetail: React.FC = () => {
     const userRole = user?.role;
     const isEmployee = userRole === UserRole.EMPLOYEE;
     const isReceiptCancelled = receipt.status === RECEIPT_IMPORT_STATUS.CANCELLED;
-  
+
     return receipt?.items?.map((item, index) => {
       return (
         <ReceiptItem
@@ -686,7 +778,7 @@ const ReceiptImportDetail: React.FC = () => {
               if (!newReceipt.items) {
                 newReceipt.items = [];
               }
-              
+
               newReceipt.items[index] = data;
               return newReceipt as ReceiptImport;
             });

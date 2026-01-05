@@ -52,19 +52,20 @@ import { useAuth, useBarcodeScanner, useLoading } from "@/hooks";
 import "./ProductList.css";
 
 import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
+import { IProduct } from "@/types";
 
-interface Product {
-  id: string;
-  code: string;
-  productCode: string;
-  productName: string;
-  inventory: number;
-  unit: string;
-  status: string;
-  category: string;
-  costPrice: number;
-  sellingPrice: number;
-}
+// interface Product {
+//   id: string;
+//   code: string;
+//   productCode: string;
+//   productName: string;
+//   inventory: number;
+//   unit: string;
+//   status: string;
+//   category: string;
+//   costPrice: number;
+//   sellingPrice: number;
+// }
 
 interface Total {
   totalProduct: number;
@@ -92,7 +93,7 @@ const ProductListScreen: React.FC = () => {
 
   const [presentToast] = useIonToast();
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<IProduct[]>([]);
   const [dataTotal, setDataTotal] = useState<Total>({
     totalProduct: 0,
     totalInventory: 0,
@@ -116,7 +117,7 @@ const ProductListScreen: React.FC = () => {
   const { getList, getDetail, getTotalProductAndInventory } = useProduct();
 
   const isShowCostPrice = useMemo(() => {
-    const roles = [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.MANAGER];
+    const roles = [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.MANAGER, UserRole.EMPLOYEE];
     return user?.role ? roles.includes(user.role) : false;
   }, [user?.role])
 
@@ -143,7 +144,7 @@ const ProductListScreen: React.FC = () => {
         'BarcodeScanner',
         'handleBarcodeScanned'
       ));
-      
+
       presentToast({
         message: (error as Error).message || "Có lỗi xảy ra",
         duration: 2000,
@@ -202,7 +203,7 @@ const ProductListScreen: React.FC = () => {
           'ProductList',
           'fetchProducts'
         ));
-        
+
         presentToast({
           message: (error as Error).message || "Có lỗi xảy ra",
           duration: 2000,

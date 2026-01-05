@@ -67,6 +67,10 @@ export interface ReceiptDebt {
   createdAt: Date;
   supplierName: string;
   customerName: string;
+  customer?: {
+    id: string;
+    name: string;
+  };
 }
 
 interface ResponseData {
@@ -95,7 +99,6 @@ const ReceiptDebtDetail: React.FC = () => {
   const fetchPaymentTransactions = useCallback(async () => {
     try {
       const response = await getPaymentTransactions(id);
-      console.log({ response });
 
       if (response.transactions && response.transactions.length > 0) {
         setTransactions(response.transactions);
@@ -277,6 +280,25 @@ const ReceiptDebtDetail: React.FC = () => {
   };
 
   const handleActionSheet = () => {
+    // Flatten all products from all periods for return slip
+    // Calculate returnable quantity = quantity - returnedQuantity
+    const flattenedProducts = Object.values(items)
+      .flat()
+      .map(item => {
+        const returnedQty = item.returnedQuantity || 0;
+        const returnableQty = item.quantity - returnedQty;
+        return {
+          id: item.id,
+          productId: item.productId,
+          code: item.code,
+          productName: item.productName,
+          quantity: returnableQty, // Use returnable quantity
+          price: item.costPrice,
+          returnedQuantity: returnedQty, // Pass along for display
+        };
+      })
+      .filter(item => item.quantity > 0); // Only include items with returnable quantity
+
     presentActionSheet({
       header: "Tùy chọn",
       buttons: [
@@ -291,6 +313,21 @@ const ReceiptDebtDetail: React.FC = () => {
           text: "Chỉnh sửa",
           handler: () => {
             history.push(`/tabs/debt/update/${id}`);
+          },
+        },
+        {
+          text: "Trả hàng",
+          handler: () => {
+            history.push({
+              pathname: `/tabs/receipt/return`,
+              state: {
+                refId: id,
+                refType: 'debt',
+                customerId: receipt?.customer?.id,
+                customerName: receipt?.customer?.name || receipt?.customerName || "Khách lẻ",
+                orderProducts: flattenedProducts,
+              },
+            });
           },
         },
         {
@@ -494,6 +531,15 @@ const ReceiptDebtDetail: React.FC = () => {
                             {formatCurrencyWithoutSymbol(item.costPrice)}đ
                           </IonCol>
                         </IonRow>
+                        {(item.returnedQuantity && item.returnedQuantity > 0) ? (
+                          <IonRow className="text-xs mt-1">
+                            <IonCol className="p-0">
+                              <IonChip color="warning" className="text-xs h-5">
+                                Đã trả: {item.returnedQuantity}
+                              </IonChip>
+                            </IonCol>
+                          </IonRow>
+                        ) : null}
                       </IonGrid>
                     </div>
                   ))}

@@ -1,5 +1,5 @@
 import { useIonToast } from "@ionic/react";
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 
 export const useLoading = (initialState: boolean = false) => {
   const [isLoading, setIsLoading] = useState(initialState);
@@ -21,7 +21,7 @@ export const useLoading = (initialState: boolean = false) => {
       } catch (error) {
         await presentToast({
           message: (error as Error).message,
-          duration: 2000,
+          duration: 3000,
           position: "top",
           color: "danger",
         });
@@ -29,7 +29,7 @@ export const useLoading = (initialState: boolean = false) => {
         hideLoading();
       }
     },
-    [showLoading, hideLoading]
+    [showLoading, hideLoading],
   );
 
   return {

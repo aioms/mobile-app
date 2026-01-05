@@ -10,7 +10,7 @@ export interface IProduct {
   inventory: number;
   unit: string;
   description: string;
-  imageUrls?: string[]; // Add imageUrls array property
+  imageUrls?: string[]; // TODO: remove this property
   images?: Array<{
     id: string;
     path: string;
@@ -32,6 +32,7 @@ export interface IProductItem {
   actualInventory?: string;
   inventory?: string;
   quantity: number;
+  returnedQuantity?: number;
   costPrice: number;
   discount?: number;
   createdAt: string;

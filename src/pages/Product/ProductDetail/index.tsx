@@ -54,6 +54,7 @@ import ModalSelectCategory from "@/components/ModalSelectCategory";
 import ModalSelectSupplier from "@/components/ModalSelectSupplier";
 import { OverlayEventDetail } from "@ionic/react/dist/types/components/react-component-lib/interfaces";
 import { ProductImage, VALIDATION_RULES } from "./types/productEdit.d";
+import { getS3ImageUrl } from "@/helpers/fileHelper";
 
 import "./ProductDetail.css";
 
@@ -64,6 +65,10 @@ interface HistoryItem {
   value: number;
   status: string;
   type: 'order' | 'debt' | 'import' | 'check';
+  customer?: {
+    id: string;
+    name: string;
+  };
 }
 
 interface HistoryData {
@@ -139,7 +144,7 @@ const ProductDetail: React.FC = () => {
   const [presentToast] = useIonToast();
 
   const { getDetail, getHistory, update: updateProduct } = useProduct();
-  
+
   // Product edit functionality
   const { categories, suppliers } = useProductEdit(id!);
 
@@ -245,14 +250,14 @@ const ProductDetail: React.FC = () => {
   const fetchHistory = async () => {
     try {
       setLoading(true);
-      
+
       // For return tab, fetch both order and debt data
       if (selectedTab === "export") {
         // Fetch order data
         const orderResult = await getHistory({ productId: id, type: "order" });
         const orderData = orderResult && orderResult.length ? orderResult.map((order: Record<string, any>) => {
           const productItem = order.items.find((item: Record<string, any>) => item.productId === id);
-          
+
           return {
             id: order.id,
             receiptNumber: order.code,
@@ -260,6 +265,10 @@ const ProductDetail: React.FC = () => {
             value: productItem?.price || 0,
             status: order.status,
             type: 'order' as const,
+            customer: order.customer ? {
+              id: order.customer.id,
+              name: order.customer.name,
+            } : undefined,
           };
         }) : [];
 
@@ -269,7 +278,7 @@ const ProductDetail: React.FC = () => {
           const [receiptItemMap, receiptImportMap] = Object.entries(item);
           const [, receipt] = receiptImportMap;
           const [, receiptItem] = receiptItemMap;
-          
+
           return {
             id: receipt.id,
             receiptNumber: receipt.code,
@@ -277,6 +286,10 @@ const ProductDetail: React.FC = () => {
             value: receiptItem.costPrice,
             status: receipt.status,
             type: 'debt' as const,
+            customer: receipt.customer ? {
+              id: receipt.customer.id,
+              name: receipt.customer.name,
+            } : undefined,
           };
         }) : [];
 
@@ -285,13 +298,13 @@ const ProductDetail: React.FC = () => {
           order: orderData,
           debt: debtData,
         }));
-        
+
         setHasMore((prev) => ({
           ...prev,
           order: orderData.length === 10,
           debt: debtData.length === 10,
         }));
-        
+
         setPage((prev) => ({
           ...prev,
           order: 1,
@@ -387,11 +400,11 @@ const ProductDetail: React.FC = () => {
     if (productImages.length !== originalProductImages.length) {
       return true;
     }
-    
+
     // Check if any image IDs are different
     const currentIds = productImages.map(img => img.id).sort();
     const originalIds = originalProductImages.map(img => img.id).sort();
-    
+
     return currentIds.some((id, index) => id !== originalIds[index]);
   }, [productImages, originalProductImages]);
 
@@ -399,21 +412,21 @@ const ProductDetail: React.FC = () => {
     try {
       // Store current images before refresh
       const currentImages = [...productImages];
-      
+
       // Reload product detail and history
       await Promise.all([
         fetchProductDetail(),
         fetchHistory()
       ]);
-      
+
       // If images haven't changed during refresh, restore the current state
       // This prevents the upload button from appearing when no actual changes were made
-      if (productImages.length === currentImages.length && 
-          productImages.every((img, index) => img.id === currentImages[index]?.id)) {
+      if (productImages.length === currentImages.length &&
+        productImages.every((img, index) => img.id === currentImages[index]?.id)) {
         setProductImages(currentImages);
         setOriginalProductImages(currentImages);
       }
-      
+
       presentToast({
         message: "Đã tải lại dữ liệu",
         duration: 1500,
@@ -459,13 +472,20 @@ const ProductDetail: React.FC = () => {
   };
 
   // Get the first image URL or use fallback
-  const primaryImageUrl =
-    product?.imageUrls && product.imageUrls.length > 0
-      ? product.imageUrls[0]
-      : null;
+  const primaryImageUrl = useMemo(() => {
+    if (product?.images && product.images.length > 0) {
+      return getS3ImageUrl(product.images[0].path);
+    }
+
+    if (product?.imageUrls && product.imageUrls.length > 0) {
+      return product.imageUrls[0];
+    }
+
+    return null;
+  }, [product?.images, product?.imageUrls])
 
   const isShowCostPrice = useMemo(() => {
-    const roles = [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.MANAGER];
+    const roles = [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.MANAGER, UserRole.EMPLOYEE];
     return user?.role ? roles.includes(user.role) : false;
   }, [user?.role]);
 
@@ -509,7 +529,7 @@ const ProductDetail: React.FC = () => {
         return "Giá không được bằng 0";
       }
     }
-    
+
     // For text fields
     if (field === "productName") {
       const strValue = value as string;
@@ -520,21 +540,21 @@ const ProductDetail: React.FC = () => {
         return "Tên sản phẩm không được vượt quá 100 ký tự";
       }
     }
-    
+
     if (field === "category") {
       const strValue = value as string;
       if (!strValue || strValue.trim().length === 0) {
         return "Danh mục không được để trống";
       }
     }
-    
+
     if (field === "suppliers") {
       const arrValue = value as any[];
       if (!arrValue || arrValue.length === 0) {
         return "Phải chọn ít nhất một nhà cung cấp";
       }
     }
-    
+
     return "";
   };
 
