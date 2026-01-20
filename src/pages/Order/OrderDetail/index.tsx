@@ -79,34 +79,58 @@ const OrderDetail: React.FC = () => {
   };
 
   const buttons = useMemo(() => {
-    if (!order || order?.status === OrderStatus.COMPLETED) {
+    if (!order || order?.status === OrderStatus.CANCELLED) {
       return [];
     }
 
     return [
       {
-        text: "Chỉnh sửa",
+        text: "Trả hàng",
         handler: () => {
-          history.push(`/tabs/orders/update/${id}`);
-        },
-      },
-      {
-        text: "Xóa",
-        role: "destructive",
-        handler: () => {
-          Toast.show({
-            text: "Tính năng này đang được phát triển",
-            duration: "short",
-            position: "center",
+          history.push({
+            pathname: `/tabs/receipt/return`,
+            state: {
+              refId: order.id,
+              refType: 'order',
+              customerId: order.customer?.id,
+              customerName: order.customer?.name || "Khách lẻ",
+              orderProducts: order.items.map(item => ({
+                id: item.productId,
+                productId: item.productId,
+                code: item.code,
+                productName: item.productName,
+                quantity: item.quantity,
+                price: item.price,
+              })),
+            },
           });
         },
       },
+      ...order.status !== OrderStatus.COMPLETED ? [
+        {
+          text: "Chỉnh sửa",
+          handler: () => {
+            history.push(`/tabs/orders/update/${id}`);
+          },
+        },
+      ] : [],
+      // {
+      //   text: "Xóa",
+      //   role: "destructive",
+      //   handler: () => {
+      //     Toast.show({
+      //       text: "Tính năng này đang được phát triển",
+      //       duration: "short",
+      //       position: "center",
+      //     });
+      //   },
+      // },
       {
         text: "Hủy",
         role: "cancel",
       },
     ]
-  }, [order?.status])
+  }, [order?.status, order, id, history])
 
   const handleActionSheet = () => {
     presentActionSheet({

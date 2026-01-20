@@ -21,6 +21,10 @@ interface HistoryItem {
   value: number;
   status: string;
   type: 'order' | 'debt' | 'import' | 'check';
+  customer?: {
+    id: string;
+    name: string;
+  };
 }
 
 interface HistoryData {
@@ -89,10 +93,11 @@ const InventoryHistory: React.FC<Props> = ({
       )}
 
       {/* Table Header */}
-      <div className="grid grid-cols-4 gap-4 px-4 py-2 bg-gray-50 rounded-t-lg">
+      <div className="grid grid-cols-5 gap-4 px-4 py-2 bg-gray-50 rounded-t-lg">
         <div className="text-sm font-medium text-gray-500">Mã phiếu</div>
         <div className="text-sm font-medium text-gray-500">Số lượng</div>
         <div className="text-sm font-medium text-gray-500">Giá</div>
+        <div className="text-sm font-medium text-gray-500">Khách hàng</div>
         <div className="text-sm font-medium text-gray-500">Trạng thái</div>
       </div>
 
@@ -101,7 +106,7 @@ const InventoryHistory: React.FC<Props> = ({
         {tableData.map((item, index) => (
           <div
             key={index}
-            className="grid grid-cols-4 gap-4 px-4 py-3 border-b border-gray-100"
+            className="grid grid-cols-5 gap-4 px-4 py-3 border-b border-gray-100"
           >
             <div
               className="text-sm text-blue-600 cursor-pointer hover:text-blue-800 hover:underline"
@@ -111,6 +116,7 @@ const InventoryHistory: React.FC<Props> = ({
             </div>
             <div className="text-sm">{item.quantity}</div>
             <div className="text-sm">{formatCurrencyWithoutSymbol(item.value)}</div>
+            <div className="text-sm">{item.customer?.name || '-'}</div>
             <div>
               <IonLabel
                 color={getStatusColor(item.status as ReceiptStatus)}

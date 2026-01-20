@@ -78,8 +78,6 @@ export const ItemList: FC<Props> = ({ receipt }) => {
       await incrementActualInventory(
         receipt.id,
         value,
-        1,
-        CHANGE_QUANTITY_TYPE.INCREASE
       );
     } catch (error) {
       await Toast.show({

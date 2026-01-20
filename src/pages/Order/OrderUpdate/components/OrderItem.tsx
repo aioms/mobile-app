@@ -1,5 +1,5 @@
 import { FC, memo, useState, useEffect } from "react";
-import { IonInput, IonIcon, IonButton } from "@ionic/react";
+import { IonInput, IonIcon, IonButton, IonCheckbox } from "@ionic/react";
 import { trashOutline } from "ionicons/icons";
 
 import {
@@ -18,6 +18,7 @@ type Props = {
   sellingPrice: number;
   vatRate?: number;
   inventory?: number; // Add inventory prop for max quantity constraint
+  shipNow?: boolean;
   attrs?: any;
   orderStatus: string;
   onRowChange?: (data: any) => void;
@@ -33,6 +34,7 @@ const OrderItem: FC<Props> = memo(
     sellingPrice,
     vatRate = 0,
     inventory,
+    shipNow = false,
     orderStatus,
     onRowChange,
     onRemoveItem,
@@ -45,9 +47,10 @@ const OrderItem: FC<Props> = memo(
     const [newVatRate, setNewVatRate] = useState<number>(vatRate);
     const [quantityInputValue, setQuantityInputValue] = useState<string>(quantity.toString());
     const [quantityError, setQuantityError] = useState<string>("");
+    const [isShipNow, setIsShipNow] = useState<boolean>(shipNow);
 
     // Maximum quantity constraint based on inventory or reasonable limit
-    const maxQuantity = inventory ?? 9999;
+    const maxQuantity = isShipNow ? 9999 : (inventory ?? 9999);
     const minQuantity = 1;
 
     const validateQuantity = (value: number): { isValid: boolean; error?: string } => {
@@ -134,6 +137,15 @@ const OrderItem: FC<Props> = memo(
       }
     };
 
+    const handleShipNowChange = (checked: boolean) => {
+      setIsShipNow(checked);
+      // Revalidate quantity when shipNow changes
+      if (!checked && inventory !== undefined && newQuantity > inventory) {
+        setNewQuantity(inventory);
+        setQuantityInputValue(inventory.toString());
+      }
+    };
+
     useEffect(() => {
       if (quantity !== newQuantity) {
         setNewQuantity(quantity);
@@ -154,9 +166,10 @@ const OrderItem: FC<Props> = memo(
           quantity: newQuantity,
           sellingPrice: newPrice,
           vatRate: newVatRate,
+          shipNow: isShipNow,
         });
       }
-    }, [newQuantity, newPrice, newVatRate]);
+    }, [newQuantity, newPrice, newVatRate, isShipNow]);
 
     const totalPrice = newPrice * newQuantity;
     const vatAmount = (totalPrice * newVatRate) / 100;
@@ -166,7 +179,7 @@ const OrderItem: FC<Props> = memo(
     const isOrderPaid = orderStatus !== OrderStatus.DRAFT;
 
     return (
-      <div className="border-b border-gray-200 py-3" {...attrs}>
+      <div className={`border-b border-gray-200 py-3 px-2 rounded-md ${isShipNow ? 'bg-orange-50 border-orange-200' : ''}`} {...attrs}>
         <div className="flex justify-between items-start mb-2">
           <div>
             <div className="font-medium">{productName}</div>
@@ -280,7 +293,20 @@ const OrderItem: FC<Props> = memo(
           </div>
         </div>
 
-        <div className="flex justify-end mt-2">
+        <div className="flex justify-between items-center mt-2">
+          {!isOrderPaid && (
+            <div className="flex items-center">
+              <IonCheckbox
+                checked={isShipNow}
+                onIonChange={(e) => handleShipNowChange(e.detail.checked)}
+                className="ship-now-checkbox"
+                style={{"--border-radius": "4px"}}
+              />
+              <span className={`ml-2 text-sm ${isShipNow ? 'text-orange-600 font-medium' : 'text-gray-600'}`}>
+                Giao ngay
+              </span>
+            </div>
+          )}
           <div className="text-right">
             <div className="text-xs text-gray-500">
               {formatCurrency(newPrice)} × {newQuantity}

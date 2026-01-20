@@ -306,6 +306,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
           productCode: product.productCode,
           quantity: 1,
           costPrice: product.costPrice,
+          sellingPrice: product.sellingPrice,
           inventory: product.inventory || 0,
           discount: 0,
           createdAt: currentDate,
@@ -345,6 +346,20 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
       return;
     }
 
+    // Check if item has been returned
+    const currentItem = productItems[dateKey]?.find(
+      (item) => item.id === itemId || item.id === `temp_${itemId}`
+    );
+    if (currentItem?.returnedQuantity && currentItem.returnedQuantity > 0) {
+      presentToast({
+        message: "Không thể chỉnh sửa sản phẩm đã trả hàng",
+        duration: 2000,
+        position: "top",
+        color: "warning",
+      });
+      return;
+    }
+
     // Validate quantity input
     if (isNaN(newQuantity) || newQuantity < 0) {
       presentToast({
@@ -362,10 +377,10 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
         const itemIndex = updated[dateKey].findIndex(
           (item) => item.id === itemId || item.id === `temp_${itemId}`
         );
-        
+
         if (itemIndex !== -1) {
           const currentItem = updated[dateKey][itemIndex];
-          
+
           if (newQuantity <= 0) {
             // Remove item if quantity is 0 or less
             updated[dateKey].splice(itemIndex, 1);
@@ -410,6 +425,20 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
     if (dateKey !== currentDateKey) {
       presentToast({
         message: "Không thể thay đổi giá của đợt thu cũ",
+        duration: 2000,
+        position: "top",
+        color: "warning",
+      });
+      return;
+    }
+
+    // Check if item has been returned
+    const itemToCheck = productItems[dateKey]?.find(
+      (item) => item.id === itemId || item.id === `temp_${itemId}`
+    );
+    if (itemToCheck?.returnedQuantity && itemToCheck.returnedQuantity > 0) {
+      presentToast({
+        message: "Không thể chỉnh sửa sản phẩm đã trả hàng",
         duration: 2000,
         position: "top",
         color: "warning",
@@ -486,7 +515,13 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
     presentModalProduct({
       onWillDismiss: (ev: CustomEvent) => {
         if (ev.detail.role === "confirm" && ev.detail.data) {
-          addNewCollectionPeriod(ev.detail.data);
+          // Handle both array (multi-select) and single object (legacy support)
+          const products = Array.isArray(ev.detail.data) ? ev.detail.data : [ev.detail.data];
+
+          // Process each selected product
+          products.forEach((product: any) => {
+            addNewCollectionPeriod(product);
+          });
         }
       },
     });
@@ -507,7 +542,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
       const originalQuantity = product.originalQuantity || 0;
       const quantityDifference = product.quantity - originalQuantity;
       const itemTotal = product.costPrice * quantityDifference;
-      
+
       // Round to 2 decimal places for financial precision
       return total + Math.round(itemTotal * 100) / 100;
     }, 0);

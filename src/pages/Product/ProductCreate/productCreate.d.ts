@@ -1,3 +1,8 @@
+export interface ProductImage {
+  id: string;
+  path: string;
+}
+
 export interface IProductCreateForm {
   name: string;
   categoryId: string;
@@ -8,6 +13,7 @@ export interface IProductCreateForm {
   unit: string;
   description: string;
   notes: string;
+  images: ProductImage[];
 }
 
 export interface IProductCreateFormErrors {
@@ -43,5 +49,6 @@ export interface IProductCreatePayload {
   unit: string;
   description?: string;
   note?: string;
-  status: 'draft' | 'active';
+  status: string;
+  images?: string[]; // Array of file IDs
 }

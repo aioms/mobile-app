@@ -59,7 +59,7 @@ export const capitalizeFirstLetter = (str: string) => {
 
 export const createDebounce = <T extends any[]>(
   func: (...args: T) => void,
-  delay: number
+  delay: number,
 ) => {
   let timeoutId: NodeJS.Timeout;
 
@@ -69,7 +69,19 @@ export const createDebounce = <T extends any[]>(
   };
 };
 
-
 export const sleep = (ms: number) => {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
+/**
+ * Extracts the numeric part of a string with a 2-letter prefix.
+ * @param input A string like "NK01234".
+ * @returns The numeric value, or throw error if parsing fails.
+ */
+export function getNumberFromStringOrThrow(input: string): number {
+  const match = input.match(/[0-9]+/);
+  if (!match) {
+    throw new Error(`No digits found in "${input}"`);
+  }
+  return Number.parseInt(match[0], 10);
 }

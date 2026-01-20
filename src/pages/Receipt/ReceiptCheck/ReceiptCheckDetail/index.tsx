@@ -84,6 +84,11 @@ const ReceiptCheckDetail: React.FC = () => {
   const [reasonNote, setReasonNote] = useState("");
   const [note, setNote] = useState("");
 
+  // Barcode scanning state
+  const [isScanning, setIsScanning] = useState<boolean>(false);
+  const [scannedItems, setScannedItems] = useState<Map<string, number>>(new Map());
+  const [pendingScans, setPendingScans] = useState<string[]>([]);
+
   const { isLoading, withLoading } = useLoading();
   const { user } = useAuth();
   const {
@@ -356,30 +361,32 @@ const ReceiptCheckDetail: React.FC = () => {
   };
 
   const handleBarcodeScanned = async (value: string) => {
-    try {
-      if (!receipt?.id) {
-        throw new Error("Không tìm thấy phiếu kiểm");
-      }
+    // if (!isScanning) return;
 
-      await incrementActualInventory(
-        receipt?.id,
-        value,
-        1,
-        CHANGE_QUANTITY_TYPE.INCREASE
-      );
-    } catch (error) {
-      captureException(error as Error, createExceptionContext(
-        'ReceiptCheckDetail',
-        'BarcodeScanner',
-        'handleBarcodeScanned'
-      ));
-      presentToast({
-        message: (error as Error).message || "Có lỗi xảy ra",
-        duration: 2000,
-        position: "top",
-        color: "danger",
-      });
-    }
+    // Add to scanned items map and increment quantity
+    setScannedItems(prev => {
+      const newMap = new Map(prev);
+      const currentCount = newMap.get(value) || 0;
+      console.log({ prev, currentCount });
+      newMap.set(value, currentCount + 1);
+      return newMap;
+    });
+
+    // Add to pending scans if not already there
+    setPendingScans(prev => {
+      if (!prev.includes(value)) {
+        return [...prev, value];
+      }
+      return prev;
+    });
+
+    // Show toast for successful scan
+    presentToast({
+      message: `Đã quét: ${value} (Số lượng: ${(scannedItems.get(value) || 0) + 1})`,
+      duration: 1500,
+      position: "top",
+      color: "success",
+    });
   };
 
   const handleError = async (error: Error) => {
@@ -400,6 +407,75 @@ const ReceiptCheckDetail: React.FC = () => {
     onBarcodeScanned: handleBarcodeScanned,
     onError: handleError,
   });
+
+  const startScanning = () => {
+    setIsScanning(true);
+    setScannedItems(new Map());
+    setPendingScans([]);
+    startScan();
+  };
+
+  const stopScanningAndConfirm = async () => {
+    setIsScanning(false);
+
+    if (pendingScans.length === 0) {
+      await presentToast({
+        message: "Không có sản phẩm nào được quét",
+        duration: 2000,
+        position: "top",
+        color: "warning",
+      });
+      return;
+    }
+
+    // Process all scanned items
+    await withLoading(async () => {
+      try {
+        if (!receipt?.id) {
+          throw new Error("Không tìm thấy phiếu kiểm");
+        }
+
+        // Update inventory for each scanned product
+        for (const productCode of pendingScans) {
+          const quantity = scannedItems.get(productCode) || 1;
+
+          await incrementActualInventory(
+            receipt.id,
+            productCode,
+            quantity,
+            CHANGE_QUANTITY_TYPE.INCREASE
+          );
+        }
+
+        presentToast({
+          message: `Đã cập nhật ${pendingScans.length} sản phẩm thành công`,
+          duration: 2000,
+          position: "top",
+          color: "success",
+        });
+
+        // Clear scanning state
+        setScannedItems(new Map());
+        setPendingScans([]);
+
+        // Refresh the receipt data
+        await fetchReceiptCheck();
+      } catch (error) {
+        captureException(error as Error, createExceptionContext(
+          'ReceiptCheckDetail',
+          'ReceiptCheckDetail',
+          'stopScanningAndConfirm'
+        ));
+
+        presentToast({
+          message: (error as Error).message || "Có lỗi xảy ra khi cập nhật sản phẩm",
+          duration: 2000,
+          position: "top",
+          color: "danger",
+        });
+      }
+    });
+  };
 
   const { selectedItemValues, selectedItemDifference } = useMemo(() => {
     const selectedItem = items.find((item) => item.id === selectedItemId);
@@ -505,13 +581,14 @@ const ReceiptCheckDetail: React.FC = () => {
             </IonChip>
           </div>
 
-          <IonButtons slot="end">
+          {/* <IonButtons slot="end">
             {isShowBalanceRequireButton && (
-              <IonButton className="text-gray-600" onClick={() => startScan()}>
+              <IonButton className="text-gray-600" onClick={startScanning}>
                 <IonIcon slot="icon-only" icon={scanOutline} />
               </IonButton>
             )}
           </IonButtons>
+          */}
         </IonToolbar>
       </IonHeader>
 
@@ -523,7 +600,67 @@ const ReceiptCheckDetail: React.FC = () => {
         <div className="space-y-6">
           {/* Receipt Summary Section */}
           <div className="bg-white rounded-lg p-4 shadow-sm">
-            <h2 className="text-lg font-semibold mb-4">Danh sách sản phẩm</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">Danh sách sản phẩm</h2>
+              {isShowBalanceRequireButton && (
+                <div className="flex items-center space-x-2">
+                  {!isScanning ? (
+                    <IonButtons slot="end">
+                      <IonButton color="primary" onClick={startScanning}>
+                        <IonIcon icon={scanOutline} slot="icon-only" />
+                      </IonButton>
+                    </IonButtons>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <IonButton
+                        color="success"
+                        onClick={stopScanningAndConfirm}
+                        size="small"
+                      >
+                        Xác nhận ({pendingScans.length})
+                      </IonButton>
+                      <IonButton
+                        color="medium"
+                        fill="outline"
+                        onClick={() => setIsScanning(false)}
+                        size="small"
+                      >
+                        Hủy
+                      </IonButton>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Scanning Status */}
+            {isScanning && (
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span className="text-blue-700 font-medium">Đang quét mã vạch...</span>
+                  </div>
+                  <span className="text-blue-600 text-sm">
+                    {pendingScans.length} sản phẩm
+                  </span>
+                </div>
+
+                {/* Show scanned items */}
+                {pendingScans.length > 0 && (
+                  <div className="mt-3 space-y-1">
+                    <p className="text-sm text-blue-600 font-medium">Đã quét:</p>
+                    {Array.from(scannedItems.entries()).map(([code, quantity]) => (
+                      <div key={code} className="flex justify-between text-sm text-blue-700">
+                        <span>{code}</span>
+                        <span>x{quantity}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {items.length > 0 && (
               <SlideableReceiptItem
                 items={items}

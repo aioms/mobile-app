@@ -10,9 +10,11 @@ type Props = {
   dismiss: (data?: any, role?: string) => void;
 };
 
+// TODO: Merge all ModalSelectProduct to one
 const ModalSelectProduct: React.FC<Props> = ({ dismiss }) => {
   const [keyword, setKeyword] = useState("");
   const [products, setProducts] = useState<any[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<Map<string, any>>(new Map());
 
   const { getList: getListProducts } = useProduct();
 
@@ -54,7 +56,35 @@ const ModalSelectProduct: React.FC<Props> = ({ dismiss }) => {
   };
 
   const handleClickItem = (data: any) => {
-    dismiss(data, "confirm");
+    const productId = data.id;
+    setSelectedProducts(prev => {
+      const newMap = new Map(prev);
+      if (newMap.has(productId)) {
+        newMap.delete(productId);
+      } else {
+        newMap.set(productId, data);
+      }
+      return newMap;
+    });
+  };
+
+  const handleConfirm = () => {
+    const selectedItems = Array.from(selectedProducts.values())
+      .map(product => ({
+        ...product,
+        quantity: 1,
+      }));
+
+    if (selectedItems.length === 0) {
+      Toast.show({
+        text: "Vui lòng chọn ít nhất một sản phẩm",
+        duration: "short",
+        position: "top",
+      });
+      return;
+    }
+
+    dismiss(selectedItems, "confirm");
   };
 
   return (
@@ -62,13 +92,23 @@ const ModalSelectProduct: React.FC<Props> = ({ dismiss }) => {
       title="Chọn sản phẩm"
       dismiss={dismiss}
       onSearchChange={handleSearch}
-      // onConfirm={() => dismiss(selectedValue, "confirm")}
-      // data={selectedValue}
+      onConfirm={handleConfirm}
+      data={selectedProducts.size > 0}
     >
+      <div className="mb-2 px-4 py-2 bg-gray-100 rounded">
+        <p className="text-sm text-gray-600">
+          Đã chọn: <span className="font-semibold">{selectedProducts.size}</span> sản phẩm
+        </p>
+      </div>
       <IonList>
         {!!products.length &&
           products.map((item) => (
-            <ProductItem key={item.id} onClick={handleClickItem} {...item} />
+            <ProductItem
+              key={item.id}
+              onClick={handleClickItem}
+              isSelected={selectedProducts.has(item.id)}
+              {...item}
+            />
           ))}
       </IonList>
     </ModalCustom>

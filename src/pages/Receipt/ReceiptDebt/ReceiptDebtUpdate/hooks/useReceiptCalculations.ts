@@ -1,14 +1,18 @@
 import { useMemo } from "react";
-import { IEditableProductItem, ICalculationResults } from "../receiptDebtUpdate.d";
+import {
+  ICalculationResults,
+  IEditableProductItem,
+} from "../receiptDebtUpdate.d";
 
 /**
  * Custom hook for calculating receipt debt totals and period-specific calculations
  */
 export const useReceiptCalculations = (
-  items: Record<string, IEditableProductItem[]>
+  items: Record<string, IEditableProductItem[]>,
 ): ICalculationResults => {
   return useMemo(() => {
-    const periodTotals: Record<string, { quantity: number; amount: number }> = {};
+    const periodTotals: Record<string, { quantity: number; amount: number }> =
+      {};
     let totalQuantity = 0;
     let totalAmount = 0;
 
@@ -17,12 +21,17 @@ export const useReceiptCalculations = (
       let periodQuantity = 0;
       let periodAmount = 0;
 
-      periodItems.forEach(item => {
-        const itemQuantity = item.quantity || 0;
+      periodItems.forEach((item) => {
+        // Calculate effective quantity excluding returned items
+        const returnedQty = item.returnedQuantity || 0;
+        const effectiveQuantity = Math.max(
+          0,
+          (item.quantity || 0) - returnedQty,
+        );
         const itemCostPrice = item.costPrice || 0;
-        const itemTotal = itemQuantity * itemCostPrice;
+        const itemTotal = effectiveQuantity * itemCostPrice;
 
-        periodQuantity += itemQuantity;
+        periodQuantity += effectiveQuantity;
         periodAmount += itemTotal;
       });
 

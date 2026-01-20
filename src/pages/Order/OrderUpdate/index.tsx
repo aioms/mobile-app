@@ -62,18 +62,11 @@ import { TransactionType } from "@/common/enums/transaction";
 import OrderSummarySection from "./components/OrderSummarySection";
 import VATSection from "./components/VATSection";
 import OrderNotesSection from "./components/OrderNotesSection";
+import { IOrderItem, IOrderItemSubmission } from "./components/orderUpdate.d";
 
 import "./OrderUpdate.css";
 
-interface IOrderItem {
-  id: string;
-  productId: string;
-  productName: string;
-  code: string;
-  quantity: number;
-  sellingPrice: number;
-  vatRate?: number;
-}
+// Replaced with IOrderItem from orderUpdate.d.ts
 
 interface IFormData {
   code: string;
@@ -113,7 +106,7 @@ const OrderUpdate: React.FC = () => {
   const [orderItems, setOrderItems] = useState<IOrderItem[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showDownArrow, setShowDownArrow] = useState(false);
-  
+
   // Add payment modal state management
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [pendingOrderData, setPendingOrderData] = useState<any>(null);
@@ -147,15 +140,15 @@ const OrderUpdate: React.FC = () => {
   const isOrderPaid = formData.status === OrderStatus.COMPLETED
 
   const addItemToOrderItems = (productId: string, product: Record<string, any>) => {
-    if (product.inventory <= 0) {
-      presentToast({
-        message: "Sản phẩm đã hết hàng",
-        duration: 2000,
-        position: "top",
-        color: "warning",
-      });
-      return
-    }
+    // if (product.inventory <= 0) {
+    //   presentToast({
+    //     message: "Sản phẩm đã hết hàng",
+    //     duration: 2000,
+    //     position: "top",
+    //     color: "warning",
+    //   });
+    //   return
+    // }
 
     const productData = {
       id: product.id,
@@ -165,6 +158,7 @@ const OrderUpdate: React.FC = () => {
       sellingPrice: product.sellingPrice,
       quantity: 1,
       inventory: product.inventory, // Add inventory data
+      shipNow: false, // Default to false for new items
     };
 
     // Write function check if item is exists in orderItems, then increase quantity of item
@@ -257,7 +251,13 @@ const OrderUpdate: React.FC = () => {
         const { role, data } = event.detail;
 
         if (role === "confirm" && data) {
-          addItemToOrderItems(data.id, data);
+          // Handle both array (multi-select) and single object (legacy support)
+          const products = Array.isArray(data) ? data : [data];
+
+          // Process each selected product
+          products.forEach(product => {
+            addItemToOrderItems(product.id, product);
+          });
         }
       },
     });
@@ -388,7 +388,7 @@ const OrderUpdate: React.FC = () => {
 
   const handleItemChange = (id: string, data: Partial<IOrderItem>) => {
     if (!isEditMode) return;
-    
+
     setOrderItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, ...data } : item))
     );
@@ -396,7 +396,7 @@ const OrderUpdate: React.FC = () => {
 
   const handleRemoveItem = (id: string) => {
     if (!isEditMode) return;
-    
+
     setOrderItems((prev) => prev.filter((item) => item.id !== id));
   };
 
@@ -405,6 +405,23 @@ const OrderUpdate: React.FC = () => {
 
     if (!orderItems.length) {
       newErrors.items = "Vui lòng thêm ít nhất một sản phẩm";
+    }
+
+    // Validate order items for shipNow and quantity constraints
+    const invalidItems = orderItems.filter(item => {
+      // Check if shipNow is checked but quantity is 0
+      if (item.shipNow && item.quantity === 0) {
+        return true;
+      }
+      // Check if regular item (not shipNow) exceeds available stock
+      if (!item.shipNow && item.inventory !== undefined && item.quantity > item.inventory) {
+        return true;
+      }
+      return false;
+    });
+
+    if (invalidItems.length > 0) {
+      newErrors.items = "Có sản phẩm không hợp lệ: Không thể đặt hàng với số lượng 0 khi chọn 'Giao ngay', hoặc vượt quá tồn kho";
     }
 
     if (formData.vatEnabled) {
@@ -611,8 +628,8 @@ const OrderUpdate: React.FC = () => {
 
     try {
       // Map PaymentModalMethod to PaymentMethodEnum
-      const paymentMethodEnum = method === "cash" 
-        ? PaymentMethodEnum.CASH 
+      const paymentMethodEnum = method === "cash"
+        ? PaymentMethodEnum.CASH
         : PaymentMethodEnum.BANK_TRANSFER;
 
       // Create transaction data
@@ -653,7 +670,7 @@ const OrderUpdate: React.FC = () => {
       history.goBack();
     } catch (error) {
       console.error({ error });
-      
+
       presentToast({
         message: (error as Error).message || "Có lỗi xảy ra khi thanh toán",
         duration: 2000,
@@ -723,7 +740,7 @@ const OrderUpdate: React.FC = () => {
               // If product detail fetch fails, continue without inventory data
               console.warn(`Failed to fetch inventory for product ${item.code}:`, error);
             }
-            
+
             return {
               id: item.productId,
               productId: item.productId,
@@ -733,6 +750,7 @@ const OrderUpdate: React.FC = () => {
               sellingPrice: item.price,
               vatRate: item.vatRate || 0,
               inventory: inventory,
+              shipNow: item.shipNow || false, // Add shipNow from API response
             };
           }) || []
         );
@@ -798,22 +816,23 @@ const OrderUpdate: React.FC = () => {
     paymentMethod: formData.paymentMethod,
     discountAmount: calculateDiscount,
     note: formData.note,
-    items: orderItems.map((item) => ({
+    items: orderItems.map((item): IOrderItemSubmission => ({
       productId: item.id,
       productName: item.productName,
       code: item.code,
       quantity: item.quantity,
       price: item.sellingPrice,
       vatRate: item.vatRate || 0,
+      shipNow: item.shipNow || false,
     })),
     vatEnabled: formData.vatEnabled,
     vatInfo: formData.vatEnabled
       ? {
-          companyName: formData.companyName,
-          taxCode: formData.taxCode,
-          email: formData.email,
-          remark: formData.remark,
-        }
+        companyName: formData.companyName,
+        taxCode: formData.taxCode,
+        email: formData.email,
+        remark: formData.remark,
+      }
       : null,
   });
 
@@ -895,8 +914,8 @@ const OrderUpdate: React.FC = () => {
                   </div>
                 </div>
 
-                <div 
-                  className="ion-activatable receipt-import-ripple-parent mb-3 cursor-pointer hover:bg-gray-50 transition-colors p-2 rounded-lg"
+                <div
+                  className="ion-activatable common-ripple-parent mb-3 cursor-pointer hover:bg-gray-50 transition-colors p-2 rounded-lg"
                   onClick={openModalSelectProduct}
                 >
                   <IonIcon icon={search} className="text-2xl text-blue-600 mr-2" />
@@ -979,7 +998,7 @@ const OrderUpdate: React.FC = () => {
             <div className="mb-4">
               <IonRadioGroup
                 value={formData.discountType || "percentage"}
-                onIonChange={isEditMode ? handleDiscountTypeChange : () => {}}
+                onIonChange={isEditMode ? handleDiscountTypeChange : () => { }}
               >
                 <div className={cn("flex gap-4 mb-3", { "opacity-65": !isEditMode })}>
                   <IonItem
@@ -1052,8 +1071,8 @@ const OrderUpdate: React.FC = () => {
                 Khách hàng
               </h2>
               <div className="mb-4">
-                <div 
-                  className={cn("ion-activatable receipt-import-ripple-parent break-normal p-2", {
+                <div
+                  className={cn("ion-activatable common-ripple-parent break-normal p-2", {
                     "opacity-65 cursor-not-allowed": !isEditMode,
                     "cursor-pointer hover:bg-gray-50 transition-colors": isEditMode
                   })}
@@ -1083,7 +1102,7 @@ const OrderUpdate: React.FC = () => {
               </h2>
               <IonRadioGroup
                 value={formData.paymentMethod}
-                onIonChange={isEditMode ? handlePaymentMethodChange : () => {}}
+                onIonChange={isEditMode ? handlePaymentMethodChange : () => { }}
                 className="mt-2"
               >
                 <div className="flex gap-4">
@@ -1113,7 +1132,7 @@ const OrderUpdate: React.FC = () => {
                       {
                         "bg-custom-primary border border-custom-primary":
                           formData.paymentMethod ===
-                            PaymentMethod.BANK_TRANSFER ||
+                          PaymentMethod.BANK_TRANSFER ||
                           !formData.paymentMethod,
                         border: formData.paymentMethod === PaymentMethod.CASH,
                         "opacity-50 cursor-not-allowed": !isEditMode,
@@ -1183,7 +1202,7 @@ const OrderUpdate: React.FC = () => {
 
       <IonFooter className="ion-no-border">
         <div className="flex justify-between p-3 bg-card">
-          
+
           {/* Confirm Order Button - only for non-paid orders */}
           {!isOrderPaid && (
             <IonButton
@@ -1199,9 +1218,9 @@ const OrderUpdate: React.FC = () => {
                 "Đang xử lý..."
               ) : (
                 <>
-                  <IonIcon 
-                    icon={checkmarkCircleOutline} 
-                    slot="start" 
+                  <IonIcon
+                    icon={checkmarkCircleOutline}
+                    slot="start"
                   />
                   Xác nhận đơn hàng
                 </>
@@ -1225,9 +1244,9 @@ const OrderUpdate: React.FC = () => {
                 "Đang xử lý..."
               ) : (
                 <>
-                  <IonIcon 
-                    icon={createOutline} 
-                    slot="start" 
+                  <IonIcon
+                    icon={createOutline}
+                    slot="start"
                   />
                   Cập nhật
                 </>

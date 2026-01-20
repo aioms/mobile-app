@@ -52,11 +52,11 @@ const useReceiptCheck = () => {
   const incrementActualInventory = async (
     id: string,
     productCode: string,
-    actualInventory: number,
+    quantity: number = 1,
     changeQuantityType = CHANGE_QUANTITY_TYPE.INCREASE,
   ) => {
     const response: IHttpResponse = await request.patch(
-      `/receipt-check/${id}/receipt-items/${productCode}?changeQuantityType=${changeQuantityType}&actualInventory=${actualInventory}`,
+      `/receipt-check/${id}/receipt-items/${productCode}?changeQuantityType=${changeQuantityType}&quantity=${quantity}`,
     );
 
     if (!response.success) {

@@ -54,6 +54,7 @@ import ModalSelectCategory from "@/components/ModalSelectCategory";
 import ModalSelectSupplier from "@/components/ModalSelectSupplier";
 import { OverlayEventDetail } from "@ionic/react/dist/types/components/react-component-lib/interfaces";
 import { ProductImage, VALIDATION_RULES } from "./types/productEdit.d";
+import { getS3ImageUrl } from "@/helpers/fileHelper";
 
 import "./ProductDetail.css";
 
@@ -64,6 +65,10 @@ interface HistoryItem {
   value: number;
   status: string;
   type: 'order' | 'debt' | 'import' | 'check';
+  customer?: {
+    id: string;
+    name: string;
+  };
 }
 
 interface HistoryData {
@@ -88,6 +93,7 @@ const ProductDetail: React.FC = () => {
   const [editedValues, setEditedValues] = useState({
     inventory: 0,
     sellingPrice: 0,
+    retailPrice: 0,
     costPrice: 0,
     productName: "",
     category: "",
@@ -97,6 +103,7 @@ const ProductDetail: React.FC = () => {
   const [validationErrors, setValidationErrors] = useState({
     inventory: "",
     sellingPrice: "",
+    retailPrice: "",
     costPrice: "",
     productName: "",
     category: "",
@@ -139,9 +146,9 @@ const ProductDetail: React.FC = () => {
   const [presentToast] = useIonToast();
 
   const { getDetail, getHistory, update: updateProduct } = useProduct();
-  
+
   // Product edit functionality
-  const { categories, suppliers } = useProductEdit(id!);
+  const { suppliers } = useProductEdit(id!);
 
   // Modal for category selection
   const [presentCategoryModal, dismissCategoryModal] = useIonModal(
@@ -217,6 +224,7 @@ const ProductDetail: React.FC = () => {
       setEditedValues({
         inventory: result.inventory || 0,
         sellingPrice: result.sellingPrice || 0,
+        retailPrice: result.retailPrice || 0,
         costPrice: result.costPrice || 0,
         productName: result.productName || "",
         category: result.category || "",
@@ -245,14 +253,14 @@ const ProductDetail: React.FC = () => {
   const fetchHistory = async () => {
     try {
       setLoading(true);
-      
+
       // For return tab, fetch both order and debt data
       if (selectedTab === "export") {
         // Fetch order data
         const orderResult = await getHistory({ productId: id, type: "order" });
         const orderData = orderResult && orderResult.length ? orderResult.map((order: Record<string, any>) => {
           const productItem = order.items.find((item: Record<string, any>) => item.productId === id);
-          
+
           return {
             id: order.id,
             receiptNumber: order.code,
@@ -260,6 +268,10 @@ const ProductDetail: React.FC = () => {
             value: productItem?.price || 0,
             status: order.status,
             type: 'order' as const,
+            customer: order.customer ? {
+              id: order.customer.id,
+              name: order.customer.name,
+            } : undefined,
           };
         }) : [];
 
@@ -269,7 +281,7 @@ const ProductDetail: React.FC = () => {
           const [receiptItemMap, receiptImportMap] = Object.entries(item);
           const [, receipt] = receiptImportMap;
           const [, receiptItem] = receiptItemMap;
-          
+
           return {
             id: receipt.id,
             receiptNumber: receipt.code,
@@ -277,6 +289,10 @@ const ProductDetail: React.FC = () => {
             value: receiptItem.costPrice,
             status: receipt.status,
             type: 'debt' as const,
+            customer: receipt.customer ? {
+              id: receipt.customer.id,
+              name: receipt.customer.name,
+            } : undefined,
           };
         }) : [];
 
@@ -285,13 +301,13 @@ const ProductDetail: React.FC = () => {
           order: orderData,
           debt: debtData,
         }));
-        
+
         setHasMore((prev) => ({
           ...prev,
           order: orderData.length === 10,
           debt: debtData.length === 10,
         }));
-        
+
         setPage((prev) => ({
           ...prev,
           order: 1,
@@ -387,11 +403,11 @@ const ProductDetail: React.FC = () => {
     if (productImages.length !== originalProductImages.length) {
       return true;
     }
-    
+
     // Check if any image IDs are different
     const currentIds = productImages.map(img => img.id).sort();
     const originalIds = originalProductImages.map(img => img.id).sort();
-    
+
     return currentIds.some((id, index) => id !== originalIds[index]);
   }, [productImages, originalProductImages]);
 
@@ -399,21 +415,21 @@ const ProductDetail: React.FC = () => {
     try {
       // Store current images before refresh
       const currentImages = [...productImages];
-      
+
       // Reload product detail and history
       await Promise.all([
         fetchProductDetail(),
         fetchHistory()
       ]);
-      
+
       // If images haven't changed during refresh, restore the current state
       // This prevents the upload button from appearing when no actual changes were made
-      if (productImages.length === currentImages.length && 
-          productImages.every((img, index) => img.id === currentImages[index]?.id)) {
+      if (productImages.length === currentImages.length &&
+        productImages.every((img, index) => img.id === currentImages[index]?.id)) {
         setProductImages(currentImages);
         setOriginalProductImages(currentImages);
       }
-      
+
       presentToast({
         message: "Đã tải lại dữ liệu",
         duration: 1500,
@@ -459,13 +475,20 @@ const ProductDetail: React.FC = () => {
   };
 
   // Get the first image URL or use fallback
-  const primaryImageUrl =
-    product?.imageUrls && product.imageUrls.length > 0
-      ? product.imageUrls[0]
-      : null;
+  const primaryImageUrl = useMemo(() => {
+    if (product?.images && product.images.length > 0) {
+      return getS3ImageUrl(product.images[0].path);
+    }
+
+    if (product?.imageUrls && product.imageUrls.length > 0) {
+      return product.imageUrls[0];
+    }
+
+    return null;
+  }, [product?.images, product?.imageUrls])
 
   const isShowCostPrice = useMemo(() => {
-    const roles = [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.MANAGER];
+    const roles = [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.MANAGER, UserRole.EMPLOYEE];
     return user?.role ? roles.includes(user.role) : false;
   }, [user?.role]);
 
@@ -497,7 +520,7 @@ const ProductDetail: React.FC = () => {
 
   const validateField = (field: string, value: string | number | string[] | { id: string; name: string }[]): string => {
     // For numeric fields (inventory, prices)
-    if (field === "inventory" || field === "sellingPrice" || field === "costPrice") {
+    if (field === "inventory" || field === "sellingPrice" || field === "retailPrice" || field === "costPrice") {
       const numValue = typeof value === 'number' ? value : parseFloat(value as string);
       if (numValue < 0) {
         return "Giá trị không được âm";
@@ -505,11 +528,11 @@ const ProductDetail: React.FC = () => {
       if (field === "inventory" && !Number.isInteger(numValue)) {
         return "Tồn kho phải là số nguyên";
       }
-      if ((field === "sellingPrice" || field === "costPrice") && numValue === 0) {
+      if ((field === "sellingPrice" || field === "retailPrice" || field === "costPrice") && numValue === 0) {
         return "Giá không được bằng 0";
       }
     }
-    
+
     // For text fields
     if (field === "productName") {
       const strValue = value as string;
@@ -520,21 +543,21 @@ const ProductDetail: React.FC = () => {
         return "Tên sản phẩm không được vượt quá 100 ký tự";
       }
     }
-    
+
     if (field === "category") {
       const strValue = value as string;
       if (!strValue || strValue.trim().length === 0) {
         return "Danh mục không được để trống";
       }
     }
-    
+
     if (field === "suppliers") {
       const arrValue = value as any[];
       if (!arrValue || arrValue.length === 0) {
         return "Phải chọn ít nhất một nhà cung cấp";
       }
     }
-    
+
     return "";
   };
 
@@ -560,7 +583,7 @@ const ProductDetail: React.FC = () => {
 
     let processedValue: any;
     // Handle different field types
-    if (field === "inventory" || field === "sellingPrice" || field === "costPrice") {
+    if (field === "inventory" || field === "sellingPrice" || field === "retailPrice" || field === "costPrice") {
       // Numeric fields
       if (field === "inventory") {
         // Inventory: parse as integer, no formatting
@@ -780,9 +803,9 @@ const ProductDetail: React.FC = () => {
             {/* Product Code */}
             <div className="mb-4 flex gap-2 justify-between items-center">
               <div>
-                <IonLabel className="text-sm text-gray-500">Mã sản phẩm:</IonLabel>
+                <IonLabel className="text-lg text-gray-500">Mã sản phẩm:</IonLabel>
                 <IonText>
-                  <p className="text-sm">{product?.code}</p>
+                  <h1>{product?.code}</h1>
                 </IonText>
               </div>
 
@@ -800,7 +823,7 @@ const ProductDetail: React.FC = () => {
             {/* Product Name */}
             <div className="mb-4">
               <div className="flex justify-between items-center">
-                <IonLabel className="text-sm text-gray-500">
+                <IonLabel className="text-lg text-gray-500">
                   Tên sản phẩm:
                 </IonLabel>
                 <div className="flex gap-2">
@@ -847,11 +870,11 @@ const ProductDetail: React.FC = () => {
                     handleFieldChange("productName", e.detail.value!)
                   }
                   placeholder="Nhập tên sản phẩm"
-                  className="mt-2 border border-blue-300 rounded-lg py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  className="mt-2 border border-blue-300 rounded-lg py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg"
                 />
               ) : (
                 <IonText>
-                  <p className="text-sm">{product?.productName}</p>
+                  <h1>{product?.productName}</h1>
                 </IonText>
               )}
               {validationErrors.productName && (
@@ -864,7 +887,7 @@ const ProductDetail: React.FC = () => {
             {/* Categories */}
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
-                <IonLabel className="text-sm text-gray-500">
+                <IonLabel className="text-lg text-gray-500">
                   Nhóm hàng:
                 </IonLabel>
                 {editingField === "category" ? (
@@ -905,7 +928,7 @@ const ProductDetail: React.FC = () => {
               {editingField === "category" ? (
                 <div className="mt-2">
                   <div
-                    className="ion-activatable receipt-import-ripple-parent break-normal p-2 border border-blue-300 rounded-lg text-sm"
+                    className="ion-activatable receipt-import-ripple-parent break-normal p-2 border border-blue-300 rounded-lg text-lg"
                     onClick={openModalSelectCategory}
                     style={{ cursor: "pointer" }}
                   >
@@ -916,7 +939,7 @@ const ProductDetail: React.FC = () => {
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  <IonChip className="bg-blue-50 text-blue-600">
+                  <IonChip className="bg-blue-50 text-blue-600 text-lg">
                     {product?.category || "--"}
                   </IonChip>
                 </div>
@@ -931,7 +954,7 @@ const ProductDetail: React.FC = () => {
             {/* Suppliers */}
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
-                <IonLabel className="text-sm text-gray-500">
+                <IonLabel className="text-lg text-gray-500">
                   Nhà cung cấp:
                 </IonLabel>
                 {editingField === "suppliers" ? (
@@ -972,7 +995,7 @@ const ProductDetail: React.FC = () => {
               {editingField === "suppliers" ? (
                 <div className="mt-2">
                   <div
-                    className="ion-activatable receipt-import-ripple-parent break-normal p-2 border border-blue-300 rounded-lg text-sm"
+                    className="ion-activatable receipt-import-ripple-parent break-normal p-2 border border-blue-300 rounded-lg text-lg"
                     onClick={openModalSelectSuppliers}
                     style={{ cursor: "pointer" }}
                   >
@@ -1000,7 +1023,7 @@ const ProductDetail: React.FC = () => {
                     product.suppliers.map((supplier) => (
                       <IonChip
                         key={supplier.id}
-                        className="bg-blue-50 text-blue-600"
+                        className="bg-blue-50 text-blue-600 text-lg"
                       >
                         {supplier.name}
                       </IonChip>
@@ -1020,7 +1043,7 @@ const ProductDetail: React.FC = () => {
             {/* Inventory */}
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
-                <IonLabel className="text-sm text-gray-500">Tồn kho:</IonLabel>
+                <IonLabel className="text-lg text-gray-500">Tồn kho:</IonLabel>
                 {editingField === "inventory" ? (
                   <div className="flex gap-2">
                     <IonButton
@@ -1065,7 +1088,7 @@ const ProductDetail: React.FC = () => {
                     onIonInput={(e) =>
                       handleFieldChange("inventory", e.detail.value!)
                     }
-                    className={`border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-200 ${validationErrors.inventory ? "border-red-500 focus:border-red-500" : "border-blue-300 focus:border-blue-500"}`}
+                    className={`border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-200 text-lg ${validationErrors.inventory ? "border-red-500 focus:border-red-500" : "border-blue-300 focus:border-blue-500"}`}
                     placeholder="Nhập số lượng tồn kho"
                     autofocus
                   />
@@ -1079,7 +1102,7 @@ const ProductDetail: React.FC = () => {
                 </>
               ) : (
                 <IonText>
-                  <p className="text-sm">{product?.inventory || "--"}</p>
+                  <h1>{product?.inventory || "--"}</h1>
                 </IonText>
               )}
             </div>
@@ -1088,7 +1111,7 @@ const ProductDetail: React.FC = () => {
             {isShowCostPrice ? (
               <div className="mb-4">
                 <div className="flex justify-between items-center mb-2">
-                  <IonLabel className="text-sm text-gray-500">Giá vốn:</IonLabel>
+                  <IonLabel className="text-lg text-gray-500">Giá vốn:</IonLabel>
                   {canEditCostPrice &&
                     (editingField === "costPrice" ? (
                       <div className="flex gap-2">
@@ -1137,7 +1160,7 @@ const ProductDetail: React.FC = () => {
                       onIonInput={(e) =>
                         handleFieldChange("costPrice", e.detail.value!)
                       }
-                      className={`border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-200 ${validationErrors.costPrice ? "border-red-500 focus:border-red-500" : "border-blue-300 focus:border-blue-500"}`}
+                      className={`border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-200 text-lg ${validationErrors.costPrice ? "border-red-500 focus:border-red-500" : "border-blue-300 focus:border-blue-500"}`}
                       placeholder="Nhập giá vốn"
                       autofocus
                     />
@@ -1151,18 +1174,18 @@ const ProductDetail: React.FC = () => {
                   </>
                 ) : (
                   <IonText>
-                    <p className="text-sm">
+                    <h1>
                       {product?.costPrice
                         ? formatCurrencyWithoutSymbol(product?.costPrice)
                         : "--"}
-                    </p>
+                    </h1>
                   </IonText>
                 )}
               </div>
             ) : null}
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
-                <IonLabel className="text-sm text-gray-500">Giá bán:</IonLabel>
+                <IonLabel className="text-lg text-gray-500">Giá sỉ:</IonLabel>
                 {editingField === "sellingPrice" ? (
                   <div className="flex gap-2">
                     <IonButton
@@ -1210,8 +1233,8 @@ const ProductDetail: React.FC = () => {
                     onIonInput={(e) =>
                       handleFieldChange("sellingPrice", e.detail.value!)
                     }
-                    className={`border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-200 ${validationErrors.sellingPrice ? "border-red-500 focus:border-red-500" : "border-blue-300 focus:border-blue-500"}`}
-                    placeholder="Nhập giá bán"
+                    className={`border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-200 text-lg ${validationErrors.sellingPrice ? "border-red-500 focus:border-red-500" : "border-blue-300 focus:border-blue-500"}`}
+                    placeholder="Nhập giá sỉ"
                     autofocus
                   />
                   {validationErrors.sellingPrice && (
@@ -1224,11 +1247,85 @@ const ProductDetail: React.FC = () => {
                 </>
               ) : (
                 <IonText>
-                  <p className="text-sm">
+                  <h1>
                     {product?.sellingPrice
                       ? formatCurrencyWithoutSymbol(product?.sellingPrice)
                       : "--"}
-                  </p>
+                  </h1>
+                </IonText>
+              )}
+            </div>
+
+            {/* Retail Price */}
+            <div className="mb-4">
+              <div className="flex justify-between items-center mb-2">
+                <IonLabel className="text-lg text-gray-500">Giá lẻ:</IonLabel>
+                {editingField === "retailPrice" ? (
+                  <div className="flex gap-2">
+                    <IonButton
+                      size="small"
+                      fill="clear"
+                      onClick={() => handleCancelFieldEdit("retailPrice")}
+                      disabled={isSaving || pendingSave}
+                      className="text-gray-600"
+                    >
+                      <IonIcon icon={closeOutline} slot="icon-only" />
+                    </IonButton>
+                    <IonButton
+                      size="small"
+                      fill="clear"
+                      onClick={() => handleSaveField("retailPrice")}
+                      disabled={isSaving || pendingSave}
+                      className="text-blue-600"
+                    >
+                      {isSaving || pendingSave ? (
+                        <IonSpinner name="crescent" />
+                      ) : (
+                        <IonIcon icon={saveOutline} slot="icon-only" />
+                      )}
+                    </IonButton>
+                  </div>
+                ) : (
+                  <IonButton
+                    size="small"
+                    fill="clear"
+                    onClick={() => handleEditFieldClick("retailPrice")}
+                    className="text-blue-600"
+                  >
+                    <IonIcon icon={createOutline} slot="icon-only" />
+                  </IonButton>
+                )}
+              </div>
+              {editingField === "retailPrice" ? (
+                <>
+                  <IonInput
+                    type="text"
+                    inputmode="numeric"
+                    value={formatCurrencyWithoutSymbol(
+                      editedValues.retailPrice,
+                    )}
+                    onIonInput={(e) =>
+                      handleFieldChange("retailPrice", e.detail.value!)
+                    }
+                    className={`border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-200 text-lg ${validationErrors.retailPrice ? "border-red-500 focus:border-red-500" : "border-blue-300 focus:border-blue-500"}`}
+                    placeholder="Nhập giá lẻ"
+                    autofocus
+                  />
+                  {validationErrors.retailPrice && (
+                    <IonText color="danger">
+                      <p className="text-xs mt-1">
+                        {validationErrors.retailPrice}
+                      </p>
+                    </IonText>
+                  )}
+                </>
+              ) : (
+                <IonText>
+                  <h1>
+                    {product?.retailPrice
+                      ? formatCurrencyWithoutSymbol(product?.retailPrice)
+                      : "--"}
+                  </h1>
                 </IonText>
               )}
             </div>
@@ -1236,7 +1333,7 @@ const ProductDetail: React.FC = () => {
             {/* Notes */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <IonLabel className="text-sm text-gray-500">
+                <IonLabel className="text-2xl text-gray-500">
                   Ghi chú
                 </IonLabel>
                 {editingField === "description" ? (
@@ -1280,7 +1377,7 @@ const ProductDetail: React.FC = () => {
                   <IonTextarea
                     placeholder="Nhập ghi chú..."
                     rows={3}
-                    className="border border-blue-300 rounded-lg px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    className="border border-blue-300 rounded-lg px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg"
                     value={editedValues.description}
                     onIonInput={(e) => handleFieldChange("description", e.detail.value!)}
                   />
@@ -1294,7 +1391,7 @@ const ProductDetail: React.FC = () => {
                 <IonTextarea
                   placeholder="Nhập ghi chú..."
                   rows={3}
-                  className="border rounded-lg px-2"
+                  className="border rounded-lg px-2 text-lg"
                   value={product?.description}
                   readonly
                 />

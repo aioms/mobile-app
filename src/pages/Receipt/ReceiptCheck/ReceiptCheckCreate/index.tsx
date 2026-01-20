@@ -97,20 +97,26 @@ const ReceiptCheckCreate: React.FC = () => {
                 const { role, data } = event.detail;
 
                 if (role === "confirm") {
-                    // Check if product already exists
-                    const existingItem = receiptItems.find((item) => item.id === data.id);
-                    if (existingItem) {
-                        presentToast({
-                            message: "Sản phẩm đã có trong danh sách",
-                            duration: 2000,
-                            position: "top",
-                            color: "warning",
-                        });
-                        return;
-                    }
+                    // Handle both array (multi-select) and single object (legacy support)
+                    const products = Array.isArray(data) ? data : [data];
 
-                    // Add product to list
-                    setReceiptItems((prev) => [...prev, data]);
+                    // Process each selected product
+                    products.forEach(product => {
+                        // Check if product already exists
+                        const existingItem = receiptItems.find((item) => item.id === product.id);
+                        if (existingItem) {
+                            presentToast({
+                                message: `${product.productName} đã có trong danh sách`,
+                                duration: 2000,
+                                position: "top",
+                                color: "warning",
+                            });
+                            return;
+                        }
+
+                        // Add product to list
+                        setReceiptItems((prev) => [...prev, product]);
+                    });
                 }
             },
         });

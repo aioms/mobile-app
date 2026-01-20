@@ -45,6 +45,7 @@ import useUploadFile from '@/hooks/useUploadFile';
 import { ProductImage, VALIDATION_RULES } from '@/pages/Product/ProductDetail/types/productEdit.d';
 import { dataURLtoFile, getDataURLFileSize, getS3ImageUrl } from '@/helpers/fileHelper';
 
+import { ImagePreview } from '@/components/ImagePreview/ImagePreview';
 import './CameraModal.css';
 
 interface MediaUploadProps {
@@ -103,6 +104,10 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
   const [isCompressing, setIsCompressing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Preview state
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
 
   // New camera modal state
   const [cameraModal, setCameraModal] = useState<CameraModalState>({
@@ -475,9 +480,15 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
           <IonGrid>
             <IonRow>
               {/* TODO: Will be remove after migrate to new image storage */}
-              {imageUrls?.map(url => (
+              {imageUrls?.map((url, index) => (
                 <IonCol size="6" sizeMd="4" key={url}>
-                  <div style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden' }}>
+                  <div 
+                    style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden' }}
+                    onClick={() => {
+                      setPreviewIndex(index);
+                      setPreviewOpen(true);
+                    }}
+                  >
                     <IonImg
                       src={url}
                       alt={`Product image`}
@@ -489,7 +500,13 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
 
               {images.map((image, index) => (
                 <IonCol size="6" sizeMd="4" key={index}>
-                  <div style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden' }}>
+                  <div 
+                    style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden' }}
+                    onClick={() => {
+                      setPreviewIndex((imageUrls?.length || 0) + index);
+                      setPreviewOpen(true);
+                    }}
+                  >
                     <IonImg
                       src={getS3ImageUrl(image.path)}
                       alt={`Product image ${index + 1}`}
@@ -509,7 +526,10 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                           height: '32px',
                           '--border-radius': '50%'
                         }}
-                        onClick={() => handleDeleteImage(index)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteImage(index);
+                        }}
                       >
                         <IonIcon icon={trashOutline} />
                       </IonButton>
@@ -902,6 +922,14 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
             handler: confirmDeleteImage
           }
         ]}
+      />
+
+      {/* Image Preview Component */}
+      <ImagePreview
+        images={[...(imageUrls || []), ...images.map(img => getS3ImageUrl(img.path))]}
+        initialIndex={previewIndex}
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
       />
     </>
   );

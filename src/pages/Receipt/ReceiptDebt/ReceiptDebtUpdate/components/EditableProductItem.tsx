@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { IonInput, IonButton, IonIcon, useIonToast } from "@ionic/react";
+import { IonInput, IonButton, IonIcon, IonChip, useIonToast } from "@ionic/react";
 import { createOutline, checkmarkOutline, closeOutline } from "ionicons/icons";
 
 import { formatCurrency, formatCurrencyInput, parseCurrencyInput } from "@/helpers/formatters";
@@ -41,7 +41,7 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
 
   const validateInputs = () => {
     const newErrors: { quantity?: string; costPrice?: string } = {};
-    
+
     const quantity = parseInt(editValues.quantity);
     const costPrice = parseCurrencyInput(editValues.costPrice);
 
@@ -127,7 +127,7 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
     // Only allow numeric input
     const numericValue = value.replace(/[^0-9]/g, "");
     setEditValues(prev => ({ ...prev, quantity: numericValue }));
-    
+
     if (errors.quantity) {
       setErrors(prev => ({ ...prev, quantity: undefined }));
     }
@@ -136,13 +136,13 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
   const handleCostPriceChange = (value: string) => {
     const formattedValue = formatCurrencyInput(value);
     setEditValues(prev => ({ ...prev, costPrice: formattedValue }));
-    
+
     if (errors.costPrice) {
       setErrors(prev => ({ ...prev, costPrice: undefined }));
     }
   };
 
-  const totalPrice = item.isEditing 
+  const totalPrice = item.isEditing
     ? parseInt(editValues.quantity || "0") * parseCurrencyInput(editValues.costPrice || "0")
     : item.costPrice * item.quantity;
 
@@ -159,6 +159,12 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
         <div className="flex items-center space-x-2 text-base text-gray-600">
           <span>Mã: {item.code}</span>
         </div>
+        {/* Show badge for returned items */}
+        {item.returnedQuantity && item.returnedQuantity > 0 && (
+          <IonChip color="warning" className="text-xs mt-2">
+            Đã trả: {item.returnedQuantity}
+          </IonChip>
+        )}
       </div>
 
       {/* Quantity and Price Info */}
@@ -184,7 +190,7 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
             <div className="text-md font-bold text-gray-900">{item.quantity}</div>
           )}
         </div>
-        
+
         <div>
           <span className="text-base font-semibold text-gray-600">Đơn giá:</span>
           {item.isEditing ? (
@@ -218,8 +224,8 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
         </div>
       </div>
 
-      {/* Edit Controls */}
-      {!isDisabled && (
+      {/* Edit Controls - disable for returned items */}
+      {!isDisabled && !(item.returnedQuantity && item.returnedQuantity > 0) && (
         <div className="flex items-center justify-center space-x-2">
           {item.isEditing ? (
             <>
@@ -262,6 +268,13 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
           Không thể chỉnh sửa do trạng thái phiếu
         </div>
       )}
+
+      {/* Returned Item Message */}
+      {(!isDisabled && item.returnedQuantity && item.returnedQuantity > 0) ? (
+        <div className="text-center text-sm text-orange-500 mt-2">
+          Không thể chỉnh sửa - sản phẩm đã trả hàng
+        </div>
+      ) : null}
     </div>
   );
 };

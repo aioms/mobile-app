@@ -12,6 +12,20 @@ export interface IOrderItem {
   sellingPrice: number;
   vatRate?: number;
   inventory?: number; // Add inventory for quantity constraints
+  shipNow?: boolean; // Add shipNow flag for bypassing inventory validation
+}
+
+/**
+ * Order item interface for API submission
+ */
+export interface IOrderItemSubmission {
+  productId: string;
+  productName: string;
+  code: string;
+  quantity: number;
+  price: number;
+  vatRate?: number;
+  shipNow: boolean;
 }
 
 /**

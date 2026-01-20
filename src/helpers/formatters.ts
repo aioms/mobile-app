@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 export const dayjsFormat = (
   date?: string | Date,
   format?: string,
-  locale?: string
+  locale?: string,
 ) => {
   let datetime = dayjs(date || new Date());
 

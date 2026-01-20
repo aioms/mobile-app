@@ -108,20 +108,26 @@ const ProductList: React.FC<Props> = ({
         const { role, data } = event.detail;
 
         if (role === "confirm" && data) {
-          if (data.inventory <= 0) {
-            presentToast({
-              message: "Sản phẩm đã hết hàng",
-              duration: 2000,
-              position: "top",
-              color: "warning",
-            });
-          } else {
-            onAddItem({
-              ...data,
-              quantity: 1,
-              inventory: data.inventory,
-            });
-          }
+          // Handle both array (multi-select) and single object (legacy support)
+          const products = Array.isArray(data) ? data : [data];
+
+          // Process each selected product
+          products.forEach((product: any) => {
+            if (product.inventory <= 0) {
+              presentToast({
+                message: `${product.productName} đã hết hàng`,
+                duration: 2000,
+                position: "top",
+                color: "warning",
+              });
+            } else {
+              onAddItem({
+                ...product,
+                quantity: 1,
+                inventory: product.inventory,
+              });
+            }
+          });
         }
       },
     });

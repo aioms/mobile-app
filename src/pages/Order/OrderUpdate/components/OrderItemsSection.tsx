@@ -19,6 +19,7 @@ import {
 import { OrderItemsSectionProps } from "./orderUpdate.d";
 
 /**
+ * @deprecated TODO: Remove this in future
  * OrderItemsSection component manages the order items list with functionality for:
  * - Barcode scanning
  * - Product search
@@ -44,11 +45,12 @@ const OrderItemsSection: React.FC<OrderItemsSectionProps> = React.memo(({
   const orderItemsRef = useRef<HTMLIonListElement>(null);
   const [quantityInputValues, setQuantityInputValues] = useState<Record<number, string>>({});
   const [quantityErrors, setQuantityErrors] = useState<Record<number, string>>({});
+  const [shipNowStates, setShipNowStates] = useState<Record<number, boolean>>({});
 
   const minQuantity = 1;
-  const maxQuantity = 9999;
+  const defaultMaxQuantity = 9999;
 
-  const validateQuantity = (value: number): { isValid: boolean; error?: string } => {
+  const validateQuantity = (value: number, maxQuantity: number = defaultMaxQuantity): { isValid: boolean; error?: string } => {
     if (isNaN(value)) {
       return { isValid: false, error: "Vui lòng nhập số hợp lệ" };
     }
@@ -61,6 +63,12 @@ const OrderItemsSection: React.FC<OrderItemsSectionProps> = React.memo(({
     return { isValid: true };
   };
 
+  const getMaxQuantity = (index: number) => {
+    const item = orderItems[index];
+    const isShipNow = shipNowStates[index] || false;
+    return isShipNow ? defaultMaxQuantity : (item.inventory ?? defaultMaxQuantity);
+  };
+
   const handleQuantityInputChange = (index: number, value: string) => {
     setQuantityInputValues(prev => ({ ...prev, [index]: value }));
     const numericValue = parseInt(value, 10);
@@ -70,13 +78,27 @@ const OrderItemsSection: React.FC<OrderItemsSectionProps> = React.memo(({
       return;
     }
     
-    const validation = validateQuantity(numericValue);
+    const item = orderItems[index];
+    const isShipNow = shipNowStates[index] || false;
+    const maxQuantity = isShipNow ? defaultMaxQuantity : (item.inventory ?? defaultMaxQuantity);
+    const validation = validateQuantity(numericValue, maxQuantity);
     if (validation.isValid) {
-      const item = orderItems[index];
       onItemChange(item.id, { quantity: numericValue });
       setQuantityErrors(prev => ({ ...prev, [index]: "" }));
     } else {
       setQuantityErrors(prev => ({ ...prev, [index]: validation.error || "" }));
+    }
+  };
+
+  const handleShipNowChange = (index: number, checked: boolean) => {
+    setShipNowStates(prev => ({ ...prev, [index]: checked }));
+    const item = orderItems[index];
+    
+    // Revalidate quantity when shipNow changes
+    if (!checked && item.inventory !== undefined && item.quantity > item.inventory) {
+      const newQuantity = item.inventory;
+      onItemChange(item.id, { quantity: newQuantity });
+      setQuantityInputValues(prev => ({ ...prev, [index]: newQuantity.toString() }));
     }
   };
 
@@ -105,14 +127,22 @@ const OrderItemsSection: React.FC<OrderItemsSectionProps> = React.memo(({
 
   const handleQuantityChange = useCallback((index: number, quantity: string) => {
     const numQuantity = parseInt(quantity) || 0;
+    const item = orderItems[index];
+    const isShipNow = shipNowStates[index] || false;
+    const maxQuantity = isShipNow ? defaultMaxQuantity : (item.inventory ?? defaultMaxQuantity);
+    
     if (numQuantity >= 0) {
-      const item = orderItems[index];
-      onItemChange(item.id, { quantity: numQuantity });
-      // Sync input value
-      setQuantityInputValues(prev => ({ ...prev, [index]: numQuantity.toString() }));
-      setQuantityErrors(prev => ({ ...prev, [index]: "" }));
+      const validation = validateQuantity(numQuantity, maxQuantity);
+      if (validation.isValid) {
+        onItemChange(item.id, { quantity: numQuantity });
+        // Sync input value
+        setQuantityInputValues(prev => ({ ...prev, [index]: numQuantity.toString() }));
+        setQuantityErrors(prev => ({ ...prev, [index]: "" }));
+      } else {
+        setQuantityErrors(prev => ({ ...prev, [index]: validation.error || "" }));
+      }
     }
-  }, [orderItems, onItemChange]);
+  }, [orderItems, onItemChange, shipNowStates]);
 
   const handlePriceChange = useCallback((index: number, price: string) => {
     const numPrice = parseFloat(price) || 0;
@@ -225,7 +255,7 @@ const OrderItemsSection: React.FC<OrderItemsSectionProps> = React.memo(({
                             onBlur={() => handleQuantityInputBlur(index)}
                             onKeyDown={(e) => handleQuantityInputKeyPress(index, e)}
                             min="1"
-                            max="9999"
+                            max={getMaxQuantity(index)}
                             className={`quantity-input w-12 h-8 mx-1 text-center text-sm border rounded focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent ${
                               quantityErrors[index] ? 'border-red-400 bg-red-50' : 'border-gray-300'
                             }`}
@@ -241,7 +271,7 @@ const OrderItemsSection: React.FC<OrderItemsSectionProps> = React.memo(({
                                 ((parseInt(quantityInputValues[index] || item.quantity.toString()) || 1) + 1).toString()
                               )
                             }
-                            disabled={(parseInt(quantityInputValues[index] || item.quantity.toString()) || 1) >= 9999}
+                            disabled={(parseInt(quantityInputValues[index] || item.quantity.toString()) || 1) >= getMaxQuantity(index)}
                             aria-label="Tăng số lượng"
                           >
                             +
@@ -270,7 +300,18 @@ const OrderItemsSection: React.FC<OrderItemsSectionProps> = React.memo(({
                       </div>
                     </div>
                     
-                    <div className="mt-2 text-right">
+                    <div className="mt-2 flex justify-between items-center">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={shipNowStates[index] || false}
+                          onChange={(e) => handleShipNowChange(index, e.target.checked)}
+                          className="mr-2"
+                        />
+                        <span className={`text-sm ${shipNowStates[index] ? 'text-orange-600 font-medium' : 'text-gray-600'}`}>
+                          Giao ngay
+                        </span>
+                      </div>
                       <IonText color="primary">
                         <p className="font-semibold">
                           Thành tiền: {(item.quantity * item.sellingPrice).toLocaleString("vi-VN")} VND
