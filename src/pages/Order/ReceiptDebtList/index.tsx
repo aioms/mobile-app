@@ -59,9 +59,17 @@ const ReceiptDebtList: FC = () => {
 
   const { isLoading, withLoading } = useLoading();
   const { addItem, getItem } = useStorage();
-  const { getList } = useReceiptDebt();
+  const { getList, getStatistics } = useReceiptDebt();
 
-    const { getDetail: getProductDetail } = useProduct();
+  const { getDetail: getProductDetail } = useProduct();
+
+  const [statistics, setStatistics] = useState<{
+    totalCount: number;
+    totalOutstandingAmount: number;
+  }>({
+    totalCount: 0,
+    totalOutstandingAmount: 0,
+  });
 
   const { startScan, stopScan } = useBarcodeScanner({
     onBarcodeScanned: handleBarcodeScanned,
@@ -190,7 +198,7 @@ const ReceiptDebtList: FC = () => {
           });
         }
 
-        setReceiptDebts(data || []);
+        setReceiptDebts((prev) => [...prev, ...(data || [])]);
         setTotalCount(metadata?.totalItems || 0);
         setHasMore(metadata?.hasNext || false);
       } catch (error) {
@@ -204,8 +212,25 @@ const ReceiptDebtList: FC = () => {
     });
   };
 
+  const fetchStatistics = async () => {
+    try {
+      const stats = await getStatistics();
+      setStatistics(stats);
+    } catch (error) {
+      await presentToast({
+        message: (error as Error).message || "Không thể tải thống kê",
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+    }
+  };
+
   useEffect(() => {
+    setReceiptDebts([]);
+    setPage(1);
     fetchReceiptDebts(1, searchKeyword, filters);
+    fetchStatistics();
   }, [searchKeyword]);
 
   const handleLoadMore = () => {
@@ -227,6 +252,7 @@ const ReceiptDebtList: FC = () => {
   };
 
   const handleApplyFilters = () => {
+    setReceiptDebts([]);
     setPage(1);
     setIsFilterModalOpen(false);
     fetchReceiptDebts(1, searchKeyword, filters);
@@ -240,12 +266,15 @@ const ReceiptDebtList: FC = () => {
       status: "",
     };
     setFilters(clearedFilters);
+    setReceiptDebts([]);
     setPage(1);
     fetchReceiptDebts(1, searchKeyword, clearedFilters);
   };
 
   const handleRefresh = (event: CustomEvent<RefresherEventDetail>) => {
-    fetchReceiptDebts().finally(() => {
+    setReceiptDebts([]);
+    setPage(1);
+    Promise.all([fetchReceiptDebts(1, searchKeyword, filters), fetchStatistics()]).finally(() => {
       event.detail.complete();
     });
   };
@@ -273,7 +302,7 @@ const ReceiptDebtList: FC = () => {
           </IonItem>
           <IonItem>
             <IonBadge slot="end" color="danger">
-              {formatCurrencyWithoutSymbol(totalCount)}
+              {formatCurrencyWithoutSymbol(statistics.totalOutstandingAmount)}
             </IonBadge>
             <IonLabel>Tổng công nợ</IonLabel>
           </IonItem>

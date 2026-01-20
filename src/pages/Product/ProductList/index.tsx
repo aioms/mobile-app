@@ -572,10 +572,18 @@ const ProductListScreen: React.FC = () => {
                               </div>
                             ) : null}
                             <div>
-                              <p className="text-xs text-gray-500">Giá bán</p>
+                              <p className="text-xs text-gray-500 text-nowrap">Giá sỉ</p>
                               <p className="text-sm font-medium">
                                 {formatCurrencyWithoutSymbol(
                                   product.sellingPrice
+                                )}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 text-nowrap">Giá lẻ</p>
+                              <p className="text-sm font-medium">
+                                {formatCurrencyWithoutSymbol(
+                                  (product as any).retailPrice || 0
                                 )}
                               </p>
                             </div>

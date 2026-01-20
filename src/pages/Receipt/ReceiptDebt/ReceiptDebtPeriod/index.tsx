@@ -306,6 +306,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
           productCode: product.productCode,
           quantity: 1,
           costPrice: product.costPrice,
+          sellingPrice: product.sellingPrice,
           inventory: product.inventory || 0,
           discount: 0,
           createdAt: currentDate,
@@ -514,7 +515,13 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
     presentModalProduct({
       onWillDismiss: (ev: CustomEvent) => {
         if (ev.detail.role === "confirm" && ev.detail.data) {
-          addNewCollectionPeriod(ev.detail.data);
+          // Handle both array (multi-select) and single object (legacy support)
+          const products = Array.isArray(ev.detail.data) ? ev.detail.data : [ev.detail.data];
+
+          // Process each selected product
+          products.forEach((product: any) => {
+            addNewCollectionPeriod(product);
+          });
         }
       },
     });

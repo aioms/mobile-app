@@ -41,7 +41,7 @@ const PurchasePeriod: FC<Props> = ({
   // Memoize initial prices calculation
   const initialPrices = useMemo(() => {
     return items.reduce((acc, item) => {
-      acc[item.id] = item.costPrice;
+      acc[item.id] = item.sellingPrice;
       return acc;
     }, {} as Record<string, number>);
   }, [items]);
@@ -83,7 +83,7 @@ const PurchasePeriod: FC<Props> = ({
 
   const updateQuantity = (value: number) => {
     const validation = validateQuantity(value);
-    
+
     if (validation.isValid) {
       setQuantityError("");
       return true;
@@ -117,16 +117,18 @@ const PurchasePeriod: FC<Props> = ({
     return periodDate
       ? getDate(periodDate).format("DD/MM/YYYY")
       : currentItem
-      ? getDate(currentItem.createdAt).format("DD/MM/YYYY")
-      : "";
+        ? getDate(currentItem.createdAt).format("DD/MM/YYYY")
+        : "";
   }, [periodDate, currentItem]);
 
   // Memoize total price calculation
   const totalPrice = useMemo(() => {
     if (!currentItem) return 0;
+
     const quantity = editable
       ? quantities[currentItem.id] || currentItem.quantity
       : currentItem.quantity;
+
     const price = editable
       ? prices[currentItem.id] || currentItem.costPrice
       : currentItem.costPrice;
@@ -151,17 +153,17 @@ const PurchasePeriod: FC<Props> = ({
     if (value !== null && value !== undefined) {
       setQuantityInputValue(value);
       const numericValue = parseInt(value, 10);
-      
+
       if (value === "" || isNaN(numericValue)) {
         setQuantityError("Vui lòng nhập số hợp lệ");
         return;
       }
-      
+
       if (numericValue < 0) {
         setQuantityError("Số lượng không thể âm");
         return;
       }
-      
+
       if (updateQuantity(numericValue)) {
         handleQuantityChange(numericValue);
       }
@@ -172,7 +174,7 @@ const PurchasePeriod: FC<Props> = ({
   const handleDecrement = () => {
     const currentQty = quantities[currentItem.id] || currentItem.quantity;
     const newQuantity = currentQty > minQuantity ? currentQty - 1 : minQuantity;
-    
+
     if (newQuantity === 0 && currentQty === 1 && totalItems === 1) {
       // This is the last item and user is trying to set quantity to 0
       // Let the parent component handle the confirmation modal
@@ -231,7 +233,7 @@ const PurchasePeriod: FC<Props> = ({
     const numericValue = parseCurrencyInput(value);
     const formattedValue = formatCurrencyWithoutSymbol(numericValue);
     setPriceInputValue(formattedValue);
-    
+
     // Update the actual price
     handlePriceChange(numericValue);
   };
@@ -296,11 +298,10 @@ const PurchasePeriod: FC<Props> = ({
               <div className="flex items-center">
                 <button
                   type="button"
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${
-                    (quantities[currentItem.id] || currentItem.quantity) <= minQuantity
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-gray-100 text-teal-400 hover:bg-gray-200"
-                  }`}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${(quantities[currentItem.id] || currentItem.quantity) <= minQuantity
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-gray-100 text-teal-400 hover:bg-gray-200"
+                    }`}
                   onClick={handleDecrement}
                   disabled={(quantities[currentItem.id] || currentItem.quantity) <= minQuantity}
                   style={{ border: "none" }}
@@ -316,19 +317,17 @@ const PurchasePeriod: FC<Props> = ({
                   onKeyDown={handleQuantityInputKeyPress}
                   min={minQuantity}
                   max={maxQuantity}
-                  className={`quantity-input w-12 h-8 mx-1 text-center text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent ${
-                    quantityError ? 'border-red-400 bg-red-50' : 'border-gray-300'
-                  }`}
+                  className={`quantity-input w-12 h-8 mx-1 text-center text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent ${quantityError ? 'border-red-400 bg-red-50' : 'border-gray-300'
+                    }`}
                   aria-label="Số lượng sản phẩm"
                   autoComplete="off"
                 />
                 <button
                   type="button"
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${
-                    (quantities[currentItem.id] || currentItem.quantity) >= maxQuantity
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-gray-100 text-teal-400 hover:bg-gray-200"
-                  }`}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${(quantities[currentItem.id] || currentItem.quantity) >= maxQuantity
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-gray-100 text-teal-400 hover:bg-gray-200"
+                    }`}
                   onClick={() => {
                     const currentQty = quantities[currentItem.id] || currentItem.quantity;
                     if (updateQuantity(currentQty + 1)) {
@@ -409,11 +408,10 @@ const PurchasePeriod: FC<Props> = ({
               <button
                 onClick={handlePrevious}
                 disabled={currentIndex === 0}
-                className={`p-2 rounded-full transition-colors ${
-                  currentIndex === 0
-                    ? "text-gray-300 cursor-not-allowed"
-                    : "text-gray-600 hover:bg-gray-200 active:bg-gray-300"
-                }`}
+                className={`p-2 rounded-full transition-colors ${currentIndex === 0
+                  ? "text-gray-300 cursor-not-allowed"
+                  : "text-gray-600 hover:bg-gray-200 active:bg-gray-300"
+                  }`}
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
@@ -427,11 +425,10 @@ const PurchasePeriod: FC<Props> = ({
               <button
                 onClick={handleNext}
                 disabled={currentIndex === totalItems - 1}
-                className={`p-2 rounded-full transition-colors ${
-                  currentIndex === totalItems - 1
-                    ? "text-gray-300 cursor-not-allowed"
-                    : "text-gray-600 hover:bg-gray-200 active:bg-gray-300"
-                }`}
+                className={`p-2 rounded-full transition-colors ${currentIndex === totalItems - 1
+                  ? "text-gray-300 cursor-not-allowed"
+                  : "text-gray-600 hover:bg-gray-200 active:bg-gray-300"
+                  }`}
               >
                 <ChevronRight className="w-5 h-5" />
               </button>

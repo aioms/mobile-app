@@ -15,6 +15,7 @@ export interface IReceiptItemPeriod {
   inventory: number;
   discount: number;
   costPrice: number;
+  sellingPrice: number;
   createdAt: string;
   updatedAt: string;
   // Additional properties used in the component

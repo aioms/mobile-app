@@ -5,6 +5,7 @@ export interface IProduct {
   productName: string;
   costPrice: number;
   sellingPrice: number;
+  retailPrice: number;
   status: string;
   category: string;
   inventory: number;

@@ -837,14 +837,6 @@ const ReceiptImportDetail: React.FC = () => {
               {showScanProduct && (
                 <div className="flex items-center space-x-2">
                   {!isScanning ? (
-                    // <IonButton 
-                    //   color="primary" 
-                    //   onClick={startScanning}
-                    //   size="small"
-                    // >
-                    //   <IonIcon icon={scanOutline} slot="start" />
-                    //   Quét mã
-                    // </IonButton>
                     <IonButtons slot="end">
                       <IonButton color="primary" onClick={startScanning}>
                         <IonIcon icon={scanOutline} slot="icon-only" />

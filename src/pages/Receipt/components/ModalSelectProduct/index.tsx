@@ -1,19 +1,20 @@
 import { useEffect, useState } from "react";
 import { Toast } from "@capacitor/toast";
-import { IonSearchbar, IonList } from "@ionic/react";
+import { IonList } from "@ionic/react";
 
 import { PRODUCT_STATUS } from "@/common/constants/product";
-import ModalBase from "@/components/Modal/ModalBase";
+import ModalCustom from "@/components/Modal/ModalCustom";
 import useProduct from "@/hooks/apis/useProduct";
 import ProductItem from "./components/ProductItem";
 
 type Props = {
-  dismiss: (data?: string | null | undefined | number, role?: string) => void;
+  dismiss: (data?: any, role?: string) => void;
 };
 
 const ModalSelectProduct: React.FC<Props> = ({ dismiss }) => {
   const [keyword, setKeyword] = useState("");
   const [products, setProducts] = useState<any[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<Map<string, any>>(new Map());
 
   const { getList: getListProducts } = useProduct();
 
@@ -56,33 +57,63 @@ const ModalSelectProduct: React.FC<Props> = ({ dismiss }) => {
   };
 
   const handleClickItem = (data: any) => {
-    dismiss(data, "confirm");
+    const productId = data.id;
+    setSelectedProducts(prev => {
+      const newMap = new Map(prev);
+      if (newMap.has(productId)) {
+        newMap.delete(productId);
+      } else {
+        newMap.set(productId, data);
+      }
+      return newMap;
+    });
+  };
+
+  const handleConfirm = () => {
+    const selectedItems = Array.from(selectedProducts.values())
+      .map(product => ({
+        ...product,
+        quantity: 1,
+        totalPrice: product.costPrice,
+      }));
+
+    if (selectedItems.length === 0) {
+      Toast.show({
+        text: "Vui lòng chọn ít nhất một sản phẩm",
+        duration: "short",
+        position: "top",
+      });
+      return;
+    }
+
+    dismiss(selectedItems, "confirm");
   };
 
   return (
-    <ModalBase title="Thêm sản phẩm" hasConfirmButton={false} dismiss={dismiss}>
-      <div className="flex justify-between">
-        <IonSearchbar
-          placeholder="Tên hàng, mã sản phẩm"
-          onIonInput={handleSearch}
-          className="py-0"
-          enterKeyHint="done"
-          debounce={500}
-        />
-        {/* <IonButtons slot="end">
-          <IonButton color="primary">
-            <IonIcon icon={filterOutline} slot="icon-only" />
-          </IonButton>
-        </IonButtons> */}
+    <ModalCustom
+      title="Thêm sản phẩm"
+      dismiss={dismiss}
+      onSearchChange={handleSearch}
+      onConfirm={handleConfirm}
+      data={selectedProducts.size > 0}
+    >
+      <div className="mb-2 px-4 py-2 bg-gray-100 rounded">
+        <p className="text-sm text-gray-600">
+          Đã chọn: <span className="font-semibold">{selectedProducts.size}</span> sản phẩm
+        </p>
       </div>
-
       <IonList>
         {!!products.length &&
           products.map((item) => (
-            <ProductItem key={item.id} onClick={handleClickItem} {...item} />
+            <ProductItem
+              key={item.id}
+              onClick={handleClickItem}
+              isSelected={selectedProducts.has(item.id)}
+              {...item}
+            />
           ))}
       </IonList>
-    </ModalBase>
+    </ModalCustom>
   );
 };
 

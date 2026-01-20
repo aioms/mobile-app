@@ -22,8 +22,7 @@ const ReturnReasonSelect: FC<Props> = ({ value, onChange, error }) => {
         onIonChange={(e) => onChange(e.detail.value as string)}
         interface="popover"
         placeholder="Chọn lý do trả hàng"
-        className={`border rounded-lg w-full ${error ? "border-red-500" : "border-gray-300"
-          }`}
+        className={`pl-2 border rounded-lg w-full ${error ? "border-red-500" : "border-gray-300"}`}
       >
         {RETURN_REASONS.map((reason) => (
           <IonSelectOption key={reason.value} value={reason.value}>

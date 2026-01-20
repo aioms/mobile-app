@@ -182,7 +182,7 @@ const FilterModal: React.FC<Props> = ({ dismiss, initialFilters }) => {
 
               {/* Price Range */}
               <IonItem>
-                <IonLabel position="stacked">Giá bán</IonLabel>
+                <IonLabel position="stacked">Giá sỉ</IonLabel>
                 <div className="flex items-center gap-2 mt-2">
                   <IonInput
                     type="number"

@@ -95,9 +95,15 @@ const ProductCard: FC<ProductCardProps> = ({ product, isShowCostPrice }) => {
             </div>
           ) : null}
           <div>
-            <p className="text-gray-500 text-xs">Giá bán</p>
+            <p className="text-gray-500 text-xs text-nowrap">Giá sỉ</p>
             <p className="font-medium">
               {formatCurrencyWithoutSymbol(product.sellingPrice)}
+            </p>
+          </div>
+          <div>
+            <p className="text-gray-500 text-xs text-nowrap">Giá lẻ</p>
+            <p className="font-medium">
+              {formatCurrencyWithoutSymbol(product.retailPrice || 0)}
             </p>
           </div>
         </div>

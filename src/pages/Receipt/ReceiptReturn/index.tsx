@@ -337,6 +337,41 @@ const ReceiptReturn: React.FC = () => {
 
         {/* Return Details Section */}
         <div className="bg-card rounded-lg shadow-sm mb-4">
+
+          {/* Payment Method */}
+          <div className="p-4">
+            <h2 className="text-md font-medium text-foreground mb-3">
+              Phương thức thanh toán
+            </h2>
+            <IonRadioGroup
+              value={formData.paymentMethod}
+              onIonChange={(e) => handleFormChange("paymentMethod", e.detail.value)}
+            >
+              <div className="flex gap-4">
+                <IonItem
+                  lines="none"
+                  className={cn(`rounded-lg transition-colors`, {
+                    "bg-custom-primary border border-custom-primary":
+                      formData.paymentMethod === PaymentMethod.CASH,
+                    border: formData.paymentMethod === PaymentMethod.BANK_TRANSFER,
+                  })}
+                >
+                  <IonRadio value={PaymentMethod.CASH}>Tiền mặt</IonRadio>
+                </IonItem>
+                <IonItem
+                  lines="none"
+                  className={cn(`rounded-lg transition-colors`, {
+                    "bg-custom-primary border border-custom-primary":
+                      formData.paymentMethod === PaymentMethod.BANK_TRANSFER,
+                    border: formData.paymentMethod === PaymentMethod.CASH,
+                  })}
+                >
+                  <IonRadio value={PaymentMethod.BANK_TRANSFER}>Chuyển khoản</IonRadio>
+                </IonItem>
+              </div>
+            </IonRadioGroup>
+          </div>
+
           {/* Return Reason */}
           <div className="p-4">
             <h2 className="text-md font-medium text-foreground mb-2">
@@ -383,39 +418,6 @@ const ReceiptReturn: React.FC = () => {
             </div>
           </div>
 
-          {/* Payment Method */}
-          <div className="p-4">
-            <h2 className="text-md font-medium text-foreground mb-3">
-              Phương thức thanh toán
-            </h2>
-            <IonRadioGroup
-              value={formData.paymentMethod}
-              onIonChange={(e) => handleFormChange("paymentMethod", e.detail.value)}
-            >
-              <div className="flex gap-4">
-                <IonItem
-                  lines="none"
-                  className={cn(`rounded-lg transition-colors`, {
-                    "bg-custom-primary border border-custom-primary":
-                      formData.paymentMethod === PaymentMethod.CASH,
-                    border: formData.paymentMethod === PaymentMethod.BANK_TRANSFER,
-                  })}
-                >
-                  <IonRadio value={PaymentMethod.CASH}>Tiền mặt</IonRadio>
-                </IonItem>
-                <IonItem
-                  lines="none"
-                  className={cn(`rounded-lg transition-colors`, {
-                    "bg-custom-primary border border-custom-primary":
-                      formData.paymentMethod === PaymentMethod.BANK_TRANSFER,
-                    border: formData.paymentMethod === PaymentMethod.CASH,
-                  })}
-                >
-                  <IonRadio value={PaymentMethod.BANK_TRANSFER}>Chuyển khoản</IonRadio>
-                </IonItem>
-              </div>
-            </IonRadioGroup>
-          </div>
         </div>
       </IonContent>
 

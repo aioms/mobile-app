@@ -301,34 +301,38 @@ const OrderCreate: React.FC = () => {
         const { role, data } = event.detail;
 
         if (role === "confirm" && data) {
-          setOrderItems((prev) => [
-            {
-              ...data,
-              quantity: 1,
-              vatRate: 0,
-              inventory: data.inventory, // Add inventory data
-              shipNow: false, // Default to false for new items
-            },
-            ...prev,
-          ]);
-          // if (data.inventory === 0) {
-          //   await presentToast({
-          //     message: "Sản phẩm này đã hết hàng",
-          //     duration: 1500,
-          //     position: "top",
-          //     color: "warning",
-          //   });
-          // } else {
-          //   setOrderItems((prev) => [
-          //     {
-          //       ...data,
-          //       quantity: 1,
-          //       vatRate: 0,
-          //       inventory: data.inventory, // Add inventory data
-          //     },
-          //     ...prev,
-          //   ]);
-          // }
+          // Handle both array (multi-select) and single object (legacy support)
+          const products = Array.isArray(data) ? data : [data];
+
+          // Process each selected product
+          const newItems = products.map(product => ({
+            ...product,
+            quantity: product.quantity || 1,
+            vatRate: 0,
+            inventory: product.inventory,
+            shipNow: false,
+          }));
+
+          // Check for duplicates and merge quantities
+          setOrderItems((prev) => {
+            const updatedItems = [...prev];
+
+            newItems.forEach(newItem => {
+              const existingIndex = updatedItems.findIndex(item => item.id === newItem.id);
+              if (existingIndex >= 0) {
+                // Increase quantity of existing item
+                updatedItems[existingIndex] = {
+                  ...updatedItems[existingIndex],
+                  quantity: updatedItems[existingIndex].quantity + newItem.quantity,
+                };
+              } else {
+                // Add new item at the beginning
+                updatedItems.unshift(newItem);
+              }
+            });
+
+            return updatedItems;
+          });
         }
       },
     });

@@ -94,21 +94,20 @@ const ReceiptImportCreate: React.FC = () => {
           prev.map((item) =>
             item.id === product.id
               ? {
-                  ...item,
-                  quantity: item.quantity + 1,
-                  totalPrice: (item.quantity + 1) * item.costPrice,
-                }
+                ...item,
+                quantity: item.quantity + 1,
+                totalPrice: (item.quantity + 1) * item.costPrice,
+              }
               : item
           )
         );
 
         presentToast({
-          message: `Đã tăng số lượng ${product.productName} lên ${
-            existingItem.quantity + 1
-          }`,
+          message: `Đã tăng số lượng ${product.productName} lên ${existingItem.quantity + 1
+            }`,
           duration: 2000,
           position: "top",
-          color: "success", 
+          color: "success",
         });
       } else {
         setReceiptItems((prev) => [...prev, productData]);
@@ -117,7 +116,7 @@ const ReceiptImportCreate: React.FC = () => {
           message: `Đã thêm ${product.productName} vào phiếu nhập`,
           duration: 2000,
           position: "top",
-          color: "success", 
+          color: "success",
         });
       }
     } catch (error) {
@@ -125,7 +124,7 @@ const ReceiptImportCreate: React.FC = () => {
         message: (error as Error).message || "Không tìm thấy sản phẩm",
         duration: 2000,
         position: "top",
-        color: "danger", 
+        color: "danger",
       });
     }
   };
@@ -142,7 +141,7 @@ const ReceiptImportCreate: React.FC = () => {
         message: error.message || "Lỗi đọc mã vạch",
         duration: 2000,
         position: "top",
-        color: "danger", 
+        color: "danger",
       });
     },
   });
@@ -161,7 +160,11 @@ const ReceiptImportCreate: React.FC = () => {
         const { role, data } = event.detail;
 
         if (role === "confirm") {
-          setReceiptItems((prev) => [...prev, data]);
+          // Handle both array (multi-select) and single object (legacy support)
+          const products = Array.isArray(data) ? data : [data];
+
+          // Add all selected products to receipt items
+          setReceiptItems((prev) => [...prev, ...products]);
         }
       },
     });
@@ -250,7 +253,7 @@ const ReceiptImportCreate: React.FC = () => {
         message: "Vui lòng chọn ít nhất 1 mặt hàng",
         duration: 2000,
         position: "top",
-        color: "danger", 
+        color: "danger",
       });
     }
 
@@ -292,14 +295,14 @@ const ReceiptImportCreate: React.FC = () => {
           message: "Tạo phiếu nhập thành công",
           duration: 2000,
           position: "top",
-          color: "success", 
+          color: "success",
         });
       } else {
         presentToast({
           message: "Tạo phiếu nhập thất bại",
           duration: 2000,
           position: "top",
-          color: "danger", 
+          color: "danger",
         });
       }
 
@@ -309,7 +312,7 @@ const ReceiptImportCreate: React.FC = () => {
         message: (error as Error).message || "Lỗi tạo phiếu nhập",
         duration: 2000,
         position: "top",
-        color: "danger", 
+        color: "danger",
       });
     }
   };

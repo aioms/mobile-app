@@ -251,7 +251,13 @@ const OrderUpdate: React.FC = () => {
         const { role, data } = event.detail;
 
         if (role === "confirm" && data) {
-          addItemToOrderItems(data.id, data);
+          // Handle both array (multi-select) and single object (legacy support)
+          const products = Array.isArray(data) ? data : [data];
+
+          // Process each selected product
+          products.forEach(product => {
+            addItemToOrderItems(product.id, product);
+          });
         }
       },
     });
