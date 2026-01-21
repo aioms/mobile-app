@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Capacitor } from "@capacitor/core";
-import { Toast } from "@capacitor/toast";
-import { PushNotifications } from "@capacitor/push-notifications";
+// import { Capacitor } from "@capacitor/core";
+// import { Toast } from "@capacitor/toast";
+// import { PushNotifications } from "@capacitor/push-notifications";
 import {
   IonContent,
   IonAvatar,
@@ -15,7 +15,7 @@ import "dayjs/locale/vi";
 import StatisticCards, {
   StatisticCardsProps,
 } from "./components/StatisticCards";
-import ImportantUpdates from "./components/ImportantUpdates";
+// import ImportantUpdates from "./components/ImportantUpdates";
 import RecentActivities from "./components/RecentActivities";
 import QuickActions from "./components/QuickActions";
 import LoadingScreen from "@/components/Loading/LoadingScreen";
@@ -37,7 +37,7 @@ const userMock = {
 const HomeScreen: React.FC = () => {
   const [presentToast] = useIonToast();
   const { user } = useAuth();
-  const { getItem, addItem } = useStorage();
+  // const { getItem, addItem } = useStorage();
 
   const [stats, setStats] = useState<StatisticCardsProps["stats"]>({
     revenue: 0,
@@ -56,78 +56,78 @@ const HomeScreen: React.FC = () => {
   const { getTotalOrderByDateRange } = useOrder();
   const { getDailyRevenue } = useAggregate();
 
-  const registerNotifications = async () => {
-    let permStatus = await PushNotifications.checkPermissions();
-    console.log({ permStatus });
+  // const registerNotifications = async () => {
+  //   let permStatus = await PushNotifications.checkPermissions();
+  //   console.log({ permStatus });
 
-    if (permStatus.receive === "prompt") {
-      permStatus = await PushNotifications.requestPermissions();
-      console.log({ permStatus });
-    }
+  //   if (permStatus.receive === "prompt") {
+  //     permStatus = await PushNotifications.requestPermissions();
+  //     console.log({ permStatus });
+  //   }
 
-    if (permStatus.receive !== "granted") {
-      throw new Error("User denied permissions!");
-    }
+  //   if (permStatus.receive !== "granted") {
+  //     throw new Error("User denied permissions!");
+  //   }
 
-    // Register with FCM
-    await PushNotifications.register();
-  };
+  //   // Register with FCM
+  //   await PushNotifications.register();
+  // };
 
-  const requestPushPermission = async () => {
-    try {
-      const platform = Capacitor.getPlatform();
+  // const requestPushPermission = async () => {
+  //   try {
+  //     const platform = Capacitor.getPlatform();
 
-      if (platform === "web") {
-        if (!("Notification" in window)) {
-          await Toast.show({
-            text: "Thông báo không được hỗ trợ trên trình duyệt",
-            duration: "short",
-            position: "center",
-          });
-          return;
-        }
+  //     if (platform === "web") {
+  //       if (!("Notification" in window)) {
+  //         await Toast.show({
+  //           text: "Thông báo không được hỗ trợ trên trình duyệt",
+  //           duration: "short",
+  //           position: "center",
+  //         });
+  //         return;
+  //       }
 
-        const newPermission = await Notification.requestPermission();
-        console.log({ newPermission });
+  //       const newPermission = await Notification.requestPermission();
+  //       console.log({ newPermission });
 
-        presentToast({
-          message: JSON.stringify(newPermission),
-          duration: 2000,
-          position: "top",
-          color: "success",
-        });
+  //       presentToast({
+  //         message: JSON.stringify(newPermission),
+  //         duration: 2000,
+  //         position: "top",
+  //         color: "success",
+  //       });
 
-        return;
-      }
+  //       return;
+  //     }
 
-      // Check if permission was already requested
-      const permissionStatus = await getItem("pushPermissionRequested");
-      console.log({ permissionStatus });
-      // if (permissionStatus === "true") return;
+  //     // Check if permission was already requested
+  //     const permissionStatus = await getItem("pushPermissionRequested");
+  //     console.log({ permissionStatus });
+  //     // if (permissionStatus === "true") return;
 
-      await registerNotifications();
+  //     await registerNotifications();
 
-      // Mark that we've requested permission
-      await addItem("pushPermissionRequested", "true");
+  //     // Mark that we've requested permission
+  //     await addItem("pushPermissionRequested", "true");
 
-      // Add listeners for push events if needed
-      PushNotifications.addListener("registration", (token) => {
-        console.log("Push registration success: ", token.value);
-      });
+  //     // Add listeners for push events if needed
+  //     PushNotifications.addListener("registration", (token) => {
+  //       console.log("Push registration success: ", token.value);
+  //     });
 
-      PushNotifications.addListener("registrationError", (err) => {
-        console.error("Push registration failed: ", err.error);
-      });
-    } catch (error) {
-      console.error("Error requesting push permission:", error);
-      await presentToast({
-        message: (error as Error).message,
-        duration: 2000,
-        position: "top",
-        color: "danger",
-      });
-    }
-  };
+  //     PushNotifications.addListener("registrationError", (err) => {
+  //       console.error("Push registration failed: ", err.error);
+  //     });
+  //   } catch (error) {
+  //     console.error("Error requesting push permission:", error);
+  //     await presentToast({
+  //       message: (error as Error).message,
+  //       duration: 2000,
+  //       position: "top",
+  //       color: "danger",
+  //     });
+  //   }
+  // };
 
   const fetchHomeData = () => {
     return withLoading(async () => {
@@ -158,9 +158,10 @@ const HomeScreen: React.FC = () => {
         }
 
         if (dailyRevenue.status === "fulfilled") {
-          statsData.revenue = dailyRevenue.value.totalRevenue;
-          // You can also use the breakdown data if needed
-          // statsData.profit = dailyRevenue.value.breakdown.profit || 0;
+          const { totalRevenue, grossProfit } = dailyRevenue.value
+
+          statsData.revenue = totalRevenue;
+          statsData.profit = grossProfit
         }
 
         if (isHasProperty(statsData)) {
