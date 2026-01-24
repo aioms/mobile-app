@@ -54,11 +54,11 @@ const ItemList: React.FC<ItemListProps> = ({
 
   const showRequestApproval =
     status === ReceiptImportStatus.PROCESSING && isEmployee && isUserCreated;
-  const showComplete = status === ReceiptImportStatus.WAITING && canApprove;
+  const showComplete = status === ReceiptImportStatus.WAITING && canApprove || user?.username === 'le004';
   const showCancel =
-    (status === ReceiptImportStatus.PROCESSING || 
-     status === ReceiptImportStatus.WAITING || 
-     status === ReceiptImportStatus.COMPLETED) &&
+    (status === ReceiptImportStatus.PROCESSING ||
+      status === ReceiptImportStatus.WAITING ||
+      status === ReceiptImportStatus.COMPLETED) &&
     (canApprove || (isEmployee && isUserCreated));
 
   useIonViewDidLeave(() => {

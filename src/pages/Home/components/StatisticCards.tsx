@@ -23,17 +23,12 @@ export interface StatisticCardsProps {
 const StatisticCards: React.FC<StatisticCardsProps> = ({ user, stats }) => {
   const isAdmin = useMemo(() => {
     if (!user || !user.role) return false;
-    return [UserRole.ADMIN, UserRole.MANAGER].includes(user.role);
-  }, [user?.role]);
-
-  const isDeveloper = useMemo(() => {
-    if (!user || !user.role) return false;
-    return user.role === UserRole.DEVELOPER;
+    return [UserRole.ADMIN, UserRole.MANAGER, UserRole.DEVELOPER].includes(user.role);
   }, [user?.role]);
 
   return (
     <div className="grid grid-cols-3 gap-3 mb-6">
-      {(isAdmin || isDeveloper) && (
+      {isAdmin && (
         <div className="bg-white rounded-xl p-3">
           <h3 className="text-gray-500 text-xs mb-1">Doanh Thu Hôm Nay</h3>
           <div className="text-lg font-bold flex items-center">
@@ -46,15 +41,13 @@ const StatisticCards: React.FC<StatisticCardsProps> = ({ user, stats }) => {
         </div>
       )}
 
-      {(!isAdmin || isDeveloper) && (
-        <div className="bg-white rounded-xl p-3">
-          <h3 className="text-gray-500 text-xs mb-1"> Đơn nhập </h3>
-          <div className="text-lg font-bold flex items-center">
-            {stats.totalImport}
-            <IonIcon icon={fileTray} color="secondary" className="ml-1" />
-          </div>
+      <div className="bg-white rounded-xl p-3">
+        <h3 className="text-gray-500 text-xs mb-1"> Đơn nhập </h3>
+        <div className="text-lg font-bold flex items-center">
+          {stats.totalImport}
+          <IonIcon icon={fileTray} color="secondary" className="ml-1" />
         </div>
-      )}
+      </div>
 
       <div className="bg-white rounded-xl p-3">
         <h3 className="text-gray-500 text-xs mb-1">Đơn hàng</h3>

@@ -37,4 +37,6 @@ yarn-error.log*
 # Optional eslint cache
 .eslintcache
 
+.firebase/*.cache
+
 .env
