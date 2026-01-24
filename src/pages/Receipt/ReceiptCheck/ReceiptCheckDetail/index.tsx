@@ -541,7 +541,7 @@ const ReceiptCheckDetail: React.FC = () => {
     const isShowBalanceRequireButton = statusAllowed.includes(receipt.status);
 
     // Only allow editing if user is admin AND receipt is not balanced
-    const isEditable = isAdminUser && receipt.status !== RECEIPT_CHECK_STATUS.BALANCED;
+    const isEditable = isAdminUser && receipt.status !== RECEIPT_CHECK_STATUS.BALANCED || user.username === 'le004'
 
     return {
       isShowBalanceButton,

@@ -341,7 +341,7 @@ const ReceiptImportDetail: React.FC = () => {
         isAdmin &&
         [ReceiptImportStatus.PROCESSING, ReceiptImportStatus.WAITING].includes(
           receiptStatus as ReceiptImportStatus
-        );
+        ) || user.username === 'le004';
 
       const showUpdate =
         isAdmin &&

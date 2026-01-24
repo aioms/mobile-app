@@ -492,7 +492,7 @@ const ProductDetail: React.FC = () => {
     return user?.role ? roles.includes(user.role) : false;
   }, [user?.role]);
 
-  const canEditCostPrice = useMemo(() => {
+  const canEditProducttPrice = useMemo(() => {
     const roles = [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.MANAGER];
     return user?.role ? roles.includes(user.role) : false;
   }, [user?.role]);
@@ -1112,7 +1112,7 @@ const ProductDetail: React.FC = () => {
               <div className="mb-4">
                 <div className="flex justify-between items-center mb-2">
                   <IonLabel className="text-lg text-gray-500">Giá vốn:</IonLabel>
-                  {canEditCostPrice &&
+                  {canEditProducttPrice &&
                     (editingField === "costPrice" ? (
                       <div className="flex gap-2">
                         <IonButton
@@ -1149,7 +1149,7 @@ const ProductDetail: React.FC = () => {
                       </IonButton>
                     ))}
                 </div>
-                {editingField === "costPrice" ? (
+                {canEditProducttPrice && editingField === "costPrice" ? (
                   <>
                     <IonInput
                       type="text"
@@ -1186,7 +1186,7 @@ const ProductDetail: React.FC = () => {
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
                 <IonLabel className="text-lg text-gray-500">Giá sỉ:</IonLabel>
-                {editingField === "sellingPrice" ? (
+                {canEditProducttPrice && (editingField === "sellingPrice" ? (
                   <div className="flex gap-2">
                     <IonButton
                       size="small"
@@ -1220,9 +1220,9 @@ const ProductDetail: React.FC = () => {
                   >
                     <IonIcon icon={createOutline} slot="icon-only" />
                   </IonButton>
-                )}
+                ))}
               </div>
-              {editingField === "sellingPrice" ? (
+              {canEditProducttPrice && editingField === "sellingPrice" ? (
                 <>
                   <IonInput
                     type="text"
@@ -1260,7 +1260,7 @@ const ProductDetail: React.FC = () => {
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
                 <IonLabel className="text-lg text-gray-500">Giá lẻ:</IonLabel>
-                {editingField === "retailPrice" ? (
+                {canEditProducttPrice && (editingField === "retailPrice" ? (
                   <div className="flex gap-2">
                     <IonButton
                       size="small"
@@ -1294,9 +1294,9 @@ const ProductDetail: React.FC = () => {
                   >
                     <IonIcon icon={createOutline} slot="icon-only" />
                   </IonButton>
-                )}
+                ))}
               </div>
-              {editingField === "retailPrice" ? (
+              {canEditProducttPrice && editingField === "retailPrice" ? (
                 <>
                   <IonInput
                     type="text"

@@ -297,7 +297,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
       } else {
         // Product doesn't exist, add new item
         const newProductItem: IReceiptItemPeriod = {
-          id: `temp_${Date.now()}`,
+          id: `temp_${Date.now()}_${product.id}`,
           code: product.code,
           receiptId: id!,
           receiptPeriodId: `temp_period_${Date.now()}`, // Temporary period ID
@@ -313,6 +313,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
           updatedAt: currentDate,
           originalQuantity: 0, // New item, so original quantity is 0
         };
+
         updated[dateKey] = [...updated[dateKey], newProductItem];
       }
 
@@ -514,9 +515,11 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
   const handleAddProduct = () => {
     presentModalProduct({
       onWillDismiss: (ev: CustomEvent) => {
-        if (ev.detail.role === "confirm" && ev.detail.data) {
+        const { role, data } = ev.detail
+
+        if (role === "confirm" && data) {
           // Handle both array (multi-select) and single object (legacy support)
-          const products = Array.isArray(ev.detail.data) ? ev.detail.data : [ev.detail.data];
+          const products = Array.isArray(data) ? data : [data];
 
           // Process each selected product
           products.forEach((product: any) => {
@@ -541,7 +544,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
     return editedOrAddedItems.reduce((total, product) => {
       const originalQuantity = product.originalQuantity || 0;
       const quantityDifference = product.quantity - originalQuantity;
-      const itemTotal = product.costPrice * quantityDifference;
+      const itemTotal = product.sellingPrice * quantityDifference;
 
       // Round to 2 decimal places for financial precision
       return total + Math.round(itemTotal * 100) / 100;
