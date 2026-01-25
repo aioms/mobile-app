@@ -44,6 +44,7 @@ interface IProductItem {
   quantity: number;
   sellingPrice: number;
   inventory?: number; // Add inventory field
+  shipNow?: boolean; // Add shipNow field
 }
 
 const initialFormData = {
@@ -160,6 +161,7 @@ const ReceiptDebtCreate: React.FC = () => {
           productName: item.productName,
           quantity: item.quantity,
           costPrice: item.sellingPrice,
+          shipNow: item.shipNow || false, // Include shipNow flag
         })),
       };
 
@@ -268,9 +270,9 @@ const ReceiptDebtCreate: React.FC = () => {
                 return prev.map((item) =>
                   item.id === product.id
                     ? {
-                        ...item,
-                        ...product,
-                      }
+                      ...item,
+                      ...product,
+                    }
                     : item
                 );
               } else {
@@ -332,7 +334,7 @@ const ReceiptDebtCreate: React.FC = () => {
             expand="block"
             size="default"
             onClick={handleSubmit}
-            // className="submit-button"
+          // className="submit-button"
           >
             <IonIcon icon={checkmarkCircleOutline} slot="start" />
             Xác nhận tạo Phiếu Thu

@@ -22,6 +22,7 @@ type Props = {
     newPrice: number
   ) => void;
   onRemoveProduct?: (dateKey: string, itemId: string) => void;
+  onShipNowChange?: (dateKey: string, itemId: string, shipNow: boolean) => void;
 };
 
 const PurchasePeriodList: FC<Props> = ({
@@ -31,6 +32,7 @@ const PurchasePeriodList: FC<Props> = ({
   onQuantityChange,
   onPriceChange,
   onRemoveProduct,
+  onShipNowChange,
 }) => {
   const [showDownArrow, setShowDownArrow] = useState(false);
   const productItemsListRef = useRef<HTMLDivElement>(null);
@@ -162,6 +164,9 @@ const PurchasePeriodList: FC<Props> = ({
                       onPriceChange?.(date, itemId, newPrice)
                     }
                     onRemove={(itemId) => onRemoveProduct?.(date, itemId)}
+                    onShipNowChange={(itemId, shipNow) =>
+                      onShipNowChange?.(date, itemId, shipNow)
+                    }
                   />
                 </div>
               </div>

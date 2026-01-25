@@ -23,6 +23,7 @@ interface IProductItem {
   quantity: number;
   sellingPrice: number;
   inventory?: number; // Add inventory field
+  shipNow?: boolean; // Add shipNow field
 }
 
 type Props = {
@@ -48,15 +49,16 @@ const ProductList: React.FC<Props> = ({
   const addProductToCartItem = async (productCode: string) => {
     try {
       const product = await getProductDetail(productCode);
-      if (product.inventory <= 0) {
-        presentToast({
-          message: "Sản phẩm đã hết hàng",
-          duration: 2000,
-          position: "top",
-          color: "warning",
-        });
-        return
-      }
+      // Allow products with zero inventory - auto-enable shipNow
+      // if (product.inventory <= 0) {
+      //   presentToast({
+      //     message: "Sản phẩm đã hết hàng",
+      //     duration: 2000,
+      //     position: "top",
+      //     color: "warning",
+      //   });
+      //   return
+      // }
 
       const productData = {
         id: product.id,
@@ -66,6 +68,7 @@ const ProductList: React.FC<Props> = ({
         sellingPrice: product.sellingPrice,
         quantity: 1,
         inventory: product.inventory,
+        shipNow: (product.inventory ?? 0) <= 0, // Auto-enable shipNow for zero inventory
       };
       onAddItem(productData);
     } catch (error) {
@@ -113,20 +116,22 @@ const ProductList: React.FC<Props> = ({
 
           // Process each selected product
           products.forEach((product: any) => {
-            if (product.inventory <= 0) {
-              presentToast({
-                message: `${product.productName} đã hết hàng`,
-                duration: 2000,
-                position: "top",
-                color: "warning",
-              });
-            } else {
-              onAddItem({
-                ...product,
-                quantity: 1,
-                inventory: product.inventory,
-              });
-            }
+            // Allow products with zero inventory - auto-enable shipNow
+            // if (product.inventory <= 0) {
+            //   presentToast({
+            //     message: `${product.productName} đã hết hàng`,
+            //     duration: 2000,
+            //     position: "top",
+            //     color: "warning",
+            //   });
+            // } else {
+            onAddItem({
+              ...product,
+              quantity: 1,
+              inventory: product.inventory,
+              shipNow: (product.inventory ?? 0) <= 0, // Auto-enable shipNow for zero inventory
+            });
+            // }
           });
         }
       },

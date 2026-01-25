@@ -243,16 +243,16 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
 
   // Add new collection period for a product
   const addNewCollectionPeriod = async (product: any) => {
-    // Check if product has available inventory
-    if (product.inventory <= 0) {
-      presentToast({
-        message: "Sản phẩm đã hết hàng",
-        duration: 2000,
-        position: "top",
-        color: "warning",
-      });
-      return;
-    }
+    // Allow products with zero inventory - auto-enable shipNow
+    // if (product.inventory <= 0) {
+    //   presentToast({
+    //     message: "Sản phẩm đã hết hàng",
+    //     duration: 2000,
+    //     position: "top",
+    //     color: "warning",
+    //   });
+    //   return;
+    // }
 
     const currentDate = new Date().toISOString();
     const dateKey = getDate(currentDate).format("YYYY-MM-DD");
@@ -290,6 +290,13 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
               id: newId,
               quantity: item.quantity + 1,
               originalQuantity,
+              // Ensure these fields are set (they may be missing from existing items)
+              costPrice: item.costPrice ?? product.costPrice,
+              sellingPrice: item.sellingPrice ?? product.sellingPrice,
+              inventory: item.inventory ?? product.inventory ?? 0,
+              discount: item.discount ?? 0,
+              // Update shipNow based on current inventory if not already set
+              shipNow: item.shipNow ?? ((product.inventory ?? 0) <= 0),
             };
           }
           return item;
@@ -312,7 +319,9 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
           createdAt: currentDate,
           updatedAt: currentDate,
           originalQuantity: 0, // New item, so original quantity is 0
+          shipNow: (product.inventory ?? 0) <= 0, // Auto-enable shipNow for zero inventory
         };
+        console.log({ newProductItem });
 
         updated[dateKey] = [...updated[dateKey], newProductItem];
       }
@@ -511,6 +520,44 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
     });
   };
 
+  // Handle ship now change
+  const handleShipNowChange = (
+    dateKey: string,
+    itemId: string,
+    shipNow: boolean
+  ) => {
+    setProductItems((prev) => {
+      const updated = { ...prev };
+      if (updated[dateKey]) {
+        const itemIndex = updated[dateKey].findIndex(
+          (item) => item.id === itemId || item.id === `temp_${itemId}`
+        );
+
+        if (itemIndex !== -1) {
+          const currentItem = updated[dateKey][itemIndex];
+          // Add temp_ prefix if it doesn't already have it (marking as edited)
+          const newId = currentItem.id.startsWith("temp_")
+            ? currentItem.id
+            : `temp_${currentItem.id}`;
+
+          // Store original quantity if not already stored
+          const originalQuantity =
+            currentItem.originalQuantity !== undefined
+              ? currentItem.originalQuantity
+              : currentItem.quantity;
+
+          updated[dateKey][itemIndex] = {
+            ...currentItem,
+            id: newId,
+            shipNow,
+            originalQuantity,
+          };
+        }
+      }
+      return updated;
+    });
+  };
+
   // Handle manual product selection
   const handleAddProduct = () => {
     presentModalProduct({
@@ -542,9 +589,16 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
     );
 
     return editedOrAddedItems.reduce((total, product) => {
+      console.log({ total, product });
+
       const originalQuantity = product.originalQuantity || 0;
       const quantityDifference = product.quantity - originalQuantity;
-      const itemTotal = product.sellingPrice * quantityDifference;
+
+      /**
+       * Use sellingPrice if available, otherwise fall back to costPrice
+       */
+      const price = product.sellingPrice ?? 0;
+      const itemTotal = price * quantityDifference;
 
       // Round to 2 decimal places for financial precision
       return total + Math.round(itemTotal * 100) / 100;
@@ -663,10 +717,12 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
             productCode: item.productCode,
             quantity: item.quantity,
             originalQuantity: item.originalQuantity || 0,
-            costPrice: item.costPrice, // This will now include any price changes
+            costPrice: item.sellingPrice, // This will now include any price changes
             receiptPeriodId: item.receiptPeriodId,
+            shipNow: item.shipNow || false, // Include shipNow flag
           })),
         };
+        console.log({ payload });
 
         const response = await updateInventoryForNewPeriod(id!, payload);
 
@@ -778,6 +834,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
               onQuantityChange={handleQuantityChange}
               onPriceChange={handlePriceChange}
               onRemoveProduct={handleRemoveProduct}
+              onShipNowChange={handleShipNowChange}
             />
 
             <div className="bg-card rounded-lg shadow-sm p-4 mt-3">

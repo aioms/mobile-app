@@ -505,7 +505,7 @@ const ReceiptDebtDetail: React.FC = () => {
                   {periodItems.map((item) => (
                     <div
                       key={item.id}
-                      className="px-4 py-3 border-b border-gray-100 last:border-b-0"
+                      className={`px-4 py-3 border-b border-gray-100 last:border-b-0 ${item.metadata?.shipNow ? 'bg-orange-50' : ''}`}
                     >
                       <IonGrid className="p-0">
                         <IonRow className="text-xs">
@@ -531,6 +531,16 @@ const ReceiptDebtDetail: React.FC = () => {
                             {formatCurrencyWithoutSymbol(item.costPrice)}đ
                           </IonCol>
                         </IonRow>
+                        {/* Show ship now badge */}
+                        {item.metadata?.shipNow && (
+                          <IonRow className="text-xs mt-1">
+                            <IonCol className="p-0">
+                              <IonChip color="warning" className="text-xs h-5">
+                                Giao ngay
+                              </IonChip>
+                            </IonCol>
+                          </IonRow>
+                        )}
                         {(item.returnedQuantity && item.returnedQuantity > 0) ? (
                           <IonRow className="text-xs mt-1">
                             <IonCol className="p-0">

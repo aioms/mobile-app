@@ -1,6 +1,6 @@
 import { FC, useState, useEffect, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { IonButton, IonIcon, IonInput } from "@ionic/react";
+import { IonButton, IonIcon, IonInput, IonCheckbox } from "@ionic/react";
 import { trashOutline, createOutline } from "ionicons/icons";
 
 import { IReceiptItemPeriod } from "@/types/receipt-debt.type";
@@ -13,6 +13,7 @@ type Props = {
   onQuantityChange?: (itemId: string, newQuantity: number) => void;
   onPriceChange?: (itemId: string, newPrice: number) => void;
   onRemove?: (itemId: string) => void;
+  onShipNowChange?: (itemId: string, shipNow: boolean) => void;
   editable?: boolean;
 };
 
@@ -22,6 +23,7 @@ const PurchasePeriod: FC<Props> = ({
   onQuantityChange,
   onPriceChange,
   onRemove,
+  onShipNowChange,
   editable = true,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -29,6 +31,7 @@ const PurchasePeriod: FC<Props> = ({
   const [priceInputValue, setPriceInputValue] = useState("");
   const [quantityInputValue, setQuantityInputValue] = useState("");
   const [quantityError, setQuantityError] = useState("");
+  const [shipNowStates, setShipNowStates] = useState<Record<string, boolean>>({});
 
   // Memoize initial quantities calculation
   const initialQuantities = useMemo(() => {
@@ -50,6 +53,15 @@ const PurchasePeriod: FC<Props> = ({
     useState<Record<string, number>>(initialQuantities);
   const [prices, setPrices] = useState<Record<string, number>>(initialPrices);
 
+  // Initialize shipNow states from items
+  useEffect(() => {
+    const initialShipNow = items.reduce((acc, item) => {
+      acc[item.id] = item.shipNow || false;
+      return acc;
+    }, {} as Record<string, boolean>);
+    setShipNowStates(initialShipNow);
+  }, [items]);
+
   // Memoize current item and total items
   const currentItem = useMemo(() => items[currentIndex], [items, currentIndex]);
   const totalItems = useMemo(() => items.length, [items.length]);
@@ -60,10 +72,11 @@ const PurchasePeriod: FC<Props> = ({
     return Math.max(0, inventory);
   };
 
-  // Maximum quantity constraint based on inventory
+  // Maximum quantity constraint based on shipNow state
   const maxQuantity = useMemo(() => {
     if (!currentItem) return 0;
-    return getAvailableInventory(currentItem);
+    const isShipNow = shipNowStates[currentItem.id] || false;
+    return isShipNow ? 9999 : getAvailableInventory(currentItem);
   }, [currentItem]);
 
   const minQuantity = 1;
@@ -251,6 +264,24 @@ const PurchasePeriod: FC<Props> = ({
     }
   };
 
+  const handleShipNowChange = (checked: boolean) => {
+    const itemId = currentItem.id;
+    setShipNowStates((prev) => ({
+      ...prev,
+      [itemId]: checked,
+    }));
+    onShipNowChange?.(itemId, checked);
+
+    // Revalidate quantity when shipNow changes
+    const currentQty = quantities[itemId] || currentItem.quantity;
+    if (!checked && currentQty > getAvailableInventory(currentItem)) {
+      const newQty = getAvailableInventory(currentItem);
+      setQuantities((prev) => ({ ...prev, [itemId]: newQty }));
+      setQuantityInputValue(newQty.toString());
+      onQuantityChange?.(itemId, newQty);
+    }
+  };
+
   const truncateProductName = (name: string, maxLength: number = 35) => {
     if (name.length <= maxLength) return name;
     return `${name.substring(0, maxLength)}...`;
@@ -260,8 +291,10 @@ const PurchasePeriod: FC<Props> = ({
     return null;
   }
 
+  const isShipNow = shipNowStates[currentItem?.id] || false;
+
   return (
-    <div className="p-4 border-l-4 border-blue-500 bg-blue-50 relative">
+    <div className={`p-4 border-l-4 ${isShipNow ? 'border-orange-500 bg-orange-50' : 'border-blue-500 bg-blue-50'} relative`}>
       {/* Remove button for editable mode */}
       {editable && onRemove && (
         <div className="absolute top-2 right-2">
@@ -280,7 +313,7 @@ const PurchasePeriod: FC<Props> = ({
         <span className="text-sm text-blue-600 font-medium">
           Đợt {displayDate}
         </span>
-        {editable && (
+        {editable && currentItem.id.startsWith("temp_") && (
           <span className="ml-2 text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
             Mới thêm
           </span>
@@ -351,7 +384,7 @@ const PurchasePeriod: FC<Props> = ({
         {editable && (
           <div className="flex justify-between items-center mb-2">
             <span className="text-xs text-gray-500">
-              Tồn kho: {maxQuantity}
+              SL khả dụng: {maxQuantity}
             </span>
           </div>
         )}
@@ -438,11 +471,26 @@ const PurchasePeriod: FC<Props> = ({
           )}
 
           <div className="flex items-center">
-            <span className="text-sm font-semibold text-blue-600">
+            <span className={`text-sm font-semibold ${isShipNow ? 'text-orange-600' : 'text-blue-600'}`}>
               {formatCurrency(totalPrice)}
             </span>
           </div>
         </div>
+
+        {/* Ship Now Checkbox */}
+        {editable && (
+          <div className="flex items-center mt-3">
+            <IonCheckbox
+              checked={isShipNow}
+              onIonChange={(e) => handleShipNowChange(e.detail.checked)}
+              className="ship-now-checkbox"
+              style={{ "--border-radius": "4px" }}
+            />
+            <span className={`ml-2 text-sm ${isShipNow ? 'text-orange-600 font-medium' : 'text-gray-600'}`}>
+              Giao ngay
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

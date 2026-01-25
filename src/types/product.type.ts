@@ -39,4 +39,7 @@ export interface IProductItem {
   createdAt: string;
   periodId?: string;
   originalQuantity?: number;
+  metadata?: {
+    shipNow?: boolean;
+  };
 }
