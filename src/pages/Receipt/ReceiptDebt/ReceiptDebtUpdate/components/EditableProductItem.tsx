@@ -147,7 +147,7 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
     : item.costPrice * item.quantity;
 
   return (
-    <div className="bg-gray-50 rounded-lg p-4">
+    <div className={`rounded-lg p-4 ${item.metadata?.shipNow ? 'bg-orange-50' : 'bg-gray-50'}`}>
       {/* Product Info */}
       <div className="mb-4">
         <h4
@@ -159,6 +159,12 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
         <div className="flex items-center space-x-2 text-base text-gray-600">
           <span>Mã: {item.code}</span>
         </div>
+        {/* Show ship now badge */}
+        {item.metadata?.shipNow && (
+          <IonChip color="warning" className="text-xs mt-2">
+            Giao ngay
+          </IonChip>
+        )}
         {/* Show badge for returned items */}
         {item.returnedQuantity && item.returnedQuantity > 0 && (
           <IonChip color="warning" className="text-xs mt-2">

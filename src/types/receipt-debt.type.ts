@@ -21,4 +21,5 @@ export interface IReceiptItemPeriod {
   // Additional properties used in the component
   originalQuantity?: number;
   isDeleted?: boolean;
+  shipNow?: boolean;
 }
