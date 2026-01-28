@@ -20,6 +20,7 @@ type Props = {
   discountType?: DiscountType;
   onRowChange?: (data: any) => void;
   isEmployee: boolean;
+  isUserSpecial: boolean;
   disabled?: boolean;
 };
 
@@ -38,13 +39,13 @@ const ReceiptItem: FC<Props> = (
     discountType,
     onRowChange,
     isEmployee,
+    isUserSpecial,
     disabled = false,
   }) => {
     const [formattedCostPrice, setformattedCostPrice] = useState<string>(
       formatCurrencyWithoutSymbol(costPrice)
     );
     const [newCostPrice, setNewCostPrice] = useState<number>(costPrice);
-
     const [newDiscount, setNewDiscount] = useState<number>(discount);
 
     const [isEditingQty, setIsEditingQty] = useState<boolean>(false);
@@ -249,7 +250,7 @@ const ReceiptItem: FC<Props> = (
           </div>
 
           {/* Cost Price Input */}
-          {isEmployee || disabled ? (
+          {(isEmployee || disabled) && !isUserSpecial ? (
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <IonLabel position="stacked">Giá nhập</IonLabel>

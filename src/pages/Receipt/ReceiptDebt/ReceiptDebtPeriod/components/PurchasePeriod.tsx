@@ -1,6 +1,6 @@
 import { FC, useState, useEffect, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { IonButton, IonIcon, IonInput, IonCheckbox } from "@ionic/react";
+import { IonButton, IonIcon, IonInput, IonCheckbox, CheckboxChangeEventDetail } from "@ionic/react";
 import { trashOutline, createOutline } from "ionicons/icons";
 
 import { IReceiptItemPeriod } from "@/types/receipt-debt.type";
@@ -16,6 +16,8 @@ type Props = {
   onShipNowChange?: (itemId: string, shipNow: boolean) => void;
   editable?: boolean;
 };
+
+const minQuantity = 1;
 
 const PurchasePeriod: FC<Props> = ({
   items,
@@ -59,12 +61,32 @@ const PurchasePeriod: FC<Props> = ({
       acc[item.id] = item.shipNow || false;
       return acc;
     }, {} as Record<string, boolean>);
+
     setShipNowStates(initialShipNow);
   }, [items]);
 
-  // Memoize current item and total items
-  const currentItem = useMemo(() => items[currentIndex], [items, currentIndex]);
+  // Memoize base current item and total items
+  const baseCurrentItem = useMemo(() => items[currentIndex], [items, currentIndex]);
   const totalItems = useMemo(() => items.length, [items.length]);
+  const isNewItem = useMemo(() => baseCurrentItem.id.startsWith("temp_"), [baseCurrentItem]);
+
+  // Create enhanced currentItem that merges base item with local state changes
+  const currentItem = useMemo(() => {
+    if (!baseCurrentItem) return baseCurrentItem;
+
+    // console.log('-----------');
+    // console.log({ items, baseCurrentItem });
+    // console.log({ quantities, prices, shipNowStates });
+    // console.log('-----------');
+
+    return {
+      ...baseCurrentItem,
+      quantity: quantities[baseCurrentItem.id] ?? baseCurrentItem.quantity,
+      sellingPrice: prices[baseCurrentItem.id] ?? baseCurrentItem.sellingPrice,
+      costPrice: prices[baseCurrentItem.id] ?? baseCurrentItem.costPrice,
+      shipNow: shipNowStates[baseCurrentItem.id] ?? baseCurrentItem.shipNow ?? false,
+    };
+  }, [baseCurrentItem, quantities, prices, shipNowStates]);
 
   // Get available inventory for current item
   const getAvailableInventory = (item: IReceiptItemPeriod): number => {
@@ -75,11 +97,8 @@ const PurchasePeriod: FC<Props> = ({
   // Maximum quantity constraint based on shipNow state
   const maxQuantity = useMemo(() => {
     if (!currentItem) return 0;
-    const isShipNow = shipNowStates[currentItem.id] || false;
-    return isShipNow ? 9999 : getAvailableInventory(currentItem);
+    return currentItem.shipNow ? 9999 : getAvailableInventory(currentItem);
   }, [currentItem]);
-
-  const minQuantity = 1;
 
   const validateQuantity = (value: number): { isValid: boolean; error?: string } => {
     if (isNaN(value)) {
@@ -90,6 +109,10 @@ const PurchasePeriod: FC<Props> = ({
     }
     if (value > maxQuantity) {
       return { isValid: false, error: `Số lượng tối đa là ${maxQuantity} (tồn kho)` };
+    }
+    // If current item is not new and value is less than original quantity
+    if (currentItem.originalQuantity && value < currentItem.originalQuantity) {
+      return { isValid: false, error: `Số lượng đã nhập không được nhỏ hơn số lượng cũ` };
     }
     return { isValid: true };
   };
@@ -106,24 +129,20 @@ const PurchasePeriod: FC<Props> = ({
     }
   };
 
-  // Update quantities and prices when items change
+  // Reset current index if it's out of bounds
   useEffect(() => {
-    setQuantities(initialQuantities);
-    setPrices(initialPrices);
-    // Reset current index if it's out of bounds
     if (currentIndex >= items.length && items.length > 0) {
       setCurrentIndex(0);
     }
-  }, [initialQuantities, initialPrices, currentIndex, items.length]);
+  }, [currentIndex, items.length]);
 
   // Update quantity input value when current item changes
   useEffect(() => {
     if (currentItem) {
-      const currentQuantity = quantities[currentItem.id] || currentItem.quantity;
-      setQuantityInputValue(currentQuantity.toString());
+      setQuantityInputValue(currentItem.quantity.toString());
       setQuantityError("");
     }
-  }, [currentItem, quantities]);
+  }, [currentItem]);
 
   // Memoize display date calculation
   const displayDate = useMemo(() => {
@@ -137,16 +156,9 @@ const PurchasePeriod: FC<Props> = ({
   // Memoize total price calculation
   const totalPrice = useMemo(() => {
     if (!currentItem) return 0;
-
-    const quantity = editable
-      ? quantities[currentItem.id] || currentItem.quantity
-      : currentItem.quantity;
-
-    const price = editable
-      ? prices[currentItem.id] || currentItem.costPrice
-      : currentItem.costPrice;
-    return price * quantity;
-  }, [currentItem, editable, quantities, prices]);
+    const price = editable && isNewItem ? currentItem.sellingPrice : currentItem.costPrice;
+    return price * currentItem.quantity;
+  }, [currentItem]);
 
   const handlePrevious = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -185,7 +197,7 @@ const PurchasePeriod: FC<Props> = ({
 
   // Handle decrement button with special case for quantity 1 -> 0
   const handleDecrement = () => {
-    const currentQty = quantities[currentItem.id] || currentItem.quantity;
+    const currentQty = currentItem.quantity;
     const newQuantity = currentQty > minQuantity ? currentQty - 1 : minQuantity;
 
     if (newQuantity === 0 && currentQty === 1 && totalItems === 1) {
@@ -200,7 +212,7 @@ const PurchasePeriod: FC<Props> = ({
   const handleQuantityInputBlur = () => {
     if (quantityInputValue === "" || isNaN(parseInt(quantityInputValue, 10))) {
       // Reset to current valid quantity
-      const currentQuantity = quantities[currentItem.id] || currentItem.quantity;
+      const currentQuantity = currentItem.quantity;
       setQuantityInputValue(currentQuantity.toString());
       setQuantityError("");
     }
@@ -236,8 +248,7 @@ const PurchasePeriod: FC<Props> = ({
   };
 
   const handlePriceEdit = () => {
-    const currentPrice = prices[currentItem.id] || currentItem.costPrice;
-    setPriceInputValue(formatCurrencyWithoutSymbol(currentPrice));
+    setPriceInputValue(formatCurrencyWithoutSymbol(currentItem.sellingPrice));
     setEditingPrice(true);
   };
 
@@ -259,13 +270,16 @@ const PurchasePeriod: FC<Props> = ({
   const handleRemove = () => {
     onRemove?.(currentItem.id);
     // Adjust current index if we're removing the last item
+
     if (currentIndex >= totalItems - 1 && currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
     }
   };
 
-  const handleShipNowChange = (checked: boolean) => {
+  const handleShipNowChange = (e: CustomEvent<CheckboxChangeEventDetail>) => {
+    const checked = e.detail.checked;
     const itemId = currentItem.id;
+
     setShipNowStates((prev) => ({
       ...prev,
       [itemId]: checked,
@@ -273,9 +287,9 @@ const PurchasePeriod: FC<Props> = ({
     onShipNowChange?.(itemId, checked);
 
     // Revalidate quantity when shipNow changes
-    const currentQty = quantities[itemId] || currentItem.quantity;
-    if (!checked && currentQty > getAvailableInventory(currentItem)) {
-      const newQty = getAvailableInventory(currentItem);
+    if (!checked) {
+      const availableQuantity = getAvailableInventory(currentItem);
+      const newQty = availableQuantity;
       setQuantities((prev) => ({ ...prev, [itemId]: newQty }));
       setQuantityInputValue(newQty.toString());
       onQuantityChange?.(itemId, newQty);
@@ -291,12 +305,31 @@ const PurchasePeriod: FC<Props> = ({
     return null;
   }
 
-  const isShipNow = shipNowStates[currentItem?.id] || false;
+  const isShipNow = currentItem?.shipNow;
+
+  // useEffect(() => {
+  //   console.log('Enhanced currentItem:', {
+  //     id: currentItem?.id,
+  //     name: currentItem.productName,
+  //     quantity: currentItem?.quantity,
+  //     costPrice: currentItem?.costPrice,
+  //     sellingPrice: currentItem?.sellingPrice,
+  //     shipNow: currentItem?.shipNow,
+  //     metadata: currentItem?.metadata,
+  //     maxQuantity,
+  //     isNewItem,
+  //     isShipNow
+  //   });
+  // }, [currentItem]);
+
+  const isShowButtonRemove = useMemo(() => {
+    return editable && isNewItem && onRemove && !currentItem.originalQuantity;
+  }, [editable, isNewItem, onRemove]);
 
   return (
     <div className={`p-4 border-l-4 ${isShipNow ? 'border-orange-500 bg-orange-50' : 'border-blue-500 bg-blue-50'} relative`}>
       {/* Remove button for editable mode */}
-      {editable && onRemove && (
+      {isShowButtonRemove && (
         <div className="absolute top-2 right-2">
           <IonButton
             fill="clear"
@@ -313,7 +346,7 @@ const PurchasePeriod: FC<Props> = ({
         <span className="text-sm text-blue-600 font-medium">
           Đợt {displayDate}
         </span>
-        {editable && currentItem.id.startsWith("temp_") && (
+        {editable && isNewItem && (
           <span className="ml-2 text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
             Mới thêm
           </span>
@@ -331,12 +364,12 @@ const PurchasePeriod: FC<Props> = ({
               <div className="flex items-center">
                 <button
                   type="button"
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${(quantities[currentItem.id] || currentItem.quantity) <= minQuantity
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${currentItem.quantity <= minQuantity
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                     : "bg-gray-100 text-teal-400 hover:bg-gray-200"
                     }`}
                   onClick={handleDecrement}
-                  disabled={(quantities[currentItem.id] || currentItem.quantity) <= minQuantity}
+                  disabled={currentItem.quantity <= minQuantity || !isNewItem}
                   style={{ border: "none" }}
                   aria-label="Giảm số lượng"
                 >
@@ -350,6 +383,7 @@ const PurchasePeriod: FC<Props> = ({
                   onKeyDown={handleQuantityInputKeyPress}
                   min={minQuantity}
                   max={maxQuantity}
+                  disabled={!isNewItem}
                   className={`quantity-input w-12 h-8 mx-1 text-center text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent ${quantityError ? 'border-red-400 bg-red-50' : 'border-gray-300'
                     }`}
                   aria-label="Số lượng sản phẩm"
@@ -357,17 +391,16 @@ const PurchasePeriod: FC<Props> = ({
                 />
                 <button
                   type="button"
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${(quantities[currentItem.id] || currentItem.quantity) >= maxQuantity
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${currentItem.quantity >= maxQuantity
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                     : "bg-gray-100 text-teal-400 hover:bg-gray-200"
                     }`}
                   onClick={() => {
-                    const currentQty = quantities[currentItem.id] || currentItem.quantity;
-                    if (updateQuantity(currentQty + 1)) {
-                      handleQuantityChange(currentQty + 1);
+                    if (updateQuantity(currentItem.quantity + 1)) {
+                      handleQuantityChange(currentItem.quantity + 1);
                     }
                   }}
-                  disabled={(quantities[currentItem.id] || currentItem.quantity) >= maxQuantity}
+                  disabled={currentItem.quantity >= maxQuantity || !isNewItem}
                   style={{ border: "none" }}
                   aria-label="Tăng số lượng"
                 >
@@ -416,9 +449,10 @@ const PurchasePeriod: FC<Props> = ({
             ) : (
               <div className="flex items-center">
                 <span className="text-sm text-gray-500 mr-1 min-w-max">
-                  {formatCurrency(prices[currentItem.id] || currentItem.costPrice)}
+                  {/* Nếu là đợt cũ thì sử dụng costPrice từ receipt item */}
+                  {formatCurrency(editable && isNewItem ? currentItem.sellingPrice : currentItem.costPrice)}
                 </span>
-                {editable && (
+                {editable && isNewItem && (
                   <IonButton
                     fill="clear"
                     size="small"
@@ -478,16 +512,23 @@ const PurchasePeriod: FC<Props> = ({
         </div>
 
         {/* Ship Now Checkbox */}
-        {editable && (
+        {editable ? (
           <div className="flex items-center mt-3">
             <IonCheckbox
               checked={isShipNow}
-              onIonChange={(e) => handleShipNowChange(e.detail.checked)}
+              disabled={getAvailableInventory(currentItem) === 0}
+              onIonChange={handleShipNowChange}
               className="ship-now-checkbox"
               style={{ "--border-radius": "4px" }}
             />
             <span className={`ml-2 text-sm ${isShipNow ? 'text-orange-600 font-medium' : 'text-gray-600'}`}>
               Giao ngay
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center mt-3">
+            <span className={`text-sm ${isShipNow ? 'text-orange-600 font-medium' : 'text-gray-600'}`}>
+              {isShipNow && 'Giao ngay'}
             </span>
           </div>
         )}

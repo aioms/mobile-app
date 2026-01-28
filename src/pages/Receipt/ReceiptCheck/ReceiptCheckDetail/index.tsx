@@ -98,6 +98,8 @@ const ReceiptCheckDetail: React.FC = () => {
     updateBalanceInventory,
   } = useReceiptCheck();
 
+  const isUserSpecial = useMemo(() => user?.username === 'le004', [user?.username]);
+
   // Get available reason values
   const availableReasons = useMemo(() => {
     return RECEIPT_CHECK_REASONS.map((r) => r.value);
@@ -541,7 +543,7 @@ const ReceiptCheckDetail: React.FC = () => {
     const isShowBalanceRequireButton = statusAllowed.includes(receipt.status);
 
     // Only allow editing if user is admin AND receipt is not balanced
-    const isEditable = isAdminUser && receipt.status !== RECEIPT_CHECK_STATUS.BALANCED || user.username === 'le004'
+    const isEditable = isAdminUser && receipt.status !== RECEIPT_CHECK_STATUS.BALANCED || isUserSpecial
 
     return {
       isShowBalanceButton,

@@ -121,6 +121,8 @@ const ReceiptImportDetail: React.FC = () => {
   const [presentToast] = useIonToast();
   const { create: createSupplier } = useSupplier();
 
+  const isUserSpecial = useMemo(() => user?.username === 'le004', [user?.username]);
+
   const [presentModalSupplier, dismissModalSupplier] = useIonModal(
     ModalSelectSupplier,
     {
@@ -338,13 +340,13 @@ const ReceiptImportDetail: React.FC = () => {
         isUserCreated;
 
       const showComplete =
-        isAdmin &&
+        (isAdmin || isUserSpecial) &&
         [ReceiptImportStatus.PROCESSING, ReceiptImportStatus.WAITING].includes(
           receiptStatus as ReceiptImportStatus
-        ) || user.username === 'le004';
+        );
 
       const showUpdate =
-        isAdmin &&
+        (isAdmin || isUserSpecial) &&
         receiptStatus !== ReceiptImportStatus.COMPLETED &&
         receiptStatus !== ReceiptImportStatus.CANCELLED;
 
@@ -620,7 +622,7 @@ const ReceiptImportDetail: React.FC = () => {
     const userRole = user.role;
     const isEmployee = userRole === UserRole.EMPLOYEE;
 
-    if (receipt.status === RECEIPT_IMPORT_STATUS.COMPLETED || isEmployee) {
+    if (receipt.status === RECEIPT_IMPORT_STATUS.COMPLETED || isEmployee && !isUserSpecial) {
       return (
         <div className="space-y-2">
           <div className="flex justify-between">
@@ -769,6 +771,7 @@ const ReceiptImportDetail: React.FC = () => {
         <ReceiptItem
           key={item.id}
           isEmployee={isEmployee}
+          isUserSpecial={isUserSpecial}
           disabled={isReceiptCancelled}
           {...item}
           onRowChange={(data) => {

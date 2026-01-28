@@ -69,6 +69,10 @@ interface HistoryItem {
     id: string;
     name: string;
   };
+  suppliers?: {
+    id: string;
+    name: string;
+  };
 }
 
 interface HistoryData {
@@ -277,10 +281,13 @@ const ProductDetail: React.FC = () => {
 
         // Fetch debt data
         const debtResult = await getHistory({ productId: id, type: "debt" });
+
         const debtData = debtResult && debtResult.length ? debtResult.map((item: Record<string, any>) => {
-          const [receiptItemMap, receiptImportMap] = Object.entries(item);
-          const [, receipt] = receiptImportMap;
-          const [, receiptItem] = receiptItemMap;
+          const {
+            receipt_items: receiptItem,
+            receipt_debts: receipt,
+            customers: customer,
+          } = item;
 
           return {
             id: receipt.id,
@@ -289,10 +296,10 @@ const ProductDetail: React.FC = () => {
             value: receiptItem.costPrice,
             status: receipt.status,
             type: 'debt' as const,
-            customer: receipt.customer ? {
-              id: receipt.customer.id,
-              name: receipt.customer.name,
-            } : undefined,
+            customer: customer ? {
+              id: customer.id,
+              name: customer.name,
+            } : { name: '-' },
           };
         }) : [];
 
@@ -322,10 +329,14 @@ const ProductDetail: React.FC = () => {
         }
 
         const data = result.map((item: Record<string, any>) => {
-          const [receiptItemMap, receiptImportMap] = Object.entries(item);
+          const {
+            receipt_items: receiptItem,
+            receipt_imports,
+            receipt_checks,
+            suppliers: supplier,
+          } = item;
 
-          const [, receipt] = receiptImportMap;
-          const [, receiptItem] = receiptItemMap;
+          const receipt = receipt_imports || receipt_checks;
 
           return {
             id: receipt.id,
@@ -334,6 +345,10 @@ const ProductDetail: React.FC = () => {
             value: receiptItem.costPrice,
             status: receipt.status,
             type: selectedTab as 'import' | 'check',
+            suppliers: supplier ? {
+              id: supplier.id,
+              name: supplier.name,
+            } : { name: '-' },
           };
         });
 
