@@ -22,4 +22,5 @@ export interface IReceiptItemPeriod {
   originalQuantity?: number;
   isDeleted?: boolean;
   shipNow?: boolean;
+  metadata?: Record<string, any>;
 }

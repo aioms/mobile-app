@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useMemo, useRef } from "react";
 import {
   IonItem,
   IonLabel,
@@ -46,20 +46,28 @@ const ItemList: React.FC<ItemListProps> = ({
   const { user } = useAuth();
   const userRole = user?.role || "";
 
-  const isUserCreated = user?.id === userCreate?.id;
-  const isEmployee = userRole === UserRole.EMPLOYEE;
-  const canApprove = (
-    [UserRole.ADMIN, UserRole.MANAGER, UserRole.DEVELOPER] as string[]
-  ).includes(userRole);
+  const { showRequestApproval, showComplete, showCancel } = useMemo(() => {
+    const isUserCreated = user?.id === userCreate?.id;
+    const isEmployee = userRole === UserRole.EMPLOYEE;
+    const canApprove = (
+      [UserRole.ADMIN, UserRole.MANAGER, UserRole.DEVELOPER] as string[]
+    ).includes(userRole);
 
-  const showRequestApproval =
-    status === ReceiptImportStatus.PROCESSING && isEmployee && isUserCreated;
-  const showComplete = status === ReceiptImportStatus.WAITING && canApprove || user?.username === 'le004';
-  const showCancel =
-    (status === ReceiptImportStatus.PROCESSING ||
-      status === ReceiptImportStatus.WAITING ||
-      status === ReceiptImportStatus.COMPLETED) &&
-    (canApprove || (isEmployee && isUserCreated));
+    const showRequestApproval =
+      status === ReceiptImportStatus.PROCESSING && isEmployee && isUserCreated;
+    const showComplete = status === ReceiptImportStatus.WAITING && canApprove || user?.username === 'le004';
+    const showCancel =
+      (status === ReceiptImportStatus.PROCESSING ||
+        status === ReceiptImportStatus.WAITING ||
+        status === ReceiptImportStatus.COMPLETED) &&
+      (canApprove || (isEmployee && isUserCreated));
+
+    return {
+      showRequestApproval,
+      showComplete,
+      showCancel,
+    }
+  }, [user, userRole, status, userCreate])
 
   useIonViewDidLeave(() => {
     slidingRef.current?.close();

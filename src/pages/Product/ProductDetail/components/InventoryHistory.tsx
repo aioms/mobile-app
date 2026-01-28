@@ -25,6 +25,10 @@ interface HistoryItem {
     id: string;
     name: string;
   };
+  suppliers?: {
+    id: string;
+    name: string;
+  };
 }
 
 interface HistoryData {
@@ -116,7 +120,7 @@ const InventoryHistory: React.FC<Props> = ({
             </div>
             <div className="text-sm">{item.quantity}</div>
             <div className="text-sm">{formatCurrencyWithoutSymbol(item.value)}</div>
-            <div className="text-sm">{item.customer?.name || '-'}</div>
+            <div className="text-sm">{item.customer?.name || item.suppliers?.name || 'Khách lẻ'}</div>
             <div>
               <IonLabel
                 color={getStatusColor(item.status as ReceiptStatus)}

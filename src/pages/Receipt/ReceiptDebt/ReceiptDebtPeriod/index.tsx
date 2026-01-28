@@ -140,7 +140,16 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
       const { customerName, dueDate, note } = response.receipt;
 
       setReceiptDebt(response.receipt);
-      setProductItems(response.items);
+
+      const items: Record<string, IReceiptItemPeriod[]> = {}
+
+      Object.keys(response.items).forEach((key) => {
+        items[key] = response.items[key].map((item) => ({
+          ...item,
+          shipNow: item.metadata?.shipNow || false,
+        }));
+      });
+      setProductItems(items);
 
       setFormData({
         customer: customerName || "",
@@ -304,7 +313,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
       } else {
         // Product doesn't exist, add new item
         const newProductItem: IReceiptItemPeriod = {
-          id: `temp_${Date.now()}_${product.id}`,
+          id: `temp_${product.id}`,
           code: product.code,
           receiptId: id!,
           receiptPeriodId: `temp_period_${Date.now()}`, // Temporary period ID
@@ -321,7 +330,6 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
           originalQuantity: 0, // New item, so original quantity is 0
           shipNow: (product.inventory ?? 0) <= 0, // Auto-enable shipNow for zero inventory
         };
-        console.log({ newProductItem });
 
         updated[dateKey] = [...updated[dateKey], newProductItem];
       }
@@ -360,6 +368,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
     const currentItem = productItems[dateKey]?.find(
       (item) => item.id === itemId || item.id === `temp_${itemId}`
     );
+
     if (currentItem?.returnedQuantity && currentItem.returnedQuantity > 0) {
       presentToast({
         message: "Không thể chỉnh sửa sản phẩm đã trả hàng",
@@ -383,6 +392,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
 
     setProductItems((prev) => {
       const updated = { ...prev };
+
       if (updated[dateKey]) {
         const itemIndex = updated[dateKey].findIndex(
           (item) => item.id === itemId || item.id === `temp_${itemId}`
@@ -419,6 +429,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
           }
         }
       }
+
       return updated;
     });
   };
@@ -479,6 +490,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
             ...currentItem,
             id: newId,
             costPrice: newPrice,
+            sellingPrice: newPrice,
             originalQuantity,
           };
         }
@@ -504,18 +516,22 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
 
     setProductItems((prev) => {
       const updated = { ...prev };
+
       if (updated[dateKey]) {
         const itemIndex = updated[dateKey].findIndex(
           (item) => item.id === itemId || item.id === `temp_${itemId}`
         );
+
         if (itemIndex !== -1) {
           updated[dateKey].splice(itemIndex, 1);
+
           // Remove date key if no items left
           if (updated[dateKey].length === 0) {
             delete updated[dateKey];
           }
         }
       }
+
       return updated;
     });
   };
@@ -527,7 +543,8 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
     shipNow: boolean
   ) => {
     setProductItems((prev) => {
-      const updated = { ...prev };
+      const updated = { ...prev }
+
       if (updated[dateKey]) {
         const itemIndex = updated[dateKey].findIndex(
           (item) => item.id === itemId || item.id === `temp_${itemId}`
@@ -550,10 +567,12 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
             ...currentItem,
             id: newId,
             shipNow,
+            sellingPrice: currentItem.costPrice,
             originalQuantity,
           };
         }
       }
+
       return updated;
     });
   };
@@ -589,8 +608,6 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
     );
 
     return editedOrAddedItems.reduce((total, product) => {
-      console.log({ total, product });
-
       const originalQuantity = product.originalQuantity || 0;
       const quantityDifference = product.quantity - originalQuantity;
 
@@ -697,7 +714,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
             });
             return;
           }
-          if (item.costPrice < 0) {
+          if (item.sellingPrice < 0) {
             presentToast({
               message: `Giá sản phẩm ${item.productName} không thể âm`,
               duration: 2000,
@@ -717,12 +734,12 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
             productCode: item.productCode,
             quantity: item.quantity,
             originalQuantity: item.originalQuantity || 0,
-            costPrice: item.sellingPrice, // This will now include any price changes
+            // costPrice: item.sellingPrice, // Cost price for internal tracking
+            costPrice: item.sellingPrice, // Selling price (customer-facing price, includes any price changes)
             receiptPeriodId: item.receiptPeriodId,
             shipNow: item.shipNow || false, // Include shipNow flag
           })),
         };
-        console.log({ payload });
 
         const response = await updateInventoryForNewPeriod(id!, payload);
 
