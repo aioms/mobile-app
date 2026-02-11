@@ -15,17 +15,19 @@ import { IReceiptReturnItem } from "@/types/receipt-return.type";
 import { formatCurrency } from "@/helpers/formatters";
 import { getNumberFromStringOrThrow } from "@/helpers/common";
 
+interface OrderItem {
+  id: string;
+  productId: string;
+  code: string;
+  productName: string;
+  quantity: number;
+  price: number;
+  returnedQuantity?: number;
+}
+
 interface Props {
   dismiss: (data?: any, role?: string) => void;
-  orderProducts: Array<{
-    id: string;
-    productId: string;
-    code: string;
-    productName: string;
-    quantity: number;
-    price: number;
-    returnedQuantity?: number;
-  }>;
+  orderProducts: Array<OrderItem>;
 }
 
 const ModalSelectReturnProduct: FC<Props> = ({ dismiss, orderProducts }) => {
@@ -33,13 +35,14 @@ const ModalSelectReturnProduct: FC<Props> = ({ dismiss, orderProducts }) => {
     Map<string, IReceiptReturnItem>
   >(new Map());
 
-  const handleToggleProduct = (product: any, checked: boolean) => {
+  const handleToggleProduct = (product: OrderItem, checked: boolean) => {
     const newSelected = new Map(selectedProducts);
+    const productId = product.productId || product.id;
 
     if (checked) {
       const returnItem: IReceiptReturnItem = {
         id: product.id || product.productId,
-        productId: product.productId,
+        productId: product.productId || product.id,
         code: product.code,
         productCode: getNumberFromStringOrThrow(product.code),
         productName: product.productName,
@@ -47,9 +50,9 @@ const ModalSelectReturnProduct: FC<Props> = ({ dismiss, orderProducts }) => {
         costPrice: product.price,
         originalQuantity: product.quantity,
       };
-      newSelected.set(product.productId, returnItem);
+      newSelected.set(productId, returnItem);
     } else {
-      newSelected.delete(product.productId);
+      newSelected.delete(productId);
     }
 
     setSelectedProducts(newSelected);
@@ -91,30 +94,39 @@ const ModalSelectReturnProduct: FC<Props> = ({ dismiss, orderProducts }) => {
             {orderProducts.map((product) => {
               const productId = product.productId || product.id;
               const isSelected = selectedProducts.has(productId);
+              const returnedQty = product.returnedQuantity || 0;
+              const returnableQty = product.quantity - returnedQty;
+              const isDisabled = returnableQty <= 0;
 
               return (
-                <IonItem key={productId} lines="full">
+                <IonItem
+                  key={productId}
+                  lines="full"
+                  className={isDisabled ? "opacity-50" : ""}
+                >
                   <IonCheckbox
                     slot="start"
                     checked={isSelected}
+                    disabled={isDisabled}
                     onIonChange={(e) =>
-                      handleToggleProduct(product, e.detail.checked)
+                      handleToggleProduct(
+                        { ...product, quantity: returnableQty },
+                        e.detail.checked
+                      )
                     }
                   />
                   <IonLabel>
-                    <h2 className="font-medium">
+                    <h2 className={`font-medium ${isDisabled ? "text-gray-400" : ""}`}>
                       {product.productName}
                     </h2>
-                    <p className="text-sm text-gray-500">
-                      Mã SP: {product.code}
-                    </p>
+                    <p className="text-sm text-gray-500">Mã SP: {product.code}</p>
                     <p className="text-sm text-gray-600">
-                      Số lượng có thể trả: {product.quantity}
-                      {(product.returnedQuantity && product.returnedQuantity > 0) ? (
+                      Số lượng có thể trả: {returnableQty}
+                      {returnedQty > 0 && (
                         <span className="text-orange-500 ml-2">
-                          (Đã trả: {product.returnedQuantity})
+                          (Đã trả: {returnedQty})
                         </span>
-                      ) : null}
+                      )}
                       {" | "}
                       {formatCurrency(product.price)}
                     </p>
