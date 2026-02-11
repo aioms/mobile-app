@@ -224,6 +224,9 @@ const ReceiptReturn: React.FC = () => {
           productName: item.productName,
           quantity: item.quantity,
           costPrice: item.costPrice,
+          metadata: {
+            returnedQuantity: item.quantity,
+          }
         })),
         paymentMethod: formData.paymentMethod,
       };
@@ -423,7 +426,7 @@ const ReceiptReturn: React.FC = () => {
 
       <IonFooter>
         <div className="ion-padding flex gap-2">
-          <IonButton
+          {/* <IonButton
             expand="block"
             fill="outline"
             size="default"
@@ -433,7 +436,7 @@ const ReceiptReturn: React.FC = () => {
           >
             <IonIcon icon={saveOutline} slot="start" />
             Lưu nháp
-          </IonButton>
+          </IonButton> */}
           <IonButton
             expand="block"
             size="default"

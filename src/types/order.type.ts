@@ -5,6 +5,8 @@ export interface IOrderItem {
   quantity: number;
   price: number;
   vatRate?: number;
+  shipNow?: boolean;
+  returnedQuantity?: number;
 }
 
 export interface IVatInfo {

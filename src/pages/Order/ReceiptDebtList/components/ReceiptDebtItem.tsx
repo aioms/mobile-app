@@ -58,7 +58,7 @@ const ReceiptDebtItem: React.FC<ReceiptDebtItemProps> = ({ receiptDebt }) => {
     },
   });
 
-  const onPrint = () => {};
+  const onPrint = () => { };
 
   const handleAddPeriod = async () => {
     // Close the sliding item first
@@ -116,25 +116,26 @@ const ReceiptDebtItem: React.FC<ReceiptDebtItemProps> = ({ receiptDebt }) => {
         <IonRippleEffect></IonRippleEffect>
       </IonItem>
 
-      {receiptDebt.status !== RECEIPT_DEBT_STATUS.CANCELLED && (
-        <IonItemOptions side="end">
-          <IonItemOption color="warning" onClick={handleAddPeriod}>
-            <IonIcon slot="top" icon={addCircleSharp}></IonIcon>
-            Thêm đợt
-          </IonItemOption>
-          <IonItemOption
-            color="tertiary"
-            routerLink={`/tabs/debt/update/${receiptDebt.id}`}
-          >
-            Sửa phiếu
-            <IonIcon slot="top" icon={createOutline}></IonIcon>
-        </IonItemOption>
-        <IonItemOption color="medium" onClick={onPrint}>
-          In phiếu
-          <IonIcon slot="top" icon={printOutline}></IonIcon>
-        </IonItemOption>
-      </IonItemOptions>
-      )}
+      {receiptDebt.status !== RECEIPT_DEBT_STATUS.CANCELLED &&
+        receiptDebt.status !== RECEIPT_DEBT_STATUS.COMPLETED && (
+          <IonItemOptions side="end">
+            <IonItemOption color="warning" onClick={handleAddPeriod}>
+              <IonIcon slot="top" icon={addCircleSharp}></IonIcon>
+              Thêm đợt
+            </IonItemOption>
+            <IonItemOption
+              color="tertiary"
+              routerLink={`/tabs/debt/update/${receiptDebt.id}`}
+            >
+              Sửa phiếu
+              <IonIcon slot="top" icon={createOutline}></IonIcon>
+            </IonItemOption>
+            <IonItemOption color="medium" onClick={onPrint}>
+              In phiếu
+              <IonIcon slot="top" icon={printOutline}></IonIcon>
+            </IonItemOption>
+          </IonItemOptions>
+        )}
     </IonItemSliding>
   );
 };

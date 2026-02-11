@@ -21,6 +21,9 @@ export interface CreateReceiptItemRequestDto {
   productName: string;
   quantity: number;
   costPrice: number;
+  metadata?: {
+    returnedQuantity: number;
+  };
 }
 
 export interface CreateReceiptReturnRequestDto {

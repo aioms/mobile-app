@@ -101,6 +101,7 @@ const OrderDetail: React.FC = () => {
                 productName: item.productName,
                 quantity: item.quantity,
                 price: item.price,
+                returnedQuantity: item.returnedQuantity,
               })),
             },
           });
@@ -223,6 +224,8 @@ const OrderDetail: React.FC = () => {
                     code={item.code}
                     price={item.price}
                     quantity={item.quantity}
+                    returnedQuantity={item.returnedQuantity}
+                    shipNow={item.shipNow}
                   />
                 ))}
               </div>
