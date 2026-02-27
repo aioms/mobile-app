@@ -1,3 +1,5 @@
+import { DiscountType, OrderType } from "@/common/enums/order";
+
 export interface IOrderItemEnhanced {
   id: string;
   productId: string;
@@ -25,7 +27,9 @@ export interface IOrderSubmissionData {
   customer: string;
   paymentMethod: string;
   note: string;
+  orderType: OrderType;
   discountAmount: number;
+  discountType?: DiscountType;
   items: IOrderItemSubmission[];
   vatInfo?: {
     companyName: string;

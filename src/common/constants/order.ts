@@ -1,5 +1,5 @@
 import type { ICustomer } from "@/types/order.type";
-import { OrderStatus, PaymentMethod } from "../enums/order";
+import { OrderStatus, OrderType, PaymentMethod } from "../enums/order";
 
 export const getOrderStatusLabel = (status: string): string => {
   switch (status) {
@@ -44,7 +44,7 @@ export const getPaymentMethodLabel = (method: string): string => {
 
 export const getCustomerTypeLabel = (
   customer: ICustomer | null,
-  isTruncate = false
+  isTruncate = false,
 ): string => {
   if (!customer) return "Khách lẻ";
   if (!isTruncate) return customer.name;
@@ -60,4 +60,24 @@ export const getCustomerTypeColor = (customer: ICustomer | null): string => {
   return customer && customer.id
     ? "bg-blue-100 text-blue-700"
     : "bg-orange-100 text-orange-700";
+};
+
+export const getOrderTypeLabel = (type?: OrderType): string => {
+  switch (type) {
+    case OrderType.INTERNAL_TRANSFER:
+      return "Chuyển kho nội bộ";
+    case OrderType.SALES:
+    default:
+      return "Bán hàng";
+  }
+};
+
+export const getOrderTypeColor = (type?: OrderType): string => {
+  switch (type) {
+    case OrderType.INTERNAL_TRANSFER:
+      return "secondary";
+    case OrderType.SALES:
+    default:
+      return "primary";
+  }
 };

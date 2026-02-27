@@ -49,7 +49,7 @@ import {
   formatCurrencyWithoutSymbol,
   parseCurrencyInput,
 } from "@/helpers/formatters";
-import { OrderStatus, PaymentMethod } from "@/common/enums/order";
+import { OrderStatus, PaymentMethod, DiscountType, OrderType } from "@/common/enums/order";
 import { cn } from "@/lib/utils";
 
 import OrderItem from "./components/OrderItem";
@@ -80,10 +80,11 @@ interface IFormData {
   taxCode?: string;
   email?: string;
   remark?: string;
-  discountType?: "percentage" | "fixed";
+  discountType?: DiscountType;
   discountPercentage?: number;
   discountAmount?: number;
   discountAmountFormatted?: string;
+  orderType?: OrderType;
 }
 
 const initialFormData: IFormData = {
@@ -91,10 +92,11 @@ const initialFormData: IFormData = {
   customer: "",
   paymentMethod: PaymentMethod.CASH,
   vatEnabled: false,
-  discountType: "percentage",
+  discountType: DiscountType.PERCENTAGE,
   discountPercentage: 0,
   discountAmount: 0,
   discountAmountFormatted: "",
+  orderType: OrderType.SALES,
 };
 
 // Map order payment method to modal payment method
@@ -460,6 +462,15 @@ const OrderCreate: React.FC = () => {
     }
   };
 
+  const handleOrderTypeChange = (e: CustomEvent) => {
+    const { value } = e.detail;
+    setFormData((prev) => ({
+      ...prev,
+      orderType: value as OrderType,
+    }));
+  };
+
+
   const handleDiscountChange = (e: InputCustomEvent) => {
     const { name, value } = e.target;
 
@@ -554,9 +565,9 @@ const OrderCreate: React.FC = () => {
 
   const calculateDiscount = () => {
     const subtotal = calculateTotal();
-    if (formData.discountType === "percentage" && formData.discountPercentage) {
+    if (formData.discountType === DiscountType.PERCENTAGE && formData.discountPercentage) {
       return (subtotal * Number(formData.discountPercentage)) / 100;
-    } else if (formData.discountType === "fixed" && formData.discountAmount) {
+    } else if (formData.discountType === DiscountType.FIXED && formData.discountAmount) {
       return formData.discountAmount;
     }
     return 0;
@@ -697,12 +708,15 @@ const OrderCreate: React.FC = () => {
     }
 
     // Prepare order data
+    const discountValue = calculateDiscount();
     const orderData: IOrderSubmissionData = {
       status: status || OrderStatus.PENDING,
       customer: formData.customer,
       paymentMethod: formData.paymentMethod,
       note: formData.note,
-      discountAmount: calculateDiscount(),
+      orderType: formData.orderType || OrderType.SALES,
+      discountAmount: discountValue,
+      ...(discountValue > 0 && { discountType: formData.discountType }),
       items: orderItems.map((item) => ({
         productId: item.id,
         productName: item.productName,
@@ -778,6 +792,52 @@ const OrderCreate: React.FC = () => {
       </IonHeader>
 
       <IonContent className="ion-padding bg-background">
+        {/* 0. Order Type Section */}
+        <div className="bg-card rounded-lg shadow-sm mb-4">
+          <div className="p-4">
+            <h2 className="text-lg font-medium text-foreground mb-3">
+              Loại đơn hàng (Order Type) <span className="text-red-500">*</span>
+            </h2>
+            <IonRadioGroup
+              value={formData.orderType || OrderType.SALES}
+              onIonChange={handleOrderTypeChange}
+            >
+              <div className="flex gap-4">
+                <IonItem
+                  lines="none"
+                  className={cn(`rounded-lg transition-colors`, {
+                    "bg-custom-primary border border-custom-primary":
+                      formData.orderType === OrderType.SALES || !formData.orderType,
+                    border: formData.orderType === OrderType.INTERNAL_TRANSFER,
+                  })}
+                >
+                  <IonRadio value={OrderType.SALES}>
+                    <div className="flex flex-col">
+                      <span>Bán hàng</span>
+                      <span className="text-sm text-gray-500">(Sales)</span>
+                    </div>
+                  </IonRadio>
+                </IonItem>
+                <IonItem
+                  lines="none"
+                  className={cn(`rounded-lg transition-colors`, {
+                    "bg-custom-primary border border-custom-primary":
+                      formData.orderType === OrderType.INTERNAL_TRANSFER,
+                    border: formData.orderType === OrderType.SALES || !formData.orderType,
+                  })}
+                >
+                  <IonRadio value={OrderType.INTERNAL_TRANSFER}>
+                    <div className="flex flex-col">
+                      <span>Chuyển kho nội bộ</span>
+                      <span className="text-sm text-gray-500">(Internal Transfer)</span>
+                    </div>
+                  </IonRadio>
+                </IonItem>
+              </div>
+            </IonRadioGroup>
+          </div>
+        </div>
+
         {/* 1. Product Selection Section */}
         <div className="bg-card rounded-lg shadow-sm mb-4">
           <div className="p-4">
@@ -837,6 +897,7 @@ const OrderCreate: React.FC = () => {
                       {...item}
                       vatRate={item.vatRate || 0}
                       attrs={{ "data-order-item": "true" }}
+                      isInternalTransfer={formData.orderType === OrderType.INTERNAL_TRANSFER}
                       onRowChange={(data) => handleItemChange(item.id, data)}
                       onRemoveItem={() => handleRemoveItem(item.id)}
                     />
@@ -866,72 +927,74 @@ const OrderCreate: React.FC = () => {
         </div>
 
         {/* 2. Discount Section */}
-        <div className="bg-card rounded-lg shadow-sm mb-4">
-          <div className="p-4">
-            <h2 className="text-lg font-medium text-foreground mb-3">
-              Giảm giá
-            </h2>
-            <div className="mb-4">
-              <IonRadioGroup
-                value={formData.discountType || "percentage"}
-                onIonChange={handleDiscountTypeChange}
-              >
-                <div className="flex gap-4 mb-3">
-                  <IonItem
-                    lines="none"
-                    className={cn(`rounded-lg transition-colors`, {
-                      "bg-custom-primary border border-custom-primary":
-                        formData.discountType === "percentage" ||
-                        !formData.discountType,
-                      border: formData.discountType === "fixed",
-                    })}
-                  >
-                    <IonRadio value="percentage">Theo %</IonRadio>
-                  </IonItem>
-                  <IonItem
-                    lines="none"
-                    className={cn(`rounded-lg transition-colors`, {
-                      "bg-custom-primary border border-custom-primary":
-                        formData.discountType === "fixed",
-                      border:
-                        formData.discountType === "percentage" ||
-                        !formData.discountType,
-                    })}
-                  >
-                    <IonRadio value="fixed">Theo VND</IonRadio>
-                  </IonItem>
-                </div>
-              </IonRadioGroup>
+        {formData.orderType !== OrderType.INTERNAL_TRANSFER && (
+          <div className="bg-card rounded-lg shadow-sm mb-4">
+            <div className="p-4">
+              <h2 className="text-lg font-medium text-foreground mb-3">
+                Giảm giá
+              </h2>
+              <div className="mb-4">
+                <IonRadioGroup
+                  value={formData.discountType || DiscountType.PERCENTAGE}
+                  onIonChange={handleDiscountTypeChange}
+                >
+                  <div className="flex gap-4 mb-3">
+                    <IonItem
+                      lines="none"
+                      className={cn(`rounded-lg transition-colors`, {
+                        "bg-custom-primary border border-custom-primary":
+                          formData.discountType === DiscountType.PERCENTAGE ||
+                          !formData.discountType,
+                        border: formData.discountType === DiscountType.FIXED,
+                      })}
+                    >
+                      <IonRadio value={DiscountType.PERCENTAGE}>Theo %</IonRadio>
+                    </IonItem>
+                    <IonItem
+                      lines="none"
+                      className={cn(`rounded-lg transition-colors`, {
+                        "bg-custom-primary border border-custom-primary":
+                          formData.discountType === DiscountType.FIXED,
+                        border:
+                          formData.discountType === DiscountType.PERCENTAGE ||
+                          !formData.discountType,
+                      })}
+                    >
+                      <IonRadio value={DiscountType.FIXED}>Theo VND</IonRadio>
+                    </IonItem>
+                  </div>
+                </IonRadioGroup>
 
-              {formData.discountType === "percentage" ? (
-                <IonInput
-                  label="Giảm giá (%)"
-                  labelPlacement="floating"
-                  fill="solid"
-                  type="number"
-                  min={0}
-                  max={100}
-                  placeholder="Nhập % giảm giá"
-                  name="discountPercentage"
-                  className="custom-padding border rounded-lg"
-                  value={formData.discountPercentage}
-                  onIonChange={handleDiscountChange}
-                ></IonInput>
-              ) : (
-                <IonInput
-                  label="Giảm giá (VND)"
-                  labelPlacement="floating"
-                  fill="solid"
-                  placeholder="Nhập số tiền giảm giá"
-                  name="discountAmount"
-                  className="custom-padding border rounded-lg"
-                  value={formData.discountAmountFormatted || 0}
-                  onIonInput={handleDiscountChange}
-                ></IonInput>
-              )}
+                {formData.discountType === DiscountType.PERCENTAGE ? (
+                  <IonInput
+                    label="Giảm giá (%)"
+                    labelPlacement="floating"
+                    fill="solid"
+                    type="number"
+                    min={0}
+                    max={100}
+                    placeholder="Nhập % giảm giá"
+                    name="discountPercentage"
+                    className="custom-padding border rounded-lg"
+                    value={formData.discountPercentage}
+                    onIonChange={handleDiscountChange}
+                  ></IonInput>
+                ) : (
+                  <IonInput
+                    label="Giảm giá (VND)"
+                    labelPlacement="floating"
+                    fill="solid"
+                    placeholder="Nhập số tiền giảm giá"
+                    name="discountAmount"
+                    className="custom-padding border rounded-lg"
+                    value={formData.discountAmountFormatted || 0}
+                    onIonInput={handleDiscountChange}
+                  ></IonInput>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* 3. Payment Method Section */}
         <div className="bg-card rounded-lg shadow-sm mb-4">
