@@ -1,4 +1,4 @@
-import { DiscountType } from "@/common/enums/order";
+import { DiscountType, OrderType } from "@/common/enums/order";
 
 export interface IOrderItemEnhanced {
   id: string;
@@ -27,7 +27,7 @@ export interface IOrderSubmissionData {
   customer: string;
   paymentMethod: string;
   note: string;
-  orderType: string;
+  orderType: OrderType;
   discountAmount: number;
   discountType?: DiscountType;
   items: IOrderItemSubmission[];

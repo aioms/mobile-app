@@ -1,5 +1,5 @@
 import type { ICustomer } from "@/types/order.type";
-import { OrderStatus, PaymentMethod } from "../enums/order";
+import { OrderStatus, OrderType, PaymentMethod } from "../enums/order";
 
 export const getOrderStatusLabel = (status: string): string => {
   switch (status) {
@@ -62,21 +62,21 @@ export const getCustomerTypeColor = (customer: ICustomer | null): string => {
     : "bg-orange-100 text-orange-700";
 };
 
-export const getOrderTypeLabel = (type?: string): string => {
+export const getOrderTypeLabel = (type?: OrderType): string => {
   switch (type) {
-    case "internal_transfer":
+    case OrderType.INTERNAL_TRANSFER:
       return "Chuyển kho nội bộ";
-    case "sales":
+    case OrderType.SALES:
     default:
       return "Bán hàng";
   }
 };
 
-export const getOrderTypeColor = (type?: string): string => {
+export const getOrderTypeColor = (type?: OrderType): string => {
   switch (type) {
-    case "internal_transfer":
+    case OrderType.INTERNAL_TRANSFER:
       return "secondary";
-    case "sales":
+    case OrderType.SALES:
     default:
       return "primary";
   }

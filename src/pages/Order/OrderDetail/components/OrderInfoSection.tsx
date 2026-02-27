@@ -3,11 +3,12 @@ import { IonChip, IonLabel } from "@ionic/react";
 import { dayjsFormat } from "@/helpers/formatters";
 import { getCustomerTypeLabel, getOrderTypeLabel, getOrderTypeColor } from "@/common/constants/order";
 import type { ICustomer } from "@/types/order.type";
+import { OrderType } from "@/common/enums/order";
 
 interface OrderInfoSectionProps {
   orderDate: string;
   customer: ICustomer | null;
-  orderType?: string;
+  orderType?: OrderType;
   note?: string;
 }
 

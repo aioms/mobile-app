@@ -1,4 +1,4 @@
-import { DiscountType, PaymentMethod } from "@/common/enums/order";
+import { DiscountType, OrderType, PaymentMethod } from "@/common/enums/order";
 
 /**
  * Order item interface for managing product items in the order
@@ -46,7 +46,7 @@ export interface IFormData {
   discountPercentage?: number;
   discountAmount?: number;
   discountAmountFormatted?: string;
-  orderType?: string;
+  orderType?: OrderType;
 }
 
 /**

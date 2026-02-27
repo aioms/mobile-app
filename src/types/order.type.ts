@@ -1,3 +1,6 @@
+import { DiscountType } from "@/common/enums";
+import { OrderType } from "@/common/enums/order";
+
 export interface IOrderItem {
   productId: string;
   productName: string;
@@ -28,8 +31,9 @@ export interface IOrder {
   paymentMethod: string;
   totalAmount: number;
   discountAmount: number;
+  discountType?: DiscountType;
   status: string;
-  orderType?: string;
+  orderType?: OrderType;
   note: string;
   vatInfo: IVatInfo;
   items: IOrderItem[];

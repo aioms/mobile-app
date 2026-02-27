@@ -15,3 +15,7 @@ export enum DiscountType {
   FIXED = "fixed",
   PERCENTAGE = "percentage",
 }
+export enum OrderType {
+  SALES = "sales",
+  INTERNAL_TRANSFER = "internal_transfer",
+}

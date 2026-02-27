@@ -46,7 +46,7 @@ import {
   getOrderStatusColor,
   getOrderStatusLabel,
 } from "@/common/constants/order";
-import { OrderStatus, PaymentMethod, DiscountType } from "@/common/enums/order";
+import { OrderStatus, PaymentMethod, DiscountType, OrderType } from "@/common/enums/order";
 import { cn } from "@/lib/utils";
 
 import OrderItem from "./components/OrderItem";
@@ -83,7 +83,7 @@ interface IFormData {
   discountPercentage?: number;
   discountAmount?: number;
   discountAmountFormatted?: string;
-  orderType?: "sales" | "internal_transfer";
+  orderType?: OrderType;
 }
 
 const initialFormData: IFormData = {
@@ -97,7 +97,7 @@ const initialFormData: IFormData = {
   discountPercentage: 0,
   discountAmount: 0,
   discountAmountFormatted: "",
-  orderType: "sales",
+  orderType: OrderType.SALES,
 };
 
 const OrderUpdate: React.FC = () => {
@@ -320,6 +320,15 @@ const OrderUpdate: React.FC = () => {
       });
     }
   };
+
+  const handleOrderTypeChange = (e: CustomEvent) => {
+    const { value } = e.detail;
+    setFormData((prev) => ({
+      ...prev,
+      orderType: value as OrderType,
+    }));
+  };
+
 
   const handleDiscountChange = (e: InputCustomEvent) => {
     const { name, value } = e.target;
@@ -804,7 +813,7 @@ const OrderUpdate: React.FC = () => {
           discountPercentage,
           discountAmount,
           discountAmountFormatted: formatCurrencyWithoutSymbol(discountAmount),
-          orderType: orderDetail.orderType || "sales",
+          orderType: orderDetail.orderType || OrderType.SALES,
         });
 
         // Set customer name
@@ -832,7 +841,7 @@ const OrderUpdate: React.FC = () => {
       discountAmount: discountValue,
       ...(discountValue > 0 && { discountType: formData.discountType }),
       note: formData.note,
-      orderType: formData.orderType || "sales",
+      orderType: formData.orderType || OrderType.SALES,
       items: orderItems.map((item): IOrderItemSubmission => ({
         productId: item.id,
         productName: item.productName,
@@ -905,19 +914,19 @@ const OrderUpdate: React.FC = () => {
               Loại đơn hàng (Order Type) <span className="text-red-500">*</span>
             </h2>
             <IonRadioGroup
-              value={formData.orderType || "sales"}
-              onIonChange={(e) => handleInputChange({ target: { name: 'orderType', value: e.detail.value } } as any)}
+              value={formData.orderType || OrderType.SALES}
+              onIonChange={handleOrderTypeChange}
             >
               <div className={cn("flex gap-4", { "opacity-65": !isEditMode })}>
                 <IonItem
                   lines="none"
                   className={cn(`rounded-lg transition-colors`, {
                     "bg-custom-primary border border-custom-primary":
-                      formData.orderType === "sales" || !formData.orderType,
-                    border: formData.orderType === "internal_transfer",
+                      formData.orderType === OrderType.SALES || !formData.orderType,
+                    border: formData.orderType === OrderType.INTERNAL_TRANSFER,
                   })}
                 >
-                  <IonRadio value="sales" disabled={!isEditMode}>
+                  <IonRadio value={OrderType.SALES} disabled={!isEditMode}>
                     <div className="flex flex-col">
                       <span>Bán hàng</span>
                       <span className="text-sm text-gray-500">(Sales)</span>
@@ -928,11 +937,11 @@ const OrderUpdate: React.FC = () => {
                   lines="none"
                   className={cn(`rounded-lg transition-colors`, {
                     "bg-custom-primary border border-custom-primary":
-                      formData.orderType === "internal_transfer",
-                    border: formData.orderType === "sales" || !formData.orderType,
+                      formData.orderType === OrderType.INTERNAL_TRANSFER,
+                    border: formData.orderType === OrderType.SALES || !formData.orderType,
                   })}
                 >
-                  <IonRadio value="internal_transfer" disabled={!isEditMode}>
+                  <IonRadio value={OrderType.INTERNAL_TRANSFER} disabled={!isEditMode}>
                     <div className="flex flex-col">
                       <span>Chuyển kho nội bộ</span>
                       <span className="text-sm text-gray-500">(Internal Transfer)</span>
@@ -1024,7 +1033,7 @@ const OrderUpdate: React.FC = () => {
                       key={item.id}
                       {...item}
                       orderStatus={formData.status}
-                      isInternalTransfer={formData.orderType === "internal_transfer"}
+                      isInternalTransfer={formData.orderType === OrderType.INTERNAL_TRANSFER}
                       attrs={{ "data-order-item": "true" }}
                       onRowChange={(data) => handleItemChange(item.id, data)}
                       onRemoveItem={() => handleRemoveItem(item.id)}
@@ -1055,7 +1064,7 @@ const OrderUpdate: React.FC = () => {
         </div>
 
         {/* 2. Discount Section */}
-        {formData.orderType !== "internal_transfer" && (
+        {formData.orderType !== OrderType.INTERNAL_TRANSFER && (
           <div className="bg-card rounded-lg shadow-sm mb-4">
             <div className="p-4">
               <h2 className="text-lg font-medium text-foreground mb-3">
