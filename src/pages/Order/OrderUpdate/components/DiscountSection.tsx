@@ -7,6 +7,7 @@ import {
   IonInput,
 } from "@ionic/react";
 import { DiscountSectionProps } from "./orderUpdate.d";
+import { DiscountType } from "@/common/enums/order";
 
 /**
  * DiscountSection component manages discount settings including:
@@ -28,7 +29,7 @@ const DiscountSection: React.FC<DiscountSectionProps> = React.memo(({
   return (
     <div className="bg-card rounded-lg shadow-sm p-4 mb-4">
       <h3 className="text-lg font-semibold mb-3">Giảm giá</h3>
-      
+
       {/* Discount Type Selection */}
       <IonRadioGroup
         value={formData.discountType}
@@ -38,7 +39,7 @@ const DiscountSection: React.FC<DiscountSectionProps> = React.memo(({
           <IonLabel>Giảm theo phần trăm (%)</IonLabel>
           <IonRadio
             slot="start"
-            value="percentage"
+            value={DiscountType.PERCENTAGE}
             disabled={!isEditMode}
           />
         </IonItem>
@@ -46,14 +47,14 @@ const DiscountSection: React.FC<DiscountSectionProps> = React.memo(({
           <IonLabel>Giảm theo số tiền cố định</IonLabel>
           <IonRadio
             slot="start"
-            value="fixed"
+            value={DiscountType.FIXED}
             disabled={!isEditMode}
           />
         </IonItem>
       </IonRadioGroup>
 
       {/* Discount Input Fields */}
-      {formData.discountType === "percentage" ? (
+      {formData.discountType === DiscountType.PERCENTAGE ? (
         <IonItem className="mt-3">
           <IonLabel position="stacked">Phần trăm giảm giá (%)</IonLabel>
           <IonInput

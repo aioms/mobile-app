@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { IOrderItem, IFormData } from "../components/orderUpdate.d";
+import { IFormData, IOrderItem } from "../components/orderUpdate.d";
+import { DiscountType } from "@/common/enums/order";
 
 /**
  * Custom hook for order calculations with memoization
@@ -7,7 +8,7 @@ import { IOrderItem, IFormData } from "../components/orderUpdate.d";
  */
 export const useOrderCalculations = (
   orderItems: IOrderItem[],
-  formData: IFormData
+  formData: IFormData,
 ) => {
   // Calculate subtotal (before discount and VAT)
   const subtotal = useMemo(() => {
@@ -19,7 +20,7 @@ export const useOrderCalculations = (
   // Calculate total VAT amount
   const totalVat = useMemo(() => {
     if (!formData.vatEnabled) return 0;
-    
+
     return orderItems.reduce((total, item) => {
       const itemTotal = item.quantity * item.sellingPrice;
       const vatRate = item.vatRate || 0.1; // Default 10% VAT
@@ -29,12 +30,17 @@ export const useOrderCalculations = (
 
   // Calculate discount amount
   const discountAmount = useMemo(() => {
-    if (formData.discountType === "percentage") {
+    if (formData.discountType === DiscountType.PERCENTAGE) {
       return subtotal * ((formData.discountPercentage || 0) / 100);
     } else {
       return formData.discountAmount || 0;
     }
-  }, [subtotal, formData.discountType, formData.discountPercentage, formData.discountAmount]);
+  }, [
+    subtotal,
+    formData.discountType,
+    formData.discountPercentage,
+    formData.discountAmount,
+  ]);
 
   // Calculate final total
   const finalTotal = useMemo(() => {

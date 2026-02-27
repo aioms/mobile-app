@@ -20,6 +20,7 @@ type Props = {
   attrs?: any;
   onRowChange?: (data: any) => void;
   onRemoveItem?: () => void;
+  isInternalTransfer?: boolean;
 };
 
 const OrderItem: FC<Props> = memo(
@@ -32,6 +33,7 @@ const OrderItem: FC<Props> = memo(
     vatRate = 0,
     inventory,
     shipNow = false,
+    isInternalTransfer = false,
     onRowChange,
     onRemoveItem,
   }) => {
@@ -244,6 +246,7 @@ const OrderItem: FC<Props> = memo(
               value={formattedPrice}
               onIonInput={(e) => handlePriceChange(e.detail.value)}
               className="border rounded-lg text-sm w-28 custom-padding"
+              disabled={isInternalTransfer}
             />
           </div>
           {/* VAT Rate Block */}
@@ -256,6 +259,7 @@ const OrderItem: FC<Props> = memo(
               min="0"
               max="100"
               className="border rounded-lg text-sm w-28 custom-padding"
+              disabled={isInternalTransfer}
             />
           </div>
         </div>
@@ -267,6 +271,7 @@ const OrderItem: FC<Props> = memo(
               onIonChange={(e) => handleShipNowChange(e.detail.checked)}
               className="ship-now-checkbox"
               style={{"--border-radius": "4px"}}
+              disabled={isInternalTransfer}
             />
             <span className={`ml-2 text-sm ${isShipNow ? 'text-orange-600 font-medium' : 'text-gray-600'}`}>
               Giao ngay

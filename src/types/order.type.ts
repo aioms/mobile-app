@@ -29,6 +29,7 @@ export interface IOrder {
   totalAmount: number;
   discountAmount: number;
   status: string;
+  orderType?: string;
   note: string;
   vatInfo: IVatInfo;
   items: IOrderItem[];

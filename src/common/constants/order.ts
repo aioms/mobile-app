@@ -44,7 +44,7 @@ export const getPaymentMethodLabel = (method: string): string => {
 
 export const getCustomerTypeLabel = (
   customer: ICustomer | null,
-  isTruncate = false
+  isTruncate = false,
 ): string => {
   if (!customer) return "Khách lẻ";
   if (!isTruncate) return customer.name;
@@ -60,4 +60,24 @@ export const getCustomerTypeColor = (customer: ICustomer | null): string => {
   return customer && customer.id
     ? "bg-blue-100 text-blue-700"
     : "bg-orange-100 text-orange-700";
+};
+
+export const getOrderTypeLabel = (type?: string): string => {
+  switch (type) {
+    case "internal_transfer":
+      return "Chuyển kho nội bộ";
+    case "sales":
+    default:
+      return "Bán hàng";
+  }
+};
+
+export const getOrderTypeColor = (type?: string): string => {
+  switch (type) {
+    case "internal_transfer":
+      return "secondary";
+    case "sales":
+    default:
+      return "primary";
+  }
 };

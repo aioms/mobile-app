@@ -1,4 +1,4 @@
-import { PaymentMethod } from "@/common/enums/order";
+import { DiscountType, PaymentMethod } from "@/common/enums/order";
 
 /**
  * Order item interface for managing product items in the order
@@ -42,10 +42,11 @@ export interface IFormData {
   taxCode?: string;
   email?: string;
   remark?: string;
-  discountType?: "percentage" | "fixed";
+  discountType?: DiscountType;
   discountPercentage?: number;
   discountAmount?: number;
   discountAmountFormatted?: string;
+  orderType?: string;
 }
 
 /**
@@ -72,7 +73,13 @@ export interface OrderItemsSectionProps {
  * Props for DiscountSection component
  */
 export interface DiscountSectionProps {
-  formData: Pick<IFormData, 'discountType' | 'discountPercentage' | 'discountAmount' | 'discountAmountFormatted'>;
+  formData: Pick<
+    IFormData,
+    | "discountType"
+    | "discountPercentage"
+    | "discountAmount"
+    | "discountAmountFormatted"
+  >;
   isEditMode: boolean;
   onDiscountChange: (e: any) => void;
   onDiscountTypeChange: (e: CustomEvent) => void;
@@ -82,7 +89,7 @@ export interface DiscountSectionProps {
  * Props for OrderFormSection component
  */
 export interface OrderFormSectionProps {
-  formData: Pick<IFormData, 'customer' | 'paymentMethod'>;
+  formData: Pick<IFormData, "customer" | "paymentMethod">;
   selectedCustomerName: string;
   isEditMode: boolean;
   errors: Record<string, string>;
@@ -94,7 +101,10 @@ export interface OrderFormSectionProps {
  * Props for VATSection component
  */
 export interface VATSectionProps {
-  formData: Pick<IFormData, 'vatEnabled' | 'companyName' | 'taxCode' | 'email' | 'remark'>;
+  formData: Pick<
+    IFormData,
+    "vatEnabled" | "companyName" | "taxCode" | "email" | "remark"
+  >;
   isEditMode: boolean;
   errors: Record<string, string>;
   onVatToggle: (e: CustomEvent) => void;
