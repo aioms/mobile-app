@@ -42,6 +42,7 @@ import { OverlayEventDetail } from "@ionic/react/dist/types/components/react-com
 import { useLoading, useBarcodeScanner, useStorage } from "@/hooks";
 import useOrder from "@/hooks/apis/useOrder";
 import useProduct from "@/hooks/apis/useProduct";
+import useCustomer from "@/hooks/apis/useCustomer";
 
 import { isHasProperty } from "@/helpers/common";
 import {
@@ -56,6 +57,7 @@ import OrderItem from "./components/OrderItem";
 import ModalSelectProduct from "../components/ModalSelectProduct";
 import ModalCreateProduct from "./components/ModalCreateProduct";
 import ModalSelectCustomer from "../components/ModalSelectCustomer";
+import ModalCreateCustomer from "@/components/ModalCreateCustomer";
 import ErrorMessage from "@/components/ErrorMessage";
 import PaymentModal, {
   PaymentMethod as PaymentModalMethod,
@@ -130,6 +132,7 @@ const OrderCreate: React.FC = () => {
   const { isLoading, withLoading } = useLoading();
   const { create: createOrder } = useOrder();
   const { getDetail: getProductDetail } = useProduct();
+  const { create: createCustomer } = useCustomer();
 
   const handleCreateOrder = (orderData: Record<string, any>, callback?: (orderId: string) => void) => {
     return withLoading(async () => {
@@ -434,6 +437,58 @@ const OrderCreate: React.FC = () => {
             ));
             await presentToast({
               message: (error as Error).message || "Có lỗi xảy ra khi tạo sản phẩm",
+              duration: 2000,
+              position: "top",
+              color: "danger",
+            });
+          }
+        }
+      },
+    });
+  };
+
+  // Modal for creating new customer
+  const [presentModalCreateCustomer, dismissModalCreateCustomer] = useIonModal(
+    ModalCreateCustomer,
+    {
+      dismiss: (data: any, role: string) => dismissModalCreateCustomer(data, role),
+    }
+  );
+
+  const openModalCreateCustomer = () => {
+    presentModalCreateCustomer({
+      onWillDismiss: async (event: CustomEvent<OverlayEventDetail>) => {
+        const { role, data } = event.detail;
+
+        if (role === "confirm" && data) {
+          try {
+            const newCustomer = await createCustomer(data);
+
+            if (!newCustomer) {
+              throw new Error("Không thể tạo khách hàng");
+            }
+
+            await presentToast({
+              message: "Tạo khách hàng thành công!",
+              duration: 1500,
+              position: "top",
+              color: "success",
+            });
+
+            // Auto-select the newly created customer
+            setSelectedCustomerName(newCustomer.name);
+            setFormData((prev) => ({
+              ...prev,
+              customer: String(newCustomer.id),
+            }));
+          } catch (error) {
+            captureException(error as Error, createExceptionContext(
+              'OrderCreate',
+              'CreateCustomer',
+              'openModalCreateCustomer'
+            ));
+            await presentToast({
+              message: (error as Error).message || "Có lỗi xảy ra khi tạo khách hàng",
               duration: 2000,
               position: "top",
               color: "danger",
@@ -1004,13 +1059,18 @@ const OrderCreate: React.FC = () => {
                 Khách hàng
               </h2>
               <div className="mb-4">
-                <div
-                  className="ion-activatable common-ripple-parent break-normal p-2"
-                  onClick={() => openModalSelectCustomer()}
-                >
-                  <IonIcon icon={search} className="text-2xl mr-2" />
-                  {selectedCustomerName}
-                  <IonRippleEffect className="custom-ripple"></IonRippleEffect>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="ion-activatable common-ripple-parent break-normal p-2 flex-1"
+                    onClick={() => openModalSelectCustomer()}
+                  >
+                    <IonIcon icon={search} className="text-2xl mr-2" />
+                    {selectedCustomerName}
+                    <IonRippleEffect className="custom-ripple"></IonRippleEffect>
+                  </div>
+                  <IonButton fill="outline" onClick={() => openModalCreateCustomer()}>
+                    <IonIcon icon={add}></IonIcon>
+                  </IonButton>
                 </div>
                 <ErrorMessage message={errors.customer} />
               </div>

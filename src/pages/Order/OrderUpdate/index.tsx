@@ -23,6 +23,7 @@ import {
   useIonViewWillEnter,
 } from "@ionic/react";
 import {
+  add,
   checkmarkCircle,
   checkmarkCircleOutline,
   chevronBack,
@@ -37,6 +38,7 @@ import { OverlayEventDetail } from "@ionic/react/dist/types/components/react-com
 import { useLoading, useBarcodeScanner } from "@/hooks";
 import useOrder from "@/hooks/apis/useOrder";
 import useProduct from "@/hooks/apis/useProduct";
+import useCustomer from "@/hooks/apis/useCustomer";
 
 import {
   formatCurrencyWithoutSymbol,
@@ -52,6 +54,7 @@ import { cn } from "@/lib/utils";
 import OrderItem from "./components/OrderItem";
 import ModalSelectProduct from "../components/ModalSelectProduct";
 import ModalSelectCustomer from "../components/ModalSelectCustomer";
+import ModalCreateCustomer from "@/components/ModalCreateCustomer";
 import ErrorMessage from "@/components/ErrorMessage";
 import PaymentModal, {
   PaymentMethod as PaymentModalMethod,
@@ -123,6 +126,7 @@ const OrderUpdate: React.FC = () => {
   const { isLoading, withLoading } = useLoading();
   const { getDetail: getOrderDetail, update: updateOrder } = useOrder();
   const { getDetail: getProductDetail } = useProduct();
+  const { create: createCustomer } = useCustomer();
 
   // Individual status checks
   const isOrderDraft = useMemo(() => {
@@ -236,6 +240,63 @@ const OrderUpdate: React.FC = () => {
       dismiss: (data: any, role: string) => dismissModalCustomer(data, role),
     }
   );
+
+  // Modal for creating new customer
+  const [presentModalCreateCustomer, dismissModalCreateCustomer] = useIonModal(
+    ModalCreateCustomer,
+    {
+      dismiss: (data: any, role: string) => dismissModalCreateCustomer(data, role),
+    }
+  );
+
+  const openModalCreateCustomer = () => {
+    if (!isEditMode) {
+      presentToast({
+        message: "Chỉ có thể chỉnh sửa đơn hàng ở trạng thái nháp",
+        duration: 2000,
+        position: "top",
+        color: "warning",
+      });
+      return;
+    }
+
+    presentModalCreateCustomer({
+      onWillDismiss: async (event: CustomEvent<OverlayEventDetail>) => {
+        const { role, data } = event.detail;
+
+        if (role === "confirm" && data) {
+          try {
+            const newCustomer = await createCustomer(data);
+
+            if (!newCustomer) {
+              throw new Error("Không thể tạo khách hàng");
+            }
+
+            await presentToast({
+              message: "Tạo khách hàng thành công!",
+              duration: 1500,
+              position: "top",
+              color: "success",
+            });
+
+            // Auto-select the newly created customer
+            setSelectedCustomerName(newCustomer.name);
+            setFormData((prev) => ({
+              ...prev,
+              customer: String(newCustomer.id),
+            }));
+          } catch (error) {
+            await presentToast({
+              message: (error as Error).message || "Có lỗi xảy ra khi tạo khách hàng",
+              duration: 2000,
+              position: "top",
+              color: "danger",
+            });
+          }
+        }
+      },
+    });
+  };
 
   const openModalSelectProduct = () => {
     if (!isEditMode) {
@@ -1147,27 +1208,36 @@ const OrderUpdate: React.FC = () => {
                 Khách hàng
               </h2>
               <div className="mb-4">
-                <div
-                  className={cn("ion-activatable common-ripple-parent break-normal p-2", {
-                    "opacity-65 cursor-not-allowed": !isEditMode,
-                    "cursor-pointer hover:bg-gray-50 transition-colors": isEditMode
-                  })}
-                  onClick={isEditMode ? openModalSelectCustomer : undefined}
-                >
-                  <IonIcon
-                    icon={search}
-                    className={cn("text-2xl mr-2", {
-                      "text-gray-400": !isEditMode,
-                      "text-blue-600": isEditMode
+                <div className="flex items-center gap-2">
+                  <div
+                    className={cn("ion-activatable common-ripple-parent break-normal p-2 flex-1", {
+                      "opacity-65 cursor-not-allowed": !isEditMode,
+                      "cursor-pointer hover:bg-gray-50 transition-colors": isEditMode
                     })}
-                  />
-                  <span className={cn({
-                    "text-gray-500": !isEditMode,
-                    "text-blue-700": isEditMode
-                  })}>
-                    {selectedCustomerName}
-                  </span>
-                  {isEditMode && <IonRippleEffect></IonRippleEffect>}
+                    onClick={isEditMode ? openModalSelectCustomer : undefined}
+                  >
+                    <IonIcon
+                      icon={search}
+                      className={cn("text-2xl mr-2", {
+                        "text-gray-400": !isEditMode,
+                        "text-blue-600": isEditMode
+                      })}
+                    />
+                    <span className={cn({
+                      "text-gray-500": !isEditMode,
+                      "text-blue-700": isEditMode
+                    })}>
+                      {selectedCustomerName}
+                    </span>
+                    {isEditMode && <IonRippleEffect></IonRippleEffect>}
+                  </div>
+                  <IonButton
+                    fill="outline"
+                    disabled={!isEditMode}
+                    onClick={openModalCreateCustomer}
+                  >
+                    <IonIcon icon={add}></IonIcon>
+                  </IonButton>
                 </div>
                 <ErrorMessage message={errors.customer} />
               </div>
