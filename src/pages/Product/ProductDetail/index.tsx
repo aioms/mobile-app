@@ -386,28 +386,103 @@ const ProductDetail: React.FC = () => {
     fetchHistory();
   }, [selectedTab]);
 
-  const handleLoadMore = async () => {
+  const handleLoadMore = async (tableKey: keyof HistoryData) => {
     try {
       setLoading(true);
-      // TODO: Replace with your actual API call
+      const nextPage = page[tableKey] + 1;
 
-      const nextPage = page[selectedTab as keyof typeof page] + 1;
+      const result = await getHistory({ productId: id, type: tableKey }, nextPage);
 
-      // Update page for the current tab
-      setPage((prev) => ({
-        ...prev,
-        [selectedTab]: nextPage,
-      }));
-
-      // Example: If no more data, set hasMore to false
-      if (nextPage > 3) {
+      if (!result || !result.length) {
         setHasMore((prev) => ({
           ...prev,
-          [selectedTab]: false,
+          [tableKey]: false,
         }));
+        return;
       }
+
+      let data: HistoryItem[] = [];
+
+      if (tableKey === "order") {
+        data = result.map((order: Record<string, any>) => {
+          const productItem = order.items.find((item: Record<string, any>) => item.productId === id);
+          return {
+            id: order.id,
+            receiptNumber: order.code,
+            quantity: productItem?.quantity || 0,
+            value: productItem?.price || 0,
+            status: order.status,
+            type: 'order' as const,
+            customer: order.customer ? {
+              id: order.customer.id,
+              name: order.customer.name,
+            } : undefined,
+          };
+        });
+      } else if (tableKey === "debt") {
+        data = result.map((item: Record<string, any>) => {
+          const { receipt_items: receiptItem, receipt_debts: receipt, customers: customer } = item;
+          return {
+            id: receipt.id,
+            receiptNumber: receipt.code,
+            quantity: receiptItem.quantity,
+            value: receiptItem.costPrice,
+            status: receipt.status,
+            type: 'debt' as const,
+            customer: customer ? {
+              id: customer.id,
+              name: customer.name,
+            } : { name: '-' },
+          };
+        });
+      } else {
+        data = result.map((item: Record<string, any>) => {
+          const {
+            receipt_items: receiptItem,
+            receipt_imports,
+            receipt_checks,
+            suppliers: supplier,
+          } = item;
+
+          const receipt = receipt_imports || receipt_checks;
+
+          return {
+            id: receipt.id,
+            receiptNumber: receipt.receiptNumber || receipt.code, // checks might use code
+            quantity: receiptItem.quantity,
+            value: receiptItem.costPrice,
+            status: receipt.status,
+            type: tableKey as 'import' | 'check',
+            suppliers: supplier ? {
+              id: supplier.id,
+              name: supplier.name,
+            } : { name: '-' },
+          };
+        });
+      }
+
+      setHistory((prev) => ({
+        ...prev,
+        [tableKey]: [...prev[tableKey], ...data],
+      }));
+
+      setPage((prev) => ({
+        ...prev,
+        [tableKey]: nextPage,
+      }));
+
+      setHasMore((prev) => ({
+        ...prev,
+        [tableKey]: data.length === 10,
+      }));
     } catch (error) {
       console.error("Error loading more items:", error);
+      presentToast({
+        message: "Lỗi khi tải thêm dữ liệu",
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
     } finally {
       setLoading(false);
     }
