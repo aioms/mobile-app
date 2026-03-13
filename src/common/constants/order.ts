@@ -22,6 +22,8 @@ export const getOrderStatusColor = (status: string): string => {
       return "warning";
     case OrderStatus.COMPLETED:
       return "success";
+    case OrderStatus.RETURNED:
+      return "medium";
     case OrderStatus.CANCELLED:
       return "danger";
     default:

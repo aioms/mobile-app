@@ -12,6 +12,7 @@ import {
   cubeOutline,
   bagHandleOutline,
   cartOutline,
+  menuOutline,
 } from "ionicons/icons";
 import { Redirect as RouterRedirect, Route as RouterRoute } from "react-router-dom";
 
@@ -46,6 +47,9 @@ import OrderCreateScreen from "@/pages/Order/OrderCreate";
 import OrderDetailScreen from "@/pages/Order/OrderDetail";
 import OrderUpdateScreen from "@/pages/Order/OrderUpdate";
 import OrderPage from "@/pages/Order";
+import ExtendedScreen from "@/pages/Extended/Extended";
+import CustomerListScreen from "@/pages/Extended/CustomerList";
+import CustomerDetailScreen from "@/pages/Extended/CustomerDetail";
 
 import "./TabBar.css";
 
@@ -54,6 +58,7 @@ const tabs = [
   { icon: cartOutline, label: "Đơn hàng", path: "/tabs/orders" },
   { icon: cubeOutline, label: "Quản lý kho", path: "/tabs/inventory" },
   { icon: bagHandleOutline, label: "Sản phẩm", path: "/tabs/products" },
+  { icon: menuOutline, label: "Mở rộng", path: "/tabs/extended" },
   // { icon: statsChartOutline, label: "Báo cáo", path: "/tabs/report" },
 ];
 
@@ -158,6 +163,29 @@ const TabBar: React.FC = () => {
           exact
           path="/tabs/orders/update/:id"
           component={OrderUpdateScreen}
+        />
+
+        {/* Extended Screens */}
+        <Route
+          exact
+          path="/tabs/extended"
+          children={
+            <MenuLayout
+              component={<ExtendedScreen />}
+              isHeaderDefault
+              title="Tính năng mở rộng"
+            />
+          }
+        />
+        <Route
+          exact
+          path="/tabs/extended/customers"
+          component={CustomerListScreen}
+        />
+        <Route
+          exact
+          path="/tabs/extended/customers/detail/:id"
+          component={CustomerDetailScreen}
         />
 
         <Route component={NotFound} />

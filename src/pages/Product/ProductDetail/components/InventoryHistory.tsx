@@ -49,7 +49,7 @@ interface Props {
     order: boolean;
     debt: boolean;
   };
-  onLoadMore: () => Promise<void>;
+  onLoadMore: (tableKey: keyof HistoryData) => Promise<void>;
   onChangeTab: (e: any) => void;
   selectedTab: string;
 }
@@ -144,7 +144,7 @@ const InventoryHistory: React.FC<Props> = ({
         <div className="flex justify-center mt-2">
           <IonButton
             fill="clear"
-            onClick={onLoadMore}
+            onClick={() => onLoadMore(tableKey)}
             disabled={loading}
             className="text-sm"
           >
