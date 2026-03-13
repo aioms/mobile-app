@@ -3,6 +3,7 @@ export enum OrderStatus {
   PENDING = "pending",
   CANCELLED = "cancelled",
   COMPLETED = "completed",
+  RETURNED = "returned",
 }
 
 export enum PaymentMethod {
