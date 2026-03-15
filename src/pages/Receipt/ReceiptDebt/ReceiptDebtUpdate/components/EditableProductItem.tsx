@@ -166,11 +166,11 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
           </IonChip>
         )}
         {/* Show badge for returned items */}
-        {item.returnedQuantity && item.returnedQuantity > 0 && (
+        {(item.returnedQuantity && item.returnedQuantity > 0) ? (
           <IonChip color="warning" className="text-xs mt-2">
             Đã trả: {item.returnedQuantity}
           </IonChip>
-        )}
+        ) : null}
       </div>
 
       {/* Quantity and Price Info */}

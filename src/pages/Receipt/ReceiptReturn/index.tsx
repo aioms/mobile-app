@@ -96,6 +96,7 @@ const ReceiptReturn: React.FC = () => {
     {
       dismiss: (data: any, role: string) => dismissModalProduct(data, role),
       orderProducts: location.state?.orderProducts || [],
+      refType: location.state?.refType || "order",
     }
   );
 
@@ -107,9 +108,9 @@ const ReceiptReturn: React.FC = () => {
         if (role === "confirm" && data) {
           // Merge new products with existing ones
           setSelectedProducts((prev) => {
-            const existingIds = new Set(prev.map((p) => p.productId));
+            const existingIds = new Set(prev.map((p) => p.id));
             const newProducts = data.filter(
-              (p: IReceiptReturnItem) => !existingIds.has(p.productId)
+              (p: IReceiptReturnItem) => !existingIds.has(p.id)
             );
             return [...prev, ...newProducts];
           });
@@ -226,10 +227,12 @@ const ReceiptReturn: React.FC = () => {
           costPrice: item.costPrice,
           metadata: {
             returnedQuantity: item.quantity,
-          }
+            ...item.metadata,
+          },
         })),
         paymentMethod: formData.paymentMethod,
       };
+      console.log({ submissionData });
 
       await createReceiptReturn(submissionData)
 
