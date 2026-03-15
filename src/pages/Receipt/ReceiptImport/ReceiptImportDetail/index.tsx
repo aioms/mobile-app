@@ -121,7 +121,7 @@ const ReceiptImportDetail: React.FC = () => {
   const [presentToast] = useIonToast();
   const { create: createSupplier } = useSupplier();
 
-  const isUserSpecial = useMemo(() => user?.username === 'le004', [user?.username]);
+  const isUserSpecial = useMemo(() => user?.code == '497', [user?.code]);
 
   const [presentModalSupplier, dismissModalSupplier] = useIonModal(
     ModalSelectSupplier,

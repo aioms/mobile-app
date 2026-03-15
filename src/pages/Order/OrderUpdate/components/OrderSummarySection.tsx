@@ -28,7 +28,6 @@ const OrderSummarySection: React.FC<OrderSummarySectionProps> = React.memo(({
   return (
     <div className="bg-card rounded-lg shadow-sm p-4 mb-4">
       <h3 className="text-lg font-semibold mb-3">Tổng kết đơn hàng</h3>
-      
       {/* Subtotal */}
       <IonItem>
         <IonLabel>

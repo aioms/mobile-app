@@ -280,23 +280,24 @@ const ReceiptDebtDetail: React.FC = () => {
   };
 
   const handleActionSheet = () => {
-    // Flatten all products from all periods for return slip
-    // Calculate returnable quantity = quantity - returnedQuantity
-    const flattenedProducts = Object.values(items)
-      .flat()
-      .map(item => {
-        const returnedQty = item.returnedQuantity || 0;
-        const returnableQty = item.quantity - returnedQty;
-        return {
-          id: item.id,
-          productId: item.productId,
-          code: item.code,
-          productName: item.productName,
-          quantity: returnableQty, // Use returnable quantity
-          price: item.costPrice,
-          returnedQuantity: returnedQty, // Pass along for display
-        };
-      })
+    const flattenedProducts = Object.entries(items)
+      .flatMap(([period, periodItems]) =>
+        periodItems.map(item => {
+          const returnedQty = item.returnedQuantity || 0;
+          const returnableQty = item.quantity - returnedQty;
+          return {
+            id: item.id,
+            productId: item.productId,
+            code: item.code,
+            productName: item.productName,
+            quantity: returnableQty, // Use returnable quantity
+            price: item.costPrice,
+            returnedQuantity: returnedQty, // Pass along for display
+            periodId: item.receiptPeriodId,
+            periodDate: period,
+          };
+        })
+      )
       .filter(item => item.quantity > 0); // Only include items with returnable quantity
 
     presentActionSheet({

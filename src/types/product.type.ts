@@ -38,6 +38,7 @@ export interface IProductItem {
   discount?: number;
   createdAt: string;
   periodId?: string;
+  receiptPeriodId?: string;
   originalQuantity?: number;
   metadata?: {
     shipNow?: boolean;

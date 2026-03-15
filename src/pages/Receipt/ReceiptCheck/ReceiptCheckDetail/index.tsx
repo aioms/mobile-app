@@ -98,7 +98,7 @@ const ReceiptCheckDetail: React.FC = () => {
     updateBalanceInventory,
   } = useReceiptCheck();
 
-  const isUserSpecial = useMemo(() => user?.username === 'le004', [user?.username]);
+  const isUserSpecial = useMemo(() => user?.code == '497', [user?.code]);
 
   // Get available reason values
   const availableReasons = useMemo(() => {

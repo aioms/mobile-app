@@ -64,6 +64,7 @@ export const useAuth = () => {
       }
 
       const { token, user: userData } = response.data;
+      console.log({ userData });
 
       // Validate token before storing
       if (!token || isTokenExpired(token)) {

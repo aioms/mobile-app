@@ -26,6 +26,7 @@ export interface IHttpResponse<T = any> {
 
 export interface User {
   id: string;
+  code: string;
   username: string;
   fullname: string;
   role: UserRole;

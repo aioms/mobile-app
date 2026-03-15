@@ -30,10 +30,10 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
   const totalVat = useMemo(() => calculateTotalVat(), [items]);
 
   const finalTotal = useMemo(() => {
-    const finalTotal = subtotal - discount + totalVat;
+    const finalTotal = subtotal - discount // + totalVat;
     return finalTotal > 0 ? finalTotal : 0;
-  }, [subtotal, discount, totalVat]);
-  
+  }, [subtotal, discount]);
+
   return (
     <div className="bg-card rounded-lg shadow-sm mb-4">
       <div className="p-4 border-b border-border">
@@ -48,7 +48,7 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
       <div className="p-4">
         <div className="flex justify-between items-center mb-2">
           <span className="text-muted-foreground">Tổng tiền hàng:</span>
-          <span>{formatCurrency(subtotal)}</span>
+          <span>{formatCurrency(subtotal - totalVat)}</span>
         </div>
         <div className="flex justify-between items-center mb-2">
           <span className="text-muted-foreground">Giảm giá:</span>

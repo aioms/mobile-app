@@ -55,7 +55,7 @@ const ItemList: React.FC<ItemListProps> = ({
 
     const showRequestApproval =
       status === ReceiptImportStatus.PROCESSING && isEmployee && isUserCreated;
-    const showComplete = status === ReceiptImportStatus.WAITING && canApprove || user?.username === 'le004';
+    const showComplete = status === ReceiptImportStatus.WAITING && canApprove || user?.code == '497';
     const showCancel =
       (status === ReceiptImportStatus.PROCESSING ||
         status === ReceiptImportStatus.WAITING ||
