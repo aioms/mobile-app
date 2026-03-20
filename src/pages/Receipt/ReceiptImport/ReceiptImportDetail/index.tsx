@@ -163,7 +163,7 @@ const ReceiptImportDetail: React.FC = () => {
 
         try {
           // Create the supplier
-          const result = await createSupplier(data);
+          const { data: result } = await createSupplier(data);
 
           if (!result || !result.id) {
             await presentToast({

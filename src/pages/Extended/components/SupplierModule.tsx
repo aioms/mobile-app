@@ -1,12 +1,17 @@
-import React from 'react';
-import { IonIcon } from '@ionic/react';
-import { briefcaseOutline } from 'ionicons/icons';
+import React from "react";
+import { IonIcon } from "@ionic/react";
+import { briefcaseOutline } from "ionicons/icons";
+import { useHistory } from "react-router-dom";
 
 const SupplierModule: React.FC = () => {
+  const history = useHistory();
   return (
     <div className="mb-6">
       <h2 className="text-base font-bold mb-3 text-gray-800">Nhà cung cấp</h2>
-      <div className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition-transform">
+      <div
+        className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition-transform"
+        onClick={() => history.push('/tabs/extended/suppliers')}
+      >
         <div className="flex items-center gap-3">
           <div className="bg-purple-50 p-3 rounded-xl text-purple-600">
             <IonIcon icon={briefcaseOutline} className="w-6 h-6" />

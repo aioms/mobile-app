@@ -1,3 +1,4 @@
+// TODO: Move to common types
 export interface ICustomer {
   id: string;
   code: string;
@@ -9,20 +10,6 @@ export interface ICustomer {
   avatarUrl?: string;
   status?: string | number;
   type?: string | number;
-}
-
-export interface IPaginationMetadata {
-  totalCount: number;
-  totalPages: number;
-  currentPage: number;
-  pageSize: number;
-}
-
-export interface ICustomerApiResponse {
-  data: ICustomer[];
-  metadata: IPaginationMetadata;
-  success: boolean;
-  statusCode: number;
 }
 
 export interface ICustomerFilters {
