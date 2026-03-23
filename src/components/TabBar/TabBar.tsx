@@ -51,6 +51,7 @@ import ExtendedScreen from "@/pages/Extended/Extended";
 import CustomerListScreen from "@/pages/Extended/CustomerList";
 import CustomerDetailScreen from "@/pages/Extended/CustomerDetail";
 import SupplierListScreen from "@/pages/Extended/SupplierList";
+import SupplierDetailScreen from "@/pages/Extended/SupplierDetail";
 
 import "./TabBar.css";
 
@@ -193,6 +194,11 @@ const TabBar: React.FC = () => {
           exact
           path="/tabs/extended/suppliers"
           component={SupplierListScreen}
+        />
+        <Route
+          exact
+          path="/tabs/extended/suppliers/detail/:id"
+          component={SupplierDetailScreen}
         />
 
         <Route component={NotFound} />

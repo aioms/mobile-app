@@ -8,14 +8,13 @@ import {
   IonContent,
   IonButtons,
   IonBackButton,
-  IonButton,
   IonIcon,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
   IonSpinner,
   IonChip,
 } from "@ionic/react";
-import { addOutline, closeCircle, ellipsisVertical } from "ionicons/icons";
+import { closeCircle } from "ionicons/icons";
 import { debounce } from "radash";
 import useSupplier from "@/hooks/apis/useSupplier";
 import ModalSelectSupplier from "@/components/ModalSelectSupplier";
@@ -30,7 +29,6 @@ const SupplierList: React.FC = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [total, setTotal] = useState(0);
 
   // Filters
   const [searchText, setSearchText] = useState("");
@@ -56,7 +54,6 @@ const SupplierList: React.FC = () => {
       if (filters.supplierIds) apiFilters.supplierIds = filters.supplierIds.join(",");
 
       const response = await getList(apiFilters, currentPage, 15);
-      console.log({ response });
 
       // Adaptation to match API response structure
       const fetchedSuppliers = response?.data || [];
@@ -67,8 +64,6 @@ const SupplierList: React.FC = () => {
       } else {
         setSuppliers((prev) => [...prev, ...fetchedSuppliers]);
       }
-
-      setTotal(metadata.totalCount || suppliers.length + fetchedSuppliers.length);
 
       if (metadata.totalPages) {
         setHasMore(currentPage < metadata.totalPages);

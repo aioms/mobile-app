@@ -15,13 +15,6 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   onFilterClick,
   isFiltered,
 }) => {
-  // const types = [
-  //   { label: "Tất cả", value: "all" },
-  //   { label: "CTY", value: "cty" },
-  //   { label: "Sạp chợ", value: "sạp chợ" },
-  //   { label: "Cá nhân", value: "cá nhân" },
-  // ];
-
   return (
     <div className="px-4 pb-2 bg-white">
       <div className="flex items-center gap-2 mb-2">
