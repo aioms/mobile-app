@@ -28,6 +28,7 @@ export interface IProductCreateFormErrors {
   notes?: string;
 }
 
+// TODO: Move to common types
 export interface ISupplier {
   id: string;
   name: string;

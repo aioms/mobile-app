@@ -19,13 +19,13 @@ import type { IModalSelectSupplierProps } from "@/types/supplierModal";
 const ModalSelectSupplier: React.FC<IModalSelectSupplierProps> = ({ dismiss, initialSelectedNames = [], multi = false }) => {
   const [keyword, setKeyword] = useState("");
   const [suppliers, setSuppliers] = useState<any[]>([]);
+
   // Store tokens in format `${id}__${name}` for robust ID handling
   const [selectedValues, setSelectedValues] = useState<string[]>([]);
   const [selectedSingle, setSelectedSingle] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  console.log({ initialSelectedNames, multi });
 
   const { getList: getListSuppliers } = useSupplier();
   const { withLoading } = useLoading();
@@ -42,7 +42,7 @@ const ModalSelectSupplier: React.FC<IModalSelectSupplierProps> = ({ dismiss, ini
           25
         );
 
-        const newSuppliers = response || [];
+        const newSuppliers = response.data || [];
 
         if (append) {
           // For infinite scroll, append new suppliers

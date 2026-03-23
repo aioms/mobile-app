@@ -39,6 +39,7 @@ const initialMediaUpload = {
   error: null
 };
 
+// TODO: Need to refactor this
 export const useProductEdit = (productId: string): UseProductEdit => {
   const [presentToast] = useIonToast();
   const productApi = useProduct();
@@ -63,8 +64,8 @@ export const useProductEdit = (productId: string): UseProductEdit => {
 
   // Load initial data
   useEffect(() => {
-    loadProductData();
-    loadCategories();
+    // loadProductData();
+    // loadCategories();
     loadSuppliers();
   }, [productId]);
 
@@ -72,7 +73,7 @@ export const useProductEdit = (productId: string): UseProductEdit => {
     try {
       const product = await productApi.getDetail(productId);
       setOriginalProduct(product);
-      
+
       const formData: ProductEditFormData = {
         productName: product.productName || '',
         category: product.category || '',
@@ -100,7 +101,7 @@ export const useProductEdit = (productId: string): UseProductEdit => {
     setIsLoadingCategories(true);
     try {
       const response = await productApi.getCategories({}, 1, 100);
-      setCategories(response.data || []);
+      setCategories(response || []);
     } catch (error) {
       presentToast({
         message: `Lỗi khi tải danh mục: ${(error as Error).message}`,
@@ -185,7 +186,7 @@ export const useProductEdit = (productId: string): UseProductEdit => {
       const newFormData = { ...prev.formData, [field]: value };
       const validationError = validateField(field, value);
       const newValidation = { ...prev.validation, [field]: validationError };
-      
+
       // Check if there are changes
       const hasChanges = JSON.stringify(newFormData) !== JSON.stringify(originalProduct ? {
         productName: originalProduct.productName || '',
@@ -207,7 +208,7 @@ export const useProductEdit = (productId: string): UseProductEdit => {
 
   const saveChanges = useCallback(async (): Promise<boolean> => {
     setState(prev => ({ ...prev, isSaving: true }));
-    
+
     try {
       // Validate all fields
       const validationErrors: Partial<ProductEditValidation> = {};
@@ -241,10 +242,10 @@ export const useProductEdit = (productId: string): UseProductEdit => {
       };
 
       await productApi.update(productId, updateData);
-      
+
       // Reload product data to get updated info
       await loadProductData();
-      
+
       setState(prev => ({
         ...prev,
         isSaving: false,
@@ -263,14 +264,14 @@ export const useProductEdit = (productId: string): UseProductEdit => {
       return true;
     } catch (error) {
       setState(prev => ({ ...prev, isSaving: false }));
-      
+
       presentToast({
         message: `Lỗi khi cập nhật sản phẩm: ${(error as Error).message}`,
         duration: 3000,
         position: 'top',
         color: 'danger'
       });
-      
+
       return false;
     }
   }, [state.formData, validateField, productId, productApi, presentToast, loadProductData]);
