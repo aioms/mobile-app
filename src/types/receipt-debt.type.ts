@@ -1,5 +1,22 @@
+import { ReceiptDebtStatus } from "@/common/enums/receipt";
+
 export interface CancelReceiptDebtRequestDto {
   note?: string;
+}
+
+export interface IReceiptDebt {
+  id: string;
+  code: string;
+  totalAmount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  status: ReceiptDebtStatus;
+  note?: string;
+  customerId?: string;
+  customerName?: string;
+  createdAt: string;
+  updatedAt: string;
+  items: IReceiptItemPeriod[];
 }
 
 export interface IReceiptItemPeriod {
