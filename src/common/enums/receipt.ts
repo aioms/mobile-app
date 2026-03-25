@@ -26,3 +26,10 @@ export enum ReceiptReturnType {
   CUSTOMER = "customer",
   SUPPLIER = "supplier",
 }
+
+export enum ReceiptDebtStatus {
+  PENDING = "pending",
+  PARTIAL_PAID = "partial_paid",
+  COMPLETED = "completed",
+  CANCELLED = "cancelled",
+}

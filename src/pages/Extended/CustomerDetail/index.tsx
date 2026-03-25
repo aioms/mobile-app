@@ -26,21 +26,34 @@ import { useLoading } from "@/hooks";
 import { IOrder } from "@/types/order.type";
 import { ICustomerDetail } from "./types";
 import { OrderStatus } from "@/common/enums/order";
+import { ReceiptDebtStatus } from "@/common/enums/receipt";
+import { IReceiptDebt } from "@/types/receipt-debt.type";
 
 import CustomerHero from "./components/CustomerHero";
 import StatsSection from "./components/StatsSection";
 import OrderItem from "./components/OrderItem";
+import ReceiptDebtItem from "./components/ReceiptDebtItem";
 
 const CustomerDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
   const [customer, setCustomer] = useState<ICustomerDetail | null>(null);
+
+  // Order State
   const [orders, setOrders] = useState<IOrder[]>([]);
   const [orderPage, setOrderPage] = useState(1);
   const [hasMoreOrders, setHasMoreOrders] = useState(true);
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderSearchText, setOrderSearchText] = useState("");
   const [orderSearchKeyword, setOrderSearchKeyword] = useState("");
+
+  // Receipt Debt State
+  const [receiptDebts, setReceiptDebts] = useState<IReceiptDebt[]>([]);
+  const [receiptPage, setReceiptPage] = useState(1);
+  const [hasMoreReceipts, setHasMoreReceipts] = useState(true);
+  const [receiptLoading, setReceiptLoading] = useState(false);
+  const [receiptSearchText, setReceiptSearchText] = useState("");
+  const [receiptSearchKeyword, setReceiptSearchKeyword] = useState("");
 
   // Tabs and Filters
   const [activeTab, setActiveTab] = useState<'orders' | 'receipts'>('orders');
@@ -56,9 +69,12 @@ const CustomerDetail: React.FC = () => {
   const fetchCustomerData = async () => {
     await withLoading(async () => {
       try {
-        const data = await getCustomerDetail(id);
-        if (data) {
-          setCustomer(data);
+        const response = await getCustomerDetail(id);
+        if (response?.success && response?.data) {
+          setCustomer(response.data);
+        } else if (response) {
+          // Fallback for older API structure if any
+          setCustomer(response);
         }
       } catch (error) {
         console.error("Failed to fetch customer detail:", error);
@@ -109,14 +125,66 @@ const CustomerDetail: React.FC = () => {
     }
   };
 
-  const debouncedSearch = useMemo(
+  const fetchReceiptDebts = async (page = 1, isRefresh = false) => {
+    try {
+      setReceiptLoading(true);
+      const limit = 10;
+
+      const filters: any = {
+        customerId: id,
+        keyword: receiptSearchKeyword,
+        isGetItems: true,
+      };
+
+      if (selectedStatus !== 'all') {
+        filters.status = selectedStatus;
+      }
+
+      if (timeRange === 'day') {
+        filters.startDate = dayjs().startOf('day').toISOString();
+        filters.endDate = dayjs().endOf('day').toISOString();
+      } else if (timeRange === 'month') {
+        filters.startDate = dayjs().startOf('month').toISOString();
+        filters.endDate = dayjs().endOf('month').toISOString();
+      } else if (timeRange === 'year') {
+        filters.startDate = dayjs().startOf('year').toISOString();
+        filters.endDate = dayjs().endOf('year').toISOString();
+      }
+
+      const response = await getDebtList(filters, page, limit);
+      const newReceipts = response?.data || [];
+
+      if (isRefresh) {
+        setReceiptDebts(newReceipts);
+      } else {
+        setReceiptDebts((prev) => [...prev, ...newReceipts]);
+      }
+
+      setHasMoreReceipts(newReceipts.length === limit);
+    } catch (error) {
+      console.error("Failed to fetch customer receipt debts:", error);
+    } finally {
+      setReceiptLoading(false);
+    }
+  };
+
+  const debouncedOrderSearch = useMemo(
     () => debounce({ delay: 500 }, (val: string) => setOrderSearchKeyword(val)),
     []
   );
 
+  const debouncedReceiptSearch = useMemo(
+    () => debounce({ delay: 500 }, (val: string) => setReceiptSearchKeyword(val)),
+    []
+  );
+
   useEffect(() => {
-    debouncedSearch(orderSearchText);
-  }, [orderSearchText, debouncedSearch]);
+    if (activeTab === 'orders') {
+      debouncedOrderSearch(orderSearchText);
+    } else {
+      debouncedReceiptSearch(receiptSearchText);
+    }
+  }, [orderSearchText, receiptSearchText, activeTab, debouncedOrderSearch, debouncedReceiptSearch]);
 
   useEffect(() => {
     if (id) {
@@ -128,13 +196,22 @@ const CustomerDetail: React.FC = () => {
     if (id && activeTab === 'orders') {
       fetchOrders(1, true);
       setOrderPage(1);
+    } else if (id && activeTab === 'receipts') {
+      fetchReceiptDebts(1, true);
+      setReceiptPage(1);
     }
-  }, [id, activeTab, orderSearchKeyword, selectedStatus, timeRange]);
+  }, [id, activeTab, orderSearchKeyword, receiptSearchKeyword, selectedStatus, timeRange]);
 
   const loadMoreOrders = () => {
     const nextPage = orderPage + 1;
     fetchOrders(nextPage);
     setOrderPage(nextPage);
+  };
+
+  const loadMoreReceipts = () => {
+    const nextPage = receiptPage + 1;
+    fetchReceiptDebts(nextPage);
+    setReceiptPage(nextPage);
   };
 
   const handleEdit = () => {
@@ -163,14 +240,29 @@ const CustomerDetail: React.FC = () => {
     });
   };
 
-  const statusOptions = [
-    { label: 'Tất cả', value: 'all' },
-    { label: 'Nháp', value: OrderStatus.DRAFT },
-    { label: 'Hoàn thành', value: OrderStatus.COMPLETED },
-    { label: 'Chờ xử lý', value: OrderStatus.PENDING },
-    { label: 'Trả hàng', value: 'returned' },
-    { label: 'Đã hủy', value: OrderStatus.CANCELLED },
-  ];
+  const statusOptions = useMemo(() => {
+    if (activeTab === 'orders') {
+      return [
+        { label: 'Tất cả', value: 'all' },
+        { label: 'Nháp', value: OrderStatus.DRAFT },
+        { label: 'Hoàn thành', value: OrderStatus.COMPLETED },
+        { label: 'Chờ xử lý', value: OrderStatus.PENDING },
+        { label: 'Trả hàng', value: 'returned' },
+        { label: 'Đã hủy', value: OrderStatus.CANCELLED },
+      ];
+    }
+    return [
+      { label: 'Tất cả', value: 'all' },
+      { label: 'Chờ thanh toán', value: ReceiptDebtStatus.PENDING },
+      { label: 'Thanh toán một phần', value: ReceiptDebtStatus.PARTIAL_PAID },
+      { label: 'Hoàn thành', value: ReceiptDebtStatus.COMPLETED },
+      { label: 'Đã hủy', value: ReceiptDebtStatus.CANCELLED },
+    ];
+  }, [activeTab]);
+
+  useEffect(() => {
+    setSelectedStatus('all');
+  }, [activeTab]);
 
   const timeOptions = [
     { label: 'Tất cả', value: 'all' },
@@ -213,8 +305,9 @@ const CustomerDetail: React.FC = () => {
 
             {/* Stats Section */}
             <StatsSection
-              totalTransactions={customer.totalAmountSpent || 0}
-              totalOrders={customer.totalOrders || 0}
+              totalPaid={customer.totalPaid || 0}
+              totalOrders={customer.totalOrder || 0}
+              totalDebt={customer.totalDebt || 0}
             />
 
             {/* Content Tabs */}
@@ -230,17 +323,17 @@ const CustomerDetail: React.FC = () => {
                   className={`flex-1 py-3 text-[14px] font-bold rounded-xl transition-all ${activeTab === 'receipts' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}
                   onClick={() => setActiveTab('receipts')}
                 >
-                  Phiếu nhập/nợ
+                  Phiếu thu
                 </button>
               </div>
             </div>
 
-            {/* Orders Tab Content */}
-            {activeTab === 'orders' && (
+            {/* Orders & Receipts Tab Content */}
+            {(activeTab === 'orders' || activeTab === 'receipts') && (
               <div className="px-4">
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="text-[17px] font-bold text-gray-900 flex items-center gap-2">
-                    Lịch sử đơn hàng
+                    {activeTab === 'orders' ? 'Lịch sử đơn hàng' : 'Lịch sử phiếu thu'}
                     <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase">
                       Hoạt động
                     </span>
@@ -280,12 +373,12 @@ const CustomerDetail: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Order Search */}
+                {/* Order/Receipt Search */}
                 <div className="relative mb-2">
                   <IonSearchbar
-                    value={orderSearchText}
-                    onIonInput={(e) => setOrderSearchText(e.detail.value!)}
-                    placeholder="Tìm tên sản phẩm hoặc mã đơn"
+                    value={activeTab === 'orders' ? orderSearchText : receiptSearchText}
+                    onIonInput={(e) => activeTab === 'orders' ? setOrderSearchText(e.detail.value!) : setReceiptSearchText(e.detail.value!)}
+                    placeholder={activeTab === 'orders' ? "Tìm tên sản phẩm hoặc mã đơn" : "Tìm mã phiếu hoặc ghi chú"}
                     className="p-0 custom-searchbar h-[48px]"
                     searchIcon={searchOutline}
                     clearIcon={undefined}
@@ -304,55 +397,84 @@ const CustomerDetail: React.FC = () => {
                 </div>
 
                 {/* Order Grid List */}
-                {orderLoading && orders.length === 0 ? (
-                  <div className="flex justify-center py-10">
-                    <IonSpinner name="crescent" color="primary" />
-                  </div>
-                ) : orders.length > 0 ? (
+                {activeTab === 'orders' ? (
                   <>
-                    <div className="flex flex-col gap-3">
-                      {orders.map((order) => (
-                        <OrderItem
-                          key={order.id}
-                          order={order}
-                          onClick={() => history.push(`/tabs/orders/detail/${order.id}`)}
-                          isCompact={false}
-                        />
-                      ))}
-                    </div>
+                    {orderLoading && orders.length === 0 ? (
+                      <div className="flex justify-center py-10">
+                        <IonSpinner name="crescent" color="primary" />
+                      </div>
+                    ) : orders.length > 0 ? (
+                      <>
+                        <div className="flex flex-col gap-3">
+                          {orders.map((order) => (
+                            <OrderItem
+                              key={order.id}
+                              order={order}
+                              onClick={() => history.push(`/tabs/orders/detail/${order.id}`)}
+                              isCompact={false}
+                            />
+                          ))}
+                        </div>
 
-                    {hasMoreOrders && (
-                      <div className="mt-4">
-                        <IonButton
-                          fill="clear"
-                          expand="block"
-                          className="h-[48px] bg-blue-50 text-blue-600 font-semibold rounded-2xl border border-dashed border-blue-200"
-                          onClick={loadMoreOrders}
-                          disabled={orderLoading}
-                        >
-                          {orderLoading ? <IonSpinner name="dots" /> : 'Tải thêm đơn hàng'}
-                        </IonButton>
+                        {hasMoreOrders && (
+                          <div className="mt-4">
+                            <IonButton
+                              fill="clear"
+                              expand="block"
+                              className="h-[48px] bg-blue-50 text-blue-600 font-semibold rounded-2xl border border-dashed border-blue-200"
+                              onClick={loadMoreOrders}
+                              disabled={orderLoading}
+                            >
+                              {orderLoading ? <IonSpinner name="dots" /> : 'Tải thêm đơn hàng'}
+                            </IonButton>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-gray-200">
+                        <p className="text-gray-400 text-sm">Không có đơn hàng nào khớp với bộ lọc.</p>
                       </div>
                     )}
                   </>
                 ) : (
-                  <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-gray-200">
-                    <p className="text-gray-400 text-sm">Không có đơn hàng nào khớp với bộ lọc.</p>
-                  </div>
-                )}
-              </div>
-            )}
+                  <>
+                    {receiptLoading && receiptDebts.length === 0 ? (
+                      <div className="flex justify-center py-10">
+                        <IonSpinner name="crescent" color="primary" />
+                      </div>
+                    ) : receiptDebts.length > 0 ? (
+                      <>
+                        <div className="flex flex-col gap-3">
+                          {receiptDebts.map((receipt) => (
+                            <ReceiptDebtItem
+                              key={receipt.id}
+                              receipt={receipt}
+                              onClick={() => history.push(`/tabs/receipts/debt/detail/${receipt.id}`)}
+                            />
+                          ))}
+                        </div>
 
-            {/* Receipts Tab Content */}
-            {activeTab === 'receipts' && (
-              <div className="px-4 text-center py-10">
-                <div className="bg-white p-6 rounded-2xl border border-dashed border-gray-200">
-                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <IonIcon icon={filterOutline} className="text-gray-300 text-3xl" />
-                  </div>
-                  <p className="text-gray-500 font-medium">Lịch sử phiếu nhập và công nợ</p>
-                  <p className="text-gray-400 text-sm mt-1">Tính năng này đang được cập nhật dữ liệu.</p>
-                </div>
+                        {hasMoreReceipts && (
+                          <div className="mt-4">
+                            <IonButton
+                              fill="clear"
+                              expand="block"
+                              className="h-[48px] bg-blue-50 text-blue-600 font-semibold rounded-2xl border border-dashed border-blue-200"
+                              onClick={loadMoreReceipts}
+                              disabled={receiptLoading}
+                            >
+                              {receiptLoading ? <IonSpinner name="dots" /> : 'Tải thêm phiếu thu'}
+                            </IonButton>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-gray-200">
+                        <p className=" text-sm">Không có phiếu thu nào khớp với bộ lọc.</p>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>
