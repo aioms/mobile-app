@@ -3,40 +3,44 @@ import { IonIcon } from '@ionic/react';
 import { chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
 import dayjs from 'dayjs';
 import { formatCurrency } from '@/helpers/formatters';
+import { ReceiptImportStatus } from '@/common/enums/receipt';
 
-// Define receipt interface manually since it's not exported globally
-export interface IReceiptData {
+export interface IReceiptImportItem {
   id: string;
-  code: string;
+  receiptId: string;
+  productId: string;
+  productCode: string;
+  productName: string;
+  quantity: number;
+  costPrice: number;
   createdAt: string;
+}
+
+export interface IReceiptImport {
+  id: string;
+  receiptNumber: string;
+  note: string | null;
+  quantity: number;
+  totalProduct: number;
   totalAmount: number;
-  status: string | number;
-  items: Array<{
-    productName: string;
-    quantity: number;
-    price: number;
-  }>;
+  status: string;
+  createdAt: string;
+  items?: IReceiptImportItem[];
 }
 
 interface ReceiptItemProps {
-  receipt: IReceiptData;
+  receipt: IReceiptImport;
   onClick?: () => void;
   isCompact?: boolean;
 }
 
-const getStatusInfo = (status: string | number) => {
+const getStatusInfo = (status: string) => {
   switch (status) {
-    case 1:
-    case 'completed':
-    case 'Đã nhận':
-      return { label: 'Đã nhận', color: 'bg-green-50 text-green-600' };
-    case 2:
-    case 'processing':
-    case 'Đang xử lý':
+    case ReceiptImportStatus.COMPLETED:
+      return { label: 'Đã hoàn thành', color: 'bg-green-50 text-green-600' };
+    case ReceiptImportStatus.PROCESSING:
       return { label: 'Đang xử lý', color: 'bg-orange-50 text-orange-600' };
-    case 0:
-    case 'cancelled':
-    case 'Đã huỷ':
+    case ReceiptImportStatus.CANCELLED:
       return { label: 'Đã huỷ', color: 'bg-red-50 text-red-600' };
     default:
       return { label: 'Đang xử lý', color: 'bg-orange-50 text-orange-600' };
@@ -59,7 +63,7 @@ const ReceiptItem: React.FC<ReceiptItemProps> = ({ receipt, onClick, isCompact }
     >
       <div className="flex justify-between items-start mb-3">
         <div className="min-w-0 flex-1 pr-2">
-          <h4 className="text-blue-600 font-bold text-[15px]">#{receipt.code}</h4>
+          <h4 className="text-blue-600 font-bold text-[15px]">#{receipt.receiptNumber}</h4>
           <p className="text-gray-900 font-medium text-[14px] mt-0.5">
             {dayjs(receipt.createdAt).format('DD/MM/YY - H:mm')}
           </p>
@@ -69,34 +73,38 @@ const ReceiptItem: React.FC<ReceiptItemProps> = ({ receipt, onClick, isCompact }
         </span>
       </div>
 
-      <div className="mb-4 space-y-1.5">
-        {receipt.items.slice(0, 2).map((item, idx) => (
-          <div key={idx} className="flex items-center gap-2 text-gray-500 text-[13px]">
-            <div className="w-1 h-1 rounded-full bg-gray-300"></div>
-            <span className="truncate">{item.productName} (x{item.quantity})</span>
-          </div>
-        ))}
-        {receipt.items.length > 2 && (
-          <div className="flex items-center gap-2 text-gray-500 text-[13px]">
-            <div className="w-1 h-1 rounded-full bg-gray-300"></div>
-            <span>... và {receipt.items.length - 2} sản phẩm khác</span>
-          </div>
-        )}
-      </div>
+      {receipt.items && receipt.items.length > 0 && (
+        <div className="mb-4 space-y-1.5">
+          {receipt.items.slice(0, 2).map((item, idx) => (
+            <div key={idx} className="flex items-center gap-2 text-gray-500 text-[13px]">
+              <div className="w-1 h-1 rounded-full bg-gray-300"></div>
+              <span className="truncate">{item.productName} (x{item.quantity})</span>
+            </div>
+          ))}
+          {receipt.items.length > 2 && (
+            <div className="flex items-center gap-2 text-gray-500 text-[13px]">
+              <div className="w-1 h-1 rounded-full bg-gray-300"></div>
+              <span>... và {receipt.items.length - 2} sản phẩm khác</span>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="mt-auto pt-3 border-t border-gray-50 flex justify-between items-center group" onClick={toggleExpand}>
         <span className="text-gray-900 font-bold text-[18px]">{formatCurrency(receipt.totalAmount)}</span>
-        <IonIcon icon={isExpanded ? chevronUpOutline : chevronDownOutline} className="text-gray-400 text-lg transition-transform" />
+        {receipt.items && receipt.items.length > 0 && (
+          <IonIcon icon={isExpanded ? chevronUpOutline : chevronDownOutline} className="text-gray-400 text-lg transition-transform" />
+        )}
       </div>
 
-      {isExpanded && (
+      {isExpanded && receipt.items && (
         <div className="mt-3 space-y-3 pt-3 border-t border-gray-50 animate-fadeIn">
           {receipt.items.map((item, idx) => (
             <div key={idx} className="flex flex-col gap-1.5">
               <div className="flex justify-between text-[13px] text-gray-600 leading-tight">
                 <span className="flex-1 pr-4 font-medium">{item.productName}</span>
                 <span className="whitespace-nowrap font-bold text-gray-800">
-                  x{item.quantity} x {formatCurrency(item.price)}
+                  x{item.quantity} x {formatCurrency(item.costPrice)}
                 </span>
               </div>
             </div>

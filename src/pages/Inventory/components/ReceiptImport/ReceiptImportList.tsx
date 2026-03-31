@@ -86,26 +86,28 @@ const ReceiptImportList = () => {
         filterParams.toDate = activeFilters.dateRange.to;
       }
 
-      const response = await getListReceiptImport(
+      const response: any = await getListReceiptImport(
         filterParams,
         page,
         pageSize,
       );
 
+      const data = response?.data || [];
+
       if (isLoadMore) {
-        if (response.length < pageSize) {
+        if (data.length < pageSize) {
           setHasMore(false);
         }
-        setReceiptImports((prev) => [...prev, ...response]);
+        setReceiptImports((prev) => [...prev, ...data]);
       } else {
-        if (response.length < pageSize) {
+        if (data.length < pageSize) {
           setHasMore(false);
         } else {
           setHasMore(true);
         }
-        setReceiptImports(response);
+        setReceiptImports(data);
 
-        if (!response.length) {
+        if (!data.length) {
           presentToast({
             message: "Không tìm thấy kết quả",
             duration: 2000,
