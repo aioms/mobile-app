@@ -7,9 +7,22 @@ type Props = {
   presentation?: 'date' | 'time' | 'date-time' | 'time-date' | 'month-year' | 'year' | 'month';
   attrs: HTMLAttributes<HTMLIonDatetimeElement> & { disabled?: boolean };
   extraClassName?: string;
+  formatOptions?: any;
 }
 
-const DatePicker: FC<Props> = ({ value, onChange, presentation = 'date-time', attrs, extraClassName }) =>  {
+const defaultFormatOptions = {
+  date: {
+    weekday: 'long',
+    month: 'long',
+    day: '2-digit',
+  },
+  time: {
+    hour: '2-digit',
+    minute: '2-digit',
+  },
+};
+
+const DatePicker: FC<Props> = ({ value, onChange, presentation = 'date-time', attrs, extraClassName, formatOptions }) =>  {
   return (
     <>
       <IonDatetimeButton className={extraClassName} datetime={attrs.id} disabled={attrs.disabled}></IonDatetimeButton>
@@ -20,17 +33,7 @@ const DatePicker: FC<Props> = ({ value, onChange, presentation = 'date-time', at
           presentation={presentation}
           value={value || new Date().toISOString()}
           onIonChange={onChange}
-          formatOptions={{
-            date: {
-              weekday: 'long',
-              month: 'long',
-              day: '2-digit',
-            },
-            time: {
-              hour: '2-digit',
-              minute: '2-digit',
-            },
-          }}
+          formatOptions={formatOptions || defaultFormatOptions}
           {...attrs}
         />
       </IonModal>

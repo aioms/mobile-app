@@ -1,8 +1,3 @@
-import { ISupplier } from "@/types/supplier";
+import { ISupplierDetail as ISupplierDetailBase } from "@/types/supplier";
 
-export interface ISupplierDetail extends ISupplier {
-  email?: string;
-  company?: string;
-  totalOrders?: number;
-  totalReceiptCheck?: number;
-}
+export interface ISupplierDetail extends ISupplierDetailBase {}

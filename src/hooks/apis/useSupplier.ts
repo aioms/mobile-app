@@ -1,6 +1,6 @@
 import { IHttpResponse } from "@/types";
 import { request } from "../../helpers/axios";
-import { ISupplier } from "@/types/supplier";
+import { ISupplierListItem, ISupplierDetail } from "@/types/supplier";
 
 const useSupplier = () => {
   const getList = async (
@@ -10,7 +10,7 @@ const useSupplier = () => {
   ) => {
     const query = new URLSearchParams(filters);
 
-    const response: IHttpResponse<ISupplier[]> = await request.get(
+    const response: IHttpResponse<ISupplierListItem[]> = await request.get(
       `/suppliers?${query.toString()}&page=${page}&limit=${limit}`,
     );
     return response;
@@ -25,8 +25,14 @@ const useSupplier = () => {
     return response;
   };
 
+  const getDetail = async (id: string) => {
+    const response: IHttpResponse<ISupplierDetail> = await request.get(`/suppliers/${id}`);
+    return response;
+  };
+
   return {
     getList,
+    getDetail,
     create,
   };
 };

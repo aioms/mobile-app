@@ -112,7 +112,7 @@ const ReceiptDebtItem: React.FC<ReceiptDebtItemProps> = ({ receipt, onClick }) =
                 <div className="flex justify-between text-[13px] text-gray-600 leading-tight">
                   <span className="flex-1 pr-4 font-medium">{item.productName}</span>
                   <span className="whitespace-nowrap font-bold text-gray-800">
-                    x{item.quantity} x {formatCurrency(item.sellingPrice || item.costPrice)}
+                    x{item.quantity} x {formatCurrency(item.costPrice)}
                   </span>
                 </div>
               </div>

@@ -23,7 +23,7 @@ const StatsSection: React.FC<StatsSectionProps> = ({ supplier }) => {
           Đơn nhập
         </span>
         <span className="text-[18px] font-bold text-gray-900">
-          {supplier.totalOrders || 0}
+          {supplier.totalReceiptReturn || 0}
         </span>
       </div>
 
@@ -36,7 +36,7 @@ const StatsSection: React.FC<StatsSectionProps> = ({ supplier }) => {
         </span>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center">
+      {/* <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center">
         <div className="flex items-center gap-1 mb-1">
           <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
             Phiếu nhập CTT
@@ -48,7 +48,7 @@ const StatsSection: React.FC<StatsSectionProps> = ({ supplier }) => {
           </span>
           <span className="text-yellow-400 text-sm">★</span>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };
