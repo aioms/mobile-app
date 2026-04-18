@@ -1,7 +1,16 @@
-import { PrinterConfig, PrinterStatus, PrinterResponse, DEFAULT_XPRINTER_CONFIG } from '@/types/printer.d';
+import {
+  PrinterConfig,
+  PrinterStatus,
+  PrinterResponse,
+  DEFAULT_XPRINTER_CONFIG,
+  BarcodeLayout,
+  PrinterV2PrintData,
+  PrinterV2Response,
+  PrinterV2TestData,
+} from '@/types/printer.d';
 
 // Proxy server configuration
-const PROXY_SERVER_URL = 'https://desktop-0au7em7.tail0c14cf.ts.net';
+const PROXY_SERVER_URL = import.meta.env.VITE_PROXY_SERVER_URL || 'https://desktop-0au7em7.tail0c14cf.ts.net';
 
 export class XprinterService {
   private config: PrinterConfig;
@@ -151,6 +160,88 @@ export class XprinterService {
       return {
         success: false,
         message: `Failed to print horizontal barcode: ${(error as Error).message}`,
+      };
+    }
+  }
+
+  // =========================================================================
+  // Printer Service V2 — talks to /api/printer/v2/* endpoints.
+  //
+  // Differences vs. the legacy methods above:
+  //   - Transport & mode are controlled by the proxy-server .env (ESC/POS,
+  //     TSPL or ZPL; TCP or USB). The client only chooses the *layout*.
+  //   - Supports `layout: 'side-by-side'` for two-up 76×22 mm printing.
+  //   - Server performs a fresh connection check before every print and can
+  //     automatically fall back from primary (LAN) to a configured USB path.
+  //   - Response surfaces the `via` / `transport` fields so the UI can tell
+  //     the user whether the job went out over LAN or USB.
+  // =========================================================================
+
+  /**
+   * Probe the V2 service — primary first, then fallback if configured.
+   */
+  async testConnectionV2(): Promise<PrinterV2Response<PrinterV2TestData>> {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/printer/v2/test`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      return (await response.json()) as PrinterV2Response<PrinterV2TestData>;
+    } catch (error) {
+      return {
+        success: false,
+        message: `Failed to test V2 connection: ${(error as Error).message}`,
+        data: null,
+      };
+    }
+  }
+
+  /**
+   * Fetch the V2 service description (primary / fallback targets, mode, etc.)
+   * Useful for debug UIs.
+   */
+  async describeV2(): Promise<PrinterV2Response> {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/printer/v2/describe`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      return (await response.json()) as PrinterV2Response;
+    } catch (error) {
+      return {
+        success: false,
+        message: `Failed to describe V2: ${(error as Error).message}`,
+        data: null,
+      };
+    }
+  }
+
+  /**
+   * Print barcode labels via the V2 pipeline.
+   *
+   * @param productData     productCode (required) + optional productName
+   * @param quantity        total labels to print (1–500)
+   * @param options.layout  'single' (one per strip) or 'side-by-side'
+   *                        (two 35 mm labels on a 76 mm strip)
+   */
+  async printBarcodeLabelsV2(
+    productData: { productCode: string; productName?: string },
+    quantity: number = 1,
+    options: { layout?: BarcodeLayout } = {},
+  ): Promise<PrinterV2Response<PrinterV2PrintData>> {
+    const { layout = 'single' } = options;
+    try {
+      const response = await fetch(`${this.baseUrl}/api/printer/v2/print-barcode`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...productData, quantity, layout }),
+      });
+      return (await response.json()) as PrinterV2Response<PrinterV2PrintData>;
+    } catch (error) {
+      return {
+        success: false,
+        message: `Failed to print (V2): ${(error as Error).message}`,
+        data: null,
       };
     }
   }
