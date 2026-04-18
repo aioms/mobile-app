@@ -47,3 +47,39 @@ export interface PrinterResponse {
   message: string;
   data?: any;
 }
+
+// --- Printer Service V2 -----------------------------------------------------
+
+export type BarcodeLayout = 'single' | 'side-by-side';
+
+export type PrinterTransport = 'tcp' | 'usb-spooler' | 'usb-libusb';
+
+export type PrinterMode = 'escpos' | 'tspl' | 'zpl';
+
+export interface PrinterV2TestData {
+  isConnected: boolean;
+  target: string;
+  using?: 'primary' | 'fallback';
+  primary?: string;
+  fallback?: string | null;
+  error?: string;
+}
+
+export interface PrinterV2PrintData {
+  productCode: string;
+  productName: string;
+  quantity: number;
+  layout: BarcodeLayout;
+  mode: PrinterMode;
+  transport: PrinterTransport;
+  via: 'primary' | 'fallback';
+  target: string;
+  bytesSent: number;
+  timestamp: string;
+}
+
+export interface PrinterV2Response<T = any> {
+  success: boolean;
+  message: string;
+  data: T | null;
+}

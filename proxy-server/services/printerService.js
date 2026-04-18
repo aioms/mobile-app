@@ -45,20 +45,21 @@
  *    - Product code below barcode
  *    - Uses native thermal printer commands
  *
- * 2. Multiple labels - Vertical Stack (printHorizontalBarcodes):
- *    - Labels printed vertically (stacked)
- *    - Each label: Product name + Barcode + Product code
- *    - Separated by dashed lines
- *    - Uses native CODE128 commands (fast, reliable)
- *    - Recommended for most use cases
- *
- * 3. Multiple labels - Side-by-Side (printSideBySideBarcodes):
+ * 2. Multiple labels - Side-by-Side (printSideBySideBarcodes):
  *    - Two labels per row (35mm each)
  *    - Product names in table layout (48% + 4% spacing + 48%)
  *    - Barcodes side-by-side using image generation
  *    - Product codes below each barcode
  *    - Uses bwip-js + canvas (slower, more precise)
  *    - Best for label sheets or specific layout requirements
+ *
+ * 3. Multiple labels - Vertical Stack (printHorizontalBarcodes):
+ *    - Labels printed vertically (stacked)
+ *    - Each label: Product name + Barcode + Product code
+ *    - Separated by dashed lines
+ *    - Uses native CODE128 commands (fast, reliable)
+ *    - Recommended for most use cases
+
  *
  * IMPLEMENTATION NOTES:
  * - printBarcodeLabel: Native commands, single label

@@ -7,12 +7,25 @@ const compression = require('compression');
 const bodyParser = require('body-parser');
 const logger = require('./config/logger');
 const PrinterService = require('./services/printerService');
+const PrinterServiceV2 = require('./services/printerServiceV2');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Global printer service instance
-let printerService = null;
+// Global printer service instances
+let printerService = null;     // legacy (printerService.js)
+let printerServiceV2 = null;   // new (printerServiceV2.js)
+
+/**
+ * Lazily construct the V2 singleton from env. Re-throws so endpoints can
+ * return 500 with the original reason (e.g. bad PRINTER_MODE).
+ */
+const getPrinterServiceV2 = () => {
+  if (!printerServiceV2) {
+    printerServiceV2 = new PrinterServiceV2();
+  }
+  return printerServiceV2;
+};
 
 // Middleware
 app.use(helmet({
@@ -60,7 +73,7 @@ const errorHandler = (err, req, res, next) => {
 
 // Request validation middleware
 const validatePrintRequest = (req, res, next) => {
-  const { productCode, quantity } = req.body;
+  const { productCode, quantity, layout } = req.body;
 
   if (!productCode || typeof productCode !== 'string') {
     return res.status(400).json({
@@ -69,10 +82,21 @@ const validatePrintRequest = (req, res, next) => {
     });
   }
 
-  if (quantity && (typeof quantity !== 'number' || quantity < 1 || quantity > 100)) {
+  // quantity is optional; if present it must be a positive integer in [1, 500].
+  if (quantity !== undefined) {
+    if (typeof quantity !== 'number' || !Number.isFinite(quantity) || quantity < 1 || quantity > 500) {
+      return res.status(400).json({
+        success: false,
+        message: 'Quantity must be a number between 1 and 500'
+      });
+    }
+  }
+
+  // Layout is optional; if present must be a supported value (V2 only).
+  if (layout !== undefined && !['single', 'side-by-side'].includes(layout)) {
     return res.status(400).json({
       success: false,
-      message: 'Quantity must be a number between 1 and 100'
+      message: 'Layout must be "single" or "side-by-side"'
     });
   }
 
@@ -293,6 +317,71 @@ app.post('/api/printer/disconnect', async (req, res) => {
       success: false,
       message: error.message
     });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Printer Service V2 routes
+// ---------------------------------------------------------------------------
+// New endpoints backed by `services/printerServiceV2.js`. These support:
+//   - USB (spooler / libusb) + LAN transports
+//   - ESC/POS + TSPL + ZPL modes (driven by env PRINTER_MODE)
+//   - Automatic TCP → USB fallback (env FALLBACK_PRINTER_CONNECTION)
+//   - Connection re-check before every print
+//   - Telegram error reporting (env TELEGRAM_*)
+// Legacy routes above continue to work unchanged.
+
+// Describe current V2 configuration (for debugging).
+app.get('/api/printer/v2/describe', (req, res) => {
+  try {
+    const svc = getPrinterServiceV2();
+    res.json({ success: true, data: svc.describe() });
+  } catch (error) {
+    logger.error('V2 describe failed:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Liveness test (probes primary, then fallback).
+app.get('/api/printer/v2/test', async (req, res) => {
+  try {
+    const svc = getPrinterServiceV2();
+    const result = await svc.testConnection();
+    res.json({
+      success: result.isConnected,
+      message: result.isConnected
+        ? `Printer reachable via ${result.using} (${result.target})`
+        : result.error || 'Printer not reachable',
+      data: result,
+    });
+  } catch (error) {
+    logger.error('V2 test failed:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Print barcode labels (V2).
+//
+// Body: {
+//   productCode: string,
+//   productName?: string,
+//   quantity?: number,           // 1-500
+//   layout?: 'single' | 'side-by-side'
+// }
+app.post('/api/printer/v2/print-barcode', validatePrintRequest, async (req, res) => {
+  try {
+    const { productCode, productName, quantity = 1, layout = 'single' } = req.body;
+    const svc = getPrinterServiceV2();
+    const result = await svc.printBarcodeLabels(
+      { productCode, productName },
+      quantity,
+      { layout },
+    );
+    const statusCode = result.success ? 200 : 500;
+    res.status(statusCode).json(result);
+  } catch (error) {
+    logger.error('V2 print failed:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 

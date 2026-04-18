@@ -36,7 +36,7 @@ import {
 } from "ionicons/icons";
 import { useLoading } from "@/hooks";
 import { createXprinterService, DEFAULT_XPRINTER_CONFIG } from "@/helpers/printerService";
-import { PrinterConfig } from "@/types/printer";
+import { BarcodeLayout, PrinterConfig } from "@/types/printer";
 import { PrintingStatus } from "@/types/barcodeModal";
 import LocalNetworkService from "@/services/localNetworkService";
 import { PrinterDevice } from "@/types/localNetwork";
@@ -61,6 +61,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
   // State management for single product printing
   const [printQuantity, setPrintQuantity] = useState<number>(1);
   const [useNetworkPrinter, setUseNetworkPrinter] = useState<boolean>(false);
+  const [barcodeLayout, setBarcodeLayout] = useState<BarcodeLayout>('single');
   const [showPrinterSettings, setShowPrinterSettings] = useState<boolean>(false);
   const [showDiscovery, setShowDiscovery] = useState<boolean>(false);
 
@@ -103,13 +104,11 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
       try {
         const printerService = createXprinterService(printerConfig);
 
-        // Update printing status
         setPrintingStatus({
           status: 'preparing',
           progress: { current: 0, total: 1, message: 'Đang chuẩn bị in...' }
         });
 
-        // Single product printing using the updated printHorizontalBarcodes method
         setPrintingStatus({
           status: 'printing',
           progress: { current: 1, total: 1, message: `Đang in ${productName || productCode}...` }
@@ -120,25 +119,36 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
           productName: productName || productCode
         };
 
-        const response = await printerService.printHorizontalBarcodes(product, printQuantity);
+        // V2 pipeline: server picks transport (LAN primary, USB fallback),
+        // client only chooses layout.
+        const response = await printerService.printBarcodeLabelsV2(
+          product,
+          printQuantity,
+          { layout: barcodeLayout },
+        );
 
-        if (response.success) {
-          setPrintingStatus({
-            status: 'completed',
-            progress: { current: 1, total: 1, message: 'In thành công!' }
-          });
-
-          await presentToast({
-            message: `In thành công ${printQuantity} mã vạch`,
-            duration: 3000,
-            position: "top",
-            color: "success",
-          });
-        } else {
+        if (!response.success) {
           throw new Error(response.message);
         }
 
-        // Reset status after delay
+        setPrintingStatus({
+          status: 'completed',
+          progress: { current: 1, total: 1, message: 'In thành công!' }
+        });
+
+        const viaFallback = response.data?.via === 'fallback';
+        const transport = response.data?.transport;
+        const toastMessage = viaFallback
+          ? `In thành công ${printQuantity} mã vạch qua USB dự phòng (${transport})`
+          : `In thành công ${printQuantity} mã vạch${transport ? ` (${transport})` : ''}`;
+
+        await presentToast({
+          message: toastMessage,
+          duration: 3000,
+          position: "top",
+          color: viaFallback ? "warning" : "success",
+        });
+
         setTimeout(() => {
           setPrintingStatus({
             status: 'idle',
@@ -158,7 +168,6 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
           color: "danger",
         });
 
-        // Reset status after delay
         setTimeout(() => {
           setPrintingStatus({
             status: 'idle',
@@ -369,17 +378,21 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
     await withLoading(async () => {
       try {
         const printerService = createXprinterService(printerConfig);
-        const status = await printerService.testConnection();
+        const result = await printerService.testConnectionV2();
 
-        if (status.isConnected) {
+        if (result.success && result.data?.isConnected) {
+          const viaFallback = result.data.using === 'fallback';
+          const message = viaFallback
+            ? `⚠️ Primary offline — đang dùng USB dự phòng (${result.data.target})`
+            : `✅ Kết nối máy in qua ${result.data.target}`;
           await presentToast({
-            message: "✅ Kết nối máy in Xprinter 365B thành công!",
-            duration: 2000,
+            message,
+            duration: 2500,
             position: "top",
-            color: "success",
+            color: viaFallback ? "warning" : "success",
           });
         } else {
-          throw new Error(status.errorMessage || "Không thể kết nối đến máy in");
+          throw new Error(result.data?.error || result.message || "Không thể kết nối đến máy in");
         }
       } catch (error) {
         await presentToast({
@@ -671,6 +684,24 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
                 onIonChange={(e) => setUseNetworkPrinter(e.detail.checked)}
               />
             </IonItem>
+
+            {/* Layout selector (V2) */}
+            {useNetworkPrinter && (
+              <IonItem className="mb-4">
+                <IonLabel>
+                  <h3>Bố cục nhãn</h3>
+                  <p>
+                    {barcodeLayout === 'side-by-side'
+                      ? '2 nhãn 35×22 mm trên 1 strip 76×22 mm'
+                      : '1 nhãn / 1 strip (mặc định)'}
+                  </p>
+                </IonLabel>
+                <IonToggle
+                  checked={barcodeLayout === 'side-by-side'}
+                  onIonChange={(e) => setBarcodeLayout(e.detail.checked ? 'side-by-side' : 'single')}
+                />
+              </IonItem>
+            )}
 
             {/* Network Printer Settings */}
             {useNetworkPrinter && (
