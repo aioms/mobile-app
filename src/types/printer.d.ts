@@ -50,7 +50,14 @@ export interface PrinterResponse {
 
 // --- Printer Service V2 -----------------------------------------------------
 
-export type BarcodeLayout = 'single' | 'side-by-side';
+/**
+ * Barcode layout options on 76mm paper:
+ *  - `auto-pair` (default): up to 2 labels per strip; last strip holds 1
+ *    label when the quantity is odd.
+ *  - `single`: always one label per strip (wastes 76mm stock; keep for debug).
+ *  - `side-by-side`: deprecated alias of `auto-pair`, kept for compatibility.
+ */
+export type BarcodeLayout = 'auto-pair' | 'single' | 'side-by-side';
 
 export type PrinterTransport = 'tcp' | 'usb-spooler' | 'usb-libusb';
 

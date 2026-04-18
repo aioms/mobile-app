@@ -36,7 +36,7 @@ import {
 } from "ionicons/icons";
 import { useLoading } from "@/hooks";
 import { createXprinterService, DEFAULT_XPRINTER_CONFIG } from "@/helpers/printerService";
-import { BarcodeLayout, PrinterConfig } from "@/types/printer";
+import { PrinterConfig } from "@/types/printer";
 import { PrintingStatus } from "@/types/barcodeModal";
 import LocalNetworkService from "@/services/localNetworkService";
 import { PrinterDevice } from "@/types/localNetwork";
@@ -61,9 +61,19 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
   // State management for single product printing
   const [printQuantity, setPrintQuantity] = useState<number>(1);
   const [useNetworkPrinter, setUseNetworkPrinter] = useState<boolean>(false);
-  const [barcodeLayout, setBarcodeLayout] = useState<BarcodeLayout>('single');
   const [showPrinterSettings, setShowPrinterSettings] = useState<boolean>(false);
   const [showDiscovery, setShowDiscovery] = useState<boolean>(false);
+
+  // Auto-pair layout: 2 labels/strip, odd qty leaves 1 label on the last strip.
+  const pairedStrips = Math.floor(printQuantity / 2);
+  const hasTrailingSingle = printQuantity % 2 === 1;
+  const totalStrips = pairedStrips + (hasTrailingSingle ? 1 : 0);
+  const layoutHint =
+    printQuantity <= 0
+      ? ''
+      : hasTrailingSingle
+        ? `${totalStrips} strip (${pairedStrips} strip × 2 nhãn + 1 strip × 1 nhãn)`
+        : `${totalStrips} strip × 2 nhãn`;
 
   const [printingStatus, setPrintingStatus] = useState<PrintingStatus>({
     status: 'idle',
@@ -119,12 +129,13 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
           productName: productName || productCode
         };
 
-        // V2 pipeline: server picks transport (LAN primary, USB fallback),
-        // client only chooses layout.
+        // V2 pipeline: server picks transport (LAN primary, USB fallback)
+        // and automatically pairs labels on 76 mm strips. The last strip
+        // holds a single label when `printQuantity` is odd.
         const response = await printerService.printBarcodeLabelsV2(
           product,
           printQuantity,
-          { layout: barcodeLayout },
+          { layout: 'auto-pair' },
         );
 
         if (!response.success) {
@@ -685,21 +696,13 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
               />
             </IonItem>
 
-            {/* Layout selector (V2) */}
-            {useNetworkPrinter && (
-              <IonItem className="mb-4">
+            {/* Layout hint (V2 auto-pair). Purely informational. */}
+            {useNetworkPrinter && layoutHint && (
+              <IonItem lines="none" className="mb-4">
                 <IonLabel>
-                  <h3>Bố cục nhãn</h3>
-                  <p>
-                    {barcodeLayout === 'side-by-side'
-                      ? '2 nhãn 35×22 mm trên 1 strip 76×22 mm'
-                      : '1 nhãn / 1 strip (mặc định)'}
-                  </p>
+                  <h3>Bố cục nhãn (tự động)</h3>
+                  <p>{layoutHint}</p>
                 </IonLabel>
-                <IonToggle
-                  checked={barcodeLayout === 'side-by-side'}
-                  onIonChange={(e) => setBarcodeLayout(e.detail.checked ? 'side-by-side' : 'single')}
-                />
               </IonItem>
             )}
 
