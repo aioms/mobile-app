@@ -48,6 +48,7 @@ import OrderDetailScreen from "@/pages/Order/OrderDetail";
 import OrderUpdateScreen from "@/pages/Order/OrderUpdate";
 import OrderPage from "@/pages/Order";
 import ExtendedScreen from "@/pages/Extended/Extended";
+import CashBookScreen from "@/pages/Extended/CashBook";
 import CustomerListScreen from "@/pages/Extended/CustomerList";
 import CustomerDetailScreen from "@/pages/Extended/CustomerDetail";
 import SupplierListScreen from "@/pages/Extended/SupplierList";
@@ -178,6 +179,11 @@ const TabBar: React.FC = () => {
               title="Tính năng mở rộng"
             />
           }
+        />
+        <Route
+          exact
+          path="/tabs/extended/cashbook"
+          component={CashBookScreen}
         />
         <Route
           exact

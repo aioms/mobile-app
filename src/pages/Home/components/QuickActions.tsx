@@ -10,14 +10,25 @@ import {
   timeOutline,
 } from "ionicons/icons";
 
-import { useBarcodeScanner, useStorage } from "@/hooks";
+import { UserRole } from "@/common/enums/user";
+import { useAuth, useBarcodeScanner, useStorage } from "@/hooks";
 import useProduct from "@/hooks/apis/useProduct";
 
 const QuickActions: React.FC = () => {
   const history = useHistory();
   const [presentToast] = useIonToast();
+  const { user } = useAuth();
   const { addItem, getItem } = useStorage();
   const { getDetail: getProductDetail } = useProduct();
+  const canViewCashBook =
+    user?.role === UserRole.ADMIN || user?.role === UserRole.MANAGER;
+
+  type QuickActionItem = {
+    icon: string;
+    label: string;
+    color: string;
+    onAction: () => void;
+  };
 
   const { startScan, stopScan } = useBarcodeScanner({
     onBarcodeScanned: handleBarcodeScanned,
@@ -121,33 +132,46 @@ const QuickActions: React.FC = () => {
   }
 
   const actions = useMemo(
-    () => [
-      {
-        icon: scanOutline,
-        label: "Quét sản phẩm",
-        color: "bg-blue-500",
-        onAction: () => startScan({ type: "product" }),
-      },
-      {
-        icon: cartOutline,
-        label: "Tạo đơn hàng",
-        color: "bg-orange-500",
-        onAction: () => startScan({ type: "order" }),
-      },
-      {
-        icon: statsChartOutline,
-        label: "Phân tích báo cáo",
-        color: "bg-green-500",
-        route: "/analytics",
-      },
-      {
-        icon: timeOutline,
-        label: "Chấm công",
-        color: "bg-blue-500",
-        route: "/attendance",
-      },
-    ],
-    []
+    () => {
+      const items: QuickActionItem[] = [
+        {
+          icon: scanOutline,
+          label: "Quét sản phẩm",
+          color: "bg-blue-500",
+          onAction: () => startScan({ type: "product" }),
+        },
+        {
+          icon: cartOutline,
+          label: "Tạo đơn hàng",
+          color: "bg-orange-500",
+          onAction: () => startScan({ type: "order" }),
+        },
+        {
+          icon: timeOutline,
+          label: "Chấm công",
+          color: "bg-blue-500",
+          onAction: () =>
+            presentToast({
+              message: "Tính năng đang được cập nhật",
+              duration: 2000,
+              position: "top",
+              color: "medium",
+            }),
+        },
+      ];
+
+      if (canViewCashBook) {
+        items.splice(2, 0, {
+          icon: statsChartOutline,
+          label: "Phân tích báo cáo",
+          color: "bg-green-500",
+          onAction: () => history.push("/tabs/extended/cashbook"),
+        });
+      }
+
+      return items;
+    },
+    [canViewCashBook, history, presentToast, startScan]
   );
 
   return (
@@ -155,18 +179,17 @@ const QuickActions: React.FC = () => {
       <h2 className="text-base font-bold mb-3">Thao tác nhanh</h2>
       <div className="grid grid-cols-2 gap-3">
         {actions.map((action, index) => (
-          <div
+          <button
             key={index}
-            className="bg-white rounded-xl p-4 flex items-center justify-center flex-col"
+            type="button"
+            onClick={action.onAction}
+            className="bg-white rounded-xl p-4 flex items-center justify-center flex-col active:scale-[0.98] transition-transform"
           >
-            <div
-              className={`${action.color} p-2 rounded-lg mb-2`}
-              onClick={action.onAction}
-            >
+            <div className={`${action.color} p-2 rounded-lg mb-2`}>
               <IonIcon icon={action.icon} className="text-white w-6 h-6" />
             </div>
             <span className="text-xs">{action.label}</span>
-          </div>
+          </button>
         ))}
       </div>
     </div>
