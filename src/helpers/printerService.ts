@@ -221,15 +221,18 @@ export class XprinterService {
    *
    * @param productData     productCode (required) + optional productName
    * @param quantity        total labels to print (1–500)
-   * @param options.layout  'single' (one per strip) or 'side-by-side'
-   *                        (two 35 mm labels on a 76 mm strip)
+   * @param options.layout  defaults to `'auto-pair'`: the server packs two
+   *                        labels per 76 mm strip whenever it can, leaving
+   *                        a single label on the last strip when the total
+   *                        quantity is odd. Use `'single'` to force one
+   *                        label per strip.
    */
   async printBarcodeLabelsV2(
     productData: { productCode: string; productName?: string },
     quantity: number = 1,
     options: { layout?: BarcodeLayout } = {},
   ): Promise<PrinterV2Response<PrinterV2PrintData>> {
-    const { layout = 'single' } = options;
+    const { layout = 'auto-pair' } = options;
     try {
       const response = await fetch(`${this.baseUrl}/api/printer/v2/print-barcode`, {
         method: 'POST',
