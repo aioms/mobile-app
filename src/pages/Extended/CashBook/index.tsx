@@ -25,6 +25,7 @@ import OverviewCard from "./components/OverviewCard";
 import { DetailSource, ReportRange } from "./types";
 import {
   formatActualCashInputValue,
+  formatCashForDayInputValue,
   getBalanceState,
   getPreviousActualCash,
   getSelectedCashBook,
@@ -34,7 +35,8 @@ import {
 const CashBookPage: React.FC = () => {
   const history = useHistory();
   const { user } = useAuth();
-  const { getOverview, getDailyBalance, updateActualCash } = useCashbook();
+  const { getOverview, getDailyBalance, updateActualCash, updateCashForDay } =
+    useCashbook();
   const defaultDate = dayjs().format("YYYY-MM-DD");
   const [reportRange, setReportRange] = useState<ReportRange>("day");
   const [detailSource, setDetailSource] = useState<DetailSource>("orders");
@@ -45,9 +47,11 @@ const CashBookPage: React.FC = () => {
   const [selectedCashBook, setSelectedCashBook] = useState(() =>
     getSelectedCashBook(defaultDate),
   );
+  const [cashForDayInput, setCashForDayInput] = useState("");
   const [actualCashInput, setActualCashInput] = useState("");
   const [isOverviewLoading, setIsOverviewLoading] = useState(true);
   const [isBalanceLoading, setIsBalanceLoading] = useState(true);
+  const [isSavingCashForDay, setIsSavingCashForDay] = useState(false);
   const [isSavingActualCash, setIsSavingActualCash] = useState(false);
   const [hasLoadedOverview, setHasLoadedOverview] = useState(false);
   const [hasLoadedBalance, setHasLoadedBalance] = useState(false);
@@ -66,6 +70,7 @@ const CashBookPage: React.FC = () => {
     [selectedCashBook],
   );
   const cashRevenue = selectedCashBook.cashRevenue;
+  const returnsCash = selectedCashBook.returnsCash;
   const computedCash = selectedCashBook.computedCash;
   const balanceState = useMemo(
     () => getBalanceState(selectedCashBook.balanceStatus, selectedCashBook.difference),
@@ -142,6 +147,9 @@ const CashBookPage: React.FC = () => {
       }
 
       setSelectedCashBook(response);
+      setCashForDayInput(
+        formatCashForDayInputValue(response.cashForDay, response.hasCashForDay),
+      );
       setActualCashInput(formatActualCashInputValue(response.actualCash));
     } catch (error) {
       if (balanceRequestRef.current !== currentRequestId) {
@@ -149,6 +157,7 @@ const CashBookPage: React.FC = () => {
       }
 
       setSelectedCashBook(getSelectedCashBook(selectedDate));
+      setCashForDayInput("");
       setActualCashInput("");
       await showErrorToast((error as Error).message || "Không thể tải quỹ tiền mặt");
     } finally {
@@ -171,6 +180,84 @@ const CashBookPage: React.FC = () => {
     Promise.all([loadOverview(), loadDailyBalance()]).finally(() => {
       event.detail.complete();
     });
+  };
+
+  const handleCashForDayChange = (value: string) => {
+    const digitsOnly = value.replace(/\D/g, "");
+    setCashForDayInput(
+      digitsOnly ? formatCurrencyWithoutSymbol(Number(digitsOnly)) : "",
+    );
+  };
+
+  const handleCashForDayBlur = async () => {
+    if (isBalanceLoading || isSavingCashForDay || !selectedDate) {
+      return;
+    }
+
+    if (!cashForDayInput.trim()) {
+      setCashForDayInput(
+        formatCashForDayInputValue(
+          selectedCashBook.cashForDay,
+          selectedCashBook.hasCashForDay,
+        ),
+      );
+      return;
+    }
+
+    const parsedCashForDay = parseCurrencyInput(cashForDayInput);
+
+    if (
+      selectedCashBook.hasCashForDay &&
+      selectedCashBook.cashForDay === parsedCashForDay
+    ) {
+      setCashForDayInput(
+        formatCashForDayInputValue(
+          selectedCashBook.cashForDay,
+          selectedCashBook.hasCashForDay,
+        ),
+      );
+      return;
+    }
+
+    try {
+      setIsSavingCashForDay(true);
+      const response = await updateCashForDay({
+        date: selectedDate,
+        cashForDay: parsedCashForDay,
+      });
+
+      setSelectedCashBook((previous) => ({
+        ...previous,
+        cashForDay: response.cashForDay,
+        hasCashForDay: response.hasCashForDay,
+        actualCash: response.actualCash,
+        computedCash: response.computedCash,
+        hasActualCash: response.hasActualCash,
+        difference: response.difference,
+        balanceStatus: response.balanceStatus,
+      }));
+      setCashForDayInput(
+        formatCashForDayInputValue(response.cashForDay, response.hasCashForDay),
+      );
+      setActualCashInput(formatActualCashInputValue(response.actualCash));
+      await Toast.show({
+        text: "Đã cập nhật tiền đầu ngày",
+        duration: "short",
+        position: "top",
+      });
+    } catch (error) {
+      setCashForDayInput(
+        formatCashForDayInputValue(
+          selectedCashBook.cashForDay,
+          selectedCashBook.hasCashForDay,
+        ),
+      );
+      await showErrorToast(
+        (error as Error).message || "Không thể cập nhật tiền đầu ngày",
+      );
+    } finally {
+      setIsSavingCashForDay(false);
+    }
   };
 
   const handleActualCashChange = (value: string) => {
@@ -206,12 +293,17 @@ const CashBookPage: React.FC = () => {
 
       setSelectedCashBook((previous) => ({
         ...previous,
+        cashForDay: response.cashForDay,
+        hasCashForDay: response.hasCashForDay,
         actualCash: response.actualCash,
         computedCash: response.computedCash,
         hasActualCash: response.hasActualCash,
         difference: response.difference,
         balanceStatus: response.balanceStatus,
       }));
+      setCashForDayInput(
+        formatCashForDayInputValue(response.cashForDay, response.hasCashForDay),
+      );
       setActualCashInput(formatActualCashInputValue(response.actualCash));
       await Toast.show({
         text: "Đã cập nhật tiền mặt thực tế",
@@ -269,13 +361,19 @@ const CashBookPage: React.FC = () => {
             <CashBalanceCard
               selectedDate={selectedDate}
               selectedCashBook={selectedCashBook}
+              returnsCash={returnsCash}
               previousActualCash={previousActualCash}
               cashRevenue={cashRevenue}
               computedCash={computedCash}
+              cashForDayInput={cashForDayInput}
               actualCashInput={actualCashInput}
               balanceState={balanceState}
-              isInputDisabled={isBalanceLoading || isSavingActualCash}
+              isInputDisabled={
+                isBalanceLoading || isSavingCashForDay || isSavingActualCash
+              }
               onDateChange={setSelectedDate}
+              onCashForDayChange={handleCashForDayChange}
+              onCashForDayBlur={handleCashForDayBlur}
               onActualCashChange={handleActualCashChange}
               onActualCashBlur={handleActualCashBlur}
             />
