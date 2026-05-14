@@ -25,8 +25,6 @@ import {
   InputCustomEvent,
   useIonViewWillEnter,
   useIonViewWillLeave,
-  IonFab,
-  IonFabButton,
 } from "@ionic/react";
 import {
   add,
@@ -113,6 +111,27 @@ const mapOrderPaymentMethodToModal = (
     default:
       return "cash";
   }
+};
+
+const resolveProductCode = (product: {
+  code?: string | number;
+  productCode?: string | number;
+}): string => {
+  if (product.code !== undefined && product.code !== null) {
+    const normalized = String(product.code).trim();
+    if (normalized) return normalized;
+  }
+
+  if (product.productCode !== undefined && product.productCode !== null) {
+    const normalized = String(product.productCode).trim();
+    if (normalized) {
+      // Product create API can return numeric productCode (e.g. 13188).
+      // Order submit expects the final product code string.
+      return normalized.startsWith("NK") ? normalized : `NK${normalized}`;
+    }
+  }
+
+  return "";
 };
 
 const OrderCreate: React.FC = () => {
@@ -238,7 +257,7 @@ const OrderCreate: React.FC = () => {
         id: product.id,
         productId: product.id,
         productName: product.productName,
-        code: product.code,
+        code: resolveProductCode(product),
         sellingPrice: product.sellingPrice,
         quantity: 1,
         vatRate: 0,
@@ -420,7 +439,7 @@ const OrderCreate: React.FC = () => {
               id: newProduct.id,
               productId: newProduct.id,
               productName: newProduct.productName,
-              code: newProduct.code,
+              code: resolveProductCode(newProduct),
               sellingPrice: newProduct.sellingPrice,
               quantity: 1,
               vatRate: 0,
@@ -716,6 +735,13 @@ const OrderCreate: React.FC = () => {
       newErrors.items = "Có sản phẩm không hợp lệ: Không thể đặt hàng với số lượng 0 khi chọn 'Giao ngay', hoặc vượt quá tồn kho";
     }
 
+    const hasMissingProductCode = orderItems.some(
+      (item) => !resolveProductCode(item).trim()
+    );
+    if (hasMissingProductCode) {
+      newErrors.items = "Có sản phẩm thiếu mã hàng. Vui lòng kiểm tra lại sản phẩm trước khi tạo đơn.";
+    }
+
     if (formData.vatEnabled) {
       if (!formData.companyName) {
         newErrors.companyName = "Vui lòng nhập tên công ty";
@@ -773,9 +799,9 @@ const OrderCreate: React.FC = () => {
       discountAmount: discountValue,
       ...(discountValue > 0 && { discountType: formData.discountType }),
       items: orderItems.map((item) => ({
-        productId: item.id,
+        productId: item.productId || item.id,
         productName: item.productName,
-        code: item.code,
+        code: resolveProductCode(item),
         quantity: item.quantity,
         price: item.sellingPrice,
         vatRate: item.vatRate || 0,
