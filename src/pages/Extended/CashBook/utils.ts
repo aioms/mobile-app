@@ -48,8 +48,11 @@ export const getEmptyDailyCashBook = (selectedDate: string): DailyCashBook => ({
   orderCash: 0,
   receiptCash: 0,
   cashRevenue: 0,
+  cashForDay: 0,
+  hasCashForDay: false,
   expenseItems: [],
   totalExpense: 0,
+  returnsCash: 0,
   previousActualCash: 0,
   previousActualCashDate: null,
   computedCash: 0,
@@ -74,6 +77,17 @@ export const formatActualCashInputValue = (actualCash: number | null) => {
   }
 
   return formatCurrencyWithoutSymbol(actualCash);
+};
+
+export const formatCashForDayInputValue = (
+  cashForDay: number,
+  hasCashForDay: boolean,
+) => {
+  if (!hasCashForDay) {
+    return "";
+  }
+
+  return formatCurrencyWithoutSymbol(cashForDay);
 };
 
 export const getBalanceState = (

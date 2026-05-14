@@ -10,6 +10,8 @@ import type {
   CashbookOverviewResponseDto,
   UpdateCashbookActualCashRequestDto,
   UpdateCashbookActualCashResponseDto,
+  UpdateCashbookCashForDayRequestDto,
+  UpdateCashbookCashForDayResponseDto,
 } from "@/types/cashbook.type";
 
 const useCashbook = () => {
@@ -62,10 +64,24 @@ const useCashbook = () => {
     return response.data;
   }, []);
 
+  const updateCashForDay = useCallback(async (
+    payload: UpdateCashbookCashForDayRequestDto,
+  ): Promise<UpdateCashbookCashForDayResponseDto> => {
+    const response: IHttpResponse<UpdateCashbookCashForDayResponseDto> =
+      await request.put(`/cashbook/daily-balance/cash-for-day`, payload);
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || "Không thể cập nhật tiền trong ngày");
+    }
+
+    return response.data;
+  }, []);
+
   return {
     getOverview,
     getDailyBalance,
     updateActualCash,
+    updateCashForDay,
   };
 };
 
