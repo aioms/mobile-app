@@ -241,7 +241,7 @@ const CashBookPage: React.FC = () => {
       );
       setActualCashInput(formatActualCashInputValue(response.actualCash));
       await Toast.show({
-        text: "Đã cập nhật tiền đầu ngày",
+        text: "Đã cập nhật tiền trong ngày",
         duration: "short",
         position: "top",
       });
@@ -253,7 +253,7 @@ const CashBookPage: React.FC = () => {
         ),
       );
       await showErrorToast(
-        (error as Error).message || "Không thể cập nhật tiền đầu ngày",
+        (error as Error).message || "Không thể cập nhật tiền trong ngày",
       );
     } finally {
       setIsSavingCashForDay(false);

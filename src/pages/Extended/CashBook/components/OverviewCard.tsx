@@ -177,9 +177,13 @@ const OverviewCard: React.FC<Props> = ({
             <div className="mt-3 text-[28px] font-bold leading-none text-blue-600">
               {formatCurrencyWithoutSymbol(overview.profit)}
             </div>
-            <div className="mt-4 border-t border-blue-100 pt-3 text-sm text-emerald-600">
-              Tỉ lệ tăng trưởng: +{overview.growthRate}%
-            </div>
+            {overview.growthRate > 0 ? (
+              <div className="mt-4 border-t border-blue-100 pt-3 text-sm">
+                <span className="text-emerald-600">
+                  Tỉ lệ tăng trưởng: +{overview.growthRate}%
+                </span>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

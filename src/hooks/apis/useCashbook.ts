@@ -71,7 +71,7 @@ const useCashbook = () => {
       await request.put(`/cashbook/daily-balance/cash-for-day`, payload);
 
     if (!response.success || !response.data) {
-      throw new Error(response.message || "Không thể cập nhật tiền đầu ngày");
+      throw new Error(response.message || "Không thể cập nhật tiền trong ngày");
     }
 
     return response.data;
