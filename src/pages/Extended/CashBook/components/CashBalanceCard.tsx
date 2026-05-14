@@ -48,6 +48,9 @@ const CashBalanceCard: React.FC<Props> = ({
   onActualCashChange,
   onActualCashBlur,
 }) => {
+  const totalCashExpenditure =
+    (selectedCashBook.totalExpense || 0) + (returnsCash || 0);
+
   return (
     <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
       <div className="border-b border-slate-100 bg-[linear-gradient(135deg,#f8fafc_0%,#ffffff_40%,#eef2ff_100%)] p-4">
@@ -132,6 +135,14 @@ const CashBalanceCard: React.FC<Props> = ({
                       <span>Trả hàng tiền mặt</span>
                       <span className="font-semibold text-slate-900">
                         {formatCurrencyWithoutSymbol(returnsCash)}
+                      </span>
+                    </div>
+                    <div className="mt-2 border-t border-slate-200 pt-2 flex items-center justify-between">
+                      <span className="font-semibold text-slate-700">
+                        Tổng chi tiền mặt
+                      </span>
+                      <span className="font-bold text-slate-900">
+                        {formatCurrencyWithoutSymbol(totalCashExpenditure)}
                       </span>
                     </div>
                   </>

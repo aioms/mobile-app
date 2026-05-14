@@ -59,7 +59,9 @@ const OverviewCard: React.FC<Props> = ({
                 key={option.key}
                 type="button"
                 className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
-                  isActive ? "bg-blue-600 text-white shadow-sm" : "text-slate-500"
+                  isActive
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-500"
                 }`}
                 onClick={() => onChangeRange(option.key)}
               >
@@ -81,9 +83,9 @@ const OverviewCard: React.FC<Props> = ({
                 {formatCurrencyWithoutSymbol(overview.revenue)}
               </div>
             </div>
-            <div className="rounded-2xl bg-slate-50 p-3 text-slate-300">
+            {/*<div className="rounded-2xl bg-slate-50 p-3 text-slate-300">
               <IonIcon icon={arrowForwardOutline} className="text-3xl" />
-            </div>
+            </div>*/}
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-3">
@@ -131,7 +133,9 @@ const OverviewCard: React.FC<Props> = ({
           <div className="mt-3 rounded-2xl bg-slate-50 p-3">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
               <IonIcon icon={swapHorizontalOutline} />
-              {detailSource === "orders" ? "Chi tiết đơn hàng" : "Chi tiết phiếu thu"}
+              {detailSource === "orders"
+                ? "Chi tiết đơn hàng"
+                : "Chi tiết phiếu thu"}
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <div className="rounded-2xl bg-white p-3">
