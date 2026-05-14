@@ -9,6 +9,8 @@ import type {
   CashbookRevenueSummaryDto,
   UpdateCashbookActualCashRequestDto,
   UpdateCashbookActualCashResponseDto,
+  UpdateCashbookCashForDayRequestDto,
+  UpdateCashbookCashForDayResponseDto,
 } from "@/types/cashbook.type";
 
 export type ReportRange = CashbookReportRange;
@@ -23,6 +25,8 @@ export type {
   CashbookOverviewQueryDto,
   UpdateCashbookActualCashRequestDto,
   UpdateCashbookActualCashResponseDto,
+  UpdateCashbookCashForDayRequestDto,
+  UpdateCashbookCashForDayResponseDto,
 };
 
 export type DetailSource = "orders" | "receipts";
