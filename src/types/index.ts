@@ -5,5 +5,6 @@ export * from './receipt-debt.type';
 export * from './product.type';
 export * from './order.type';
 export * from './cashbook.type';
+export * from './activity.type';
 export * from './uploadFile.d';
 export * from './index.d';
