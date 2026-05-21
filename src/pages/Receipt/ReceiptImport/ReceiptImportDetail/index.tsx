@@ -348,6 +348,7 @@ const ReceiptImportDetail: React.FC = () => {
       const showUpdate =
         (isAdmin || isUserSpecial) &&
         receiptStatus !== ReceiptImportStatus.COMPLETED &&
+        receiptStatus !== ReceiptImportStatus.PAID &&
         receiptStatus !== ReceiptImportStatus.CANCELLED;
 
       return {
@@ -622,7 +623,7 @@ const ReceiptImportDetail: React.FC = () => {
     const userRole = user.role;
     const isEmployee = userRole === UserRole.EMPLOYEE;
 
-    if (receipt.status === RECEIPT_IMPORT_STATUS.COMPLETED || isEmployee && !isUserSpecial) {
+    if (receipt.status === RECEIPT_IMPORT_STATUS.COMPLETED || receipt.status === RECEIPT_IMPORT_STATUS.PAID || isEmployee && !isUserSpecial) {
       return (
         <div className="space-y-2">
           <div className="flex justify-between">
@@ -764,7 +765,11 @@ const ReceiptImportDetail: React.FC = () => {
 
     const userRole = user?.role;
     const isEmployee = userRole === UserRole.EMPLOYEE;
-    const isReceiptCancelled = receipt.status === RECEIPT_IMPORT_STATUS.CANCELLED;
+    const isReceiptEditable = ![
+      RECEIPT_IMPORT_STATUS.COMPLETED,
+      RECEIPT_IMPORT_STATUS.PAID,
+      RECEIPT_IMPORT_STATUS.CANCELLED,
+    ].includes(receipt.status as any);
 
     return receipt?.items?.map((item, index) => {
       return (
@@ -772,7 +777,7 @@ const ReceiptImportDetail: React.FC = () => {
           key={item.id}
           isEmployee={isEmployee}
           isUserSpecial={isUserSpecial}
-          disabled={isReceiptCancelled}
+          disabled={!isReceiptEditable}
           {...item}
           onRowChange={(data) => {
             setReceipt((prev): ReceiptImport | null => {
