@@ -691,6 +691,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
                 <p>In qua máy in Xprinter 365B</p>
               </IonLabel>
               <IonToggle
+                mode="ios"
                 checked={useNetworkPrinter}
                 onIonChange={(e) => setUseNetworkPrinter(e.detail.checked)}
               />

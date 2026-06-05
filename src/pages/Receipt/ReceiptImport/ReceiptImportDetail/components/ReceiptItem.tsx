@@ -2,7 +2,7 @@ import { FC, useEffect, useMemo, useState } from "react";
 import { IonInput, IonItem, IonLabel, IonIcon, IonSpinner, useIonToast, IonSegment, IonSegmentButton, IonText } from "@ionic/react";
 
 import { formatCurrencyWithoutSymbol, parseCurrencyInput } from "@/helpers/formatters";
-import { createOutline, checkmark, closeOutline } from "ionicons/icons";
+import { createOutline, checkmark, closeOutline, trashOutline } from "ionicons/icons";
 import useReceiptItem from "@/hooks/apis/useReceiptItem";
 import { DiscountType } from "@/common/enums";
 
@@ -19,6 +19,7 @@ type Props = {
   discount: number;
   discountType?: DiscountType;
   onRowChange?: (data: any) => void;
+  onDelete?: () => Promise<void> | void;
   isEmployee: boolean;
   isUserSpecial: boolean;
   disabled?: boolean;
@@ -38,6 +39,7 @@ const ReceiptItem: FC<Props> = (
     discount,
     discountType,
     onRowChange,
+    onDelete,
     isEmployee,
     isUserSpecial,
     disabled = false,
@@ -51,6 +53,7 @@ const ReceiptItem: FC<Props> = (
     const [isEditingQty, setIsEditingQty] = useState<boolean>(false);
     const [editQuantity, setEditQuantity] = useState<string>(quantity.toString());
     const [isUpdating, setIsUpdating] = useState<boolean>(false);
+    const [isDeleting, setIsDeleting] = useState<boolean>(false);
     const { update: updateReceiptItem } = useReceiptItem();
     const [presentToast] = useIonToast();
 
@@ -121,6 +124,17 @@ const ReceiptItem: FC<Props> = (
 
     const cancelEditQuantity = () => {
       setIsEditingQty(false);
+    };
+
+    const handleDelete = async () => {
+      if (!onDelete || disabled || isDeleting) return;
+
+      setIsDeleting(true);
+      try {
+        await onDelete();
+      } finally {
+        setIsDeleting(false);
+      }
     };
 
     const saveEditQuantity = async () => {
@@ -236,15 +250,20 @@ const ReceiptItem: FC<Props> = (
                     Giá nhập: {formattedCostPrice}
                   </div>
                 </div>
-                {/* <IonFabButton
-                size="small"
-                color="danger"
-                onClick={() => {
-                  onRemoveItem?.(id);
-                }}
-              >
-                <IonIcon icon={trash} size="small"></IonIcon>
-              </IonFabButton> */}
+                {!disabled && onDelete && (
+                  <button
+                    className="p-2 rounded-full hover:bg-red-50 disabled:opacity-50"
+                    onClick={handleDelete}
+                    aria-label="Xóa sản phẩm khỏi phiếu nhập"
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <IonSpinner name="dots" className="w-5 h-5" />
+                    ) : (
+                      <IonIcon icon={trashOutline} className="text-red-600 text-xl" />
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           </div>

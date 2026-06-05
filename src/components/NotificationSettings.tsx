@@ -71,6 +71,7 @@ const NotificationSettings: React.FC = () => {
       <IonItem>
         <IonLabel>Nhận thông báo đẩy</IonLabel>
         <IonToggle
+          mode="ios"
           checked={enabled}
           onIonChange={toggleNotifications}
           enableOnOffLabels={true}

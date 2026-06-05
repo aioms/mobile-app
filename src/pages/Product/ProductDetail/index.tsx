@@ -19,6 +19,7 @@ import {
   IonSpinner,
   IonRadioGroup,
   IonRadio,
+  IonToggle,
   useIonToast,
   useIonModal,
   IonRippleEffect,
@@ -869,8 +870,9 @@ const ProductDetail: React.FC = () => {
     debouncedSave(field, value);
   };
 
-  const handleVatCostPriceToggle = async () => {
-    const nextEnabled = !isVatCostPriceEnabled;
+  const handleVatCostPriceToggle = async (checkedValue?: boolean) => {
+    const nextEnabled = checkedValue !== undefined ? checkedValue : !isVatCostPriceEnabled;
+    if (nextEnabled === isVatCostPriceEnabled) return;
     const previousRate = selectedVatCostPriceRate;
     const previousBaseCostPrice = vatBaseCostPrice;
     const currentVatRate = selectedVatCostPriceRate ?? previousRate;
@@ -1469,40 +1471,49 @@ const ProductDetail: React.FC = () => {
                     </IonText>
                     {canEditProducttPrice ? (
                       <div className="mt-3 space-y-3">
-                        <IonButton
-                          size="small"
-                          fill={isVatCostPriceEnabled ? "solid" : "outline"}
-                          onClick={handleVatCostPriceToggle}
-                          disabled={isSaving || pendingSave}
-                          className="normal-case"
-                        >
-                          Giá gồm VAT
-                        </IonButton>
-
-                        {isVatCostPriceEnabled ? (
-                          <IonRadioGroup
-                            value={selectedVatCostPriceRate ?? undefined}
-                            onIonChange={(event) => {
-                              const selectedRate = Number(event.detail.value) as VatCostPriceRate;
-                              if (VAT_COST_PRICE_RATES.includes(selectedRate)) {
-                                handleVatCostPriceRateChange(selectedRate);
+                        <div className="flex items-center justify-between py-1">
+                          <span className="text-sm font-medium text-gray-700">
+                            Giá gồm VAT
+                          </span>
+                          <IonToggle
+                            mode="ios"
+                            checked={isVatCostPriceEnabled}
+                            onIonChange={(e) => {
+                              const checked = e.detail.checked;
+                              if (checked !== isVatCostPriceEnabled) {
+                                handleVatCostPriceToggle(checked);
                               }
                             }}
-                            className="flex items-center gap-4"
-                          >
-                            {VAT_COST_PRICE_RATES.map((rate) => (
-                              <label
-                                key={rate}
-                                className="flex items-center gap-2 text-sm text-gray-700"
-                              >
-                                <IonRadio
-                                  value={rate}
-                                  disabled={isSaving || pendingSave}
-                                />
-                                <span>{rate}%</span>
-                              </label>
-                            ))}
-                          </IonRadioGroup>
+                            disabled={isSaving || pendingSave}
+                          />
+                        </div>
+
+                        {isVatCostPriceEnabled ? (
+                          <div className="flex items-center gap-3 mt-2 w-full">
+                            {VAT_COST_PRICE_RATES.map((rate) => {
+                              const isSelected = selectedVatCostPriceRate === rate;
+                              return (
+                                <div
+                                  key={rate}
+                                  onClick={() => {
+                                    if (!isSaving && !pendingSave && !isSelected) {
+                                      handleVatCostPriceRateChange(rate);
+                                    }
+                                  }}
+                                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 cursor-pointer flex-1 justify-center ${
+                                    isSelected
+                                      ? "bg-blue-50/70 border-blue-500 text-blue-600 shadow-sm"
+                                      : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 active:bg-gray-100"
+                                  } ${(isSaving || pendingSave) ? "opacity-50 pointer-events-none" : ""}`}
+                                >
+                                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-blue-600' : 'border-gray-400'}`}>
+                                    {isSelected && <div className="w-2 h-2 rounded-full bg-blue-600"></div>}
+                                  </div>
+                                  <span>{rate}%</span>
+                                </div>
+                              );
+                            })}
+                          </div>
                         ) : null}
                       </div>
                     ) : null}

@@ -1,0 +1,26 @@
+.date-picker-empty-target {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--ion-color-light, #f4f5f8);
+  color: var(--ion-color-medium, #6b7280);
+  font-size: 14px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.date-picker-modal {
+  --width: fit-content;
+  --height: fit-content;
+  --border-radius: 12px;
+}
+
+.date-picker-modal ion-datetime {
+  max-width: calc(100vw - 32px);
+}
+
+.date-picker-modal ion-datetime.datetime-grid {
+  width: min(360px, calc(100vw - 32px));
+}
