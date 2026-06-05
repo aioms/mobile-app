@@ -1151,6 +1151,7 @@ const OrderCreate: React.FC = () => {
                 Xuất hóa đơn VAT
               </h2>
               <IonToggle
+                mode="ios"
                 checked={formData.vatEnabled}
                 onIonChange={handleVatToggle}
                 className="text-primary"

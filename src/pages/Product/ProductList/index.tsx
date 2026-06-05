@@ -78,6 +78,7 @@ interface LowStockProduct {
   productCode: string;
   productName: string;
   costPrice: number;
+  costPriceVatRate?: number | null;
   sellingPrice: number;
   inventory: number;
   unit: string;
@@ -565,7 +566,15 @@ const ProductListScreen: React.FC = () => {
                           <div className="flex justify-between mt-1">
                             {isShowCostPrice ? (
                               <div>
-                                <p className="text-xs text-gray-500">Giá vốn</p>
+                                <div className="flex items-center gap-1">
+                                  <p className="text-xs text-gray-500">Giá vốn</p>
+                                  {product.costPriceVatRate !== null &&
+                                  product.costPriceVatRate !== undefined ? (
+                                    <span className="text-[10px] text-blue-600 font-medium">
+                                      VAT {product.costPriceVatRate}%
+                                    </span>
+                                  ) : null}
+                                </div>
                                 <p className="text-sm font-medium">
                                   {formatCurrencyWithoutSymbol(product.costPrice)}
                                 </p>

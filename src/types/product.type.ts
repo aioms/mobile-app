@@ -4,6 +4,7 @@ export interface IProduct {
   productCode: number;
   productName: string;
   costPrice: number;
+  costPriceVatRate?: number | null;
   sellingPrice: number;
   retailPrice: number;
   status: string;

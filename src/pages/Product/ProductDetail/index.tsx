@@ -17,6 +17,9 @@ import {
   IonText,
   IonInput,
   IonSpinner,
+  IonRadioGroup,
+  IonRadio,
+  IonToggle,
   useIonToast,
   useIonModal,
   IonRippleEffect,
@@ -83,6 +86,11 @@ interface HistoryData {
   debt: HistoryItem[];
 }
 
+const VAT_COST_PRICE_RATES = [8, 10] as const;
+type VatCostPriceRate = (typeof VAT_COST_PRICE_RATES)[number];
+const calculateCostPriceWithVat = (baseCostPrice: number, vatRate: number) =>
+  Math.round(baseCostPrice + (baseCostPrice * vatRate) / 100);
+
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -115,6 +123,10 @@ const ProductDetail: React.FC = () => {
     description: "",
   });
   const [pendingSave, setPendingSave] = useState(false);
+  const [isVatCostPriceEnabled, setIsVatCostPriceEnabled] = useState(false);
+  const [selectedVatCostPriceRate, setSelectedVatCostPriceRate] =
+    useState<VatCostPriceRate | null>(null);
+  const [vatBaseCostPrice, setVatBaseCostPrice] = useState<number | null>(null);
 
   const [history, setHistory] = useState<HistoryData>({
     import: [],
@@ -224,7 +236,20 @@ const ProductDetail: React.FC = () => {
         setOriginalProductImages(result.images); // Store original images
       }
 
+      const costPriceVatRate = VAT_COST_PRICE_RATES.includes(
+        result.costPriceVatRate as VatCostPriceRate,
+      )
+        ? (result.costPriceVatRate as VatCostPriceRate)
+        : null;
+
       setProduct(result);
+      setIsVatCostPriceEnabled(costPriceVatRate !== null);
+      setSelectedVatCostPriceRate(costPriceVatRate);
+      setVatBaseCostPrice(
+        costPriceVatRate
+          ? Math.round((result.costPrice || 0) / (1 + costPriceVatRate / 100))
+          : null,
+      );
       setEditedValues({
         inventory: result.inventory || 0,
         sellingPrice: result.sellingPrice || 0,
@@ -588,6 +613,15 @@ const ProductDetail: React.FC = () => {
   }, [user?.role]);
 
   const handleEditFieldClick = (field: string) => {
+    if (field === "costPrice" && selectedVatCostPriceRate) {
+      const baseCostPrice = Math.round(
+        (product?.costPrice || 0) / (1 + selectedVatCostPriceRate / 100),
+      );
+      setEditedValues((prev) => ({
+        ...prev,
+        costPrice: baseCostPrice,
+      }));
+    }
     setEditingField(field);
     setValidationErrors((prev) => ({
       ...prev,
@@ -714,6 +748,9 @@ const ProductDetail: React.FC = () => {
             const items = value as { id: string; name: string }[];
             // const supplierIds = items.map((i) => i.id).filter(Boolean);
             updateData.suppliers = items; // Send IDs to API
+          } else if (field === "costPrice") {
+            updateData.costPrice = value;
+            updateData.costPriceVatRate = selectedVatCostPriceRate;
           } else {
             updateData[field] = value;
           }
@@ -731,11 +768,47 @@ const ProductDetail: React.FC = () => {
                 costPrice: (match as any)?.costPrice ?? 0,
               };
             });
-            setProduct((prev) => (prev ? { ...prev, suppliers: updatedSuppliers } : prev));
+            setProduct((prev) =>
+              prev ? { ...prev, suppliers: updatedSuppliers } : prev
+            );
           } else {
-            setProduct((prev) => (prev ? { ...prev, [field]: value } : prev));
+            const vatCalculatedCostPrice = field === "costPrice" &&
+                selectedVatCostPriceRate
+              ? calculateCostPriceWithVat(
+                value as number,
+                selectedVatCostPriceRate,
+              )
+              : value;
+            setProduct((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    [field]: field === "costPrice"
+                      ? vatCalculatedCostPrice
+                      : value,
+                    ...(field === "costPrice"
+                      ? { costPriceVatRate: selectedVatCostPriceRate }
+                      : {}),
+                  }
+                : prev,
+            );
           }
 
+          if (field === "costPrice") {
+            if (selectedVatCostPriceRate) {
+              const calculatedCostPrice = calculateCostPriceWithVat(
+                value as number,
+                selectedVatCostPriceRate,
+              );
+              setEditedValues((prev) => ({
+                ...prev,
+                costPrice: calculatedCostPrice,
+              }));
+              setVatBaseCostPrice(value as number);
+            } else {
+              setVatBaseCostPrice(null);
+            }
+          }
           setEditingField(null);
 
           presentToast({
@@ -755,7 +828,7 @@ const ProductDetail: React.FC = () => {
           setIsSaving(false);
         }
       }, 1000),
-    [id, suppliers],
+    [id, selectedVatCostPriceRate, suppliers],
   );
 
   const handleSaveField = async (field: string) => {
@@ -778,7 +851,10 @@ const ProductDetail: React.FC = () => {
 
     // Check if value has changed
     const originalValue = product?.[field as keyof IProduct];
-    if (value === originalValue) {
+    const normalizedValue = field === "costPrice" && selectedVatCostPriceRate
+      ? calculateCostPriceWithVat(value as number, selectedVatCostPriceRate)
+      : value;
+    if (normalizedValue === originalValue) {
       setEditingField(null);
       presentToast({
         message: "Không có thay đổi nào",
@@ -792,6 +868,128 @@ const ProductDetail: React.FC = () => {
     // Trigger debounced save
     setPendingSave(true);
     debouncedSave(field, value);
+  };
+
+  const handleVatCostPriceToggle = async (checkedValue?: boolean) => {
+    const nextEnabled = checkedValue !== undefined ? checkedValue : !isVatCostPriceEnabled;
+    if (nextEnabled === isVatCostPriceEnabled) return;
+    const previousRate = selectedVatCostPriceRate;
+    const previousBaseCostPrice = vatBaseCostPrice;
+    const currentVatRate = selectedVatCostPriceRate ?? previousRate;
+    const baseCostPrice = currentVatRate
+      ? Math.round((product?.costPrice || 0) / (1 + currentVatRate / 100))
+      : (vatBaseCostPrice ?? product?.costPrice ?? 0);
+    setIsVatCostPriceEnabled(nextEnabled);
+    setVatBaseCostPrice(
+      nextEnabled ? (vatBaseCostPrice ?? product?.costPrice ?? 0) : null,
+    );
+
+    if (nextEnabled) {
+      if (!selectedVatCostPriceRate) {
+        await handleVatCostPriceRateChange(VAT_COST_PRICE_RATES[0]);
+      }
+      return;
+    }
+
+    setSelectedVatCostPriceRate(null);
+
+    try {
+      setIsSaving(true);
+      await updateProduct(id, {
+        costPrice: baseCostPrice,
+        costPriceVatRate: null,
+      });
+      setProduct((prev) =>
+        prev
+          ? {
+              ...prev,
+              costPrice: baseCostPrice,
+              costPriceVatRate: null,
+            }
+          : prev,
+      );
+      setEditedValues((prev) => ({
+        ...prev,
+        costPrice: baseCostPrice,
+      }));
+      setValidationErrors((prev) => ({
+        ...prev,
+        costPrice: "",
+      }));
+    } catch (error) {
+      setIsVatCostPriceEnabled(!nextEnabled);
+      setSelectedVatCostPriceRate(previousRate);
+      setVatBaseCostPrice(previousBaseCostPrice);
+      presentToast({
+        message: (error as Error).message || "Lỗi khi cập nhật VAT giá vốn",
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleVatCostPriceRateChange = async (rate: VatCostPriceRate) => {
+    const baseCostPrice = vatBaseCostPrice ?? product?.costPrice ?? 0;
+    const updatedCostPrice = calculateCostPriceWithVat(baseCostPrice, rate);
+    const error = validateField("costPrice", updatedCostPrice);
+
+    if (error) {
+      setValidationErrors((prev) => ({
+        ...prev,
+        costPrice: error,
+      }));
+      presentToast({
+        message: error,
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      await updateProduct(id, {
+        costPrice: baseCostPrice,
+        costPriceVatRate: rate,
+      });
+      setProduct((prev) =>
+        prev
+          ? {
+              ...prev,
+              costPrice: updatedCostPrice,
+              costPriceVatRate: rate,
+            }
+          : prev,
+      );
+      setSelectedVatCostPriceRate(rate);
+      setEditedValues((prev) => ({
+        ...prev,
+        costPrice: updatedCostPrice,
+      }));
+      setValidationErrors((prev) => ({
+        ...prev,
+        costPrice: "",
+      }));
+      presentToast({
+        message: "Cập nhật giá vốn VAT thành công",
+        duration: 2000,
+        position: "top",
+        color: "success",
+      });
+    } catch (error) {
+      presentToast({
+        message: (error as Error).message || "Lỗi khi cập nhật giá vốn VAT",
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Handle image upload
@@ -1263,13 +1461,63 @@ const ProductDetail: React.FC = () => {
                     )}
                   </>
                 ) : (
-                  <IonText>
-                    <h1>
-                      {product?.costPrice
-                        ? formatCurrencyWithoutSymbol(product?.costPrice)
-                        : "--"}
-                    </h1>
-                  </IonText>
+                  <>
+                    <IonText>
+                      <h1>
+                        {product?.costPrice
+                          ? formatCurrencyWithoutSymbol(product?.costPrice)
+                          : "--"}
+                      </h1>
+                    </IonText>
+                    {canEditProducttPrice ? (
+                      <div className="mt-3 space-y-3">
+                        <div className="flex items-center justify-between py-1">
+                          <span className="text-sm font-medium text-gray-700">
+                            Giá gồm VAT
+                          </span>
+                          <IonToggle
+                            mode="ios"
+                            checked={isVatCostPriceEnabled}
+                            onIonChange={(e) => {
+                              const checked = e.detail.checked;
+                              if (checked !== isVatCostPriceEnabled) {
+                                handleVatCostPriceToggle(checked);
+                              }
+                            }}
+                            disabled={isSaving || pendingSave}
+                          />
+                        </div>
+
+                        {isVatCostPriceEnabled ? (
+                          <div className="flex items-center gap-3 mt-2 w-full">
+                            {VAT_COST_PRICE_RATES.map((rate) => {
+                              const isSelected = selectedVatCostPriceRate === rate;
+                              return (
+                                <div
+                                  key={rate}
+                                  onClick={() => {
+                                    if (!isSaving && !pendingSave && !isSelected) {
+                                      handleVatCostPriceRateChange(rate);
+                                    }
+                                  }}
+                                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 cursor-pointer flex-1 justify-center ${
+                                    isSelected
+                                      ? "bg-blue-50/70 border-blue-500 text-blue-600 shadow-sm"
+                                      : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 active:bg-gray-100"
+                                  } ${(isSaving || pendingSave) ? "opacity-50 pointer-events-none" : ""}`}
+                                >
+                                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-blue-600' : 'border-gray-400'}`}>
+                                    {isSelected && <div className="w-2 h-2 rounded-full bg-blue-600"></div>}
+                                  </div>
+                                  <span>{rate}%</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </>
                 )}
               </div>
             ) : null}

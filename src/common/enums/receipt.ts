@@ -6,6 +6,7 @@ export enum ReceiptImportStatus {
   CANCELLED = "cancelled",
   SHORT_RECEIVED = "short_received",
   OVER_RECEIVED = "over_received",
+  PAID = "paid",
 }
 
 export enum ReceiptReturnStatus {

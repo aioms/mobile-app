@@ -59,7 +59,8 @@ const ItemList: React.FC<ItemListProps> = ({
     const showCancel =
       (status === ReceiptImportStatus.PROCESSING ||
         status === ReceiptImportStatus.WAITING ||
-        status === ReceiptImportStatus.COMPLETED) &&
+        status === ReceiptImportStatus.COMPLETED ||
+        status === ReceiptImportStatus.PAID) &&
       (canApprove || (isEmployee && isUserCreated));
 
     return {

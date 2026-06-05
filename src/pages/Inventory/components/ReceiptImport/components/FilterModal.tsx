@@ -179,6 +179,9 @@ const FilterModal: React.FC<ReceiptImportFilterModalProps> = ({ dismiss, initial
                   <IonSelectOption value={RECEIPT_IMPORT_STATUS.COMPLETED}>
                     {getStatusLabel(RECEIPT_IMPORT_STATUS.COMPLETED)}
                   </IonSelectOption>
+                  <IonSelectOption value={RECEIPT_IMPORT_STATUS.PAID}>
+                    {getStatusLabel(RECEIPT_IMPORT_STATUS.PAID)}
+                  </IonSelectOption>
                   <IonSelectOption value={RECEIPT_IMPORT_STATUS.CANCELLED}>
                     {getStatusLabel(RECEIPT_IMPORT_STATUS.CANCELLED)}
                   </IonSelectOption>

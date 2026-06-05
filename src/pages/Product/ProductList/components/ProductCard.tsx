@@ -11,6 +11,7 @@ interface ProductCardProps {
 
 const ProductCard: FC<ProductCardProps> = ({ product, isShowCostPrice }) => {
   const history = useHistory();
+  const hasVatCostPrice = product.costPriceVatRate !== null && product.costPriceVatRate !== undefined;
 
   const handleClickToCard = () => {
     history.push(`/tabs/products/detail/${product.id}`);
@@ -88,7 +89,14 @@ const ProductCard: FC<ProductCardProps> = ({ product, isShowCostPrice }) => {
         <div className="flex gap-4 mt-2">
           {isShowCostPrice ? (
             <div>
-              <p className="text-gray-500 text-xs">Giá vốn</p>
+              <div className="flex items-center gap-1">
+                <p className="text-gray-500 text-xs">Giá vốn</p>
+                {hasVatCostPrice ? (
+                  <span className="text-[10px] text-blue-600 font-medium">
+                    VAT {product.costPriceVatRate}%
+                  </span>
+                ) : null}
+              </div>
               <p className="font-medium">
                 {formatCurrencyWithoutSymbol(product.costPrice)}
               </p>

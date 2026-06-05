@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useHistory, useParams } from "react-router";
 
 import { Dialog } from "@capacitor/dialog";
@@ -72,8 +72,8 @@ interface ReceiptItem {
 interface ReceiptImport {
   id: string;
   receiptNumber: string;
-  importDate: string;
-  paymentDate: string;
+  importDate: string | null;
+  paymentDate: string | null;
   quantity: number;
   status: string;
   warehouse: string;
@@ -98,6 +98,18 @@ const initialFormData: IFormData = {
   supplier: "",
 };
 
+const receiptImportDateFormatOptions = {
+  date: {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  },
+  time: {
+    hour: "2-digit",
+    minute: "2-digit",
+  },
+};
+
 const ReceiptImportDetail: React.FC = () => {
   const history = useHistory();
   const { id } = useParams<{ id: string }>();
@@ -115,6 +127,7 @@ const ReceiptImportDetail: React.FC = () => {
     getDetail,
     importQuick,
     update: updateReceiptImport,
+    deleteItem: deleteReceiptImportItem,
   } = useReceiptImport();
 
   const { showError } = useCustomToast();
@@ -348,6 +361,7 @@ const ReceiptImportDetail: React.FC = () => {
       const showUpdate =
         (isAdmin || isUserSpecial) &&
         receiptStatus !== ReceiptImportStatus.COMPLETED &&
+        receiptStatus !== ReceiptImportStatus.PAID &&
         receiptStatus !== ReceiptImportStatus.CANCELLED;
 
       return {
@@ -423,6 +437,26 @@ const ReceiptImportDetail: React.FC = () => {
       });
 
       if (!value) return;
+
+      if (!formData.importDate) {
+        await presentToast({
+          message: "Vui lòng chọn ngày nhập dự kiến",
+          duration: 2500,
+          position: "top",
+          color: "warning",
+        });
+        return;
+      }
+
+      if (!formData.paymentDate) {
+        await presentToast({
+          message: "Vui lòng chọn ngày thanh toán",
+          duration: 2500,
+          position: "top",
+          color: "warning",
+        });
+        return;
+      }
 
       if (formData.supplier) {
         formData.supplier = formData.supplier.split("__")[0];
@@ -598,6 +632,73 @@ const ReceiptImportDetail: React.FC = () => {
     }
   };
 
+  const isReceiptItemEditable = useCallback((status?: string) => {
+    return ![
+      RECEIPT_IMPORT_STATUS.COMPLETED,
+      RECEIPT_IMPORT_STATUS.PAID,
+      RECEIPT_IMPORT_STATUS.CANCELLED,
+    ].includes(status as any);
+  }, []);
+
+  const handleDeleteReceiptItem = useCallback(
+    async (item: ReceiptItem) => {
+      try {
+        if (!receipt?.id) return;
+
+        if (!isReceiptItemEditable(receipt.status)) {
+          await presentToast({
+            message: "Không thể xóa sản phẩm khi phiếu nhập đã bị khóa",
+            duration: 2500,
+            position: "top",
+            color: "warning",
+          });
+          return;
+        }
+
+        const { value } = await Dialog.confirm({
+          title: "Xác nhận xóa sản phẩm",
+          message: `Bạn có chắc chắn muốn xóa ${item.productName} khỏi phiếu nhập này không?`,
+        });
+
+        if (!value) return;
+
+        await withLoading(async () => {
+          await deleteReceiptImportItem(receipt.id, item.id);
+
+          await presentToast({
+            message: "Đã xóa sản phẩm khỏi phiếu nhập",
+            duration: 2000,
+            position: "top",
+            color: "success",
+          });
+
+          await fetchReceiptImport();
+        });
+      } catch (error) {
+        captureException(error as Error, createExceptionContext(
+          'ReceiptImport',
+          'ReceiptImportDetail',
+          'handleDeleteReceiptItem'
+        ));
+
+        await presentToast({
+          message: (error as Error).message || "Xóa sản phẩm khỏi phiếu nhập thất bại",
+          duration: 2500,
+          position: "top",
+          color: "danger",
+        });
+      }
+    },
+    [
+      deleteReceiptImportItem,
+      isReceiptItemEditable,
+      presentToast,
+      receipt?.id,
+      receipt?.status,
+      withLoading,
+    ]
+  );
+
   const supplierName = useMemo(() => {
     let supplierName = "";
 
@@ -622,7 +723,7 @@ const ReceiptImportDetail: React.FC = () => {
     const userRole = user.role;
     const isEmployee = userRole === UserRole.EMPLOYEE;
 
-    if (receipt.status === RECEIPT_IMPORT_STATUS.COMPLETED || isEmployee && !isUserSpecial) {
+    if (receipt.status === RECEIPT_IMPORT_STATUS.COMPLETED || receipt.status === RECEIPT_IMPORT_STATUS.PAID || isEmployee && !isUserSpecial) {
       return (
         <div className="space-y-2">
           <div className="flex justify-between">
@@ -662,12 +763,23 @@ const ReceiptImportDetail: React.FC = () => {
           <IonLabel position="stacked">Ngày nhập dự kiến</IonLabel>
           <DatePicker
             extraClassName="w-full justify-start"
-            attrs={{ id: "importDate" }}
-            value={toISODateTime(formData.importDate || receipt?.importDate)}
+            attrs={{ id: "importDate", locale: "en-GB" }}
+            value={toISODateTime(formData.importDate || undefined)}
+            formatOptions={receiptImportDateFormatOptions}
+            useCurrentDateAsDefault={false}
+            emptyDateText="Chọn ngày"
+            emptyTimeText="Chọn giờ"
+            clearable
+            onClear={() =>
+              setFormData((prev) => ({
+                ...prev,
+                importDate: null,
+              }))
+            }
             onChange={(e) =>
               setFormData((prev) => ({
                 ...prev,
-                importDate: e.detail.value! as string,
+                importDate: (e.detail.value as string) || null,
               }))
             }
           />
@@ -678,12 +790,23 @@ const ReceiptImportDetail: React.FC = () => {
           <IonLabel position="stacked">Ngày thanh toán</IonLabel>
           <DatePicker
             extraClassName="w-full justify-start"
-            attrs={{ id: "paymentDate" }}
-            value={toISODateTime(formData.paymentDate || receipt?.paymentDate)}
+            attrs={{ id: "paymentDate", locale: "en-GB" }}
+            value={toISODateTime(formData.paymentDate || undefined)}
+            formatOptions={receiptImportDateFormatOptions}
+            useCurrentDateAsDefault={false}
+            emptyDateText="Chọn ngày"
+            emptyTimeText="Chọn giờ"
+            clearable
+            onClear={() =>
+              setFormData((prev) => ({
+                ...prev,
+                paymentDate: null,
+              }))
+            }
             onChange={(e) =>
               setFormData((prev) => ({
                 ...prev,
-                paymentDate: e.detail.value! as string,
+                paymentDate: (e.detail.value as string) || null,
               }))
             }
           />
@@ -764,7 +887,7 @@ const ReceiptImportDetail: React.FC = () => {
 
     const userRole = user?.role;
     const isEmployee = userRole === UserRole.EMPLOYEE;
-    const isReceiptCancelled = receipt.status === RECEIPT_IMPORT_STATUS.CANCELLED;
+    const isReceiptEditable = isReceiptItemEditable(receipt.status);
 
     return receipt?.items?.map((item, index) => {
       return (
@@ -772,8 +895,9 @@ const ReceiptImportDetail: React.FC = () => {
           key={item.id}
           isEmployee={isEmployee}
           isUserSpecial={isUserSpecial}
-          disabled={isReceiptCancelled}
+          disabled={!isReceiptEditable}
           {...item}
+          onDelete={() => handleDeleteReceiptItem(item)}
           onRowChange={(data) => {
             setReceipt((prev): ReceiptImport | null => {
               const newReceipt = { ...prev };
@@ -789,7 +913,7 @@ const ReceiptImportDetail: React.FC = () => {
         />
       );
     });
-  }, [user?.role, receipt]);
+  }, [handleDeleteReceiptItem, isReceiptItemEditable, isUserSpecial, user?.role, receipt]);
 
   return (
     <IonPage>

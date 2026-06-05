@@ -70,6 +70,18 @@ const useReceiptImport = () => {
     return response.data;
   }, []);
 
+  const deleteItem = useCallback(async (receiptId: string, itemId: string) => {
+    const response: IHttpResponse = await request.delete(
+      `/receipt-imports/${receiptId}/items/${itemId}`
+    );
+
+    if (!response?.success) {
+      throw new Error(response?.message || "Xóa sản phẩm khỏi phiếu nhập thất bại");
+    }
+
+    return response.data;
+  }, []);
+
   const getTotalImportsByDateRange = useCallback(async (params?: Record<string, string>) => {
     const query = new URLSearchParams(params);
     const response = await request.get(
@@ -90,6 +102,7 @@ const useReceiptImport = () => {
     create,
     update,
     remove,
+    deleteItem,
     createWithProductCode,
     getTotalImportsByDateRange,
     cancelReceiptImport,

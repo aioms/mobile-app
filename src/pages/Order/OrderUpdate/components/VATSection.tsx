@@ -40,6 +40,7 @@ const VATSection: React.FC<VATSectionProps> = React.memo(({
       <IonItem>
         <IonLabel>Xuất hóa đơn VAT</IonLabel>
         <IonToggle
+          mode="ios"
           checked={formData.vatEnabled}
           onIonChange={onVatToggle}
           disabled={!isEditMode}

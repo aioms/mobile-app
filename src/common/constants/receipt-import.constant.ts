@@ -9,6 +9,7 @@ export const RECEIPT_IMPORT_STATUS = {
   CANCELLED: "cancelled",
   SHORT_RECEIVED: "short_received",
   OVER_RECEIVED: "over_received",
+  PAID: "paid",
 } as const;
 
 export const getStatusColor = (status: TReceiptImportStatus): string => {
@@ -23,6 +24,7 @@ export const getStatusColor = (status: TReceiptImportStatus): string => {
       return "tertiary";
 
     case RECEIPT_IMPORT_STATUS.COMPLETED:
+    case RECEIPT_IMPORT_STATUS.PAID:
       return "success";
 
     case RECEIPT_IMPORT_STATUS.CANCELLED:
@@ -59,6 +61,9 @@ export const getStatusLabel = (status: TReceiptImportStatus): string => {
 
     case RECEIPT_IMPORT_STATUS.OVER_RECEIVED:
       return "Giao dư";
+
+    case RECEIPT_IMPORT_STATUS.PAID:
+      return "Đã thanh toán";
 
     default:
       return "Unknown";
