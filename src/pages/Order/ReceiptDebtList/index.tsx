@@ -169,7 +169,7 @@ const ReceiptDebtList: FC = () => {
         const requestFilters: Record<string, string> = {};
 
         if (keyword) {
-          requestFilters.search = keyword;
+          requestFilters.keyword = keyword;
         }
         if (appliedFilters.customerId) {
           requestFilters.customerId = appliedFilters.customerId;

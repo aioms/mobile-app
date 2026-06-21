@@ -279,7 +279,7 @@ const ReceiptDebtUpdate: React.FC = () => {
                   Còn lại
                 </h2>
                 <div className="text-red-600 font-semibold text-base">
-                  {formatCurrency(receiptDebt?.remainingAmount || 0)}
+                  {formatCurrency(calculations.totalAmount - (receiptDebt?.paidAmount || 0))}
                 </div>
               </div>
 

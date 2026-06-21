@@ -9,6 +9,8 @@
 /* This sets a different item border color for the default theme on ios and md */
 :root {
   --ion-item-border-color: var(--ion-background-color-step-200);
+  /* Keep the root rem scale stable instead of following iOS Dynamic Type. */
+  --ion-dynamic-font: 16px var(--ion-font-family);
 }
 
 /* This sets a different background and item background for the default theme on ios */
