@@ -38,7 +38,7 @@ import { PaymentMethod } from "@/common/enums/payment";
 import { EXPENSE_TYPE_LABELS } from "../common/utils";
 import useReceiptPayment from "@/hooks/apis/useReceiptPayment";
 
-const initialFormData = {
+const initialFormData = () => ({
   paymentDate: new Date().toISOString(),
   expenseType: ReceiptPaymentExpenseType.SUPPLIER_PAYMENT,
   expenseTypeName: "",
@@ -49,7 +49,7 @@ const initialFormData = {
   note: "",
   selectedReceiptImports: [] as IReceiptImportMock[],
   isDirectExport: false,
-};
+});
 
 const ReceiptPaymentCreate: React.FC = () => {
   const history = useHistory();
