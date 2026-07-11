@@ -70,7 +70,9 @@ const ModalSelectReceiptImport: React.FC<IModalSelectReceiptImportProps> = ({
       }
     };
     fetchUnpaid();
-  }, [supplierId, getUnpaidReceiptImports, initialSelectedIds]);
+    // Initial selection is applied once when the fetched data is loaded.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supplierId, getUnpaidReceiptImports]);
 
   useEffect(() => {
     const filtered = allUnpaidReceipts.filter(
@@ -165,4 +167,3 @@ const ModalSelectReceiptImport: React.FC<IModalSelectReceiptImportProps> = ({
 };
 
 export default ModalSelectReceiptImport;
-
