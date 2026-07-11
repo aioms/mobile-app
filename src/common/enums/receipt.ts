@@ -34,3 +34,20 @@ export enum ReceiptDebtStatus {
   COMPLETED = "completed",
   CANCELLED = "cancelled",
 }
+
+export enum ReceiptPaymentStatus {
+  DRAFT = "draft",
+  PAID = "paid",
+  DEBT_PAYMENT = "debt_payment",
+  CANCELLED = "cancelled",
+}
+
+export enum ReceiptPaymentExpenseType {
+  SUPPLIER_PAYMENT = "supplier_payment",
+  TRANSPORTATION = "transportation",
+  UTILITIES = "utilities",
+  RENT = "rent",
+  LABOR = "labor",
+  OTHER = "other",
+  CASH_WITHDRAWAL_SANG = "cash_withdrawal_sang",
+}

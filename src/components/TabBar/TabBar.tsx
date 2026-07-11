@@ -43,6 +43,11 @@ import ReceiptDebtUpdateScreen from "@/pages/Receipt/ReceiptDebt/ReceiptDebtUpda
 import ReceiptDebtPeriodScreen from "@/pages/Receipt/ReceiptDebt/ReceiptDebtPeriod";
 import ReceiptReturnScreen from "@/pages/Receipt/ReceiptReturn";
 
+import PaymentReceiptListScreen from "@/pages/Receipt/ReceiptPayment/ReceiptPaymentList";
+import ReceiptPaymentCreateScreen from "@/pages/Receipt/ReceiptPayment/ReceiptPaymentCreate";
+import ReceiptPaymentDetailScreen from "@/pages/Receipt/ReceiptPayment/ReceiptPaymentDetail";
+import ReceiptPaymentUpdateScreen from "@/pages/Receipt/ReceiptPayment/ReceiptPaymentUpdate";
+
 import OrderCreateScreen from "@/pages/Order/OrderCreate";
 import OrderDetailScreen from "@/pages/Order/OrderDetail";
 import OrderUpdateScreen from "@/pages/Order/OrderUpdate";
@@ -139,6 +144,28 @@ const TabBar: React.FC = () => {
           exact
           path="/tabs/receipt/return"
           component={ReceiptReturnScreen}
+        />
+
+        {/* Receipt Payment Screens */}
+        <Route
+          exact
+          path="/tabs/extended/payment-receipts"
+          component={PaymentReceiptListScreen}
+        />
+        <Route
+          exact
+          path="/tabs/extended/payment-receipts/create"
+          component={ReceiptPaymentCreateScreen}
+        />
+        <Route
+          exact
+          path="/tabs/extended/payment-receipts/detail/:id"
+          component={ReceiptPaymentDetailScreen}
+        />
+        <Route
+          exact
+          path="/tabs/extended/payment-receipts/update/:id"
+          component={ReceiptPaymentUpdateScreen}
         />
 
         {/* Product Screens */}
