@@ -1,11 +1,29 @@
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export const dayjsFormat = (
   date?: string | Date,
   format?: string,
   locale?: string,
 ) => {
-  let datetime = dayjs(date || new Date());
+  if (!date) return "";
+
+  let datetime;
+  if (typeof date === "string") {
+    if (date.includes("Z") || date.includes("+")) {
+      datetime = dayjs(date).tz("Asia/Ho_Chi_Minh");
+    } else if (date.includes("T") || date.includes(" ")) {
+      datetime = dayjs.utc(date).tz("Asia/Ho_Chi_Minh");
+    } else {
+      datetime = dayjs(date);
+    }
+  } else {
+    datetime = dayjs(date).tz("Asia/Ho_Chi_Minh");
+  }
 
   if (locale) {
     datetime = datetime.locale(locale);
