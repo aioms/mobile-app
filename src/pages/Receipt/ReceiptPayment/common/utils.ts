@@ -73,7 +73,9 @@ export const mapBackendToReceiptPayment = (item: any): IReceiptPayment => {
       ? item.expenseTypeName
       : EXPENSE_TYPE_LABELS[item.expenseType as ReceiptPaymentExpenseType] || "Chi phí",
     date: item.paymentDate
-      ? dayjs(item.paymentDate).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD")
+      ? (item.paymentDate.includes("T") || item.paymentDate.includes(" ") || item.paymentDate.includes("Z")
+        ? dayjs(item.paymentDate).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD")
+        : item.paymentDate)
       : "",
     subjectName: item.paymentObject || item.supplierName || "---",
     amount: Number(item.amount),
