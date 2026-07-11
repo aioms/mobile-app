@@ -117,7 +117,7 @@ const PaymentReceiptListScreen: React.FC = () => {
 
       const limit = 15;
       const response = await getList(apiFilters, pageNumber, limit);
-      if (response && response.success && response.data) {
+      if (response && response.success && Array.isArray(response.data)) {
         const mapped = response.data.map((item: any) => mapBackendToReceiptPayment(item));
         if (isRefresh) {
           setReceipts(mapped);
