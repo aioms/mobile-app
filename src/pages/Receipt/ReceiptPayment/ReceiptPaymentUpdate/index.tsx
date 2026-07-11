@@ -223,7 +223,7 @@ const ReceiptPaymentUpdateScreen: React.FC = () => {
         paymentDate: formData.paymentDate,
         expenseType: formData.expenseType,
         paymentObject: isSupplierPayment
-          ? formData.supplier.split("__")[1]
+          ? (formData.supplier ? formData.supplier.split("__")[1] : "")
           : formData.subjectName,
         amount: parseCurrencyInput(formData.amount),
         paymentMethod: formData.paymentMethod,
