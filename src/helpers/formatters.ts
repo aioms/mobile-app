@@ -17,7 +17,7 @@ export const dayjsFormat = (
     if (date.includes("Z") || date.includes("+")) {
       datetime = dayjs(date).tz("Asia/Ho_Chi_Minh");
     } else if (date.includes("T") || date.includes(" ")) {
-      datetime = dayjs.utc(date).tz("Asia/Ho_Chi_Minh");
+      datetime = dayjs.tz(date, "Asia/Ho_Chi_Minh");
     } else {
       datetime = dayjs(date);
     }
