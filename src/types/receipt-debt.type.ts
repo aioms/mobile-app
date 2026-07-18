@@ -39,4 +39,5 @@ export interface IReceiptItemPeriod {
   isDeleted?: boolean;
   shipNow?: boolean;
   metadata?: Record<string, any>;
+  sellingPrice?: number;
 }
