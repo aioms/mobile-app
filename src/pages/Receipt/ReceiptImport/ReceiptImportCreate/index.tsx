@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   IonContent,
   IonHeader,
@@ -22,6 +22,7 @@ import {
   IonRefresherContent,
   RefresherEventDetail,
   useIonToast,
+  IonSpinner,
 } from "@ionic/react";
 import { useHistory } from "react-router-dom";
 import { checkmark, saveOutline, scanOutline, search } from "ionicons/icons";
@@ -32,6 +33,7 @@ import { ChevronDown } from "lucide-react";
 import { OverlayEventDetail } from "@ionic/react/dist/types/components/react-component-lib/interfaces";
 
 import { formatCurrency } from "@/helpers/formatters";
+import { createRequestId } from "@/helpers/common";
 import { useBarcodeScanner } from "@/hooks/useBarcodeScanner";
 import useReceiptImport from "@/hooks/apis/useReceiptImport";
 import useProduct from "@/hooks/apis/useProduct";
@@ -62,6 +64,10 @@ const initialDefaultItem = {
 const ReceiptImportCreate: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [receiptItems, setReceiptItems] = useState<any[]>([]);
+  const [submittingType, setSubmittingType] = useState<"draft" | "active" | null>(null);
+  const isSubmitting = submittingType !== null;
+  const isSubmittingRef = useRef(false);
+  const createRequestIdRef = useRef(createRequestId());
   const history = useHistory();
 
   const [presentToast] = useIonToast();
@@ -262,6 +268,10 @@ const ReceiptImportCreate: React.FC = () => {
   };
 
   const handleSubmit = async (type: "draft" | "active") => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    setSubmittingType(type);
+
     const newItems = receiptItems.map((item) => {
       return {
         productId: item.id,
@@ -288,7 +298,7 @@ const ReceiptImportCreate: React.FC = () => {
       const isValid = await validateForm(newFormData);
       if (!isValid) return;
 
-      const result = await createReceipt(newFormData);
+      const result = await createReceipt(newFormData, createRequestIdRef.current);
 
       if (result.id) {
         presentToast({
@@ -314,6 +324,9 @@ const ReceiptImportCreate: React.FC = () => {
         position: "top",
         color: "danger",
       });
+    } finally {
+      isSubmittingRef.current = false;
+      setSubmittingType(null);
     }
   };
 
@@ -475,16 +488,24 @@ const ReceiptImportCreate: React.FC = () => {
               fill="outline"
               color="primary"
               onClick={handleSubmit.bind(null, "draft")}
+              disabled={isSubmitting}
             >
-              <IonIcon icon={saveOutline} slot="start" />
-              Lưu tạm
+              {submittingType === "draft" ? (
+                <IonSpinner name="crescent" />
+              ) : (
+                <><IonIcon icon={saveOutline} slot="start" />Lưu tạm</>
+              )}
             </IonButton>
             <IonButton
               expand="block"
               onClick={handleSubmit.bind(null, "active")}
+              disabled={isSubmitting}
             >
-              <IonIcon icon={checkmark} slot="start" />
-              Xác nhận
+              {submittingType === "active" ? (
+                <IonSpinner name="crescent" />
+              ) : (
+                <><IonIcon icon={checkmark} slot="start" />Xác nhận</>
+              )}
             </IonButton>
           </div>
         </div>

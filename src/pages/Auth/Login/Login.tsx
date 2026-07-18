@@ -14,18 +14,15 @@ import {
   IonText,
   IonCheckbox,
   IonInputPasswordToggle,
-  useIonViewDidEnter,
   useIonToast,
 } from "@ionic/react";
 // import * as Sentry from "@sentry/capacitor";
-import { useHistory } from "react-router-dom";
 import { useAuth } from "../../../hooks";
 // import { defaultConfig } from "@/helpers/axios";
 
 import "./Login.css";
 
 const Login: React.FC = () => {
-  const history = useHistory();
   const [presentToast] = useIonToast();
 
   const [formData, setFormData] = useState({
@@ -33,7 +30,7 @@ const Login: React.FC = () => {
     password: "",
   });
   const [error, setError] = useState("");
-  const { login, isAuthenticated } = useAuth();
+  const { login } = useAuth();
 
   const handleLogin = async () => {
     try {
@@ -90,10 +87,6 @@ const Login: React.FC = () => {
       });
 
       setFormData({ username: "", password: "" });
-
-      setTimeout(() => {
-        history.replace("/tabs/home");
-      }, 500);
     } catch (error: any) {
       presentToast({
         message: error.message,
@@ -103,12 +96,6 @@ const Login: React.FC = () => {
       });
     }
   };
-
-  useIonViewDidEnter(() => {
-    if (isAuthenticated) {
-      history.replace("/tabs/home");
-    }
-  }, [isAuthenticated]);
 
   return (
     <IonPage>

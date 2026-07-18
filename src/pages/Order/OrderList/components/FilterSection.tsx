@@ -55,7 +55,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({ onFilterChange }) => {
           value={keyword}
           onIonChange={(e) => setKeyword(e.detail.value || "")}
           placeholder="Tìm kiếm đơn hàng"
-          debounce={300}
+          debounce={800}
           showClearButton="focus"
         />
         <IonButton

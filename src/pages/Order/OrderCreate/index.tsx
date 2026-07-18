@@ -23,6 +23,7 @@ import {
   IonFooter,
   IonRippleEffect,
   InputCustomEvent,
+  IonSpinner,
   useIonViewWillEnter,
   useIonViewWillLeave,
 } from "@ionic/react";
@@ -42,7 +43,7 @@ import useOrder from "@/hooks/apis/useOrder";
 import useProduct from "@/hooks/apis/useProduct";
 import useCustomer from "@/hooks/apis/useCustomer";
 
-import { isHasProperty } from "@/helpers/common";
+import { createRequestId, isHasProperty } from "@/helpers/common";
 import {
   formatCurrency,
   formatCurrencyWithoutSymbol,
@@ -146,6 +147,8 @@ const OrderCreate: React.FC = () => {
 
   const [presentToast] = useIonToast();
   const orderItemsListRef = useRef<HTMLDivElement>(null);
+  const isCreatingOrderRef = useRef(false);
+  const createRequestIdRef = useRef(createRequestId());
 
   const { getItem, removeItem } = useStorage();
   const { isLoading, withLoading } = useLoading();
@@ -154,9 +157,12 @@ const OrderCreate: React.FC = () => {
   const { create: createCustomer } = useCustomer();
 
   const handleCreateOrder = (orderData: Record<string, any>, callback?: (orderId: string) => void) => {
+    if (isCreatingOrderRef.current) return;
+    isCreatingOrderRef.current = true;
+
     return withLoading(async () => {
       try {
-        const orderCreated = await createOrder(orderData);
+        const orderCreated = await createOrder(orderData, createRequestIdRef.current);
 
         if (!orderCreated?.id) {
           throw new Error("Tạo đơn hàng thất bại");
@@ -175,6 +181,8 @@ const OrderCreate: React.FC = () => {
           position: "top",
           color: "danger",
         });
+      } finally {
+        isCreatingOrderRef.current = false;
       }
     })
   }
@@ -223,7 +231,7 @@ const OrderCreate: React.FC = () => {
       transaction: paymentTransaction,
     };
 
-    handleCreateOrder(finalOrderData, () => {
+    return handleCreateOrder(finalOrderData, () => {
       presentToast({
         message: `Tạo đơn hàng và thanh toán ${formatCurrency(
           calculateFinalTotal()
@@ -1278,7 +1286,7 @@ const OrderCreate: React.FC = () => {
             disabled={isLoading}
           >
             {isLoading ? (
-              "Đang xử lý..."
+              <><IonSpinner name="crescent" slot="start" />Đang xử lý...</>
             ) : (
               <>
                 <IonIcon icon={removeCircleOutline} slot="start" />
@@ -1299,7 +1307,7 @@ const OrderCreate: React.FC = () => {
             disabled={isLoading}
           >
             {isLoading ? (
-              "Đang xử lý..."
+              <><IonSpinner name="crescent" slot="start" />Đang xử lý...</>
             ) : (
               <>
                 <IonIcon icon={saveOutline} slot="start" />
@@ -1314,7 +1322,7 @@ const OrderCreate: React.FC = () => {
             disabled={isLoading}
           >
             {isLoading ? (
-              "Đang xử lý..."
+              <><IonSpinner name="crescent" slot="start" />Đang xử lý...</>
             ) : (
               <>
                 <IonIcon icon={checkmarkCircleOutline} slot="start" />

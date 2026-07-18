@@ -13,6 +13,8 @@ export interface ISupplier {
   status: string | number;
   createdAt?: string;
   updatedAt?: string;
+  type?: string;
+  lastTransactionDate?: string;
 }
 
 export interface ISupplierListItem extends ISupplier {

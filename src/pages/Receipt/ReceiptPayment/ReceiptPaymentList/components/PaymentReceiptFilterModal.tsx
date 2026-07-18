@@ -12,6 +12,15 @@ import { ReceiptPaymentExpenseType } from "@/common/enums/receipt";
 import { PaymentMethod } from "@/common/enums/payment";
 import { getPaymentReceiptTypeIcon } from "../../common/utils";
 
+const formatDateDisplay = (dateStr: string) => {
+  if (!dateStr) return "";
+  const parts = dateStr.split("-");
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return dateStr;
+};
+
 export interface FilterState {
   expenseType: ReceiptPaymentExpenseType | "all";
   startDate: string;
@@ -135,21 +144,59 @@ const PaymentReceiptFilterModal: React.FC<PaymentReceiptFilterModalProps> = ({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[10px] text-gray-400 block mb-1">Từ ngày</label>
-                <input
-                  type="date"
-                  value={filters.startDate}
-                  onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 outline-none focus:border-blue-500"
-                />
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={filters.startDate}
+                    onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  <div className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 outline-none min-h-[38px] flex items-center justify-between">
+                    <span className={filters.startDate ? "text-gray-700" : "text-gray-400"}>
+                      {filters.startDate ? formatDateDisplay(filters.startDate) : "Chọn ngày"}
+                    </span>
+                    {filters.startDate && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFilters({ ...filters, startDate: "" });
+                        }}
+                        className="text-gray-400 hover:text-gray-600 ml-2 z-20 relative text-lg font-bold p-1 -m-1"
+                      >
+                        &times;
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
               <div>
                 <label className="text-[10px] text-gray-400 block mb-1">Đến ngày</label>
-                <input
-                  type="date"
-                  value={filters.endDate}
-                  onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 outline-none focus:border-blue-500"
-                />
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={filters.endDate}
+                    onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  <div className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 outline-none min-h-[38px] flex items-center justify-between">
+                    <span className={filters.endDate ? "text-gray-700" : "text-gray-400"}>
+                      {filters.endDate ? formatDateDisplay(filters.endDate) : "Chọn ngày"}
+                    </span>
+                    {filters.endDate && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFilters({ ...filters, endDate: "" });
+                        }}
+                        className="text-gray-400 hover:text-gray-600 ml-2 z-20 relative text-lg font-bold p-1 -m-1"
+                      >
+                        &times;
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

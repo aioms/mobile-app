@@ -83,7 +83,7 @@ const CategoriesModal: React.FC<Props> = ({
           <IonSearchbar
             value={searchText}
             onIonInput={(e) => setSearchText(e.detail.value || "")}
-            debounce={300}
+            debounce={800}
             placeholder="Tìm kiếm nhóm hàng"
             className="mb-4"
           />

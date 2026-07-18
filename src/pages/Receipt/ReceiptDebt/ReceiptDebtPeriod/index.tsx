@@ -714,7 +714,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
             });
             return;
           }
-          if (item.sellingPrice < 0) {
+          if ((item.sellingPrice ?? 0) < 0) {
             presentToast({
               message: `Giá sản phẩm ${item.productName} không thể âm`,
               duration: 2000,
@@ -735,7 +735,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
             quantity: item.quantity,
             originalQuantity: item.originalQuantity || 0,
             // costPrice: item.sellingPrice, // Cost price for internal tracking
-            costPrice: item.sellingPrice, // Selling price (customer-facing price, includes any price changes)
+            costPrice: item.sellingPrice ?? 0, // Selling price (customer-facing price, includes any price changes)
             receiptPeriodId: item.receiptPeriodId,
             shipNow: item.shipNow || false, // Include shipNow flag
           })),

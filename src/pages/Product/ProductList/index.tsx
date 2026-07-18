@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   IonContent,
   IonSearchbar,
@@ -47,7 +47,7 @@ import { UserRole } from "@/common/enums/user";
 
 import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
 import useProduct from "@/hooks/apis/useProduct";
-import { useAuth, useBarcodeScanner, useLoading } from "@/hooks";
+import { useAuth, useBarcodeScanner } from "@/hooks";
 
 import "./ProductList.css";
 
@@ -89,18 +89,20 @@ const LIMIT = 10;
 
 const ProductListScreen: React.FC = () => {
   const history = useHistory();
-  const { isLoading, withLoading } = useLoading();
   const { user } = useAuth();
 
   const [presentToast] = useIonToast();
 
   const [products, setProducts] = useState<IProduct[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [dataTotal, setDataTotal] = useState<Total>({
     totalProduct: 0,
     totalInventory: 0,
   });
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const productsRequestIdRef = useRef(0);
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [filterValues, setFilterValues] = useState<FilterValues>({
@@ -177,42 +179,56 @@ const ProductListScreen: React.FC = () => {
     pageNumber: number = 1,
     isLoadMore: boolean = false
   ) => {
-    await withLoading(async () => {
-      try {
-        const response = await getList(filters, pageNumber, LIMIT);
+    const requestId = ++productsRequestIdRef.current;
+    if (isLoadMore) {
+      setIsLoadingMore(true);
+    } else {
+      setIsLoading(true);
+      setIsLoadingMore(false);
+    }
 
-        if (!response.length) {
+    try {
+      const response = await getList(filters, pageNumber, LIMIT);
+
+      if (requestId !== productsRequestIdRef.current) return;
+
+      if (!response.length) {
+        if (!isLoadMore) {
           setProducts([]);
-          setHasMore(false);
-
-          if (!isLoadMore) {
-            presentToast({
-              message: "Không tìm thấy kết quả",
-              duration: 2000,
-              position: "top",
-            });
-          }
-        } else {
-          setProducts((prev) =>
-            isLoadMore ? [...prev, ...response] : response
-          );
-          setHasMore(response.length === LIMIT);
+          presentToast({
+            message: "Không tìm thấy kết quả",
+            duration: 2000,
+            position: "top",
+          });
         }
-      } catch (error) {
-        captureException(error as Error, createExceptionContext(
-          'ProductList',
-          'ProductList',
-          'fetchProducts'
-        ));
 
-        presentToast({
-          message: (error as Error).message || "Có lỗi xảy ra",
-          duration: 2000,
-          position: "top",
-          color: "danger",
-        });
+        setHasMore(false);
+      } else {
+        setProducts((prev) =>
+          isLoadMore ? [...prev, ...response] : response
+        );
+        setHasMore(response.length === LIMIT);
       }
-    });
+    } catch (error) {
+      if (requestId !== productsRequestIdRef.current) return;
+
+      captureException(error as Error, createExceptionContext(
+        'ProductList',
+        'ProductList',
+        'fetchProducts'
+      ));
+
+      presentToast({
+        message: (error as Error).message || "Có lỗi xảy ra",
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+    } finally {
+      if (requestId === productsRequestIdRef.current) {
+        isLoadMore ? setIsLoadingMore(false) : setIsLoading(false);
+      }
+    }
   };
 
   const fetchTotalProductAndInventory = async () => {
@@ -373,7 +389,7 @@ const ProductListScreen: React.FC = () => {
               }}
               placeholder="Tìm kiếm sản phẩm"
               className="flex-1 bg-gray-100 rounded-lg p-0 h-[40px]"
-              debounce={300}
+              debounce={800}
               enterkeyhint="search"
               inputmode="search"
             />
@@ -458,15 +474,15 @@ const ProductListScreen: React.FC = () => {
 
           <h3 className="text-md font-medium mb-4">Sản phẩm</h3>
           <div className="space-y-4">
-            {products.length ? (
+            {isLoading ? (
+              <ContentSkeleton lines={3} />
+            ) : products.length ? (
               products.map((product) => (
                 <ProductCard key={`product-${product.id}`} product={product} isShowCostPrice={isShowCostPrice} />
               ))
-            ) : isLoading ? (
-              <ContentSkeleton lines={3} />
             ) : null}
 
-            {!hasMore && products.length === 0 && (
+            {!isLoading && !hasMore && products.length === 0 && (
               <div className="text-center text-gray-500">
                 <i className="text-sm"> Không tìm thấy sản phẩm nào</i>
               </div>
@@ -478,9 +494,9 @@ const ProductListScreen: React.FC = () => {
               <IonButton
                 fill="clear"
                 onClick={handleLoadMore}
-                disabled={isLoading}
+                disabled={isLoading || isLoadingMore}
               >
-                {isLoading ? <IonSpinner name="crescent" /> : "Xem thêm"}
+                {isLoadingMore ? <IonSpinner name="crescent" /> : "Xem thêm"}
               </IonButton>
             </div>
           )}

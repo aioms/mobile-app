@@ -315,7 +315,7 @@ const ReceiptDebtList: FC = () => {
           placeholder="Tìm Phiếu Thu"
           onIonInput={handleSearch}
           className="flex-1"
-          debounce={500}
+          debounce={800}
         />
         <div className="flex-shrink-0 flex items-center justify-center space-x-1">
           <IonButton

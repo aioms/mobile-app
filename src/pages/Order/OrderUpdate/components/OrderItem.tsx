@@ -47,6 +47,7 @@ const OrderItem: FC<Props> = memo(
     );
     const [newPrice, setNewPrice] = useState<number>(sellingPrice);
     const [newVatRate, setNewVatRate] = useState<number>(vatRate);
+    const [vatInputValue, setVatInputValue] = useState<string>(vatRate.toString());
     const [quantityInputValue, setQuantityInputValue] = useState<string>(quantity.toString());
     const [quantityError, setQuantityError] = useState<string>("");
     const [isShipNow, setIsShipNow] = useState<boolean>(shipNow);
@@ -75,6 +76,7 @@ const OrderItem: FC<Props> = memo(
         setNewQuantity(value);
         setQuantityInputValue(value.toString());
         setQuantityError("");
+        onRowChange?.({ quantity: value });
       } else {
         setQuantityError(validation.error || "");
       }
@@ -126,17 +128,26 @@ const OrderItem: FC<Props> = memo(
           setNewPrice(numericValue);
           // Use the new formatCurrencyInput for real-time formatting
           setFormattedPrice(formatCurrencyInput(value));
+          onRowChange?.({ sellingPrice: numericValue });
         }
       }
     };
 
     const handleVatRateChange = (value: string | null | undefined) => {
       if (value !== null && value !== undefined) {
-        const numericValue = Number(value) || 0;
+        setVatInputValue(value);
+        if (value.trim() === "") return;
+
+        const numericValue = Number(value);
         if (numericValue >= 0 && numericValue <= 100) {
           setNewVatRate(numericValue);
+          onRowChange?.({ vatRate: numericValue });
         }
       }
+    };
+
+    const handleVatRateBlur = () => {
+      setVatInputValue(newVatRate.toString());
     };
 
     const handleShipNowChange = (checked: boolean) => {
@@ -145,7 +156,11 @@ const OrderItem: FC<Props> = memo(
       if (!checked && inventory !== undefined && newQuantity > inventory) {
         setNewQuantity(inventory);
         setQuantityInputValue(inventory.toString());
+        onRowChange?.({ shipNow: checked, quantity: inventory });
+        return;
       }
+
+      onRowChange?.({ shipNow: checked });
     };
 
     useEffect(() => {
@@ -159,19 +174,9 @@ const OrderItem: FC<Props> = memo(
     useEffect(() => {
       if (vatRate !== newVatRate) {
         setNewVatRate(vatRate);
+        setVatInputValue(vatRate.toString());
       }
     }, [vatRate]);
-
-    useEffect(() => {
-      if (onRowChange) {
-        onRowChange({
-          quantity: newQuantity,
-          sellingPrice: newPrice,
-          vatRate: newVatRate,
-          shipNow: isShipNow,
-        });
-      }
-    }, [newQuantity, newPrice, newVatRate, isShipNow]);
 
     const totalPrice = newPrice * newQuantity;
     const vatAmount = (totalPrice * newVatRate) / 100;
@@ -286,8 +291,9 @@ const OrderItem: FC<Props> = memo(
             ) : (
               <IonInput
                 type="number"
-                value={newVatRate}
+                value={vatInputValue}
                 onIonInput={(e) => handleVatRateChange(e.detail.value)}
+                onIonBlur={handleVatRateBlur}
                 className="border rounded-lg text-sm w-20 custom-padding"
                 min="0"
                 max="100"

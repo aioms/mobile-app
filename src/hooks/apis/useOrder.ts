@@ -21,8 +21,10 @@ const useOrder = () => {
     return response.data;
   };
 
-  const create = async (data: any) => {
-    const response: IHttpResponse = await request.post(`/orders`, data);
+  const create = async (data: any, requestId?: string) => {
+    const response: IHttpResponse = await request.post(`/orders`, data, {
+      headers: requestId ? { "X-Request-ID": requestId } : undefined,
+    });
 
     if (!response.success) {
       throw new Error(response.message || "Failed to create order");

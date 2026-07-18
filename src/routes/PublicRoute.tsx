@@ -18,13 +18,20 @@ const PublicRoute: React.FC<PublicRouteProps> = ({
   return (
     <RouteCompat
       {...rest}
-      render={(props: any) =>
-        !isAuthenticated ? (
-          <Component {...props} />
-        ) : (
-          <RedirectCompat to={{ pathname: '/tabs/home' }} />
-        )
-      }
+      render={(props: any) => {
+        if (!isAuthenticated) {
+          return <Component {...props} />;
+        }
+
+        // Prevent redirect loop during transition if already in tabs layout
+        if (props.location.pathname.startsWith("/tabs")) {
+          return null;
+        }
+
+        return (
+          <RedirectCompat to={{ pathname: "/tabs/home" }} />
+        );
+      }}
     />
   );
 };

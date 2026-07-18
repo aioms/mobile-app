@@ -73,6 +73,11 @@ export const sleep = (ms: number) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
+export const createRequestId = () => {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+};
+
 /**
  * Extracts the numeric part of a string with a 2-letter prefix.
  * @param input A string like "NK01234".

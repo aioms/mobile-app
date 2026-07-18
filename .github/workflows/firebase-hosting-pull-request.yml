@@ -13,12 +13,47 @@ jobs:
   build_and_preview:
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
+    env:
+      FIREBASE_SECRET: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_AIOM_90F7C }}
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
       - run: npm ci
       - run: npm install --no-save @rollup/rollup-linux-x64-gnu@$(node -p "require('./node_modules/vite/node_modules/rollup/package.json').version")
-      - run: npm exec vite build
-      - uses: FirebaseExtended/action-hosting-deploy@v0
+      - name: Run Linter
+        run: npm run lint
+      - name: Build Application with Type Checks
+        run: npm run vite:build
+        env:
+          VITE_ENV: development
+          VITE_API_VERSION: v1
+          VITE_S3_URL: ${{ vars.VITE_S3_URL }}
+          VITE_CDN_URL: ${{ vars.VITE_CDN_URL }}
+          VITE_S3_BUCKET: ${{ vars.VITE_S3_BUCKET }}
+          VITE_PROXY_SERVER_URL: ${{ vars.VITE_PROXY_SERVER_URL }}
+          VITE_API_URL_DEV: ${{ vars.VITE_API_URL_DEV }}
+          VITE_SERVER_URL_DEV: ${{ vars.VITE_SERVER_URL_DEV }}
+          VITE_VIETQR_CLIENT_ID: ${{ secrets.VITE_VIETQR_CLIENT_ID }}
+          VITE_VIETQR_API_KEY: ${{ secrets.VITE_VIETQR_API_KEY }}
+          VITE_PUBLIC_POSTHOG_KEY: ${{ secrets.VITE_PUBLIC_POSTHOG_KEY }}
+          VITE_PUBLIC_POSTHOG_HOST: https://us.i.posthog.com
+          VITE_PUBLIC_POSTHOG_DEFAULTS: "2025-05-24"
+          VITE_PWA_UPDATE_ENABLED: "true"
+          VITE_PWA_UPDATE_STRATEGY: "both"
+          VITE_PWA_VERSION_URL: "/version.json"
+          VITE_PWA_POLL_INTERVAL_MS: 900000
+          VITE_PWA_NOTIFICATION_BEHAVIOR: "prompt"
+          VITE_PWA_LOG_LEVEL: "info"
+      - name: Warn if Firebase Service Account is missing
+        if: env.FIREBASE_SECRET == ''
+        run: echo "Warning - FIREBASE_SERVICE_ACCOUNT_AIOM_90F7C is not set. Skipping Firebase deployment."
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        if: env.FIREBASE_SECRET != ''
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_AIOM_90F7C }}

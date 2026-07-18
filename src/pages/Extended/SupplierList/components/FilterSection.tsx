@@ -22,6 +22,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
           <IonSearchbar
             value={searchText}
             onIonInput={(e) => setSearchText(e.detail.value!)}
+            debounce={800}
             placeholder="Tìm NCC theo tên, danh mục..."
             className="supplier-searchbar p-0"
             mode="md"

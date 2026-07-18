@@ -184,6 +184,7 @@ const SupplierDetail: React.FC = () => {
                   <IonSearchbar
                     value={receiptSearchText}
                     onIonInput={(e) => setReceiptSearchText(e.detail.value!)}
+                    debounce={800}
                     placeholder="Tìm kiếm theo sản phẩm hoặc mã giao..."
                     className="p-0 custom-searchbar h-[48px]"
                     searchIcon={searchOutline}

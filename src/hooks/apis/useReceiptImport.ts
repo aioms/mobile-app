@@ -45,8 +45,10 @@ const useReceiptImport = () => {
     return response.data;
   }, []);
 
-  const createWithProductCode = useCallback(async (data: any) => {
-    const response: IHttpResponse = await request.post(`/receipt-imports/product-code`, data);
+  const createWithProductCode = useCallback(async (data: any, requestId?: string) => {
+    const response: IHttpResponse = await request.post(`/receipt-imports/product-code`, data, {
+      headers: requestId ? { "X-Request-ID": requestId } : undefined,
+    });
 
     if (!response.success) {
       throw new Error(response?.message || "Import failed");
@@ -55,8 +57,10 @@ const useReceiptImport = () => {
     return response.data;
   }, []);
 
-  const create = useCallback(async (data: any) => {
-    const response = await request.post(`/receipt-imports`, data);
+  const create = useCallback(async (data: any, requestId?: string) => {
+    const response = await request.post(`/receipt-imports`, data, {
+      headers: requestId ? { "X-Request-ID": requestId } : undefined,
+    });
     return response.data;
   }, []);
 

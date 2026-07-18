@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { IonList } from "@ionic/react";
+import { useState, useEffect, useRef } from "react";
+import { IonList, IonSpinner } from "@ionic/react";
 import { Toast } from "@capacitor/toast";
 
 import useProduct from "@/hooks/apis/useProduct";
@@ -14,11 +14,16 @@ type Props = {
 const ModalSelectProduct: React.FC<Props> = ({ dismiss }) => {
   const [keyword, setKeyword] = useState("");
   const [products, setProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<Map<string, any>>(new Map());
+  const productsRequestIdRef = useRef(0);
 
   const { getList: getListProducts } = useProduct();
 
   const fetchProducts = async () => {
+    const requestId = ++productsRequestIdRef.current;
+    setIsLoading(true);
+
     try {
       const response = await getListProducts(
         {
@@ -28,6 +33,10 @@ const ModalSelectProduct: React.FC<Props> = ({ dismiss }) => {
         25
       );
 
+      if (requestId !== productsRequestIdRef.current) return;
+
+      setProducts(response);
+
       if (!response.length) {
         await Toast.show({
           text: "Không tìm thấy kết quả",
@@ -36,13 +45,16 @@ const ModalSelectProduct: React.FC<Props> = ({ dismiss }) => {
         });
       }
 
-      setProducts(response);
     } catch (error) {
+      if (requestId !== productsRequestIdRef.current) return;
+
       await Toast.show({
         text: (error as Error).message,
         duration: "short",
         position: "top",
       });
+    } finally {
+      if (requestId === productsRequestIdRef.current) setIsLoading(false);
     }
   };
 
@@ -100,8 +112,11 @@ const ModalSelectProduct: React.FC<Props> = ({ dismiss }) => {
           Đã chọn: <span className="font-semibold">{selectedProducts.size}</span> sản phẩm
         </p>
       </div>
-      <IonList>
-        {!!products.length &&
+      {isLoading ? (
+        <div className="flex justify-center py-8"><IonSpinner name="crescent" /></div>
+      ) : (
+        <IonList>
+          {!!products.length &&
           products.map((item) => (
             <ProductItem
               key={item.id}
@@ -110,7 +125,8 @@ const ModalSelectProduct: React.FC<Props> = ({ dismiss }) => {
               {...item}
             />
           ))}
-      </IonList>
+        </IonList>
+      )}
     </ModalCustom>
   );
 };

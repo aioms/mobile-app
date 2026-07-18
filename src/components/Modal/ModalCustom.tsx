@@ -67,7 +67,7 @@ const ModalCustom: FC<Props> = ({
         </IonToolbar>
         <IonToolbar>
           <IonSearchbar
-            debounce={500}
+            debounce={800}
             onIonInput={onSearchChange}
           ></IonSearchbar>
         </IonToolbar>

@@ -46,7 +46,7 @@ const PurchasePeriod: FC<Props> = ({
   // Memoize initial prices calculation
   const initialPrices = useMemo(() => {
     return items.reduce((acc, item) => {
-      acc[item.id] = item.sellingPrice;
+      acc[item.id] = item.sellingPrice ?? 0;
       return acc;
     }, {} as Record<string, number>);
   }, [items]);

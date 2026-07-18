@@ -8,7 +8,10 @@
 
 ## Introduction
 
-AIOS Mobile is a powerful, cross-platform mobile application built with React, Ionic, and Capacitor. It provides a comprehensive system management solution with features like inventory tracking, barcode scanning, and real-time data synchronization.
+AIOS Mobile is a powerful, cross-platform mobile application built with React,
+Ionic, and Capacitor. It provides a comprehensive system management solution
+with features like inventory tracking, barcode scanning, and real-time data
+synchronization.
 
 ## Features
 
@@ -31,22 +34,26 @@ AIOS Mobile is a powerful, cross-platform mobile application built with React, I
 ## Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/your-username/aios-mobile.git
 cd aios-mobile
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Configure environment variables:
+
 ```bash
 cp .env.example .env
 ```
 
 4. Install iOS/Android platforms:
+
 ```bash
 npm run sync
 ```
@@ -54,11 +61,13 @@ npm run sync
 ## Development
 
 Start the development server:
+
 ```bash
 npm run dev
 ```
 
 Build for platforms:
+
 ```bash
 # Web
 npm run build
@@ -72,12 +81,19 @@ npm run build:android
 ```
 
 Run tests:
+
 ```bash
 # Unit tests
 npm run test.unit
 
 # E2E tests
 npm run test.e2e
+```
+
+Create deploy to firebase with github:
+
+```bash
+firebase init hosting:github
 ```
 
 ## Project Structure
@@ -111,7 +127,8 @@ We welcome contributions! Please follow these steps:
 
 ## Deployment
 
-The application uses Firebase Hosting for web deployment. Deployments are automated via GitHub Actions:
+The application uses Firebase Hosting for web deployment. Deployments are
+automated via GitHub Actions:
 
 - Pull requests trigger preview deployments
 - Merges to main branch trigger production deployments
@@ -126,12 +143,13 @@ Common issues and solutions:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
+for details.
 
 ## Contact & Support
 
 - **Issues**: Submit via GitHub Issues
-- **Email**: minhvh.tech@gmail.com
+- **Email**: aiom.system@gmail.com
 - **Documentation**: [Full Documentation](https://docs.mmoment.tech)
 
 ## Acknowledgments
