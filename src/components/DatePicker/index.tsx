@@ -41,7 +41,7 @@ const DatePicker: FC<Props> = ({
   emptyTimeText,
   clearable = true,
   onClear,
-  useCurrentDateAsDefault = true,
+  useCurrentDateAsDefault = false,
 }) =>  {
   const instanceId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const hasValue = Boolean(value);
@@ -56,10 +56,11 @@ const DatePicker: FC<Props> = ({
     ...datetimeAttrs
   } = attrs;
   const datetimeId = `${id}-${instanceId}`;
-  const datetimeValue = value || (useCurrentDateAsDefault ? new Date().toISOString() : undefined);
-  const dateTargetText = emptyDateText || emptyText;
-  const timeTargetText = emptyTimeText || emptyText;
-  const showEmptyTargets = !hasValue && !useCurrentDateAsDefault && Boolean(dateTargetText || timeTargetText);
+  const todayIso = new Date().toISOString();
+  const datetimeValue = value || todayIso;
+  const dateTargetText = emptyDateText || emptyText || 'Chọn ngày';
+  const timeTargetText = emptyTimeText || emptyText || 'Chọn giờ';
+  const showEmptyTargets = !hasValue && !useCurrentDateAsDefault;
   const shouldShowClearButton = showClearButton ?? clearable;
   const shouldShowDefaultButtons = showDefaultButtons ?? true;
   const mergedFormatOptions = {
@@ -82,17 +83,21 @@ const DatePicker: FC<Props> = ({
     onChange?.(event);
   };
 
+  const presentationStr = presentation as string;
+  const hasDatePresentation = presentationStr !== 'time';
+  const hasTimePresentation = presentationStr === 'time' || presentationStr.includes('time');
+
   return (
     <>
       <IonDatetimeButton className={extraClassName} datetime={datetimeId} disabled={disabled}>
         {showEmptyTargets && (
           <>
-            {dateTargetText && (
+            {hasDatePresentation && (
               <span slot="date-target" className="date-picker-empty-target">
                 {dateTargetText}
               </span>
             )}
-            {timeTargetText && (
+            {hasTimePresentation && (
               <span slot="time-target" className="date-picker-empty-target">
                 {timeTargetText}
               </span>
