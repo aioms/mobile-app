@@ -108,18 +108,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    setIsAuthenticated(false);
-    setUser(null);
-
     try {
       await request.post(`/auth/logout`);
-      await Promise.all([removeItem("token"), removeItem("user")]);
     } catch (error) {
       await Toast.show({
         text: (error as Error).message,
         duration: "short",
         position: "center",
       });
+    } finally {
+      await Promise.all([removeItem("token"), removeItem("user")]);
+      setIsAuthenticated(false);
+      setUser(null);
     }
   };
 

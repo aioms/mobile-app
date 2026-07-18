@@ -18,13 +18,20 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({
   return (
     <RouteCompat
       {...rest}
-      render={(props: any) =>
-        isAuthenticated ? (
-          <Component {...props} />
-        ) : (
-          <RedirectCompat to={{ pathname: '/login', state: { from: props.location } }} />
-        )
-      }
+      render={(props: any) => {
+        if (isAuthenticated) {
+          return <Component {...props} />;
+        }
+
+        // Prevent redirect loop during transition if already on the login page
+        if (props.location.pathname === "/login" || props.location.pathname === "/auth/login") {
+          return null;
+        }
+
+        return (
+          <RedirectCompat to={{ pathname: "/login", state: { from: props.location } }} />
+        );
+      }}
     />
   );
 };
