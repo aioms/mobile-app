@@ -193,16 +193,16 @@ const ProductListScreen: React.FC = () => {
       if (requestId !== productsRequestIdRef.current) return;
 
       if (!response.length) {
-        setProducts([]);
-        setHasMore(false);
-
         if (!isLoadMore) {
+          setProducts([]);
           presentToast({
             message: "Không tìm thấy kết quả",
             duration: 2000,
             position: "top",
           });
         }
+
+        setHasMore(false);
       } else {
         setProducts((prev) =>
           isLoadMore ? [...prev, ...response] : response

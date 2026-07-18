@@ -65,10 +65,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     setIsProcessing(true);
     try {
       await onPaymentComplete(paymentAmount, selectedMethod);
+      handleClose();
     } finally {
       isProcessingRef.current = false;
       setIsProcessing(false);
-      handleClose();
     }
   };
 
