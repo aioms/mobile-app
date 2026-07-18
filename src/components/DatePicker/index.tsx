@@ -1,12 +1,13 @@
-import { IonDatetime, IonDatetimeButton, IonModal } from '@ionic/react';
-import { ComponentProps, FC, useId } from 'react';
+import React, { ComponentProps, useId, useMemo } from 'react';
+import { IonDatetime } from '@ionic/react';
+import dayjs from 'dayjs';
 import './style.css';
 
 type Props = {
   value?: string | null;
   onChange?: (e: any) => void;
   presentation?: 'date' | 'time' | 'date-time' | 'time-date' | 'month-year' | 'year' | 'month';
-  attrs: ComponentProps<typeof IonDatetime> & { id: string };
+  attrs?: ComponentProps<typeof IonDatetime> & { id?: string };
   extraClassName?: string;
   formatOptions?: any;
   emptyText?: string;
@@ -17,112 +18,143 @@ type Props = {
   useCurrentDateAsDefault?: boolean;
 }
 
-const defaultFormatOptions = {
-  date: {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  },
-  time: {
-    hour: '2-digit',
-    minute: '2-digit',
-  },
-};
-
-const DatePicker: FC<Props> = ({
+const DatePicker: React.FC<Props> = ({
   value,
   onChange,
   presentation = 'date-time',
   attrs,
-  extraClassName,
-  formatOptions,
+  extraClassName = '',
   emptyText = '',
   emptyDateText,
   emptyTimeText,
   clearable = true,
   onClear,
   useCurrentDateAsDefault = false,
-}) =>  {
-  const instanceId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
+}) => {
   const hasValue = Boolean(value);
-  const {
-    id,
-    disabled,
-    cancelText,
-    clearText,
-    doneText,
-    showClearButton,
-    showDefaultButtons,
-    ...datetimeAttrs
-  } = attrs;
-  const datetimeId = `${id}-${instanceId}`;
+  const { disabled, min, max } = attrs || {};
+
+  let inputType = 'datetime-local';
+  if (presentation === 'date') inputType = 'date';
+  else if (presentation === 'time') inputType = 'time';
+  else if (presentation === 'month-year' || presentation === 'month') inputType = 'month';
+
   const todayIso = new Date().toISOString();
-  const datetimeValue = value || todayIso;
-  const dateTargetText = emptyDateText || emptyText || 'Chọn ngày';
-  const timeTargetText = emptyTimeText || emptyText || 'Chọn giờ';
-  const showEmptyTargets = !hasValue && !useCurrentDateAsDefault;
-  const shouldShowClearButton = showClearButton ?? clearable;
-  const shouldShowDefaultButtons = showDefaultButtons ?? true;
-  const mergedFormatOptions = {
-    ...defaultFormatOptions,
-    ...formatOptions,
-    date: {
-      ...defaultFormatOptions.date,
-      ...formatOptions?.date,
-    },
-    time: {
-      ...defaultFormatOptions.time,
-      ...formatOptions?.time,
-    },
-  };
-  const handleIonChange = (event: any) => {
-    if (!event.detail.value) {
-      onClear?.();
+  let currentValue = value;
+  if (!hasValue && useCurrentDateAsDefault) {
+    currentValue = todayIso;
+  }
+
+  const internalValue = useMemo(() => {
+    if (!currentValue) return '';
+    try {
+      const d = dayjs(currentValue);
+      if (!d.isValid()) return '';
+      
+      if (inputType === 'date') return d.format('YYYY-MM-DD');
+      if (inputType === 'time') return d.format('HH:mm');
+      if (inputType === 'month') return d.format('YYYY-MM');
+      return d.format('YYYY-MM-DDTHH:mm');
+    } catch {
+      return '';
+    }
+  }, [currentValue, inputType]);
+
+  const displayValue = useMemo(() => {
+    if (!currentValue) return '';
+    try {
+      const d = dayjs(currentValue);
+      if (!d.isValid()) return '';
+      
+      if (inputType === 'date') return d.format('DD/MM/YYYY');
+      if (inputType === 'time') return d.format('HH:mm');
+      if (inputType === 'month') return d.format('MM/YYYY');
+      return d.format('DD/MM/YYYY HH:mm');
+    } catch {
+      return currentValue;
+    }
+  }, [currentValue, inputType]);
+
+  const placeholderText = emptyDateText || emptyText || (inputType === 'time' ? 'Chọn giờ' : 'Chọn ngày');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (!val) {
+      if (clearable) {
+        onClear?.();
+        onChange?.({ detail: { value: '' } });
+      }
+      return;
     }
 
-    onChange?.(event);
+    let isoString = val;
+    try {
+      if (inputType === 'date') {
+        isoString = dayjs(val, 'YYYY-MM-DD').toISOString();
+      } else if (inputType === 'time') {
+        const today = dayjs().format('YYYY-MM-DD');
+        isoString = dayjs(`${today}T${val}`).toISOString();
+      } else if (inputType === 'month') {
+        isoString = dayjs(val, 'YYYY-MM').toISOString();
+      } else {
+        isoString = dayjs(val).toISOString();
+      }
+    } catch {
+      isoString = val;
+    }
+
+    onChange?.({ detail: { value: isoString } });
   };
 
-  const presentationStr = presentation as string;
-  const hasDatePresentation = presentationStr !== 'time';
-  const hasTimePresentation = presentationStr === 'time' || presentationStr.includes('time');
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onClear?.();
+    onChange?.({ detail: { value: '' } });
+  };
+  
+  const formatAttrDate = (isoString?: string | string[]) => {
+     if (!isoString || typeof isoString !== 'string') return undefined;
+     try {
+       const d = dayjs(isoString);
+       if (!d.isValid()) return undefined;
+       if (inputType === 'date') return d.format('YYYY-MM-DD');
+       if (inputType === 'time') return d.format('HH:mm');
+       if (inputType === 'month') return d.format('YYYY-MM');
+       return d.format('YYYY-MM-DDTHH:mm');
+     } catch {
+       return undefined;
+     }
+  };
 
   return (
-    <>
-      <IonDatetimeButton className={extraClassName} datetime={datetimeId} disabled={disabled}>
-        {showEmptyTargets && (
-          <>
-            {hasDatePresentation && (
-              <span slot="date-target" className="date-picker-empty-target">
-                {dateTargetText}
-              </span>
-            )}
-            {hasTimePresentation && (
-              <span slot="time-target" className="date-picker-empty-target">
-                {timeTargetText}
-              </span>
-            )}
-          </>
+    <div className={`relative inline-flex items-center bg-[#f4f5f8] rounded-lg px-[10px] py-[4px] min-h-[30px] ${disabled ? 'opacity-50 pointer-events-none' : ''} ${extraClassName}`}>
+      <input
+        type={inputType}
+        value={internalValue}
+        onChange={handleChange}
+        disabled={disabled}
+        min={formatAttrDate(min)}
+        max={formatAttrDate(max)}
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+      />
+      <div className="flex-1 flex justify-between items-center text-[14px] leading-[20px] z-0 whitespace-nowrap">
+        <span className={currentValue ? "text-gray-900" : "text-[#6b7280]"}>
+          {currentValue ? displayValue : placeholderText}
+        </span>
+        
+        {clearable && currentValue && !disabled && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="text-[#6b7280] hover:text-gray-900 ml-2 z-20 relative px-1 text-lg leading-none font-bold -my-1"
+          >
+            &times;
+          </button>
         )}
-      </IonDatetimeButton>
-
-      <IonModal keepContentsMounted={true} className="date-picker-modal ion-datetime-button-overlay">
-        <IonDatetime
-          {...datetimeAttrs}
-          id={datetimeId}
-          presentation={presentation}
-          value={datetimeValue}
-          onIonChange={handleIonChange}
-          formatOptions={mergedFormatOptions}
-          disabled={disabled}
-          clearText={clearText || "Xóa"}
-          cancelText={cancelText || "Hủy"}
-          doneText={doneText || "OK"}
-          {...(shouldShowClearButton ? { showClearButton: true } : {})}
-          {...(shouldShowDefaultButtons ? { showDefaultButtons: true } : {})}
-        />
-      </IonModal>
-    </>
+      </div>
+    </div>
   );
-}
+};
+
 export default DatePicker;

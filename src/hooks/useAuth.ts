@@ -1,4 +1,11 @@
-import { useEffect, useState } from "react";
+import {
+  createContext,
+  createElement,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { Toast } from "@capacitor/toast";
 
 import { request } from "../helpers/axios";
@@ -6,7 +13,19 @@ import { request } from "../helpers/axios";
 import { IHttpResponse, User } from "../types/index.d";
 import { useStorage } from "./useStorage";
 
-export const useAuth = () => {
+interface AuthContextValue {
+  login: (username: string, password: string) => Promise<IHttpResponse>;
+  logout: () => Promise<void>;
+  isAuthenticated: boolean;
+  user: User | null;
+  isLoading: boolean;
+  getToken: () => Promise<string | null>;
+  isSessionValid: () => Promise<boolean>;
+}
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { addItem, getItem, removeItem } = useStorage();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -119,13 +138,29 @@ export const useAuth = () => {
     return !!token && !isTokenExpired(token);
   };
 
-  return {
-    login,
-    logout,
-    isAuthenticated,
-    user,
-    isLoading,
-    getToken,
-    isSessionValid,
-  };
+  return createElement(
+    AuthContext.Provider,
+    {
+      value: {
+        login,
+        logout,
+        isAuthenticated,
+        user,
+        isLoading,
+        getToken,
+        isSessionValid,
+      },
+    },
+    children,
+  );
+};
+
+export const useAuth = () => {
+  const auth = useContext(AuthContext);
+
+  if (!auth) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
+
+  return auth;
 };

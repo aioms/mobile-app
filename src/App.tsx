@@ -36,6 +36,7 @@ import "./theme/common.css";
 
 /* Components */
 import { Routes } from "./routes";
+import { AuthProvider } from "./hooks";
 import FallbackError from "./components/FallbackError";
 import AppUpdatePrompt from "./components/AppUpdatePrompt/AppUpdatePrompt";
 import { getEnvironment } from "./helpers/common";
@@ -74,8 +75,10 @@ const App: React.FC = () => {
     >
       <IonApp>
         <PWAUpdateProvider>
-          <Routes />
-          <AppUpdatePrompt />
+          <AuthProvider>
+            <Routes />
+            <AppUpdatePrompt />
+          </AuthProvider>
         </PWAUpdateProvider>
       </IonApp>
     </PostHogErrorBoundary>
