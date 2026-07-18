@@ -1,5 +1,5 @@
 import React from "react";
-import { IonCard, IonCardContent, IonButton, IonIcon } from "@ionic/react";
+import { IonCard, IonCardContent, IonButton, IonIcon, IonSpinner } from "@ionic/react";
 import { chevronBack, checkmarkCircle, cash, qrCode } from "ionicons/icons";
 import { formatCurrency } from "@/helpers/formatters";
 import { PaymentMethod } from "./index";
@@ -9,6 +9,7 @@ interface PaymentCompletionProps {
   method: PaymentMethod;
   onComplete: () => void;
   onBack: () => void;
+  isProcessing: boolean;
 }
 
 const PaymentCompletion: React.FC<PaymentCompletionProps> = ({
@@ -16,6 +17,7 @@ const PaymentCompletion: React.FC<PaymentCompletionProps> = ({
   method,
   onComplete,
   onBack,
+  isProcessing,
 }) => {
   const getMethodIcon = () => {
     return method === "cash" ? cash : qrCode;
@@ -28,7 +30,7 @@ const PaymentCompletion: React.FC<PaymentCompletionProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center space-x-3 mb-6">
-        <IonButton fill="clear" onClick={onBack} className="p-0">
+        <IonButton fill="clear" onClick={onBack} className="p-0" disabled={isProcessing}>
           <IonIcon icon={chevronBack} className="text-xl" />
         </IonButton>
         <span className="text-lg font-semibold text-gray-800">
@@ -76,8 +78,13 @@ const PaymentCompletion: React.FC<PaymentCompletionProps> = ({
               expand="block"
               onClick={onComplete}
               className="font-semibold"
+              disabled={isProcessing}
             >
-              Hoàn tất thanh toán
+              {isProcessing ? (
+                <><IonSpinner name="crescent" slot="start" />Đang xử lý...</>
+              ) : (
+                "Hoàn tất thanh toán"
+              )}
             </IonButton>
 
             <p className="text-xs text-gray-500">

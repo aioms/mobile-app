@@ -172,7 +172,7 @@ const ReceiptCheckScreen = () => {
         value={searchText}
         onIonChange={(e) => handleSearch(e.detail.value!)}
         placeholder="Tìm kiếm"
-        debounce={300}
+        debounce={800}
       />
 
       {/* Updated Filters */}

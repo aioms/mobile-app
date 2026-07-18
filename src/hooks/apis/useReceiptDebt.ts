@@ -25,8 +25,10 @@ const useReceiptDebt = () => {
     return response.data;
   };
 
-  const create = async (data: any) => {
-    const response: IHttpResponse = await request.post(`/${PREFIX_PATH}`, data);
+  const create = async (data: any, requestId?: string) => {
+    const response: IHttpResponse = await request.post(`/${PREFIX_PATH}`, data, {
+      headers: requestId ? { "X-Request-ID": requestId } : undefined,
+    });
 
     if (!response.success) {
       throw new Error(response.message || "Failed to create receipt debt");

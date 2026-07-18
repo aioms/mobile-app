@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   IonList,
   IonButton,
@@ -11,6 +11,7 @@ import {
   useIonModal,
   IonChip,
   IonLabel,
+  IonSpinner,
 } from "@ionic/react";
 import { Dialog } from "@capacitor/dialog";
 import { filterOutline, close } from "ionicons/icons";
@@ -29,6 +30,7 @@ import { ReceiptImportItemList } from "./types/receipt-import.type";
 import FilterModal from "./components/FilterModal";
 import { ReceiptImportFilterValues, defaultReceiptImportFilters } from "./types/FilterModal.d";
 import { getStatusColor, getStatusLabel } from "@/common/constants/receipt-import.constant";
+import { createRequestId } from "@/helpers/common";
 
 const pageSize = 10;
 
@@ -43,6 +45,9 @@ const ReceiptImportList = () => {
   const [keyword, setKeyword] = useState("");
   const [filterValues, setFilterValues] = useState<ReceiptImportFilterValues>(defaultReceiptImportFilters);
   const [activeFilters, setActiveFilters] = useState<ReceiptImportFilterValues>(defaultReceiptImportFilters);
+  const [isCreatingReceipt, setIsCreatingReceipt] = useState(false);
+  const isCreatingReceiptRef = useRef(false);
+  const createRequestIdRef = useRef(createRequestId());
 
   const [presentToast] = useIonToast();
 
@@ -263,6 +268,8 @@ const ReceiptImportList = () => {
   const handleSearch = (e: any) => setKeyword(e.detail.value || "");
 
   const createReceipt = async (receiptNumber: string) => {
+    if (isCreatingReceiptRef.current) return;
+
     try {
       if (!receiptNumber) {
         presentToast({
@@ -273,13 +280,19 @@ const ReceiptImportList = () => {
         return;
       }
 
-      const response = await createWithProductCode({ code: receiptNumber });
+      isCreatingReceiptRef.current = true;
+      setIsCreatingReceipt(true);
+      const response = await createWithProductCode(
+        { code: receiptNumber },
+        createRequestIdRef.current,
+      );
       const receiptId = response?.id;
 
       if (!receiptId) {
         throw new Error("Cập nhật thất bại");
       }
 
+      createRequestIdRef.current = createRequestId();
       history.push(`/tabs/receipt-import/detail/${receiptId}`);
       presentToast({
         message: 'Cập nhật thành công',
@@ -298,6 +311,9 @@ const ReceiptImportList = () => {
         position: "top",
         color: "danger",
       });
+    } finally {
+      isCreatingReceiptRef.current = false;
+      setIsCreatingReceipt(false);
     }
   };
 
@@ -361,7 +377,7 @@ const ReceiptImportList = () => {
           placeholder="Tìm kiếm..."
           onIonInput={handleSearch}
           showClearButton="focus"
-          debounce={300}
+          debounce={800}
         />
         <IonButtons slot="end">
           <IonButton color="primary" onClick={openFilterModal}>
@@ -372,8 +388,16 @@ const ReceiptImportList = () => {
               </IonChip>
             )}
           </IonButton>
-          <IonButton color="primary" onClick={() => startScan()}>
-            <IonIcon icon={scanOutline} slot="icon-only" />
+          <IonButton
+            color="primary"
+            onClick={() => startScan()}
+            disabled={isCreatingReceipt}
+          >
+            {isCreatingReceipt ? (
+              <IonSpinner name="crescent" />
+            ) : (
+              <IonIcon icon={scanOutline} slot="icon-only" />
+            )}
           </IonButton>
         </IonButtons>
       </IonToolbar>

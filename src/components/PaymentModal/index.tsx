@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   IonModal,
   IonHeader,
@@ -26,7 +26,7 @@ interface PaymentModalProps {
     totalAmount: number;
   };
   preSelectedMethod?: PaymentMethod;
-  onPaymentComplete: (amount: number, method: PaymentMethod) => void;
+  onPaymentComplete: (amount: number, method: PaymentMethod) => void | Promise<void>;
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({
@@ -41,6 +41,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   );
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(preSelectedMethod || null);
   const [paymentAmount, setPaymentAmount] = useState<number>(preSelectedMethod ? orderData.totalAmount : 0);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const isProcessingRef = useRef(false);
 
   const handleMethodSelect = (method: PaymentMethod) => {
     setSelectedMethod(method);
@@ -56,12 +58,23 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   };
 
-  const handlePaymentComplete = () => {
-    onPaymentComplete(paymentAmount, selectedMethod);
-    handleClose();
+  const handlePaymentComplete = async () => {
+    if (isProcessingRef.current) return;
+
+    isProcessingRef.current = true;
+    setIsProcessing(true);
+    try {
+      await onPaymentComplete(paymentAmount, selectedMethod);
+    } finally {
+      isProcessingRef.current = false;
+      setIsProcessing(false);
+      handleClose();
+    }
   };
 
   const handleClose = () => {
+    if (isProcessingRef.current) return;
+
     setCurrentStep(preSelectedMethod ? (preSelectedMethod === "qr" ? "qr" : "completion") : "options");
     setSelectedMethod(preSelectedMethod || null);
     setPaymentAmount(preSelectedMethod ? orderData.totalAmount : 0);
@@ -103,12 +116,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   return (
-    <IonModal isOpen={isOpen} onDidDismiss={handleClose}>
+    <IonModal isOpen={isOpen} canDismiss={!isProcessing} onDidDismiss={handleClose}>
       <IonHeader>
         <IonToolbar>
           <IonTitle>{getStepTitle()}</IonTitle>
           <IonButtons slot="end">
-            <IonButton fill="clear" onClick={handleClose}>
+            <IonButton fill="clear" onClick={handleClose} disabled={isProcessing}>
               <IonIcon icon={close} />
             </IonButton>
           </IonButtons>
@@ -144,6 +157,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             method={selectedMethod}
             onComplete={handlePaymentComplete}
             onBack={handleBack}
+            isProcessing={isProcessing}
           />
         )}
       </IonContent>

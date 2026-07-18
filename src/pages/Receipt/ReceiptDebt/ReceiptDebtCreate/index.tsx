@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import {
   IonContent,
   IonHeader,
@@ -14,6 +14,7 @@ import {
   useIonModal,
   IonRippleEffect,
   IonText,
+  IonSpinner,
   useIonToast,
   useIonViewWillEnter,
   useIonViewWillLeave,
@@ -25,7 +26,7 @@ import { useHistory } from "react-router-dom";
 import { useStorage } from "@/hooks";
 import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
 import { RECEIPT_DEBT_TYPE } from "@/common/constants/receipt-debt.constant";
-import { isHasProperty } from "@/helpers/common";
+import { createRequestId, isHasProperty } from "@/helpers/common";
 import { getDate } from "@/helpers/date";
 import { formatCurrency } from "@/helpers/formatters";
 
@@ -60,6 +61,9 @@ const ReceiptDebtCreate: React.FC = () => {
   const [formData, setFormData] = useState(initialFormData);
   const [productItems, setProductItems] = useState<IProductItem[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
+  const createRequestIdRef = useRef(createRequestId());
 
   const { getItem, removeItem } = useStorage();
   const { create: createReceiptDebt } = useReceiptDebt();
@@ -136,6 +140,8 @@ const ReceiptDebtCreate: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    if (isSubmittingRef.current) return;
+
     const isValid = validateForm();
 
     if (!isValid) {
@@ -147,6 +153,9 @@ const ReceiptDebtCreate: React.FC = () => {
       });
       return;
     }
+
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
 
     try {
       const payload = {
@@ -165,7 +174,7 @@ const ReceiptDebtCreate: React.FC = () => {
         })),
       };
 
-      const response = await createReceiptDebt(payload);
+      const response = await createReceiptDebt(payload, createRequestIdRef.current);
 
       if (response.id) {
         await presentToast({
@@ -185,6 +194,9 @@ const ReceiptDebtCreate: React.FC = () => {
         position: "top",
         color: "danger",
       });
+    } finally {
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
     }
   };
 
@@ -334,10 +346,14 @@ const ReceiptDebtCreate: React.FC = () => {
             expand="block"
             size="default"
             onClick={handleSubmit}
+            disabled={isSubmitting}
           // className="submit-button"
           >
-            <IonIcon icon={checkmarkCircleOutline} slot="start" />
-            Xác nhận tạo Phiếu Thu
+            {isSubmitting ? (
+              <><IonSpinner name="crescent" slot="start" />Đang xử lý...</>
+            ) : (
+              <><IonIcon icon={checkmarkCircleOutline} slot="start" />Xác nhận tạo Phiếu Thu</>
+            )}
           </IonButton>
         </div>
       </IonFooter>
