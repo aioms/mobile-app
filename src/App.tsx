@@ -37,18 +37,20 @@ import "./theme/common.css";
 /* Components */
 import { Routes } from "./routes";
 import FallbackError from "./components/FallbackError";
+import AppUpdatePrompt from "./components/AppUpdatePrompt/AppUpdatePrompt";
 import { getEnvironment } from "./helpers/common";
+import { PWAUpdateProvider } from "./pwa";
 
 setupIonicReact();
 
 const App: React.FC = () => {
   const [presentToast] = useIonToast();
-  const posthog = usePostHog()
+  const posthog = usePostHog();
 
   useEffect(() => {
     const environment = getEnvironment();
-    posthog?.capture('init', { environment })
-  }, [])
+    posthog?.capture("init", { environment });
+  }, []);
 
   return (
     <PostHogErrorBoundary
@@ -71,7 +73,10 @@ const App: React.FC = () => {
       )}
     >
       <IonApp>
-        <Routes />
+        <PWAUpdateProvider>
+          <Routes />
+          <AppUpdatePrompt />
+        </PWAUpdateProvider>
       </IonApp>
     </PostHogErrorBoundary>
   );
