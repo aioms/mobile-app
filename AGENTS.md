@@ -2360,3 +2360,9 @@ For questions or issues, refer to:
 **Last Updated**: 2025-12-11
 **Codebase Version**: develop branch
 **Total Codebase Size**: ~32,249 lines of TypeScript/TSX
+
+## Active Technologies
+- TypeScript 5.1.6 strict, React 18.2.0 + Ionic React/Core 8.6.x cho application shell; Tailwind CSS 3.4.17; class-variance-authority 0.7.1; clsx 2.1.1; tailwind-merge 2.6.0; Lucide React 0.469.0; provisional exact pin `konsta@4.0.1` sau dependency gate (001-build-design-system-foundation)
+
+## Recent Changes
+- 001-build-design-system-foundation: Added TypeScript 5.1.6 strict, React 18.2.0 + Ionic React/Core 8.6.x cho application shell; Tailwind CSS 3.4.17; class-variance-authority 0.7.1; clsx 2.1.1; tailwind-merge 2.6.0; Lucide React 0.469.0; provisional exact pin `konsta@4.0.1` sau dependency gate
