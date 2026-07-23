@@ -231,7 +231,7 @@ const SupplierDetail: React.FC = () => {
                       presentation="date"
                       formatOptions={dateFilterFormat}
                       onChange={(e) => setFromDate(e.detail.value!)}
-                      extraClassName="bg-white border border-gray-100 rounded-xl px-3 py-2.5 text-[13px] font-medium text-gray-700 shadow-sm w-full transition-all group-focus-within:border-blue-500/50"
+                      extraClassName="bg-white border border-gray-100 rounded-xl px-3 !pt-3.5 !pb-1.5 text-[13px] font-medium text-gray-700 shadow-sm w-full transition-all group-focus-within:border-blue-500/50"
                     />
                   </div>
 
@@ -246,7 +246,7 @@ const SupplierDetail: React.FC = () => {
                       presentation="date"
                       formatOptions={dateFilterFormat}
                       onChange={(e) => setToDate(e.detail.value!)}
-                      extraClassName="bg-white border border-gray-100 rounded-xl px-3 py-2.5 text-[13px] font-medium text-gray-700 shadow-sm w-full transition-all group-focus-within:border-blue-500/50"
+                      extraClassName="bg-white border border-gray-100 rounded-xl px-3 !pt-3.5 !pb-1.5 text-[13px] font-medium text-gray-700 shadow-sm w-full transition-all group-focus-within:border-blue-500/50"
                     />
                   </div>
                 </div>

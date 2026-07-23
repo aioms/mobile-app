@@ -171,12 +171,7 @@ const OrderItem: FC<Props> = memo(
       }
     }, [quantity]);
 
-    useEffect(() => {
-      if (vatRate !== newVatRate) {
-        setNewVatRate(vatRate);
-        setVatInputValue(vatRate.toString());
-      }
-    }, [vatRate]);
+
 
     const totalPrice = newPrice * newQuantity;
     const vatAmount = (totalPrice * newVatRate) / 100;
@@ -275,10 +270,11 @@ const OrderItem: FC<Props> = memo(
             {isOrderPaid ? (
               <span>{formatCurrency(newPrice)}</span>
             ) : (
-              <IonInput
+              <input
+                type="text"
                 value={formattedPrice}
-                onIonInput={(e) => handlePriceChange(e.detail.value)}
-                className="border rounded-lg text-sm w-28 custom-padding"
+                onChange={(e) => handlePriceChange(e.target.value)}
+                className="border border-gray-300 bg-white text-gray-900 rounded-lg text-sm w-28 px-[10px] py-2 focus:outline-none focus:ring-2 focus:ring-teal-400"
                 disabled={isInternalTransfer}
               />
             )}
@@ -289,14 +285,14 @@ const OrderItem: FC<Props> = memo(
             {isOrderPaid ? (
               <span>{newVatRate}%</span>
             ) : (
-              <IonInput
+              <input
                 type="number"
                 value={vatInputValue}
-                onIonInput={(e) => handleVatRateChange(e.detail.value)}
-                onIonBlur={handleVatRateBlur}
-                className="border rounded-lg text-sm w-20 custom-padding"
-                min="0"
-                max="100"
+                onChange={(e) => handleVatRateChange(e.target.value)}
+                onBlur={handleVatRateBlur}
+                min={0}
+                max={100}
+                className="border border-gray-300 bg-white text-gray-900 rounded-lg text-sm w-20 px-[10px] py-2 focus:outline-none focus:ring-2 focus:ring-teal-400"
                 disabled={isInternalTransfer}
               />
             )}
