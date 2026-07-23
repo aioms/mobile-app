@@ -246,24 +246,25 @@ const OrderItem: FC<Props> = memo(
           {/* Price Block */}
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-500 min-w-max">Đơn giá</span>
-            <IonInput
+            <input
+              type="text"
               value={formattedPrice}
-              onIonInput={(e) => handlePriceChange(e.detail.value)}
-              className="border rounded-lg text-sm w-28 custom-padding"
+              onChange={(e) => handlePriceChange(e.target.value)}
+              className="border border-gray-300 bg-white text-gray-900 rounded-lg text-sm w-28 px-[10px] py-2 focus:outline-none focus:ring-2 focus:ring-teal-400"
               disabled={isInternalTransfer}
             />
           </div>
           {/* VAT Rate Block */}
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-500 min-w-max">VAT (%)</span>
-            <IonInput
-              value={vatInputValue}
-              onIonInput={(e) => handleVatRateChange(e.detail.value)}
-              onIonBlur={handleVatRateBlur}
+            <input
               type="number"
-              min="0"
-              max="100"
-              className="border rounded-lg text-sm w-28 custom-padding"
+              value={vatInputValue}
+              onChange={(e) => handleVatRateChange(e.target.value)}
+              onBlur={handleVatRateBlur}
+              min={0}
+              max={100}
+              className="border border-gray-300 bg-white text-gray-900 rounded-lg text-sm w-28 px-[10px] py-2 focus:outline-none focus:ring-2 focus:ring-teal-400"
               disabled={isInternalTransfer}
             />
           </div>
