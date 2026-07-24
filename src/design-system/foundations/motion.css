@@ -1,0 +1,45 @@
+/*
+ * Motion communicates immediate state feedback only. Layout dimensions and
+ * shadows are not animated.
+ */
+.ds-root {
+  --ds-motion-duration-instant: 0ms;
+  --ds-motion-duration-fast: 120ms;
+  --ds-motion-duration-normal: 200ms;
+  --ds-motion-duration-slow: 300ms;
+  --ds-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ds-motion-easing-emphasized: cubic-bezier(0.2, 0, 0, 1.2);
+}
+
+.ds-root .ds-motion-feedback {
+  transition-duration: var(--ds-motion-duration-fast);
+  transition-property: color, background-color, border-color, opacity, transform;
+  transition-timing-function: var(--ds-motion-easing-standard);
+}
+
+.ds-root .ds-motion-enter {
+  animation-duration: var(--ds-motion-duration-normal);
+  animation-timing-function: var(--ds-motion-easing-standard);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-root {
+    --ds-motion-duration-fast: 0ms;
+    --ds-motion-duration-normal: 0ms;
+    --ds-motion-duration-slow: 0ms;
+  }
+
+  .ds-root .ds-motion-feedback,
+  .ds-root .ds-motion-enter {
+    animation-duration: var(--ds-motion-duration-instant);
+    animation-iteration-count: 1;
+    scroll-behavior: auto;
+    transition-duration: var(--ds-motion-duration-instant);
+  }
+}
+
+.ds-root .ds-reduced-motion-preview {
+  --ds-motion-duration-fast: 0ms;
+  --ds-motion-duration-normal: 0ms;
+  --ds-motion-duration-slow: 0ms;
+}

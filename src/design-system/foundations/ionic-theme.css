@@ -1,0 +1,26 @@
+/*
+ * Scoped bridge only. Ionic continues owning shell, lifecycle, scroll, overlay,
+ * keyboard, and safe-area behavior.
+ */
+.ds-root {
+  --ion-background-color: var(--ds-color-background-page);
+  --ion-text-color: var(--ds-color-text-primary);
+  --ion-border-color: var(--ds-color-border-default);
+  --ion-font-family: var(--ds-font-family-sans);
+  --ion-dynamic-font: var(--ds-font-ionic-dynamic);
+  --ion-item-background: var(--ds-color-surface-default);
+  --ion-item-border-color: var(--ds-color-border-muted);
+  --ion-card-background: var(--ds-color-surface-default);
+  --ion-toolbar-background: var(--ds-color-surface-default);
+  --ion-toolbar-color: var(--ds-color-text-primary);
+  --ion-color-primary: var(--ds-color-brand-primary);
+  --ion-color-primary-rgb: var(--ds-color-brand-primary-rgb);
+  --ion-color-primary-contrast: var(--ds-color-text-inverse);
+  --ion-color-primary-contrast-rgb: var(--ds-color-text-inverse-rgb);
+  --ion-color-primary-shade: var(--ds-color-brand-primary-pressed);
+  --ion-color-primary-tint: var(--ds-color-brand-primary-hover);
+  --ion-safe-area-top: var(--ds-safe-area-top);
+  --ion-safe-area-right: var(--ds-safe-area-right);
+  --ion-safe-area-bottom: var(--ds-safe-area-bottom);
+  --ion-safe-area-left: var(--ds-safe-area-left);
+}

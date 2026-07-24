@@ -1,25 +1,11 @@
 import React, { useState } from "react";
-import {
-  IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-  IonItem,
-  IonInput,
-  IonButton,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonText,
-  IonCheckbox,
-  IonInputPasswordToggle,
-  useIonToast,
-} from "@ionic/react";
-// import * as Sentry from "@sentry/capacitor";
+import { IonPage, useIonToast } from "@ionic/react";
+import { Block, List, ListItem, Checkbox } from "konsta/react";
 import { useAuth } from "../../../hooks";
-// import { defaultConfig } from "@/helpers/axios";
-
+import { AppTextField } from "@/design-system/components/AppTextField/AppTextField";
+import { AppButton } from "@/design-system/primitives/AppButton/AppButton";
+import { AppText } from "@/design-system/primitives/AppText/AppText";
+import { Eye, EyeOff } from "lucide-react";
 import "./Login.css";
 
 const Login: React.FC = () => {
@@ -30,42 +16,22 @@ const Login: React.FC = () => {
     password: "",
   });
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  
   const { login } = useAuth();
 
   const handleLogin = async () => {
     try {
-      // const {
-      //   VITE_ENV,
-      //   VITE_API_VERSION,
-
-      //   VITE_API_URL_DEV,
-      //   VITE_SERVER_URL_DEV,
-
-      //   VITE_API_URL_STG,
-      //   VITE_SERVER_URL_STG,
-
-      //   VITE_API_URL_PROD,
-      //   VITE_SERVER_URL_PROD,
-      // } = import.meta.env;
-
-      // Sentry.captureMessage(JSON.stringify(defaultConfig), {
-      //   extra: {
-      //     environment: VITE_ENV,
-      //     apiVersion: VITE_API_VERSION,
-      //     apiUrl: VITE_API_URL_DEV,
-      //     serverUrl: VITE_SERVER_URL_DEV,
-      //     apiUrlStg: VITE_API_URL_STG,
-      //     serverUrlStg: VITE_SERVER_URL_STG,
-      //     apiUrlProd: VITE_API_URL_PROD,
-      //     serverUrlProd: VITE_SERVER_URL_PROD,
-      //   },
-      // });
-
       const { username, password } = formData;
 
       if (!username || !password) {
         return setError("Vui lòng nhập đầy đủ thông tin");
       }
+      
+      setError("");
+      setIsLoading(true);
 
       const response = await login(username, password);
 
@@ -76,6 +42,7 @@ const Login: React.FC = () => {
           position: "top",
           color: "danger",
         });
+        setIsLoading(false);
         return;
       }
 
@@ -94,85 +61,86 @@ const Login: React.FC = () => {
         position: "top",
         color: "danger",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <IonPage>
-      <IonHeader translucent>
-        <IonToolbar>
-          <IonTitle>Welcome back</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent fullscreen className="ion-padding">
-        <h1 className="text-3xl font-bold text-center text-gray-900 mb-8">
-          Đăng nhập
-        </h1>
-        <IonGrid>
-          {error && (
-            <IonRow>
-              <IonCol>
-                <IonText color="danger">{error}</IonText>
-              </IonCol>
-            </IonRow>
-          )}
-          <IonRow>
-            <IonCol>
-              <IonItem>
-                <IonInput
-                  type="text"
-                  fill="solid"
+      <div className="ds-root flex h-screen w-full flex-col bg-ds-surface-default">
+        <header className="flex h-14 shrink-0 items-center justify-center border-b border-ds-border-default bg-ds-surface-default">
+          <AppText as="h1" variant="heading" className="font-semibold text-ds-text-primary">
+            Welcome back
+          </AppText>
+        </header>
+        
+        <main className="flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-md pt-6 pb-6 px-5">
+            <AppText as="h2" variant="title" className="mb-6 text-center font-bold text-ds-text-primary">
+              Đăng nhập
+            </AppText>
+            
+            {error && (
+              <div className="text-center text-red-500 mb-4">
+                {error}
+              </div>
+            )}
+            
+            <List margin="m-0" className="!bg-transparent mb-5 !p-0">
+              <div className="flex flex-col gap-5">
+                <AppTextField
                   label="Tên đăng nhập"
-                  labelPlacement="stacked"
-                  errorText="Tên đăng nhập không hợp lệ"
-                  debounce={500}
-                  onIonInput={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      username: e.target.value as string,
-                    }))
+                  size="lg"
+                  value={formData.username}
+                  onValueChange={(val) => setFormData(prev => ({ ...prev, username: val }))}
+                  placeholder="Nhập tên đăng nhập"
+                  state={error ? "error" : "default"}
+                />
+                
+                <AppTextField
+                  label="Mật khẩu"
+                  size="lg"
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onValueChange={(val) => setFormData(prev => ({ ...prev, password: val }))}
+                  placeholder="Nhập mật khẩu"
+                  state={error ? "error" : "default"}
+                  trailingAction={
+                    <button 
+                      type="button" 
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="p-1 text-ds-text-secondary hover:text-ds-text-primary focus:outline-none"
+                      aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
                   }
                 />
-              </IonItem>
-            </IonCol>
-          </IonRow>
-          <IonRow>
-            <IonCol>
-              <IonItem>
-                <IonInput
-                  type="password"
-                  fill="solid"
-                  label={"Mật khẩu"}
-                  labelPlacement="stacked"
-                  errorText="Mật khẩu không đúng"
-                  clearInput
-                  debounce={400}
-                  onIonInput={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      password: e.target.value as string,
-                    }))
-                  }
-                >
-                  <IonInputPasswordToggle slot="end" color="dark" />
-                </IonInput>
-              </IonItem>
-            </IonCol>
-          </IonRow>
-          <IonRow>
-            <IonCol>
-              <IonCheckbox labelPlacement="end">Ghi nhớ đăng nhập</IonCheckbox>
-            </IonCol>
-          </IonRow>
-          <IonRow>
-            <IonCol>
-              <IonButton expand="block" onClick={handleLogin}>
-                Đăng nhập
-              </IonButton>
-            </IonCol>
-          </IonRow>
-        </IonGrid>
-      </IonContent>
+              </div>
+            </List>
+            
+            <label className="flex items-center gap-3 mb-8 cursor-pointer pl-1">
+              <Checkbox
+                checked={rememberMe}
+                onChange={(e: any) => setRememberMe(e.target.checked)}
+              />
+              <AppText as="span" variant="body" className="text-ds-text-primary select-none">
+                Ghi nhớ đăng nhập
+              </AppText>
+            </label>
+            
+            <AppButton 
+              fullWidth 
+              size="lg" 
+              onClick={handleLogin}
+              loading={isLoading}
+            >
+              ĐĂNG NHẬP
+            </AppButton>
+          </div>
+        </main>
+      </div>
     </IonPage>
   );
 };

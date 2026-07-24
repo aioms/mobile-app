@@ -1,0 +1,76 @@
+{
+  "sliceKey": "reference-list",
+  "filesInScope": [
+    "src/pages/Reference/ReferenceListV2.tsx",
+    "src/pages/Reference/ReferenceListV2.test.tsx"
+  ],
+  "filesOutOfScope": [
+    "src/routes/index.tsx",
+    "src/pages/Reference/ReferenceDetail.tsx",
+    "src/hooks/apis/**"
+  ],
+  "behaviorToPreserve": [
+    "Keep the existing authenticated route and permission checks unchanged",
+    "Keep search, filter, pagination, loading, empty, and error behavior unchanged",
+    "Keep API endpoints, request payloads, response handling, and business rules unchanged"
+  ],
+  "visualBaseline": [
+    "specs/001-build-design-system-foundation/baselines/reference-list-legacy-390x844.png",
+    "specs/001-build-design-system-foundation/baselines/reference-list-legacy-768x1024.png"
+  ],
+  "performanceBaseline": [
+    {
+      "capturedAt": "2026-07-23T00:00:00.000Z",
+      "commit": "ea53362725a43bb2e377c9c423d0f71e18e3974d",
+      "environment": "Chrome PWA, 390x844 viewport, Fast 4G, 4x CPU slowdown",
+      "metric": "time-to-usable",
+      "sampleCount": 5,
+      "value": 900,
+      "unit": "ms",
+      "threshold": 945,
+      "artifactPath": "specs/001-build-design-system-foundation/baselines/reference-list-performance.md"
+    },
+    {
+      "capturedAt": "2026-07-23T00:00:00.000Z",
+      "commit": "ea53362725a43bb2e377c9c423d0f71e18e3974d",
+      "environment": "Chrome PWA, 390x844 viewport, Fast 4G, 4x CPU slowdown",
+      "metric": "interaction-next-paint",
+      "sampleCount": 20,
+      "value": 160,
+      "unit": "ms",
+      "threshold": 168,
+      "artifactPath": "specs/001-build-design-system-foundation/baselines/reference-list-performance.md"
+    }
+  ],
+  "acceptanceCriteria": [
+    "Only reference-list can resolve to V2 when VITE_UI_REFERENCE_LIST_V2=true",
+    "Reference-detail and every other screen remain Legacy",
+    "No route, permission, API, data, or business-rule behavior changes",
+    "Measured experience metrics remain within the recorded thresholds"
+  ],
+  "testCommands": [
+    "npm run lint:design-system",
+    "npx tsc --noEmit",
+    "npm run test.unit:run",
+    "npm run validate:migration-readiness -- specs/001-build-design-system-foundation/examples/reference-migration-ready.json"
+  ],
+  "manualQa": [
+    "Compare Legacy and V2 at 390x844, 393x852, 412x915, and 768x1024",
+    "Verify keyboard, focus, safe-area, loading, empty, error, long-text, and large-money cases",
+    "Verify an installed PWA stays on its active version until the user accepts the explicit update prompt"
+  ],
+  "rollbackPlan": {
+    "sliceKey": "reference-list",
+    "triggerConditions": [
+      "A preserved workflow, permission boundary, or business rule regresses",
+      "A measured performance threshold or blocking accessibility check fails"
+    ],
+    "action": "Set VITE_UI_REFERENCE_LIST_V2=false, rebuild, and release through the existing explicit PWA update prompt",
+    "targetVersion": "legacy",
+    "dataImpact": "none",
+    "owner": "Reference feature owner",
+    "timeBudgetMinutes": 5,
+    "verifiedAt": "2026-07-23T00:00:00.000Z"
+  },
+  "status": "ready"
+}

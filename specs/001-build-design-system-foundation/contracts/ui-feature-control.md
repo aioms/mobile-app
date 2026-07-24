@@ -91,3 +91,16 @@ Detect failure
 ```
 
 No auto reload, no `skipWaiting` override, no data migration, no Legacy deletion in same release.
+
+## Implementation reconciliation — 2026-07-23
+
+The implemented registry adds two restrictive fields to internal metadata:
+`rollbackTarget: "legacy"` and `productionEnabled: false`. They make the
+documented rules machine-checkable and do not broaden or break the public
+resolution contract.
+
+Only `reference-list` and `reference-detail` placeholders exist. No production
+screen, route, permission, API hook, storage layer or business state consumes
+the registry. Resolver invalid values fall back to Legacy, QA overrides are
+non-production and session-only, and migration readiness/rollback records are
+validated independently by the CLI.

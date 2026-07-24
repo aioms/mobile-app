@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { IonApp, setupIonicReact, useIonToast } from "@ionic/react";
+import { App as KonstaApp } from "konsta/react";
 import { PostHogErrorBoundary, usePostHog } from "posthog-js/react";
 
 /* Core CSS required for Ionic components to work properly */
@@ -33,6 +34,7 @@ import "@ionic/react/css/palettes/dark.class.css";
 import "./theme/variables.css";
 import "./theme/tailwind.css";
 import "./theme/common.css";
+import "./design-system/foundations/index.css";
 
 /* Components */
 import { Routes } from "./routes";
@@ -74,12 +76,14 @@ const App: React.FC = () => {
       )}
     >
       <IonApp>
-        <PWAUpdateProvider>
-          <AuthProvider>
-            <Routes />
-            <AppUpdatePrompt />
-          </AuthProvider>
-        </PWAUpdateProvider>
+        <KonstaApp theme="ios" safeAreas>
+          <PWAUpdateProvider>
+            <AuthProvider>
+              <Routes />
+              <AppUpdatePrompt />
+            </AuthProvider>
+          </PWAUpdateProvider>
+        </KonstaApp>
       </IonApp>
     </PostHogErrorBoundary>
   );

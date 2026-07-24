@@ -1,0 +1,75 @@
+/*
+ * Vietnamese-safe typography roles. Visual variants never imply document
+ * heading semantics; consumers still choose the correct HTML element.
+ */
+.ds-root {
+  --ds-font-family-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+  --ds-font-size-display: 2rem;
+  --ds-font-size-title: 1.5rem;
+  --ds-font-size-heading: 1.25rem;
+  --ds-font-size-body: 1rem;
+  --ds-font-size-label: 0.875rem;
+  --ds-font-size-caption: 0.75rem;
+  --ds-font-size-input: 1rem;
+  --ds-font-line-height-display: 1.25;
+  --ds-font-line-height-title: 1.3;
+  --ds-font-line-height-heading: 1.35;
+  --ds-font-line-height-body: 1.5;
+  --ds-font-line-height-label: 1.45;
+  --ds-font-line-height-caption: 1.4;
+  --ds-font-weight-regular: 400;
+  --ds-font-weight-medium: 500;
+  --ds-font-weight-semibold: 600;
+  --ds-font-weight-bold: 700;
+  --ds-font-ionic-dynamic: var(--ds-font-size-input)
+    var(--ds-font-family-sans);
+}
+
+.ds-root .ds-text-display {
+  font-family: var(--ds-font-family-sans);
+  font-size: var(--ds-font-size-display);
+  font-weight: var(--ds-font-weight-bold);
+  line-height: var(--ds-font-line-height-display);
+}
+
+.ds-root .ds-text-title {
+  font-family: var(--ds-font-family-sans);
+  font-size: var(--ds-font-size-title);
+  font-weight: var(--ds-font-weight-semibold);
+  line-height: var(--ds-font-line-height-title);
+}
+
+.ds-root .ds-text-heading {
+  font-family: var(--ds-font-family-sans);
+  font-size: var(--ds-font-size-heading);
+  font-weight: var(--ds-font-weight-semibold);
+  line-height: var(--ds-font-line-height-heading);
+}
+
+.ds-root .ds-text-body {
+  font-family: var(--ds-font-family-sans);
+  font-size: var(--ds-font-size-body);
+  font-weight: var(--ds-font-weight-regular);
+  line-height: var(--ds-font-line-height-body);
+}
+
+.ds-root .ds-text-label {
+  font-family: var(--ds-font-family-sans);
+  font-size: var(--ds-font-size-label);
+  font-weight: var(--ds-font-weight-medium);
+  line-height: var(--ds-font-line-height-label);
+}
+
+.ds-root .ds-text-caption {
+  font-family: var(--ds-font-family-sans);
+  font-size: var(--ds-font-size-caption);
+  font-weight: var(--ds-font-weight-regular);
+  line-height: var(--ds-font-line-height-caption);
+}
+
+.ds-root .ds-input-text {
+  font-family: var(--ds-font-family-sans);
+  font-size: var(--ds-font-size-input);
+  line-height: var(--ds-font-line-height-body);
+}

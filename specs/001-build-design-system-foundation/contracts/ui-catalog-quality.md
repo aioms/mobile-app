@@ -116,3 +116,21 @@ For each viewport:
 - Screen reader.
 - Reduced motion.
 - Existing explicit Update/Later PWA workflow.
+
+## Implementation reconciliation — 2026-07-23
+
+The development-only lazy catalog implements all 17 required sections, including
+the deterministic 200-row and 12-row controls. The four Cypress viewport cases
+run in one Ionic session because repeated `cy.visit` calls against the fixed
+`IonPage` shell produced a test-runner lifecycle false negative; viewport,
+touch, keyboard, content, direct axe-core and screenshot assertions still run
+once for every required size.
+
+The catalog build and normal production build remain separate artifacts.
+Production has an explicit internal-path NotFound boundary and contains no
+catalog source marker, chunk, or Workbox entry. This is an implementation detail,
+not a change to the route/build contract.
+
+No quality threshold was weakened. The browser matrix exposed a 24px native
+input hit rectangle; the base input contracts were corrected to 44px before the
+matrix passed.

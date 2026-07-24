@@ -1,0 +1,37 @@
+{
+  "sliceKey": "reference-list",
+  "filesInScope": [
+    "src/pages/Reference/ReferenceListV2.tsx"
+  ],
+  "filesOutOfScope": [],
+  "behaviorToPreserve": [
+    ""
+  ],
+  "visualBaseline": [],
+  "performanceBaseline": [
+    {
+      "capturedAt": "not-a-date",
+      "commit": "",
+      "environment": "",
+      "metric": "speed",
+      "sampleCount": 1,
+      "value": "fast",
+      "unit": "seconds",
+      "threshold": null,
+      "artifactPath": ""
+    }
+  ],
+  "acceptanceCriteria": [],
+  "testCommands": [],
+  "manualQa": [],
+  "rollbackPlan": {
+    "sliceKey": "reference-detail",
+    "triggerConditions": [],
+    "action": "",
+    "targetVersion": "v2",
+    "dataImpact": "migration-required",
+    "owner": "",
+    "timeBudgetMinutes": 10
+  },
+  "status": "ready"
+}

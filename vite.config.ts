@@ -86,6 +86,10 @@ export default defineConfig(({ mode }) => {
   return {
     define: {
       __APP_BUILD__: JSON.stringify(metadata),
+      __UI_CATALOG_ENABLED__: JSON.stringify(
+        mode !== "production" &&
+          process.env.VITE_ENABLE_UI_CATALOG === "true",
+      ),
     },
     plugins: [
       react(),
@@ -135,6 +139,14 @@ export default defineConfig(({ mode }) => {
       alias: {
         "@": path.resolve(__dirname, "./src"),
       },
+    },
+    test: {
+      environment: "jsdom",
+      globals: true,
+      setupFiles: "./src/test/setup.ts",
+      css: true,
+      clearMocks: true,
+      restoreMocks: true,
     },
     // build: {
     //   sourcemap: false,

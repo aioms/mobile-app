@@ -276,3 +276,20 @@ Contract:
 - Long Vietnamese text and large numeric content.
 - Reduced-motion branch where applicable.
 - Rejection/absence of raw visual props in public TypeScript API.
+
+## Implementation reconciliation — 2026-07-23
+
+The published `@/design-system` barrel matches the ten component contracts and
+shared semantic types above. Konsta was rejected by the isolation spike, so the
+private implementation uses CVA/Tailwind without exposing an engine type.
+
+No breaking API change was introduced. Two implementation clarifications remain
+within the contract:
+
+- `AppText` preserves a truncated string through its native `title`.
+- Text and search inputs apply the 44px minimum to the actual `<input>` hit
+  rectangle, not only to a visual wrapper.
+
+Future changes to a public prop, default, semantic variant, accessibility
+behavior, or import path require an explicit contract revision and breaking
+change entry before a production slice consumes them.

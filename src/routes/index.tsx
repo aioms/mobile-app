@@ -16,6 +16,39 @@ import { useAuth } from "../hooks";
 import Login from "../pages/Auth/Login/Login";
 import NotFound from "../pages/Error/NotFound";
 
+const UIKitPage = __UI_CATALOG_ENABLED__
+  ? React.lazy(() => import("../dev/UIKitPage"))
+  : null;
+
+const InternalUIKitRoute: React.FC = () => {
+  if (!UIKitPage) return <NotFound />;
+
+  return (
+    <React.Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center">
+          Loading UI catalog…
+        </div>
+      }
+    >
+      <UIKitPage />
+    </React.Suspense>
+  );
+};
+
+const isOmittedInternalCatalogPath = () => {
+  if (typeof window === "undefined") return false;
+
+  const pathname = window.location.pathname;
+  const fingerprint = Array.from(pathname).reduce(
+    (hash, character) =>
+      ((hash * 33) ^ character.charCodeAt(0)) >>> 0,
+    5381,
+  );
+
+  return pathname.length === 16 && fingerprint === 4249772517;
+};
+
 export const Routes: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -30,6 +63,17 @@ export const Routes: React.FC = () => {
     );
   }
 
+  if (
+    !__UI_CATALOG_ENABLED__ &&
+    isOmittedInternalCatalogPath()
+  ) {
+    return (
+      <IonReactRouter>
+        <NotFound />
+      </IonReactRouter>
+    );
+  }
+
   return (
     <IonReactRouter>
       <IonTabs>
@@ -37,6 +81,12 @@ export const Routes: React.FC = () => {
           {/* Public routes - only accessible when not authenticated */}
           <PublicRoute exact path="/login" component={Login} />
           <PublicRoute exact path="/auth/login" component={Login} />
+
+          <RouteCompat
+            exact
+            path="/internal/ui-kit"
+            component={__UI_CATALOG_ENABLED__ ? InternalUIKitRoute : NotFound}
+          />
 
           {/* Private routes - only accessible when authenticated */}
           <PrivateRoute path="/tabs" component={TabBar} />

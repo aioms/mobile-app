@@ -1,0 +1,31 @@
+/*
+ * Repeated list rows use borders, not shadows. Raised elevation is reserved for
+ * primary cards; overlay elevation is reserved for floating UI owned elsewhere.
+ */
+.ds-root {
+  --ds-border-width-thin: 1px;
+  --ds-border-style-default: solid;
+  --ds-shadow-none: none;
+  --ds-shadow-card: 0 1px 2px rgb(16 24 40 / 4%),
+    0 2px 8px rgb(16 24 40 / 5%);
+  --ds-shadow-overlay: 0 8px 24px rgb(16 24 40 / 14%);
+}
+
+.ds-root .ds-border-default {
+  border-color: var(--ds-color-border-default);
+  border-style: var(--ds-border-style-default);
+  border-width: var(--ds-border-width-thin);
+}
+
+.ds-root .ds-elevation-none,
+.ds-root .ds-list-row-elevation {
+  box-shadow: var(--ds-shadow-none);
+}
+
+.ds-root .ds-elevation-raised {
+  box-shadow: var(--ds-shadow-card);
+}
+
+.ds-root .ds-elevation-overlay {
+  box-shadow: var(--ds-shadow-overlay);
+}
