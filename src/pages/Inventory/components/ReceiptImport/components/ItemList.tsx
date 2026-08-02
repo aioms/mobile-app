@@ -77,8 +77,8 @@ const ItemList: React.FC<ItemListProps> = ({
   return (
     <IonItemSliding ref={slidingRef}>
       <IonItem
-        lines="full"
-        className="py-2"
+        lines="none"
+        className="ion-activatable ripple-parent rounded-2xl shadow-sm border border-gray-100 mb-3 mx-4 mt-1 [&::part(native)]:bg-white [&::part(native)]:px-4"
         routerLink={`/tabs/receipt-import/detail/${id}`}
       >
         <IonLabel className="ml-4">

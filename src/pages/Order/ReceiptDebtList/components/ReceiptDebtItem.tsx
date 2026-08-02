@@ -1,6 +1,5 @@
 import React, { useRef } from "react";
 import {
-  IonChip,
   IonIcon,
   IonItem,
   IonItemOption,
@@ -12,6 +11,7 @@ import {
 } from "@ionic/react";
 import { addCircleSharp, createOutline, printOutline } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
+import { AppBadge } from "@/components/UI";
 
 import { formatCurrency } from "@/helpers/formatters";
 import { getDate } from "@/helpers/date";
@@ -77,22 +77,22 @@ const ReceiptDebtItem: React.FC<ReceiptDebtItemProps> = ({ receiptDebt }) => {
   return (
     <IonItemSliding ref={slidingRef}>
       <IonItem
-        lines="full"
-        className="ion-activatable ripple-parent rounded-lg shadow-sm mb-2 bg-white"
+        lines="none"
+        className="ion-activatable ripple-parent rounded-2xl shadow-sm border border-gray-100 mb-3 mx-4 [&::part(native)]:bg-white [&::part(native)]:px-4"
         routerLink={`/tabs/debt/detail/${receiptDebt.id}`}
       >
-        <div className="py-3 w-full">
+        <div className="py-3.5 w-full">
           {/* Header with Code and Status */}
           <div className="flex justify-between items-center mb-2">
-            <div className="text-blue-500 font-medium text-sm">
-              Mã đơn: {receiptDebt.code}
+            <div className="text-sky-500 font-medium text-sm">
+              Mã phiếu: {receiptDebt.code}
             </div>
-            <IonChip
+            <AppBadge
               color={getStatusColor(receiptDebt.status)}
-              className="m-0 text-xs font-medium"
+              className="m-0 font-medium"
             >
               {getStatusLabel(receiptDebt.status)}
-            </IonChip>
+            </AppBadge>
           </div>
 
           {/* Due Date */}

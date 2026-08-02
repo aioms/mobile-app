@@ -4,17 +4,15 @@ import {
   IonButton,
   RefresherEventDetail,
   useIonToast,
-  IonSearchbar,
-  IonButtons,
   IonIcon,
-  IonToolbar,
   useIonModal,
   IonChip,
   IonLabel,
   IonSpinner,
 } from "@ionic/react";
+import { AppSearchBar, AppButton } from "@/components/UI";
 import { Dialog } from "@capacitor/dialog";
-import { filterOutline, close } from "ionicons/icons";
+import { close } from "ionicons/icons";
 
 import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
 
@@ -265,8 +263,6 @@ const ReceiptImportList = () => {
     }
   };
 
-  const handleSearch = (e: any) => setKeyword(e.detail.value || "");
-
   const createReceipt = async (receiptNumber: string) => {
     if (isCreatingReceiptRef.current) return;
 
@@ -372,35 +368,39 @@ const ReceiptImportList = () => {
     <>
       <Refresher onRefresh={handleRefresh} />
 
-      <IonToolbar className="mt-2">
-        <IonSearchbar
-          placeholder="Tìm kiếm..."
-          onIonInput={handleSearch}
-          showClearButton="focus"
-          debounce={800}
+      <div className="mb-2">
+        <AppSearchBar
+          searchText={keyword}
+          setSearchText={(val) => {
+            setKeyword(val);
+          }}
+          placeholder="Tìm kiếm phiếu nhập..."
+          isFiltered={activeFilterCount > 0}
+          onFilterClick={openFilterModal}
+          extraAction={
+            <IonButton
+              fill="clear"
+              className="h-10 w-10 m-0 flex-shrink-0 flex items-center justify-center rounded-xl bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors"
+              onClick={() => startScan()}
+              disabled={isCreatingReceipt}
+              style={{
+                '--padding-start': '0px',
+                '--padding-end': '0px',
+                '--padding-top': '0px',
+                '--padding-bottom': '0px',
+                '--min-height': '40px',
+                '--min-width': '40px',
+              }}
+            >
+              {isCreatingReceipt ? (
+                <IonSpinner name="crescent" />
+              ) : (
+                <IonIcon icon={scanOutline} slot="icon-only" className="text-xl" />
+              )}
+            </IonButton>
+          }
         />
-        <IonButtons slot="end">
-          <IonButton color="primary" onClick={openFilterModal}>
-            <IonIcon icon={filterOutline} slot="icon-only" />
-            {activeFilterCount > 0 && (
-              <IonChip color="primary" className="absolute -top-1 -right-1 h-5 w-5 text-xs">
-                {activeFilterCount}
-              </IonChip>
-            )}
-          </IonButton>
-          <IonButton
-            color="primary"
-            onClick={() => startScan()}
-            disabled={isCreatingReceipt}
-          >
-            {isCreatingReceipt ? (
-              <IonSpinner name="crescent" />
-            ) : (
-              <IonIcon icon={scanOutline} slot="icon-only" />
-            )}
-          </IonButton>
-        </IonButtons>
-      </IonToolbar>
+      </div>
 
       {/* Active Filters Display */}
       {activeFilterCount > 0 && (
@@ -480,7 +480,7 @@ const ReceiptImportList = () => {
         </div>
       )}
 
-      <IonList>
+      <IonList className="bg-transparent">
         {loading ? (
           <>
             <ReceiptListSkeleton />
@@ -508,14 +508,15 @@ const ReceiptImportList = () => {
 
       {/* Load More Button */}
       {hasMore && receiptImports.length > 0 && (
-        <div className="text-center py-4">
-          <IonButton
-            fill="outline"
+        <div className="flex justify-center my-3">
+          <AppButton
+            variant="pill"
             onClick={handleLoadMore}
-            disabled={loadingMore}
+            loading={loadingMore}
+            loadingText="Đang tải..."
           >
-            {loadingMore ? "Đang tải..." : "Xem thêm"}
-          </IonButton>
+            Xem thêm
+          </AppButton>
         </div>
       )}
 

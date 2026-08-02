@@ -5,6 +5,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { formatCurrency } from "@/helpers/formatters";
 import { ISupplier } from "@/types/supplier";
+import { AppCard } from "@/components/UI";
 
 dayjs.extend(relativeTime);
 
@@ -28,10 +29,7 @@ const getIcon = (type: string) => {
 
 const SupplierCard: React.FC<SupplierCardProps> = ({ supplier, onClick }) => {
   return (
-    <div
-      className="bg-white rounded-2xl p-4 mb-3 border border-gray-100 shadow-sm active:bg-gray-50 transition-colors"
-      onClick={onClick}
-    >
+    <AppCard onClick={onClick}>
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <div className={`p-3 rounded-xl ${getIcon(supplier.type || "")}`}>
@@ -66,7 +64,7 @@ const SupplierCard: React.FC<SupplierCardProps> = ({ supplier, onClick }) => {
           {formatCurrency(supplier.totalDebt || 0)}
         </span>
       </div>
-    </div>
+    </AppCard>
   );
 };
 

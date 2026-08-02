@@ -1,7 +1,6 @@
 import React, { useMemo, useRef } from "react";
 import { Dialog } from "@capacitor/dialog";
 import {
-  IonChip,
   IonIcon,
   IonItem,
   IonItemOption,
@@ -11,6 +10,7 @@ import {
   useIonToast,
   useIonViewDidLeave,
 } from "@ionic/react";
+import { AppBadge } from "@/components/UI";
 import { createOutline, trashBinOutline } from "ionicons/icons";
 
 import { dayjsFormat, formatCurrency } from "@/helpers/formatters";
@@ -83,8 +83,8 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onCancelOrder }) => {
   return (
     <IonItemSliding ref={slidingRef}>
       <IonItem
-        lines="full"
-        className="order-item ion-activatable ripple-parent rounded-lg shadow-sm mb-3"
+        lines="none"
+        className="ion-activatable ripple-parent rounded-2xl shadow-sm border border-gray-100 mb-3 mt-1 [&::part(native)]:bg-white [&::part(native)]:px-4"
         routerLink={`/tabs/orders/detail/${order.id}`}
       >
         <div className="py-4 w-full">
@@ -97,34 +97,35 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onCancelOrder }) => {
             </div>
           </div>
 
-          <div className="flex items-center mb-2">
-            <IonChip
+          <div className="flex items-center mb-2 mt-1">
+            <AppBadge
               color={getOrderStatusColor(order.status)}
               className="m-0 font-medium"
             >
-              <span className="text-sm italic">
+              <span className="text-xs italic">
                 {getOrderStatusLabel(order.status)}
               </span>
-            </IonChip>
+            </AppBadge>
           </div>
 
           <div className="flex items-center">
-            <div className="text-gray-600 mr-2">
+            <div className="text-gray-600 mr-2 text-sm">
               Số mặt hàng: {order.items?.length}
             </div>
           </div>
 
-          <div className="flex justify-between items-center">
-            <div className="text-green-500 font-medium">
-              Tổng tiền: {formatCurrency(order.totalAmount)}
+          <div className="flex justify-between items-center mt-1">
+            <div className="text-green-600 font-bold text-[15px]">
+              {formatCurrency(order.totalAmount)}
             </div>
-            <IonChip
-              className={`ml-auto m-0 py-2 ${getCustomerTypeColor(order.customer)} max-w-32`}
+            <AppBadge
+              color={getCustomerTypeColor(order.customer)}
+              className="ml-auto"
             >
-              <span className="truncate">
+              <span className="truncate max-w-[120px]">
                 {getCustomerTypeLabel(order.customer)}
               </span>
-            </IonChip>
+            </AppBadge>
           </div>
         </div>
         <IonRippleEffect></IonRippleEffect>

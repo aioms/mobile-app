@@ -23,6 +23,7 @@ import useCustomer from "@/hooks/apis/useCustomer";
 import useOrder from "@/hooks/apis/useOrder";
 import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
 import { useLoading } from "@/hooks";
+import { AppButton } from "@/components/UI";
 import { IOrder } from "@/types/order.type";
 import { ICustomerDetail } from "./types";
 import { OrderStatus } from "@/common/enums/order";
@@ -380,7 +381,7 @@ const CustomerDetail: React.FC = () => {
                     onIonInput={(e) => activeTab === 'orders' ? setOrderSearchText(e.detail.value!) : setReceiptSearchText(e.detail.value!)}
                     debounce={800}
                     placeholder={activeTab === 'orders' ? "Tìm tên sản phẩm hoặc mã đơn" : "Tìm mã phiếu hoặc ghi chú"}
-                    className="p-0 custom-searchbar h-[48px]"
+                    className="custom-app-searchbar p-0 m-0 w-full"
                     searchIcon={searchOutline}
                     clearIcon={undefined}
                     style={{
@@ -389,7 +390,7 @@ const CustomerDetail: React.FC = () => {
                       '--box-shadow': '0 1px 2px rgba(0,0,0,0.05)',
                       '--placeholder-color': '#9CA3AF',
                       '--icon-color': '#9CA3AF',
-                      '--padding-start': '44px'
+                      '--padding-start': '40px'
                     }}
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
@@ -418,16 +419,15 @@ const CustomerDetail: React.FC = () => {
                         </div>
 
                         {hasMoreOrders && (
-                          <div className="mt-4">
-                            <IonButton
-                              fill="clear"
-                              expand="block"
-                              className="h-[48px] bg-blue-50 text-blue-600 font-semibold rounded-2xl border border-dashed border-blue-200"
+                          <div className="flex justify-center mt-4">
+                            <AppButton
+                              variant="pill"
                               onClick={loadMoreOrders}
-                              disabled={orderLoading}
+                              loading={orderLoading}
+                              loadingText="Đang tải đơn hàng..."
                             >
-                              {orderLoading ? <IonSpinner name="dots" /> : 'Tải thêm đơn hàng'}
-                            </IonButton>
+                              Tải thêm đơn hàng
+                            </AppButton>
                           </div>
                         )}
                       </>
@@ -456,16 +456,15 @@ const CustomerDetail: React.FC = () => {
                         </div>
 
                         {hasMoreReceipts && (
-                          <div className="mt-4">
-                            <IonButton
-                              fill="clear"
-                              expand="block"
-                              className="h-[48px] bg-blue-50 text-blue-600 font-semibold rounded-2xl border border-dashed border-blue-200"
+                          <div className="flex justify-center mt-4">
+                            <AppButton
+                              variant="pill"
                               onClick={loadMoreReceipts}
-                              disabled={receiptLoading}
+                              loading={receiptLoading}
+                              loadingText="Đang tải phiếu thu..."
                             >
-                              {receiptLoading ? <IonSpinner name="dots" /> : 'Tải thêm phiếu thu'}
-                            </IonButton>
+                              Tải thêm phiếu thu
+                            </AppButton>
                           </div>
                         )}
                       </>

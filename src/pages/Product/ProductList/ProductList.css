@@ -1,5 +1,23 @@
 .low-stock-swiper {
   padding-bottom: 32px !important;
+  background-color: transparent !important;
+}
+
+.low-stock-swiper .swiper-wrapper,
+.low-stock-swiper .swiper-slide {
+  background-color: transparent !important;
+}
+
+.low-stock-card {
+  min-width: 0;
+}
+
+@media (max-width: 400px) {
+  .low-stock-import-button {
+    flex-basis: 100%;
+    width: 100%;
+    margin: 0;
+  }
 }
 
 .swiper-pagination-bullet-custom {

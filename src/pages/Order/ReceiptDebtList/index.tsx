@@ -1,19 +1,14 @@
-import { FC, useState, useEffect } from "react";
+import { FC, useState, useEffect, useMemo } from "react";
 import { Toast } from "@capacitor/toast";
 import {
   IonList,
   IonButton,
-  IonSearchbar,
-  IonSpinner,
   IonIcon,
   useIonToast,
-  IonRippleEffect,
-  IonItem,
-  IonBadge,
-  IonLabel,
   RefresherEventDetail,
 } from "@ionic/react";
-import { funnelOutline, scanOutline } from "ionicons/icons";
+import { AppSearchBar, AppCard, AppButton } from "@/components/UI";
+import { scanOutline } from "ionicons/icons";
 import { useHistory } from "react-router";
 
 import { useBarcodeScanner, useLoading, useStorage } from "@/hooks";
@@ -22,7 +17,7 @@ import useProduct from "@/hooks/apis/useProduct";
 
 import { TReceiptDebtStatus } from "@/common/constants/receipt-debt.constant";
 import { capitalizeFirstLetter } from "@/helpers/common";
-import { dayjsFormat, formatCurrencyWithoutSymbol } from "@/helpers/formatters";
+import { dayjsFormat, formatCurrency, formatCurrencyWithoutSymbol } from "@/helpers/formatters";
 
 import LoadingScreen from "@/components/Loading/LoadingScreen";
 import { Refresher } from "@/components/Refresher/Refresher";
@@ -70,6 +65,12 @@ const ReceiptDebtList: FC = () => {
     totalCount: 0,
     totalOutstandingAmount: 0,
   });
+
+  const activeFilterCount = useMemo(() => {
+    return Object.values(filters).filter((val) => val !== "").length;
+  }, [filters]);
+
+  const openFilterModal = () => setIsFilterModalOpen(true);
 
   const { startScan, stopScan } = useBarcodeScanner({
     onBarcodeScanned: handleBarcodeScanned,
@@ -241,12 +242,6 @@ const ReceiptDebtList: FC = () => {
     }
   };
 
-  const handleSearch = (e: any) => {
-    const keyword = e.detail.value || "";
-    setSearchKeyword(keyword);
-    setPage(1);
-  };
-
   const handleFilterChange = (field: keyof typeof filters, value: string) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
   };
@@ -284,65 +279,62 @@ const ReceiptDebtList: FC = () => {
       {isLoading && <LoadingScreen message="Đang tải dữ liệu..." />}
       <Refresher onRefresh={handleRefresh} />
 
-      {/* Order Count */}
-      <div className="mb-3 bg-white rounded-lg shadow-sm p-2">
-        <IonList>
-          <IonItem>
-            <div className="date-display">
-              {capitalizeFirstLetter(
-                dayjsFormat(new Date(), "dddd, DD MMMM YYYY", "vi")
-              )}
-            </div>
-          </IonItem>
-          <IonItem>
-            <IonBadge slot="end">
+      {/* Debt Count */}
+      <AppCard className="mx-4 mb-3">
+        <div className="text-xs font-medium text-gray-500 mb-2">
+          {capitalizeFirstLetter(
+            dayjsFormat(new Date(), "dddd, DD MMMM YYYY", "vi")
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+          <div className="flex flex-col">
+            <span className="text-xs text-gray-500 mb-1">Tổng số phiếu thu</span>
+            <span className="text-lg font-bold text-gray-900">
               {formatCurrencyWithoutSymbol(totalCount)}
-            </IonBadge>
-            <IonLabel>Tổng số phiếu thu</IonLabel>
-          </IonItem>
-          <IonItem>
-            <IonBadge slot="end" color="danger">
-              {formatCurrencyWithoutSymbol(statistics.totalOutstandingAmount)}
-            </IonBadge>
-            <IonLabel>Tổng công nợ</IonLabel>
-          </IonItem>
-        </IonList>
-      </div>
-
-      {/* Search and Filter */}
-      <div className="flex items-center mb-2">
-        <IonSearchbar
-          placeholder="Tìm Phiếu Thu"
-          onIonInput={handleSearch}
-          className="flex-1"
-          debounce={800}
-        />
-        <div className="flex-shrink-0 flex items-center justify-center space-x-1">
-          <IonButton
-            fill="clear"
-            size="default"
-            className="w-10 h-10 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200 ion-activatable ripple-parent"
-            onClick={() => setIsFilterModalOpen(true)}
-          >
-            <IonIcon
-              icon={funnelOutline}
-              slot="icon-only"
-              className="text-2xl text-gray-400"
-            />
-            <IonRippleEffect></IonRippleEffect>
-          </IonButton>
-          <div
-            className="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center ion-activatable ripple-parent"
-            onClick={() => startScan()}
-          >
-            <IonIcon icon={scanOutline} className="text-3xl text-teal-400" />
-            <IonRippleEffect></IonRippleEffect>
+            </span>
+          </div>
+          <div className="flex flex-col pl-4 border-l border-gray-100">
+            <span className="text-xs text-gray-500 mb-1">Tổng công nợ</span>
+            <span className="text-lg font-bold text-red-600">
+              {formatCurrency(statistics.totalOutstandingAmount)}
+            </span>
           </div>
         </div>
+      </AppCard>
+
+      {/* Search and Filter */}
+      <div className="mb-2">
+        <AppSearchBar
+          searchText={searchKeyword}
+          setSearchText={(val) => {
+            setSearchKeyword(val);
+            setPage(1);
+          }}
+          placeholder="Tìm Phiếu Thu..."
+          isFiltered={activeFilterCount > 0}
+          onFilterClick={openFilterModal}
+          extraAction={
+            <IonButton
+              fill="clear"
+              className="h-10 w-10 m-0 flex-shrink-0 flex items-center justify-center rounded-xl bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors"
+              onClick={() => startScan()}
+              style={{
+                '--padding-start': '0px',
+                '--padding-end': '0px',
+                '--padding-top': '0px',
+                '--padding-bottom': '0px',
+                '--min-height': '40px',
+                '--min-width': '40px',
+              }}
+            >
+              <IonIcon icon={scanOutline} slot="icon-only" className="text-xl" />
+            </IonButton>
+          }
+        />
       </div>
 
       {/* Receipt Debt List */}
-      <IonList className="space-y-2">
+      <IonList className="space-y-2 bg-transparent">
         {receiptDebts.length === 0 ? (
           <div className="flex justify-center items-center h-48">
             <div className="text-center">
@@ -358,15 +350,15 @@ const ReceiptDebtList: FC = () => {
 
       {/* Load More Button */}
       {hasMore && (
-        <div className="flex justify-center mt-3">
-          <IonButton
-            fill="clear"
+        <div className="flex justify-center my-3">
+          <AppButton
+            variant="pill"
             onClick={handleLoadMore}
-            disabled={isLoading}
-            className="w-full max-w-xs"
+            loading={isLoading}
+            loadingText="Đang tải..."
           >
-            {isLoading ? <IonSpinner name="crescent" /> : "Xem thêm"}
-          </IonButton>
+            Xem thêm
+          </AppButton>
         </div>
       )}
 

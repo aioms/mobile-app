@@ -176,19 +176,19 @@ const QuickActions: React.FC = () => {
 
   return (
     <div className="mb-6">
-      <h2 className="text-base font-bold mb-3">Thao tác nhanh</h2>
-      <div className="grid grid-cols-2 gap-3">
+      <h2 className="text-base sm:text-lg font-bold text-gray-800 mb-3">Thao tác nhanh</h2>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {actions.map((action, index) => (
           <button
             key={index}
             type="button"
             onClick={action.onAction}
-            className="bg-white rounded-xl p-4 flex items-center justify-center flex-col active:scale-[0.98] transition-transform"
+            className="bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-100 shadow-sm flex flex-col items-center justify-center active:scale-[0.97] hover:shadow-md transition-all group cursor-pointer"
           >
-            <div className={`${action.color} p-2 rounded-lg mb-2`}>
-              <IonIcon icon={action.icon} className="text-white w-6 h-6" />
+            <div className={`${action.color} p-2.5 rounded-xl mb-2 flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform`}>
+              <IonIcon icon={action.icon} className="text-lg sm:text-xl" />
             </div>
-            <span className="text-xs">{action.label}</span>
+            <span className="text-xs sm:text-sm font-medium text-gray-700 text-center line-clamp-1">{action.label}</span>
           </button>
         ))}
       </div>

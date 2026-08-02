@@ -63,7 +63,7 @@ const FallbackError: React.FC<FallbackProps> = ({
                       Error Details:
                     </p>
                     <pre className="text-xs text-red-700 whitespace-pre-wrap break-words">
-                      {error.message}
+                      {(error as Error)?.message}
                     </pre>
                   </IonText>
                 </div>

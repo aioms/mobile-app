@@ -2,7 +2,6 @@ import { FC, useMemo, useRef } from "react";
 import { useHistory } from "react-router";
 import { Toast } from "@capacitor/toast";
 import {
-  IonChip,
   IonIcon,
   IonItem,
   IonItemOption,
@@ -12,6 +11,7 @@ import {
   IonText,
   useIonViewDidLeave,
 } from "@ionic/react";
+import { AppBadge } from "@/components/UI";
 import { createOutline, playOutline } from "ionicons/icons";
 
 import useReceiptCheck from "@/hooks/apis/useReceiptCheck";
@@ -23,7 +23,6 @@ import {
   TReceiptCheckStatus,
 } from "@/common/constants/receipt-check.constant";
 import { formatDate } from "@/helpers/formatters";
-import { CHANGE_QUANTITY_TYPE } from "@/common/constants/product";
 
 const getDifferenceColor = (difference: number) => {
   if (difference === 0) return "text-green-500";
@@ -150,8 +149,8 @@ export const ItemList: FC<Props> = ({ receipt }) => {
     <>
       <IonItemSliding ref={slidingRef}>
         <IonItem
-          className="py-2"
-          lines="full"
+          lines="none"
+          className="ion-activatable ripple-parent rounded-2xl shadow-sm border border-gray-100 mb-3 mx-4 mt-1 [&::part(native)]:bg-white [&::part(native)]:px-4"
           routerLink={`/tabs/receipt-check/detail/${receipt.id}`}
         >
           <IonLabel className="ml-4">
@@ -163,11 +162,11 @@ export const ItemList: FC<Props> = ({ receipt }) => {
                   </span>
                 </IonText>
 
-                <IonChip color={getStatusColor(receipt.status)}>
-                  <span className="text-sm">
+                <AppBadge color={getStatusColor(receipt.status)}>
+                  <span className="text-[11px] font-bold">
                     {getStatusLabel(receiptStatus)}
                   </span>
-                </IonChip>
+                </AppBadge>
               </div>
 
               <div className="text-gray-500 text-sm">

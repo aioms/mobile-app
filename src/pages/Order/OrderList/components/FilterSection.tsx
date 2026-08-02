@@ -1,16 +1,8 @@
 import React, { useEffect, useState } from "react";
-import {
-  IonSearchbar,
-  IonItem,
-  IonLabel,
-  IonSelect,
-  IonSelectOption,
-  IonButton,
-  IonIcon,
-} from "@ionic/react";
-import DatePicker from "@/components/DatePicker";
-import { OrderStatus } from "@/common/enums/order";
-import { closeCircleOutline, removeCircleOutline } from "ionicons/icons";
+import { IonButton, IonIcon, useIonModal } from "@ionic/react";
+import { removeCircleOutline } from "ionicons/icons";
+import { AppSearchBar } from "@/components/UI";
+import FilterModal, { OrderFilterValues, defaultOrderFilters } from "./FilterModal";
 
 interface FilterSectionProps {
   onFilterChange: (filters: Record<string, string>) => void;
@@ -18,107 +10,74 @@ interface FilterSectionProps {
 
 const FilterSection: React.FC<FilterSectionProps> = ({ onFilterChange }) => {
   const [keyword, setKeyword] = useState("");
-  const [status, setStatus] = useState("");
-  const [timeFilter, setTimeFilter] = useState({
-    startDate: "",
-    endDate: "",
+  const [filterValues, setFilterValues] = useState<OrderFilterValues>(defaultOrderFilters);
+
+  const [presentFilter, dismissFilter] = useIonModal(FilterModal, {
+    dismiss: (data: OrderFilterValues, role: string) => dismissFilter(data, role),
+    initialFilters: filterValues,
   });
+
+  const openFilterModal = () => {
+    presentFilter({
+      onWillDismiss: (ev: CustomEvent) => {
+        if (ev.detail.role === "confirm") {
+          const newFilters: OrderFilterValues = ev.detail.data || defaultOrderFilters;
+          setFilterValues(newFilters);
+        }
+      },
+    });
+  };
 
   useEffect(() => {
     const filters: Record<string, string> = {};
 
     if (keyword) filters.keyword = keyword;
-    if (status) filters.status = status;
-    if (timeFilter.startDate) filters.startDate = timeFilter.startDate;
-    if (timeFilter.endDate) filters.endDate = timeFilter.endDate;
+    if (filterValues.status) filters.status = filterValues.status;
+    if (filterValues.startDate) filters.startDate = filterValues.startDate;
+    if (filterValues.endDate) filters.endDate = filterValues.endDate;
+    if (filterValues.customerId) filters.customerId = filterValues.customerId;
 
     onFilterChange(filters);
-  }, [keyword, status, timeFilter]);
-
-  const handleDateChange = (type: "startDate" | "endDate", value: string) => {
-    setTimeFilter((prev) => ({
-      ...prev,
-      [type]: value,
-    }));
-  };
+  }, [keyword, filterValues]);
 
   const handleClearFilters = () => {
     setKeyword("");
-    setStatus("");
-    setTimeFilter({ startDate: "", endDate: "" });
+    setFilterValues(defaultOrderFilters);
   };
 
+  const isFiltered =
+    !!filterValues.status ||
+    !!filterValues.startDate ||
+    !!filterValues.endDate ||
+    !!filterValues.customerId;
+
   return (
-    <div className="filter-section bg-card rounded-lg shadow-sm p-3 mb-2">
-      <div className="flex justify-between items-center mb-2">
-        <IonSearchbar
-          value={keyword}
-          onIonChange={(e) => setKeyword(e.detail.value || "")}
-          placeholder="Tìm kiếm đơn hàng"
-          debounce={800}
-          showClearButton="focus"
-        />
-        <IonButton
-          fill="outline"
-          // shape="round"
-          size="small"
-          color="danger"
-          className="w-12"
-          onClick={handleClearFilters}
-          style={{ marginLeft: 8 }}
-          aria-label="Xóa bộ lọc"
-        >
-          {/* Reset */}
-          <IonIcon icon={removeCircleOutline} slot="icon-only" />
-        </IonButton>
-      </div>
-
-      <IonItem className="mb-2">
-        <IonLabel>Trạng thái</IonLabel>
-        <IonSelect
-          value={status}
-          placeholder="Tất cả"
-          onIonChange={(e) => setStatus(e.detail.value)}
-        >
-          <IonSelectOption value="">Tất cả</IonSelectOption>
-          <IonSelectOption value={OrderStatus.DRAFT}>
-            Nháp
-          </IonSelectOption>
-          <IonSelectOption value={OrderStatus.COMPLETED}>
-            Hoàn thành
-          </IonSelectOption>
-          <IonSelectOption value={OrderStatus.CANCELLED}>
-            Đã hủy
-          </IonSelectOption>
-        </IonSelect>
-      </IonItem>
-
-      <div className="date-filter-container">
-        <IonItem className="flex-1">
-          <IonLabel position="stacked">Từ ngày</IonLabel>
-          <DatePicker
-            value={timeFilter.startDate}
-            onChange={(e) =>
-              handleDateChange("startDate", e.detail.value! as string)
-            }
-            extraClassName="pb-2"
-            attrs={{ id: "startDate" }}
-            presentation="date"
-          />
-        </IonItem>
-        <IonItem className="flex-1">
-          <IonLabel position="stacked">Đến ngày</IonLabel>
-          <DatePicker
-            value={timeFilter.endDate}
-            onChange={(e) =>
-              handleDateChange("endDate", e.detail.value! as string)
-            }
-            extraClassName="pb-2"
-            attrs={{ id: "endDate" }}
-            presentation="date"
-          />
-        </IonItem>
-      </div>
+    <div className="mb-2">
+      <AppSearchBar
+        searchText={keyword}
+        setSearchText={setKeyword}
+        placeholder="Tìm kiếm đơn hàng..."
+        isFiltered={isFiltered}
+        onFilterClick={openFilterModal}
+        extraAction={
+          <IonButton
+            fill="clear"
+            className="h-10 w-10 m-0 flex-shrink-0 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+            onClick={handleClearFilters}
+            disabled={!keyword && !isFiltered}
+            style={{
+              '--padding-start': '0px',
+              '--padding-end': '0px',
+              '--padding-top': '0px',
+              '--padding-bottom': '0px',
+              '--min-height': '40px',
+              '--min-width': '40px',
+            }}
+          >
+            <IonIcon icon={removeCircleOutline} slot="icon-only" className="text-xl" />
+          </IonButton>
+        }
+      />
     </div>
   );
 };

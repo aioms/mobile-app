@@ -1,15 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   IonContent,
-  IonSearchbar,
-  IonButtons,
   IonButton,
+  IonButtons,
+  IonMenuButton,
   IonIcon,
   useIonViewWillEnter,
-  IonSpinner,
-  IonList,
-  IonItem,
-  IonBadge,
   IonLabel,
   IonText,
   IonChip,
@@ -18,18 +14,14 @@ import {
   IonHeader,
   IonToolbar,
   IonTitle,
-  IonFab,
-  IonFabButton,
   RefresherEventDetail,
   useIonToast,
 } from "@ionic/react";
 import {
-  filterOutline,
   addOutline,
   scanOutline,
   close,
   chevronForward,
-  add,
 } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
 
@@ -43,6 +35,7 @@ import ProductCard from "./components/ProductCard";
 import CategoriesModal from "./components/CategoriesModal";
 import FilterModal, { FilterValues } from "./components/FilterModal";
 import { Refresher } from "@/components/Refresher/Refresher";
+import { AppSearchBar, AppFAB, AppCard, AppButton } from "@/components/UI";
 import { UserRole } from "@/common/enums/user";
 
 import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
@@ -53,19 +46,6 @@ import "./ProductList.css";
 
 import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
 import { IProduct } from "@/types";
-
-// interface Product {
-//   id: string;
-//   code: string;
-//   productCode: string;
-//   productName: string;
-//   inventory: number;
-//   unit: string;
-//   status: string;
-//   category: string;
-//   costPrice: number;
-//   sellingPrice: number;
-// }
 
 interface Total {
   totalProduct: number;
@@ -104,6 +84,7 @@ const ProductListScreen: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   const productsRequestIdRef = useRef(0);
   const [filters, setFilters] = useState<Record<string, string>>({});
+  const [searchText, setSearchText] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [filterValues, setFilterValues] = useState<FilterValues>({
     categories: [],
@@ -256,6 +237,10 @@ const ProductListScreen: React.FC = () => {
     fetchProducts(1);
   }, [filters]);
 
+  useEffect(() => {
+    setFilters((prev) => ({ ...prev, keyword: searchText }));
+  }, [searchText]);
+
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     try {
       // Reset page and fetch fresh data
@@ -371,54 +356,58 @@ const ProductListScreen: React.FC = () => {
     <IonPage>
       <IonHeader translucent>
         <IonToolbar>
-          <IonTitle>Danh sách sản phẩm</IonTitle>
+          <IonButtons slot="start">
+            <IonMenuButton />
+          </IonButtons>
+          <IonTitle className="text-center">Danh sách sản phẩm</IonTitle>
         </IonToolbar>
       </IonHeader>
 
       <IonContent className="ion-padding">
         <Refresher onRefresh={handleRefresh} />
 
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <IonSearchbar
-              onIonInput={(e) => {
-                setFilters((prev) => ({
-                  ...prev,
-                  keyword: e.detail.value ?? "",
-                }));
-              }}
-              placeholder="Tìm kiếm sản phẩm"
-              className="flex-1 bg-gray-100 rounded-lg p-0 h-[40px]"
-              debounce={800}
-              enterkeyhint="search"
-              inputmode="search"
-            />
-            <IonButtons slot="end">
-              <IonButton fill="clear" color="primary" onClick={openFilterModal}>
-                <IonIcon icon={filterOutline} size="icon-only" />
+        <div className="-mx-4 -mt-4 mb-3">
+          <AppSearchBar
+            searchText={searchText}
+            setSearchText={setSearchText}
+            placeholder="Tìm kiếm sản phẩm"
+            onFilterClick={openFilterModal}
+            extraAction={
+              <IonButton
+                fill="clear"
+                className="h-10 w-10 m-0 flex-shrink-0 flex items-center justify-center rounded-xl bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors"
+                onClick={() => startScan()}
+                style={{
+                  '--padding-start': '0px',
+                  '--padding-end': '0px',
+                  '--padding-top': '0px',
+                  '--padding-bottom': '0px',
+                  '--min-height': '40px',
+                  '--min-width': '40px',
+                }}
+              >
+                <IonIcon icon={scanOutline} slot="icon-only" className="text-xl" />
               </IonButton>
-              <IonButton color="primary" onClick={() => startScan()}>
-                <IonIcon icon={scanOutline} slot="icon-only" />
-              </IonButton>
-            </IonButtons>
-          </div>
+            }
+          />
+        </div>
 
-          <div className="mb-3 bg-white rounded-lg shadow-md p-4">
-            <IonList>
-              <IonItem>
-                <IonBadge slot="end">
-                  {formatCurrencyWithoutSymbol(dataTotal.totalProduct)}
-                </IonBadge>
-                <IonLabel>Tổng sản phẩm</IonLabel>
-              </IonItem>
-              <IonItem>
-                <IonBadge slot="end">
-                  {formatCurrencyWithoutSymbol(dataTotal.totalInventory)}
-                </IonBadge>
-                <IonLabel>Tổng tồn kho</IonLabel>
-              </IonItem>
-            </IonList>
+        <AppCard className="mb-3">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col">
+              <span className="text-xs text-gray-500 mb-1">Tổng sản phẩm</span>
+              <span className="text-lg font-bold text-gray-900">
+                {formatCurrencyWithoutSymbol(dataTotal.totalProduct)}
+              </span>
+            </div>
+            <div className="flex flex-col pl-4 border-l border-gray-100">
+              <span className="text-xs text-gray-500 mb-1">Tổng tồn kho</span>
+              <span className="text-lg font-bold text-blue-600">
+                {formatCurrencyWithoutSymbol(dataTotal.totalInventory)}
+              </span>
+            </div>
           </div>
+        </AppCard>
 
           <div className="mb-2">
             <div className="flex justify-between items-center mb-2">
@@ -490,14 +479,15 @@ const ProductListScreen: React.FC = () => {
           </div>
           {/* Load More Button */}
           {hasMore && (
-            <div className="flex justify-center mb-6">
-              <IonButton
-                fill="clear"
+            <div className="flex justify-center my-4">
+              <AppButton
+                variant="pill"
                 onClick={handleLoadMore}
-                disabled={isLoading || isLoadingMore}
+                loading={isLoading || isLoadingMore}
+                loadingText="Đang tải..."
               >
-                {isLoadingMore ? <IonSpinner name="crescent" /> : "Xem thêm"}
-              </IonButton>
+                Xem thêm
+              </AppButton>
             </div>
           )}
 
@@ -506,18 +496,14 @@ const ProductListScreen: React.FC = () => {
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-md font-medium">Sản phẩm sắp hết hàng</h3>
               {hasMoreLowStock && (
-                <IonButton
-                  fill="clear"
+                <AppButton
+                  variant="clear"
                   size="small"
                   onClick={handleLoadMoreLowStock}
-                  disabled={lowStockLoading}
+                  loading={lowStockLoading}
                 >
-                  {lowStockLoading ? (
-                    <IonSpinner name="crescent" />
-                  ) : (
-                    "Xem thêm"
-                  )}
-                </IonButton>
+                  Xem thêm
+                </AppButton>
               )}
             </div>
 
@@ -546,9 +532,9 @@ const ProductListScreen: React.FC = () => {
                       : null;
 
                   return (
-                    <SwiperSlide key={`lowstock-${product.id}`}>
-                      <div className="bg-gray-100 rounded-lg p-4 flex items-center">
-                        <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center mr-4 overflow-hidden">
+                    <SwiperSlide key={`lowstock-${product.id}`} className="pb-2">
+                      <div className="low-stock-card bg-white rounded-2xl p-3 sm:p-4 flex flex-wrap items-start sm:flex-nowrap sm:items-center gap-3 shadow-sm border border-gray-100 mx-1">
+                        <div className="w-20 h-20 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden">
                           {primaryImageUrl ? (
                             <img
                               src={primaryImageUrl}
@@ -569,8 +555,8 @@ const ProductListScreen: React.FC = () => {
                             />
                           )}
                         </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium">{product.productName}</h4>
+                        <div className="low-stock-product-details flex-1 min-w-0">
+                          <h4 className="font-medium line-clamp-2 break-words">{product.productName}</h4>
                           <p className="text-sm text-gray-500">
                             {product.code}
                           </p>
@@ -579,7 +565,7 @@ const ProductListScreen: React.FC = () => {
                               Tồn: {product.inventory} {product.unit}
                             </p>
                           </div>
-                          <div className="flex justify-between mt-1">
+                          <div className="grid grid-cols-3 gap-2 mt-1">
                             {isShowCostPrice ? (
                               <div>
                                 <div className="flex items-center gap-1">
@@ -617,7 +603,7 @@ const ProductListScreen: React.FC = () => {
                         <IonButton
                           fill="solid"
                           size="small"
-                          className="bg-blue-600 rounded text-white"
+                          className="low-stock-import-button bg-blue-600 rounded text-white flex-shrink-0"
                           routerLink="/tabs/receipt-import/create"
                         >
                           Nhập thêm
@@ -633,15 +619,9 @@ const ProductListScreen: React.FC = () => {
               </div>
             )}
           </div>
-        </div>
       </IonContent>
 
-      {/* Floating Action Button */}
-      <IonFab vertical="bottom" horizontal="end" slot="fixed">
-        <IonFabButton routerLink="/tabs/products/create">
-          <IonIcon icon={add} />
-        </IonFabButton>
-      </IonFab>
+      <AppFAB onClick={() => history.push("/tabs/products/create")} />
     </IonPage>
   );
 };

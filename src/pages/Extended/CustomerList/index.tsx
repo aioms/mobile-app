@@ -10,11 +10,7 @@ import {
   IonBackButton,
   IonButton,
   IonIcon,
-  IonInfiniteScroll,
-  IonInfiniteScrollContent,
   IonSpinner,
-  IonFab,
-  IonFabButton,
 } from "@ionic/react";
 import { ellipsisVertical, personAdd } from "ionicons/icons";
 import { debounce } from "radash";
@@ -22,6 +18,7 @@ import useCustomer from "@/hooks/apis/useCustomer";
 import ModalSelectCustomer from "@/components/ModalSelectCustomer";
 import FilterSection from "./components/FilterSection";
 import CustomerItem from "./components/CustomerItem";
+import { AppFAB, AppButton } from "@/components/UI";
 
 import { ICustomer, ICustomerFilters } from "./types";
 
@@ -159,7 +156,7 @@ const CustomerList: React.FC = () => {
             <IonSpinner name="crescent" color="primary" />
           </div>
         ) : (
-          <div className="pb-24 pt-2">
+          <div className="pt-2">
             <div>
               <h3 className="px-4 text-[11px] font-bold text-gray-400 mb-2 uppercase tracking-wide">
                 Danh sách khách hàng ({customers.length})
@@ -169,29 +166,41 @@ const CustomerList: React.FC = () => {
                   <p className="text-sm">Không tìm thấy khách hàng.</p>
                 </div>
               ) : (
-                <div className="flex flex-col">
-                  {customers.map((customer) => (
-                    <CustomerItem
-                      key={customer.id}
-                      customer={customer}
-                      onClick={() => history.push(`/tabs/extended/customers/detail/${customer.id}`)}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="flex flex-col">
+                    {customers.map((customer) => (
+                      <CustomerItem
+                        key={customer.id}
+                        customer={customer}
+                        onClick={() => history.push(`/tabs/extended/customers/detail/${customer.id}`)}
+                      />
+                    ))}
+                  </div>
+
+                  {hasMore && (
+                    <div className="flex justify-center my-3">
+                      <AppButton
+                        variant="pill"
+                        onClick={async () => {
+                          const nextPage = page + 1;
+                          await loadCustomers(nextPage, false);
+                          setPage(nextPage);
+                        }}
+                        loading={loading && page > 1}
+                        loadingText="Đang tải..."
+                      >
+                        Xem thêm
+                      </AppButton>
+                    </div>
+                  )}
+                </>
               )}
             </div>
+            <div className="pb-20" />
           </div>
         )}
 
-        <IonInfiniteScroll onIonInfinite={loadMore} disabled={!hasMore}>
-          <IonInfiniteScrollContent loadingSpinner="bubbles" loadingText="Đang tải thêm..." />
-        </IonInfiniteScroll>
-
-        <IonFab vertical="bottom" horizontal="end" slot="fixed" className="mb-4 mr-4 shadow-lg rounded-full">
-          <IonFabButton color="primary" className="w-[52px] h-[52px]">
-            <IonIcon icon={personAdd} className="text-white text-2xl" />
-          </IonFabButton>
-        </IonFab>
+        <AppFAB icon={personAdd} onClick={() => history.push("/tabs/extended/customers/create")} />
 
         {showFilterModal && (
           <ModalSelectCustomer

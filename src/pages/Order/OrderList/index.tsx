@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
 import {
-  IonSpinner,
-  IonButton,
   useIonToast,
   RefresherEventDetail,
   IonIcon,
@@ -23,6 +21,7 @@ import FilterSection from "./components/FilterSection";
 import OrderItem from "./components/OrderItem";
 
 import type { IOrder } from "@/types/order.type";
+import { AppCard, AppButton } from "@/components/UI";
 
 import "./OrderList.css";
 
@@ -214,29 +213,29 @@ const OrderList: React.FC = () => {
       <Refresher onRefresh={handleRefresh} />
 
       {/* Order Count */}
-      <div className="flex justify-between items-center bg-card rounded-lg shadow-sm mb-2 p-4">
+      <AppCard className="flex justify-between items-center mb-2 mx-4 shadow-sm border border-gray-100">
         <div className="flex flex-col">
-          <h2 className="text-lg font-medium">
+          <h2 className="text-lg font-bold text-gray-900">
             Tổng số đơn hàng: {totalOrders}
           </h2>
-          <div className="date-display">
+          <div className="text-sm text-gray-500 mt-1">
             {capitalizeFirstLetter(dayjsFormat(new Date(), "dddd, DD MMMM YYYY", "vi"))}
           </div>
         </div>
         <div
-          className="w-12 h-12 bg-teal-50 rounded-full flex items-center justify-center ion-activatable ripple-parent"
+          className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center ion-activatable ripple-parent overflow-hidden"
           onClick={() => startScan()}
         >
-          <IonIcon icon={scanOutline} className="text-3xl text-teal-400" />
+          <IonIcon icon={scanOutline} className="text-2xl text-blue-600" />
           <IonRippleEffect></IonRippleEffect>
         </div>
-      </div>
+      </AppCard>
 
       {/* Filter Section */}
       <FilterSection onFilterChange={handleFilterChange} />
 
       {/* Order List */}
-      <div>
+      <div className="px-4">
         {orders.length > 0 ? (
           orders.map((order) => (
             <OrderItem
@@ -253,14 +252,15 @@ const OrderList: React.FC = () => {
 
         {/* Load More Button */}
         {hasMore && (
-          <div className="flex justify-center">
-            <IonButton
-              fill="clear"
+          <div className="flex justify-center my-3">
+            <AppButton
+              variant="pill"
               onClick={handleLoadMore}
-              disabled={isLoading}
+              loading={isLoading}
+              loadingText="Đang tải..."
             >
-              {isLoading ? <IonSpinner name="crescent" /> : "Xem thêm"}
-            </IonButton>
+              Xem thêm
+            </AppButton>
           </div>
         )}
       </div>
