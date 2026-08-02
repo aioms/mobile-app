@@ -250,6 +250,25 @@ export class XprinterService {
   }
 
   /**
+   * Discover printers on the local network via Proxy Server (V2)
+   */
+  async discoverPrintersV2(): Promise<PrinterV2Response<any[]>> {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/printer/v2/discover`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      return (await response.json()) as PrinterV2Response<any[]>;
+    } catch (error) {
+      return {
+        success: false,
+        message: `Failed to discover printers (V2): ${(error as Error).message}`,
+        data: null,
+      };
+    }
+  }
+
+  /**
    * Update printer configuration
    */
   async updateConfig(newConfig: Partial<PrinterConfig>): Promise<PrinterResponse> {
