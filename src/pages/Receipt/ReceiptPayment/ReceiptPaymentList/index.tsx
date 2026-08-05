@@ -14,14 +14,13 @@ import {
   IonRefresher,
   IonRefresherContent,
   useIonViewWillEnter,
-  IonInfiniteScroll,
-  IonInfiniteScrollContent,
 } from "@ionic/react";
 import { filterOutline, searchOutline, add, receiptOutline } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
 import { formatCurrency } from "@/helpers/formatters";
 import dayjs from "dayjs";
 
+import { AppButton } from "@/components/UI";
 import PaymentReceiptCard from "./components/PaymentReceiptCard";
 import PaymentReceiptFilter from "./components/PaymentReceiptFilter";
 import PaymentReceiptFilterModal, { FilterState } from "./components/PaymentReceiptFilterModal";
@@ -242,19 +241,38 @@ const PaymentReceiptListScreen: React.FC = () => {
           />
 
           {/* List */}
-          <div className="mt-2 pb-20">
+          <div className="mt-2">
             {isLoading && receipts.length === 0 ? (
               <div className="text-center text-gray-500 mt-10 text-sm">
                 Đang tải danh sách...
               </div>
             ) : receipts.length > 0 ? (
-              receipts.map((receipt) => (
-                <PaymentReceiptCard
-                  key={receipt.id}
-                  receipt={receipt}
-                  onClick={(r) => history.push(`/tabs/extended/payment-receipts/detail/${r.id}`)}
-                />
-              ))
+              <>
+                {receipts.map((receipt) => (
+                  <PaymentReceiptCard
+                    key={receipt.id}
+                    receipt={receipt}
+                    onClick={(r) => history.push(`/tabs/extended/payment-receipts/detail/${r.id}`)}
+                  />
+                ))}
+
+                {hasMore && (
+                  <div className="flex justify-center my-3">
+                    <AppButton
+                      variant="pill"
+                      onClick={async () => {
+                        const nextPage = page + 1;
+                        await fetchData(nextPage, false);
+                        setPage(nextPage);
+                      }}
+                      loading={isLoading && page > 1}
+                      loadingText="Đang tải..."
+                    >
+                      Xem thêm
+                    </AppButton>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center text-gray-500 mt-10 text-sm">
                 Không tìm thấy phiếu chi nào khớp bộ lọc.
@@ -262,10 +280,7 @@ const PaymentReceiptListScreen: React.FC = () => {
             )}
           </div>
         </div>
-
-        <IonInfiniteScroll onIonInfinite={loadMore} disabled={!hasMore}>
-          <IonInfiniteScrollContent loadingSpinner="bubbles" loadingText="Đang tải thêm..." />
-        </IonInfiniteScroll>
+        <div className="pb-20" />
       </IonContent>
 
       <IonFab vertical="bottom" horizontal="end" slot="fixed" className="mb-4 mr-2">

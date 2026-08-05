@@ -2,7 +2,6 @@ import {
   IonMenu,
   IonHeader,
   IonToolbar,
-  IonTitle,
   IonContent,
   IonList,
   IonMenuToggle,
@@ -15,11 +14,10 @@ import {
   personCircle,
   notificationsOutline,
   settingsOutline,
-  cubeOutline,
   logOutOutline,
 } from "ionicons/icons";
 import { useAuth } from "../../hooks";
-import { useHistory } from "react-router";
+import { useHistory, useLocation } from "react-router";
 
 import "./MenuBar.css";
 
@@ -47,6 +45,7 @@ const defaultAvatar =
 
 const MenuBar: React.FC = () => {
   const history = useHistory();
+  const location = useLocation();
   const { logout, user } = useAuth();
 
   const handleLogout = async () => {
@@ -61,21 +60,18 @@ const MenuBar: React.FC = () => {
 
   return (
     <IonMenu type="push" contentId="main-content">
-      <IonHeader translucent>
+      <IonHeader translucent className="ion-no-border">
         <IonToolbar>
-          <IonTitle>
-            <IonItem lines="none" className="menu-logo">
-              <div className="flex items-center justify-center w-full py-4">
-                <IonIcon
-                  icon={cubeOutline}
-                  className="text-primary w-12 h-12"
-                />
-                <span className="text-xl font-bold ml-2 text-primary">
-                  AIOM
-                </span>
-              </div>
-            </IonItem>
-          </IonTitle>
+          <div className="flex items-center justify-center w-full py-3 px-4">
+            <img
+              src="/favicon.ico"
+              alt="AIOM Logo"
+              className="w-8 h-8 object-contain shrink-0"
+            />
+            <span className="text-xl font-bold ml-2.5 text-primary tracking-wide shrink-0">
+              AIOM
+            </span>
+          </div>
         </IonToolbar>
       </IonHeader>
       <IonContent className="ion-padding">

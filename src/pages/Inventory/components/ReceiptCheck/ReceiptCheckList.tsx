@@ -1,25 +1,21 @@
 import { useState, useEffect } from "react";
 import {
   IonList,
-  IonSearchbar,
-  IonSelect,
-  IonSelectOption,
   IonListHeader,
   IonLabel,
   RefresherEventDetail,
-  IonInfiniteScroll,
-  IonInfiniteScrollContent,
   IonSpinner,
-  IonItem,
   useIonToast,
 } from "@ionic/react";
-import DatePicker from "@/components/DatePicker";
 
 import useReceiptCheck from "@/hooks/apis/useReceiptCheck";
+import { AppButton } from "@/components/UI";
 
-import { RECEIPT_CHECK_STATUS, TReceiptCheckStatus } from "@/common/constants/receipt-check.constant";
+import { TReceiptCheckStatus } from "@/common/constants/receipt-check.constant";
 import { Refresher } from "@/components/Refresher/Refresher";
 import { ItemList } from "./components/ItemList";
+import { FilterSection } from "./components/FilterSection";
+import { defaultReceiptCheckFilters, ReceiptCheckFilterValues } from "./components/FilterModal";
 
 import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
 
@@ -57,20 +53,14 @@ interface Pagination {
   totalPages: number;
 }
 
-interface TimeFilter {
-  startDate: string;
-  endDate: string;
-}
+
 
 const ReceiptCheckScreen = () => {
   const [searchText, setSearchText] = useState("");
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>({
-    startDate: "",
-    endDate: "",
-  });
-  const [statusFilter, setStatusFilter] = useState("");
+  const [filters, setFilters] = useState<ReceiptCheckFilterValues>(defaultReceiptCheckFilters);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [pagination, setPagination] = useState<Pagination>({
     currentPage: 1,
     hasPrevious: false,
@@ -89,14 +79,18 @@ const ReceiptCheckScreen = () => {
     isLoadMore: boolean = false
   ) => {
     try {
-      setIsLoading(true);
+      if (isLoadMore) {
+        setIsLoadingMore(true);
+      } else {
+        setIsLoading(true);
+      }
 
       const { data, metadata, success, statusCode } = await getListReceiptCheck(
         {
           keyword: searchText,
-          startDate: timeFilter.startDate,
-          endDate: timeFilter.endDate,
-          status: statusFilter,
+          startDate: filters.startDate,
+          endDate: filters.endDate,
+          status: filters.status,
         },
         page,
         pagination.limit
@@ -123,11 +117,12 @@ const ReceiptCheckScreen = () => {
       });
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
   const handleInfiniteScroll = async (ev: any) => {
-    if (!pagination.hasNext || isLoading) {
+    if (!pagination.hasNext || isLoading || isLoadingMore) {
       ev.target.complete();
       return;
     }
@@ -146,97 +141,25 @@ const ReceiptCheckScreen = () => {
     setSearchText(value);
   };
 
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value);
-  };
-
-  const handleTimeFilterChange = (
-    type: "startDate" | "endDate",
-    value: string
-  ) => {
-    setTimeFilter((prev) => ({
-      ...prev,
-      [type]: value,
-    }));
-  };
-
   useEffect(() => {
     fetchReceiptChecks(1);
-  }, [timeFilter, statusFilter, searchText]);
+  }, [filters, searchText]);
 
   return (
     <>
       <Refresher onRefresh={handleRefresh} />
 
-      <IonSearchbar
-        value={searchText}
-        onIonChange={(e) => handleSearch(e.detail.value!)}
-        placeholder="Tìm kiếm"
-        debounce={800}
+      <FilterSection
+        searchText={searchText}
+        setSearchText={handleSearch}
+        filters={filters}
+        setFilters={setFilters}
       />
 
-      {/* Updated Filters */}
-      <div className="px-4 py-2">
-        <div className="flex flex-col gap-2">
-          {/* Date Range Picker */}
-          <div className="flex gap-1">
-            <IonItem className="flex-1">
-              <IonLabel position="stacked">Từ ngày</IonLabel>
-              <DatePicker
-                value={timeFilter.startDate}
-                onChange={(e) =>
-                  handleTimeFilterChange("startDate", e.detail.value!)
-                }
-                extraClassName="pb-2"
-                attrs={{ id: "startDate" }}
-                presentation="date"
-              />
-            </IonItem>
-            <IonItem className="flex-1">
-              <IonLabel position="stacked">Đến ngày</IonLabel>
-              <DatePicker
-                value={timeFilter.endDate}
-                onChange={(e) =>
-                  handleTimeFilterChange("endDate", e.detail.value!)
-                }
-                extraClassName="pb-2"
-                attrs={{ id: "endDate" }}
-                presentation="date"
-              />
-            </IonItem>
-          </div>
-
-          {/* Status Filter */}
-          <IonItem>
-            <IonLabel position="stacked">Trạng thái</IonLabel>
-            <IonSelect
-              value={statusFilter}
-              placeholder="Chọn trạng thái"
-              onIonChange={(e) => handleStatusFilterChange(e.detail.value)}
-              className="w-full"
-            >
-              <IonSelectOption value="">Tất cả</IonSelectOption>
-              <IonSelectOption value={RECEIPT_CHECK_STATUS.PENDING}>
-                Cần xử lý
-              </IonSelectOption>
-              <IonSelectOption value={RECEIPT_CHECK_STATUS.PROCESSING}>
-                Đang xử lý
-              </IonSelectOption>
-              <IonSelectOption value={RECEIPT_CHECK_STATUS.BALANCING_REQUIRED}>
-                Cần cân đối
-              </IonSelectOption>
-              <IonSelectOption value={RECEIPT_CHECK_STATUS.BALANCED}>
-                Đã cân đối
-              </IonSelectOption>
-            </IonSelect>
-          </IonItem>
-        </div>
-      </div>
-
       {/* Content */}
-      <IonList>
-        <IonListHeader>
-          <IonLabel className="font-semibold">
+      <IonList className="bg-transparent">
+        <IonListHeader className="px-4">
+          <IonLabel className="font-semibold text-gray-700">
             Tổng phiếu: {pagination.totalItems}
           </IonLabel>
         </IonListHeader>
@@ -258,22 +181,18 @@ const ReceiptCheckScreen = () => {
         )}
       </IonList>
 
-      <IonInfiniteScroll
-        threshold="100px"
-        disabled={!pagination.hasNext}
-        onIonInfinite={handleInfiniteScroll}
-      >
-        <IonInfiniteScrollContent
-          loadingSpinner="crescent"
-          loadingText="Đang tải thêm..."
-        >
-          {isLoading && (
-            <div className="flex justify-center p-4">
-              <IonSpinner name="crescent" />
-            </div>
-          )}
-        </IonInfiniteScrollContent>
-      </IonInfiniteScroll>
+      {pagination.hasNext && receipts.length > 0 && (
+        <div className="flex justify-center my-3">
+          <AppButton
+            variant="pill"
+            onClick={() => fetchReceiptChecks(pagination.currentPage + 1, true)}
+            loading={isLoadingMore}
+            loadingText="Đang tải..."
+          >
+            Xem thêm
+          </AppButton>
+        </div>
+      )}
     </>
   );
 };

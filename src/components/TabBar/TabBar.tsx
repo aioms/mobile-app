@@ -22,6 +22,7 @@ const Redirect = RouterRedirect as any;
 
 /* Screens */
 import MenuLayout from "../Layout/MenuLayout";
+import MenuBar from "../MenuBar/MenuBar";
 import NotFound from "@/pages/Error/NotFound";
 
 import HomeScreen from "@/pages/Home/Home";
@@ -73,7 +74,8 @@ const tabs = [
 const TabBar: React.FC = () => {
   return (
     <IonTabs>
-      <IonRouterOutlet>
+      <MenuBar />
+      <IonRouterOutlet id="main-content">
         <Route
           exact
           path="/tabs/home"
@@ -90,7 +92,7 @@ const TabBar: React.FC = () => {
         <Route
           exact
           path="/tabs/inventory"
-          children={<MenuLayout component={<InventoryScreen />} />}
+          component={InventoryScreen}
         />
 
         {/* Receipt import Screens */}
@@ -109,7 +111,7 @@ const TabBar: React.FC = () => {
         <Route
           exact
           path="/tabs/receipt-check/create"
-          children={<MenuLayout component={<ReceiptCheckCreateScreen />} />}
+          component={ReceiptCheckCreateScreen}
         />
         <Route
           exact

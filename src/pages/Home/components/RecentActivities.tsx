@@ -98,49 +98,52 @@ const RecentActivities: React.FC = () => {
   );
 
   return (
-    <div className="mb-6">
-      <h2 className="text-base font-bold mb-3">Hoạt động mới nhất</h2>
-
-      {isLoading ? (
-        <div className="text-sm text-gray-500">Đang tải hoạt động...</div>
-      ) : null}
+    <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-base sm:text-lg font-bold text-gray-800">Hoạt động mới nhất</h2>
+        {isLoading && (
+          <span className="text-xs text-gray-400 animate-pulse">Đang cập nhật...</span>
+        )}
+      </div>
 
       {!isLoading && activityRows.length === 0 ? (
-        <div className="text-sm text-gray-500">Chưa có hoạt động gần đây.</div>
+        <div className="py-6 text-center text-sm text-gray-400">Chưa có hoạt động gần đây.</div>
       ) : null}
 
-      <div className="space-y-3 mb-4">
+      <div className="divide-y divide-gray-100 mb-4">
         {activityRows.map((activity) => (
-          <div key={activity.id} className="flex items-center gap-3">
-            <div className="bg-blue-50 p-1.5 rounded-lg">
-              <IonIcon icon={activity.icon} className="text-blue-500 w-5 h-5" />
+          <div key={activity.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+            <div className="bg-blue-50/80 text-blue-600 p-2 rounded-xl flex-shrink-0 flex items-center justify-center mt-0.5">
+              <IonIcon icon={activity.icon} className="text-lg" />
             </div>
-            <div>
-              <h3 className="text-sm">{activity.fullname || activity.username} {activity.description}</h3>
-              <span className="text-gray-500 text-xs">{activity.time}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm text-gray-700 leading-snug">
+                <span className="font-semibold text-gray-900">{activity.fullname || activity.username}</span>{" "}
+                <span>{activity.description}</span>
+              </p>
+              <span className="text-gray-400 text-xs mt-1 block font-medium">{activity.time}</span>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100">
         <button
           type="button"
-          className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm disabled:opacity-50"
+          className="px-3.5 py-1.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium text-gray-600 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-40 transition-colors cursor-pointer"
           disabled={!canGoPrevious || isLoading}
           onClick={() => setPage((prev) => Math.max(1, prev - 1))}
         >
           Trước
         </button>
         <div className="text-xs text-gray-500 text-center">
-          <div>
-            Trang {metadata.currentPage}/{Math.max(metadata.totalPages, 1)}
-          </div>
-          <div>Tổng {metadata.totalItems} hoạt động</div>
+          <span className="font-medium text-gray-700">Trang {metadata.currentPage}/{Math.max(metadata.totalPages, 1)}</span>
+          <span className="mx-1 text-gray-300">•</span>
+          <span>{metadata.totalItems} hoạt động</span>
         </div>
         <button
           type="button"
-          className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm disabled:opacity-50"
+          className="px-3.5 py-1.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium text-gray-600 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-40 transition-colors cursor-pointer"
           disabled={!canGoNext || isLoading}
           onClick={() => setPage((prev) => prev + 1)}
         >

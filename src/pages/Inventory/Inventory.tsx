@@ -1,42 +1,47 @@
 import { useState } from "react";
+import { useHistory } from "react-router-dom";
 import {
   IonContent,
   IonHeader,
   IonToolbar,
-  IonSegment,
-  IonSegmentButton,
-  IonLabel,
-  IonFab,
-  IonFabButton,
-  IonIcon,
+  IonTitle,
+  IonPage,
+  IonButtons,
+  IonMenuButton,
 } from "@ionic/react";
-import { add } from "ionicons/icons";
+import { AppFAB, AppSegment } from "@/components/UI";
 
 import ReceiptImportList from "./components/ReceiptImport/ReceiptImportList";
 import ReceiptCheckList from "./components/ReceiptCheck/ReceiptCheckList";
 
 const InventoryScreen = () => {
+  const history = useHistory();
   const [selectedSegment, setSelectedSegment] = useState("receipt-import");
 
   return (
-    <IonContent>
-      <IonHeader>
+    <IonPage>
+      <IonHeader className="ion-no-border bg-white">
         <IonToolbar>
-          {/* Segment */}
-          <IonSegment
-            value={selectedSegment}
-            onIonChange={(e) => setSelectedSegment(e.detail.value as string)}
-          >
-            <IonSegmentButton value="receipt-import">
-              <IonLabel>Nhập kho</IonLabel>
-            </IonSegmentButton>
-            <IonSegmentButton value="receipt-check">
-              <IonLabel>Kiểm kho</IonLabel>
-            </IonSegmentButton>
-          </IonSegment>
-          {/* End Segment */}
+          <IonButtons slot="start">
+            <IonMenuButton />
+          </IonButtons>
+          <IonTitle>Kho hàng</IonTitle>
         </IonToolbar>
-
+        <IonToolbar>
+          <div className="flex justify-center w-full pb-2 mt-2">
+            <AppSegment
+              value={selectedSegment}
+              onIonChange={setSelectedSegment}
+              tabs={[
+                { value: "receipt-import", label: "Nhập kho" },
+                { value: "receipt-check", label: "Kiểm kho" },
+              ]}
+              className="w-full max-w-sm"
+            />
+          </div>
+        </IonToolbar>
+      </IonHeader>
+      <IonContent className="bg-gray-50">
         {/* {selectedSegment === "receipt-import" && (
           <IonToolbar>
             <IonSearchbar
@@ -52,8 +57,6 @@ const InventoryScreen = () => {
             </IonButtons>
           </IonToolbar>
         )} */}
-      </IonHeader>
-
       {selectedSegment === "receipt-import" ? (
         <ReceiptImportList />
       ) : (
@@ -61,13 +64,12 @@ const InventoryScreen = () => {
       )}
 
       {selectedSegment === "receipt-check" && (
-        <IonFab vertical="bottom" horizontal="end" slot="fixed">
-          <IonFabButton routerLink={`/tabs/${selectedSegment}/create`}>
-            <IonIcon icon={add} />
-          </IonFabButton>
-        </IonFab>
+        <AppFAB onClick={() => {
+          history.push(`/tabs/${selectedSegment}/create`);
+        }} />
       )}
     </IonContent>
+    </IonPage>
   );
 };
 

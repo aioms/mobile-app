@@ -1,8 +1,7 @@
 import React from 'react';
-import { IonIcon } from '@ionic/react';
-import { chevronForwardOutline } from 'ionicons/icons';
 import { formatCurrency } from '@/helpers/formatters';
 import { ICustomer } from '../types';
+import { AppListItem } from '@/components/UI';
 
 interface CustomerItemProps {
   customer: ICustomer;
@@ -11,11 +10,8 @@ interface CustomerItemProps {
 
 const CustomerItem: React.FC<CustomerItemProps> = ({ customer, onClick }) => {
   return (
-    <div
-      className="flex items-center justify-between px-4 py-3 bg-white active:bg-gray-50 cursor-pointer"
-      onClick={onClick}
-    >
-      <div className="flex items-center gap-3 w-full pr-4">
+    <AppListItem onClick={onClick}>
+      <div className="flex items-center gap-3 w-full">
         {customer.avatarUrl ? (
           <img src={customer.avatarUrl} alt={customer.name} className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
         ) : (
@@ -37,8 +33,7 @@ const CustomerItem: React.FC<CustomerItemProps> = ({ customer, onClick }) => {
           </p>
         </div>
       </div>
-      <IonIcon icon={chevronForwardOutline} className="text-gray-300 flex-shrink-0 text-lg" />
-    </div>
+    </AppListItem>
   );
 };
 

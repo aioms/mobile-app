@@ -436,39 +436,22 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
   const handleDiscoverPrinters = async () => {
     setIsDiscovering(true);
     try {
-      // Request permission first
-      const hasPermission = await LocalNetworkService.requestLocalNetworkPermission();
+      // Discover printers via proxy server instead of local browser fetch
+      const printerService = createXprinterService(printerConfig);
+      const result = await printerService.discoverPrintersV2();
 
-      if (!hasPermission) {
-        await presentToast({
-          message: "Cần quyền truy cập mạng local để tìm kiếm máy in",
-          duration: 3000,
-          position: "top",
-          color: "warning",
-        });
-        return;
+      if (!result.success) {
+        throw new Error(result.message || 'Lỗi không xác định từ Proxy Server');
       }
 
-      await presentToast({
-        message: "Đang tìm kiếm máy in trên mạng local...",
-        duration: 2000,
-        position: "top",
-        color: "primary",
-      });
-
-      // Discover printers on common network ranges
-      const networkRanges = ['192.168.0', '192.168.1', '10.0.0'];
-      let allPrinters: PrinterDevice[] = [];
-
-      for (const range of networkRanges) {
-        const printers = await LocalNetworkService.discoverPrinters(range);
-        allPrinters = [...allPrinters, ...printers];
-      }
-
-      // Remove duplicates based on IP
-      const uniquePrinters = allPrinters.filter((printer, index, self) =>
-        index === self.findIndex(p => p.ip === printer.ip)
-      );
+      // Map proxy response to PrinterDevice format
+      const uniquePrinters: PrinterDevice[] = (result.data || []).map((p: any) => ({
+        ip: p.ip,
+        port: p.port,
+        name: p.model || `Máy in ${p.source.toUpperCase()}`,
+        status: 'online',
+        model: p.model
+      }));
 
       setDiscoveredPrinters(uniquePrinters);
 
@@ -502,15 +485,15 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
 
   const handleSelectPrinter = async (printer: PrinterDevice) => {
     try {
-      const connected = await LocalNetworkService.connectToPrinter(printer);
+      const newConfig = { ...printerConfig, ipAddress: printer.ip, port: printer.port };
+      const printerService = createXprinterService(newConfig);
+      
+      // Test connection via proxy server instead of browser fetch
+      const result = await printerService.testConnectionV2();
 
-      if (connected) {
+      if (result.success && result.data?.isConnected) {
         setSelectedPrinter(printer);
-        setPrinterConfig(prev => ({
-          ...prev,
-          ipAddress: printer.ip,
-          port: printer.port
-        }));
+        setPrinterConfig(newConfig);
         setUseNetworkPrinter(true);
         setShowDiscovery(false);
 
@@ -520,6 +503,8 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
           position: "top",
           color: "success",
         });
+      } else {
+        throw new Error(result.message || "Không thể kết nối đến máy in qua Proxy");
       }
     } catch (error) {
       await presentToast({

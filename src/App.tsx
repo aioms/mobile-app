@@ -42,7 +42,9 @@ import AppUpdatePrompt from "./components/AppUpdatePrompt/AppUpdatePrompt";
 import { getEnvironment } from "./helpers/common";
 import { PWAUpdateProvider } from "./pwa";
 
-setupIonicReact();
+setupIonicReact({
+  backButtonText: "Trở lại",
+});
 
 const App: React.FC = () => {
   const [presentToast] = useIonToast();

@@ -9,8 +9,6 @@ import {
   IonButtons,
   IonBackButton,
   IonIcon,
-  IonInfiniteScroll,
-  IonInfiniteScrollContent,
   IonSpinner,
   IonChip,
 } from "@ionic/react";
@@ -18,8 +16,8 @@ import { closeCircle } from "ionicons/icons";
 import { debounce } from "radash";
 import useSupplier from "@/hooks/apis/useSupplier";
 import ModalSelectSupplier from "@/components/ModalSelectSupplier";
-import FilterSection from "./components/FilterSection";
 import SupplierCard from "./components/SupplierCard";
+import { AppSearchBar, AppFAB, AppButton } from "@/components/UI";
 import { ISupplierFilters } from "./types";
 import { ISupplier } from "@/types/supplier";
 
@@ -135,9 +133,10 @@ const SupplierList: React.FC = () => {
           </IonButtons> */}
         </IonToolbar>
 
-        <FilterSection
+        <AppSearchBar
           searchText={searchText}
           setSearchText={setSearchText}
+          placeholder="Tìm NCC theo tên, danh mục..."
           isFiltered={selectedSuppliers.length > 0 || searchText !== ""}
           onFilterClick={() => setShowFilterModal(true)}
         />
@@ -172,22 +171,38 @@ const SupplierList: React.FC = () => {
                 <p className="text-sm">Không tìm thấy nhà cung cấp.</p>
               </div>
             ) : (
-              <div className="flex flex-col">
-                {suppliers.map((supplier) => (
-                  <SupplierCard
-                    key={supplier.id}
-                    supplier={supplier}
-                    onClick={() => history.push(`/tabs/extended/suppliers/detail/${supplier.id}`)}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="flex flex-col">
+                  {suppliers.map((supplier) => (
+                    <SupplierCard
+                      key={supplier.id}
+                      supplier={supplier}
+                      onClick={() => history.push(`/tabs/extended/suppliers/detail/${supplier.id}`)}
+                    />
+                  ))}
+                </div>
+
+                {hasMore && (
+                  <div className="flex justify-center my-3">
+                    <AppButton
+                      variant="pill"
+                      onClick={async () => {
+                        const nextPage = page + 1;
+                        await loadSuppliers(nextPage, false);
+                        setPage(nextPage);
+                      }}
+                      loading={loading && page > 1}
+                      loadingText="Đang tải..."
+                    >
+                      Xem thêm
+                    </AppButton>
+                  </div>
+                )}
+              </>
             )}
+            <div className="pb-20" />
           </div>
         )}
-
-        <IonInfiniteScroll onIonInfinite={loadMore} disabled={!hasMore}>
-          <IonInfiniteScrollContent loadingSpinner="bubbles" loadingText="Đang tải thêm..." />
-        </IonInfiniteScroll>
 
         {showFilterModal && (
           <ModalSelectSupplier
@@ -195,6 +210,8 @@ const SupplierList: React.FC = () => {
             multi={true}
           />
         )}
+        
+        <AppFAB onClick={() => history.push("/tabs/extended/suppliers/create")} />
       </IonContent>
     </IonPage>
   );

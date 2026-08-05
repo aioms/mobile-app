@@ -1,18 +1,15 @@
 import React from "react";
 import {
-  IonSegment,
-  IonSegmentButton,
   IonLabel,
   IonCard,
   IonCardContent,
   IonList,
-  IonSpinner,
-  IonButton,
   IonText,
 } from "@ionic/react";
 import { useHistory } from "react-router-dom";
 import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
 import { getStatusColor, getStatusLabel, ReceiptStatus } from "@/common/constants/receipt-status-helper";
+import { AppSegment, AppButton } from "@/components/UI";
 
 interface HistoryItem {
   id: string;
@@ -50,7 +47,7 @@ interface Props {
     debt: boolean;
   };
   onLoadMore: (tableKey: keyof HistoryData) => Promise<void>;
-  onChangeTab: (e: any) => void;
+  onChangeTab: (tab: string) => void;
   selectedTab: string;
 }
 
@@ -141,22 +138,15 @@ const InventoryHistory: React.FC<Props> = ({
       )}
 
       {tableKey && hasMore[tableKey] && (
-        <div className="flex justify-center mt-2">
-          <IonButton
-            fill="clear"
+        <div className="flex justify-center mt-3">
+          <AppButton
+            variant="pill"
             onClick={() => onLoadMore(tableKey)}
-            disabled={loading}
-            className="text-sm"
+            loading={loading}
+            loadingText="Đang tải..."
           >
-            {loading ? (
-              <>
-                <IonSpinner name="crescent" className="mr-2" />
-                Đang tải...
-              </>
-            ) : tableData.length > 0 && (
-              "Xem thêm"
-            )}
-          </IonButton>
+            Xem thêm
+          </AppButton>
         </div>
       )}
 
@@ -171,20 +161,16 @@ const InventoryHistory: React.FC<Props> = ({
   return (
     <IonCard className="rounded-xl mt-4 shadow-sm">
       <IonCardContent className="p-4">
-        <IonSegment
+        <AppSegment
           value={selectedTab}
-          onIonChange={onChangeTab}
-        >
-          <IonSegmentButton value="import">
-            <IonLabel className="text-xs text-wrap">Lịch sử nhập</IonLabel>
-          </IonSegmentButton>
-          <IonSegmentButton value="export">
-            <IonLabel className="text-xs text-wrap">Lịch sử xuất</IonLabel>
-          </IonSegmentButton>
-          <IonSegmentButton value="check">
-            <IonLabel className="text-xs text-wrap">Lịch sử kiểm</IonLabel>
-          </IonSegmentButton>
-        </IonSegment>
+          onIonChange={(val) => onChangeTab(val)}
+          tabs={[
+            { value: "import", label: "Lịch sử nhập" },
+            { value: "export", label: "Lịch sử xuất" },
+            { value: "check", label: "Lịch sử kiểm" },
+          ]}
+          className="pb-0 pt-0 px-0"
+        />
 
         <div className="mt-4">
           {selectedTab === "export" ? (

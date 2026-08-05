@@ -20,8 +20,9 @@ import RecentActivities from "./components/RecentActivities";
 import QuickActions from "./components/QuickActions";
 import LoadingScreen from "@/components/Loading/LoadingScreen";
 import { Refresher } from "@/components/Refresher/Refresher";
+import { AppBadge } from "@/components/UI";
 
-import { useAuth, useLoading, useStorage } from "@/hooks";
+import { useAuth, useLoading } from "@/hooks";
 import useProduct from "@/hooks/apis/useProduct";
 import useReceiptImport from "@/hooks/apis/useReceiptImport";
 import useOrder from "@/hooks/apis/useOrder";
@@ -197,39 +198,39 @@ const HomeScreen: React.FC = () => {
       {isLoading && <LoadingScreen message="Đang tải dữ liệu..." />}
       <Refresher onRefresh={handleRefresh} />
 
-      {/* Header Section */}
-      <div className="bg-teal-100/60 text-teal-500 backdrop-blur-sm rounded-2xl p-4 mb-6">
-        <div className="flex justify-between items-start">
-          <div className="pr-1">
-            <h1 className="text-[24px] font-bold mb-2">
-              Chào mừng trở lại
-              <p>{user?.fullname}! </p>
-            </h1>
-            <h5 className="text-gray-500 text-sm italic mb-2">
-              Một ngày mới thật đẹp bạn nhé
-            </h5>
-            <div className="flex items-center gap-2 text-gray-500 text-sm">
-              <div className="inline-flex items-center px-2 py-1 bg-green-50 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5" />
-                <span className="text-green-700 text-xs font-medium">
+      <div className="max-w-5xl mx-auto">
+        {/* Header Section */}
+        <div className="bg-gradient-to-r from-teal-500/10 via-emerald-500/10 to-teal-500/5 border border-teal-500/20 rounded-2xl p-4 sm:p-5 mb-6 shadow-xs backdrop-blur-xs">
+          <div className="flex justify-between items-start gap-3">
+            <div className="flex-1 min-w-0 pr-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 tracking-tight mb-1">
+                Chào mừng trở lại{" "}
+                <span className="text-teal-600 font-extrabold">{user?.fullname || "bạn"}!</span>
+              </h1>
+              <p className="text-gray-500 text-xs sm:text-sm italic mb-3">
+                Một ngày mới thật đẹp bạn nhé
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <AppBadge color="success" variant="soft" className="px-2.5 py-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 inline-block" />
                   Hoạt động
+                </AppBadge>
+                <span className="text-gray-500 text-xs italic">
+                  {capitalizeFirstLetter(dayjsFormat(new Date(), "dddd, DD MMMM YYYY", "vi"))}
                 </span>
               </div>
-              <span className="text-gray-600 text-xs italic">
-                {capitalizeFirstLetter(dayjsFormat(new Date(), "dddd, DD MMMM YYYY", "vi"))}
-              </span>
             </div>
+            <IonAvatar className="w-12 h-12 sm:w-14 sm:h-14 ring-2 ring-white shadow-sm flex-shrink-0">
+              <IonImg src={userMock.avatar} alt="User avatar" />
+            </IonAvatar>
           </div>
-          <IonAvatar className="w-13 h-13 ring-2 ring-white">
-            <IonImg src={userMock.avatar} alt="User avatar" />
-          </IonAvatar>
         </div>
-      </div>
 
-      <StatisticCards stats={stats} user={user} />
-      {/* <ImportantUpdates lowStockCount={3} /> */}
-      <QuickActions />
-      <RecentActivities />
+        <StatisticCards stats={stats} user={user} />
+        {/* <ImportantUpdates lowStockCount={3} /> */}
+        <QuickActions />
+        <RecentActivities />
+      </div>
     </IonContent>
   );
 };

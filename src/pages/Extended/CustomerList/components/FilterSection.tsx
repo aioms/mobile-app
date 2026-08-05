@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { IonIcon, IonActionSheet } from '@ionic/react';
-import { searchOutline, optionsOutline, chevronDownOutline, trashOutline } from 'ionicons/icons';
+import { chevronDownOutline, trashOutline } from 'ionicons/icons';
+import { AppSearchBar } from '@/components/UI';
 
 interface FilterSectionProps {
   isFiltered: boolean;
@@ -41,27 +42,16 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   };
 
   return (
-    <div className="px-4 py-2 bg-white border-b border-gray-100">
-      <div className="flex items-center gap-3 mb-4 mt-2">
-        <div className="flex-1 flex items-center bg-gray-50 rounded-xl px-3 py-2.5">
-          <IonIcon icon={searchOutline} className="text-gray-400 mr-2 text-lg" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm khách hàng..."
-            className="bg-transparent border-none outline-none w-full text-[15px] text-gray-700 placeholder-gray-400"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-        </div>
-        <button
-          onClick={onFilterClick}
-          className="bg-blue-600 w-[42px] h-[42px] rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform shadow-sm"
-        >
-          <IonIcon icon={optionsOutline} className="text-white text-xl" />
-        </button>
-      </div>
+    <div className="bg-white border-b border-gray-100">
+      <AppSearchBar
+        searchText={searchText}
+        setSearchText={setSearchText}
+        placeholder="Tìm kiếm khách hàng..."
+        isFiltered={isFiltered}
+        onFilterClick={onFilterClick}
+      />
 
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 px-4">
         <button
           onClick={() => {
             setStatus("all");
@@ -70,7 +60,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
           className={`${status === "all" && type === "all"
               ? "bg-blue-600 text-white"
               : "bg-gray-50 text-gray-600"
-            } px-5 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-colors`}
+            } h-9 px-5 rounded-full text-[13px] font-medium whitespace-nowrap inline-flex items-center justify-center transition-colors`}
         >
           Tất cả
         </button>
@@ -80,10 +70,10 @@ const FilterSection: React.FC<FilterSectionProps> = ({
           className={`${status !== "all"
               ? "bg-blue-50 text-blue-600 border border-blue-100"
               : "bg-gray-50 text-gray-600"
-            } px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap flex items-center gap-1 active:bg-gray-100 transition-colors`}
+            } h-9 px-4 rounded-full text-[13px] font-medium whitespace-nowrap inline-flex items-center justify-center gap-1 active:bg-gray-100 transition-colors`}
         >
           {statusLabels[status]}
-          <IonIcon icon={chevronDownOutline} className="text-[10px] ml-0.5" />
+          <IonIcon icon={chevronDownOutline} className="w-3 h-3 ml-0.5" />
         </button>
 
         <button
@@ -91,18 +81,18 @@ const FilterSection: React.FC<FilterSectionProps> = ({
           className={`${type !== "all"
               ? "bg-blue-50 text-blue-600 border border-blue-100"
               : "bg-gray-50 text-gray-600"
-            } px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap flex items-center gap-1 active:bg-gray-100 transition-colors`}
+            } h-9 px-4 rounded-full text-[13px] font-medium whitespace-nowrap inline-flex items-center justify-center gap-1 active:bg-gray-100 transition-colors`}
         >
           {typeLabels[type]}
-          <IonIcon icon={chevronDownOutline} className="text-[10px] ml-0.5" />
+          <IonIcon icon={chevronDownOutline} className="w-3 h-3 ml-0.5" />
         </button>
 
         {isFiltered && (
           <button
             onClick={onClearFilters}
-            className="w-9 h-9 flex-shrink-0 flex items-center justify-center bg-red-50 text-red-500 rounded-full active:scale-90 transition-transform"
+            className="w-9 h-9 flex-shrink-0 inline-flex items-center justify-center bg-red-50 text-red-500 rounded-full active:scale-90 transition-transform"
           >
-            <IonIcon icon={trashOutline} className="text-lg" />
+            <IonIcon icon={trashOutline} className="w-4 h-4" />
           </button>
         )}
       </div>

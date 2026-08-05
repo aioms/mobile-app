@@ -1,4 +1,4 @@
-import React, { ComponentProps, useId, useMemo } from 'react';
+import React, { ComponentProps, useMemo } from 'react';
 import { IonDatetime } from '@ionic/react';
 import dayjs from 'dayjs';
 import './style.css';
@@ -136,9 +136,9 @@ const DatePicker: React.FC<Props> = ({
         disabled={disabled}
         min={formatAttrDate(min)}
         max={formatAttrDate(max)}
-        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-0"
       />
-      <div className="flex-1 flex justify-between items-center text-[14px] leading-[20px] z-0 whitespace-nowrap">
+      <div className="flex-1 flex justify-between items-center text-[14px] leading-[20px] z-10 pointer-events-none whitespace-nowrap">
         <span className={currentValue ? "text-gray-900" : "text-[#6b7280]"}>
           {currentValue ? displayValue : placeholderText}
         </span>
@@ -147,7 +147,7 @@ const DatePicker: React.FC<Props> = ({
           <button
             type="button"
             onClick={handleClear}
-            className="text-[#6b7280] hover:text-gray-900 ml-2 z-20 relative px-1 text-lg leading-none font-bold -my-1"
+            className="text-[#6b7280] hover:text-gray-900 ml-2 z-20 relative px-1 text-lg leading-none font-bold -my-1 pointer-events-auto"
           >
             &times;
           </button>

@@ -10,25 +10,22 @@ import {
   IonItem,
   IonInput,
   IonTextarea,
-  IonLabel,
-  IonIcon,
   IonFooter,
   IonCard,
   IonCardContent,
   IonSelect,
   IonSelectOption,
   IonNote,
-  IonSegment,
-  IonSegmentButton,
-  useIonModal,
-  useIonToast,
   IonCheckbox,
+  useIonToast,
+  useIonModal,
 } from "@ionic/react";
 import { useHistory, useParams } from "react-router-dom";
 import clsx from "clsx";
 import dayjs from "dayjs";
 import { ChevronDown, Save, CheckCircle } from "lucide-react";
 import { OverlayEventDetail } from "@ionic/react/dist/types/components/react-component-lib/interfaces";
+import { AppSegment } from "@/components/UI";
 
 import DatePicker from "@/components/DatePicker";
 import ModalSelectSupplier from "@/components/ModalSelectSupplier";
@@ -481,18 +478,15 @@ const ReceiptPaymentUpdateScreen: React.FC = () => {
             <IonItem className="py-2" lines="full">
               <div className="flex flex-col w-full py-1">
                 <span className="text-sm text-gray-500 font-medium mb-3">Hình thức thanh toán</span>
-                <IonSegment
+                <AppSegment
                   value={formData.paymentMethod.toString()}
-                  onIonChange={(e) => setFormData((prev) => ({ ...prev, paymentMethod: Number(e.detail.value) as PaymentMethod }))}
-                  className="w-full"
-                >
-                  <IonSegmentButton value={PaymentMethod.CASH.toString()}>
-                    <IonLabel>Tiền mặt</IonLabel>
-                  </IonSegmentButton>
-                  <IonSegmentButton value={PaymentMethod.BANK_TRANSFER.toString()}>
-                    <IonLabel>Chuyển khoản</IonLabel>
-                  </IonSegmentButton>
-                </IonSegment>
+                  onIonChange={(val) => setFormData(prev => ({ ...prev, paymentMethod: Number(val) as PaymentMethod }))}
+                  tabs={[
+                    { value: PaymentMethod.CASH.toString(), label: "Tiền mặt" },
+                    { value: PaymentMethod.BANK_TRANSFER.toString(), label: "Chuyển khoản" }
+                  ]}
+                  className="w-full px-0 py-0"
+                />
               </div>
             </IonItem>
 

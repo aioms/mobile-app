@@ -2,6 +2,7 @@ import { FC, useMemo } from "react";
 import { useHistory } from "react-router";
 import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
 import { getS3ImageUrl } from "@/helpers/fileHelper";
+import { AppCard } from "@/components/UI";
 import { IProduct } from "@/types";
 
 interface ProductCardProps {
@@ -40,7 +41,7 @@ const ProductCard: FC<ProductCardProps> = ({ product, isShowCostPrice }) => {
   }, [product?.images, product?.imageUrls])
 
   return (
-    <div className="bg-white rounded-2xl p-4 flex gap-4" onClick={handleClickToCard}>
+    <AppCard onClick={handleClickToCard} className="flex gap-4">
       {/* Product Image */}
       <div className="w-20 h-20 bg-gray-100 rounded-xl flex-shrink-0 overflow-hidden">
         {primaryImageUrl ? (
@@ -116,7 +117,7 @@ const ProductCard: FC<ProductCardProps> = ({ product, isShowCostPrice }) => {
           </div>
         </div>
       </div>
-    </div>
+    </AppCard>
   );
 };
 

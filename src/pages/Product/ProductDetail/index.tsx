@@ -17,8 +17,6 @@ import {
   IonText,
   IonInput,
   IonSpinner,
-  IonRadioGroup,
-  IonRadio,
   IonToggle,
   useIonToast,
   useIonModal,
@@ -1755,7 +1753,7 @@ const ProductDetail: React.FC = () => {
           loading={loading}
           hasMore={hasMore}
           onLoadMore={handleLoadMore}
-          onChangeTab={(e) => setSelectedTab(e.detail.value as string)}
+          onChangeTab={(val) => setSelectedTab(val as string)}
           selectedTab={selectedTab}
         />
 

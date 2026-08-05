@@ -17,12 +17,13 @@ import {
   IonRefresher,
   IonRefresherContent,
 } from '@ionic/react';
-import { searchOutline, ellipsisVertical, filterOutline, chevronDownOutline } from 'ionicons/icons';
+import { searchOutline, ellipsisVertical, filterOutline } from 'ionicons/icons';
 import useSupplier from '@/hooks/apis/useSupplier';
 import useReceiptImport from '@/hooks/apis/useReceiptImport';
 import { ReceiptImportStatus } from '@/common/enums/receipt';
 
 // Components
+import { AppButton } from '@/components/UI';
 import SupplierHero from './components/SupplierHero';
 import StatsSection from './components/StatsSection';
 import ReceiptItem, { IReceiptImport } from './components/ReceiptItem';
@@ -186,7 +187,7 @@ const SupplierDetail: React.FC = () => {
                     onIonInput={(e) => setReceiptSearchText(e.detail.value!)}
                     debounce={800}
                     placeholder="Tìm kiếm theo sản phẩm hoặc mã giao..."
-                    className="p-0 custom-searchbar h-[48px]"
+                    className="custom-app-searchbar p-0 m-0 w-full"
                     searchIcon={searchOutline}
                     clearIcon={undefined}
                     style={{
@@ -195,7 +196,7 @@ const SupplierDetail: React.FC = () => {
                       '--box-shadow': '0 1px 2px rgba(0,0,0,0.05)',
                       '--placeholder-color': '#9CA3AF',
                       '--icon-color': '#9CA3AF',
-                      '--padding-start': '44px'
+                      '--padding-start': '40px'
                     }}
                   />
                 </div>
@@ -274,23 +275,15 @@ const SupplierDetail: React.FC = () => {
                     ))}
 
                     {metadata && page < metadata.totalPages && (
-                      <div className="mt-4">
-                        <IonButton
-                          fill="clear"
-                          expand="block"
-                          className="text-blue-600 font-semibold"
+                      <div className="flex justify-center mt-4">
+                        <AppButton
+                          variant="pill"
                           onClick={handleLoadMore}
-                          disabled={isFetchingReceipts}
+                          loading={isFetchingReceipts}
+                          loadingText="Đang tải giao dịch..."
                         >
-                          {isFetchingReceipts ? (
-                            <IonSpinner name="crescent" />
-                          ) : (
-                            <>
-                              Xem các giao dịch cũ hơn
-                              <IonIcon icon={chevronDownOutline} slot="end" />
-                            </>
-                          )}
-                        </IonButton>
+                          Xem các giao dịch cũ hơn
+                        </AppButton>
                       </div>
                     )}
                   </>

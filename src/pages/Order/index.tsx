@@ -1,60 +1,54 @@
 import React, { useState } from "react";
+import { useHistory } from "react-router-dom";
 import {
   IonContent,
   IonHeader,
   IonPage,
-  IonSegment,
-  IonSegmentButton,
-  IonLabel,
   IonToolbar,
   IonTitle,
-  IonFab,
-  IonFabButton,
-  IonIcon,
+  IonButtons,
+  IonMenuButton,
 } from "@ionic/react";
-import { add } from "ionicons/icons";
+import { AppFAB, AppSegment } from "@/components/UI";
 
 import ReceiptDebtList from "./ReceiptDebtList";
 import OrderList from "./OrderList";
 
 const OrderPage: React.FC = () => {
+  const history = useHistory();
   const [segment, setSegment] = useState<"orders" | "debt">("orders");
 
   const handleSegmentChange = (value: "orders" | "debt") => setSegment(value);
 
   return (
     <IonPage>
-      <IonHeader translucent>
+      <IonHeader className="ion-no-border bg-white">
         <IonToolbar>
+          <IonButtons slot="start">
+            <IonMenuButton />
+          </IonButtons>
           <IonTitle>Đơn hàng</IonTitle>
+        </IonToolbar>
+        <IonToolbar>
+          <div className="flex justify-center w-full pb-2 mt-2">
+            <AppSegment
+              value={segment}
+              onIonChange={(value) => handleSegmentChange(value as "orders" | "debt")}
+              tabs={[
+                { value: "orders", label: "Đơn hàng" },
+                { value: "debt", label: "Phiếu thu" },
+              ]}
+              className="w-full max-w-sm"
+            />
+          </div>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
-        {/* Segment Buttons */}
-        <IonSegment
-          value={segment}
-          onIonChange={(e) =>
-            handleSegmentChange(e.detail.value as "orders" | "debt")
-          }
-          className="mb-1"
-        >
-          <IonSegmentButton value="orders">
-            <IonLabel>Đơn hàng</IonLabel>
-          </IonSegmentButton>
-          <IonSegmentButton value="debt">
-            <IonLabel>Phiếu thu</IonLabel>
-          </IonSegmentButton>
-        </IonSegment>
+      <IonContent className="bg-gray-50">
 
         {segment === "orders" ? <OrderList /> : <ReceiptDebtList />}
 
-        {/* Floating Action Button */}
-        <IonFab vertical="bottom" horizontal="end" slot="fixed">
-          <IonFabButton routerLink={`/tabs/${segment}/create`}>
-            <IonIcon icon={add} />
-          </IonFabButton>
-        </IonFab>
+        <AppFAB onClick={() => history.push(`/tabs/${segment}/create`)} />
       </IonContent>
     </IonPage>
   );

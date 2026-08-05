@@ -1,5 +1,6 @@
 import { dayjsFormat } from "@/helpers/formatters";
 import { useState } from "react";
+import { AppButton } from "@/components/UI";
 
 export interface ActivityLog {
   user: string;
@@ -67,12 +68,12 @@ export default function ActivityHistory({ activityLog }: Props) {
       {/* Load More Button */}
       {hasMore && (
         <div className="flex justify-center py-4">
-          <button
+          <AppButton
+            variant="pill"
             onClick={handleLoadMore}
-            className="px-4 py-2 text-sm font-medium text-blue-600 bg-white border border-blue-600 rounded-md hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             Xem thêm
-          </button>
+          </AppButton>
         </div>
       )}
     </>
