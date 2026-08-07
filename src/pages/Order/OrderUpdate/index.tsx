@@ -87,6 +87,7 @@ interface IFormData {
   discountAmount?: number;
   discountAmountFormatted?: string;
   orderType?: OrderType;
+  orderVatPercentage?: number;
 }
 
 const initialFormData: IFormData = {
@@ -101,6 +102,7 @@ const initialFormData: IFormData = {
   discountAmount: 0,
   discountAmountFormatted: "",
   orderType: OrderType.SALES,
+  orderVatPercentage: 0,
 };
 
 const OrderUpdate: React.FC = () => {
@@ -163,6 +165,10 @@ const OrderUpdate: React.FC = () => {
       code: product.code,
       sellingPrice: product.sellingPrice,
       quantity: 1,
+      vatRate:
+        formData.orderVatPercentage && formData.orderVatPercentage > 0
+          ? formData.orderVatPercentage
+          : 0,
       inventory: product.inventory, // Add inventory data
       shipNow: false, // Default to false for new items
     };
@@ -432,6 +438,16 @@ const OrderUpdate: React.FC = () => {
     }));
   };
 
+  const handleOrderVatChange = (e: InputCustomEvent) => {
+    const numericValue = Number(e.target.value || 0);
+    if (numericValue >= 0) {
+      setFormData((prev) => ({
+        ...prev,
+        orderVatPercentage: Math.min(numericValue, 100),
+      }));
+    }
+  };
+
   const handlePaymentMethodChange = (e: CustomEvent) => {
     const { value } = e.detail;
     setFormData((prev) => ({
@@ -541,6 +557,23 @@ const OrderUpdate: React.FC = () => {
     const finalTotal = subtotal - discount + vat;
     return finalTotal > 0 ? finalTotal : 0;
   }, [calculateTotal, calculateDiscount, calculateTotalVat]);
+
+  const isOrderVatActive = useMemo(() => {
+    return !!formData.orderVatPercentage && formData.orderVatPercentage > 0;
+  }, [formData.orderVatPercentage]);
+
+  // Fan out order-level VAT to all existing items when active
+  useEffect(() => {
+    if (!isEditMode) return;
+    const rate = formData.orderVatPercentage;
+    if (rate && rate > 0) {
+      setOrderItems((prev) =>
+        prev.map((item) =>
+          item.vatRate === rate ? item : { ...item, vatRate: rate }
+        )
+      );
+    }
+  }, [formData.orderVatPercentage, isEditMode]);
 
   // Show/hide down arrow based on scroll position
   useEffect(() => {
@@ -858,6 +891,18 @@ const OrderUpdate: React.FC = () => {
           discountAmount = 0;
         }
 
+        // Derive order-level VAT when every item shares the same vatRate > 0
+        let orderVatPercentage = 0;
+        if (items.length > 0) {
+          const firstVatRate = items[0].vatRate || 0;
+          const allSameVat =
+            firstVatRate > 0 &&
+            items.every((item: any) => (item.vatRate || 0) === firstVatRate);
+          if (allSameVat) {
+            orderVatPercentage = firstVatRate;
+          }
+        }
+
         // Set form data
         setFormData({
           code: orderDetail.code,
@@ -875,6 +920,7 @@ const OrderUpdate: React.FC = () => {
           discountAmount,
           discountAmountFormatted: formatCurrencyWithoutSymbol(discountAmount),
           orderType: orderDetail.orderType || OrderType.SALES,
+          orderVatPercentage,
         });
 
         // Set customer name
@@ -1095,6 +1141,7 @@ const OrderUpdate: React.FC = () => {
                       {...item}
                       orderStatus={formData.status}
                       isInternalTransfer={formData.orderType === OrderType.INTERNAL_TRANSFER}
+                      isVatDisabled={isOrderVatActive}
                       attrs={{ "data-order-item": "true" }}
                       onRowChange={(data) => handleItemChange(item.id, data)}
                       onRemoveItem={() => handleRemoveItem(item.id)}
@@ -1124,7 +1171,34 @@ const OrderUpdate: React.FC = () => {
           </div>
         </div>
 
-        {/* 2. Discount Section */}
+        {/* 2. Order-level VAT Section */}
+        {formData.orderType !== OrderType.INTERNAL_TRANSFER && (
+          <div className="bg-card rounded-lg shadow-sm mb-4">
+            <div className="p-4">
+              <h2 className="text-lg font-medium text-foreground mb-3">
+                VAT đơn hàng
+              </h2>
+              <IonInput
+                label="VAT đơn hàng (%)"
+                labelPlacement="floating"
+                fill="solid"
+                type="number"
+                min={0}
+                max={100}
+                placeholder="Nhập % VAT áp dụng cho toàn bộ đơn hàng"
+                name="orderVatPercentage"
+                className={cn("custom-padding border rounded-lg", {
+                  "opacity-65": !isEditMode,
+                })}
+                value={formData.orderVatPercentage || 0}
+                onIonChange={handleOrderVatChange}
+                disabled={!isEditMode}
+              ></IonInput>
+            </div>
+          </div>
+        )}
+
+        {/* 2b. Discount Section */}
         {formData.orderType !== OrderType.INTERNAL_TRANSFER && (
           <div className="bg-card rounded-lg shadow-sm mb-4">
             <div className="p-4">

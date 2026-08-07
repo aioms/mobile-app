@@ -86,6 +86,7 @@ interface IFormData {
   discountAmount?: number;
   discountAmountFormatted?: string;
   orderType?: OrderType;
+  orderVatPercentage?: number;
 }
 
 const initialFormData: IFormData = {
@@ -98,6 +99,7 @@ const initialFormData: IFormData = {
   discountAmount: 0,
   discountAmountFormatted: "",
   orderType: OrderType.SALES,
+  orderVatPercentage: 0,
 };
 
 // Map order payment method to modal payment method
@@ -268,7 +270,10 @@ const OrderCreate: React.FC = () => {
         code: resolveProductCode(product),
         sellingPrice: product.sellingPrice,
         quantity: 1,
-        vatRate: 0,
+        vatRate:
+          formData.orderVatPercentage && formData.orderVatPercentage > 0
+            ? formData.orderVatPercentage
+            : 0,
         inventory: product.inventory, // Add inventory data
         shipNow: false, // Default to false for new items
       };
@@ -340,7 +345,10 @@ const OrderCreate: React.FC = () => {
           const newItems = products.map(product => ({
             ...product,
             quantity: product.quantity || 1,
-            vatRate: 0,
+            vatRate:
+              formData.orderVatPercentage && formData.orderVatPercentage > 0
+                ? formData.orderVatPercentage
+                : 0,
             inventory: product.inventory,
             shipNow: false,
           }));
@@ -450,7 +458,10 @@ const OrderCreate: React.FC = () => {
               code: resolveProductCode(newProduct),
               sellingPrice: newProduct.sellingPrice,
               quantity: 1,
-              vatRate: 0,
+              vatRate:
+                formData.orderVatPercentage && formData.orderVatPercentage > 0
+                  ? formData.orderVatPercentage
+                  : 0,
               inventory: newProduct.inventory || 0,
               shipNow: false, // Default to false for new items
             };
@@ -594,6 +605,16 @@ const OrderCreate: React.FC = () => {
     }));
   };
 
+  const handleOrderVatChange = (e: InputCustomEvent) => {
+    const numericValue = Number(e.target.value || 0);
+    if (numericValue >= 0) {
+      setFormData((prev) => ({
+        ...prev,
+        orderVatPercentage: Math.min(numericValue, 100),
+      }));
+    }
+  };
+
   const handlePaymentMethodChange = (e: CustomEvent) => {
     const { value } = e.detail;
     setFormData((prev) => ({
@@ -662,6 +683,21 @@ const OrderCreate: React.FC = () => {
     const finalTotal = subtotal - discount + vat;
     return finalTotal > 0 ? finalTotal : 0;
   };
+
+  const isOrderVatActive =
+    !!formData.orderVatPercentage && formData.orderVatPercentage > 0;
+
+  // Fan out order-level VAT to all existing items when active
+  useEffect(() => {
+    const rate = formData.orderVatPercentage;
+    if (rate && rate > 0) {
+      setOrderItems((prev) =>
+        prev.map((item) =>
+          item.vatRate === rate ? item : { ...item, vatRate: rate }
+        )
+      );
+    }
+  }, [formData.orderVatPercentage]);
 
   // Show/hide down arrow based on scroll position
   useEffect(() => {
@@ -987,6 +1023,7 @@ const OrderCreate: React.FC = () => {
                       vatRate={item.vatRate || 0}
                       attrs={{ "data-order-item": "true" }}
                       isInternalTransfer={formData.orderType === OrderType.INTERNAL_TRANSFER}
+                      isVatDisabled={isOrderVatActive}
                       onRowChange={(data) => handleItemChange(item.id, data)}
                       onRemoveItem={() => handleRemoveItem(item.id)}
                     />
@@ -1015,7 +1052,31 @@ const OrderCreate: React.FC = () => {
           </div>
         </div>
 
-        {/* 2. Discount Section */}
+        {/* 2. Order-level VAT Section */}
+        {formData.orderType !== OrderType.INTERNAL_TRANSFER && (
+          <div className="bg-card rounded-lg shadow-sm mb-4">
+            <div className="p-4">
+              <h2 className="text-lg font-medium text-foreground mb-3">
+                VAT đơn hàng
+              </h2>
+              <IonInput
+                label="VAT đơn hàng (%)"
+                labelPlacement="floating"
+                fill="solid"
+                type="number"
+                min={0}
+                max={100}
+                placeholder="Nhập % VAT áp dụng cho toàn bộ đơn hàng"
+                name="orderVatPercentage"
+                className="custom-padding border rounded-lg"
+                value={formData.orderVatPercentage || 0}
+                onIonChange={handleOrderVatChange}
+              ></IonInput>
+            </div>
+          </div>
+        )}
+
+        {/* 2b. Discount Section */}
         {formData.orderType !== OrderType.INTERNAL_TRANSFER && (
           <div className="bg-card rounded-lg shadow-sm mb-4">
             <div className="p-4">

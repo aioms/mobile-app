@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
+    IonPage,
     IonContent,
     IonHeader,
     IonTitle,
@@ -148,6 +149,11 @@ const ReceiptCheckCreate: React.FC = () => {
             newErrors.warehouse = "Vui lòng chọn kho";
         }
 
+        setErrors(newErrors);
+
+        const hasFieldErrors = Object.values(newErrors).some((error) => error.length > 0);
+        if (hasFieldErrors) return false;
+
         if (receiptItems.length === 0) {
             presentToast({
                 message: "Vui lòng chọn ít nhất 1 sản phẩm",
@@ -155,24 +161,33 @@ const ReceiptCheckCreate: React.FC = () => {
                 position: "top",
                 color: "danger",
             });
+            return false;
         }
 
-        setErrors(newErrors);
-        return !Object.values(newErrors).some((error) => error.length > 0);
+        return true;
     };
 
     const handleSubmit = async () => {
         const isValid = await validateForm(formData);
         if (!isValid) return;
 
-        const items = receiptItems.map((item) => ({
-            productId: item.id,
-            productCode: item.productCode,
-            productName: item.productName,
-            quantity: 1,
-            inventory: item.inventory,
-            costPrice: item.costPrice || 0,
-        }));
+        const items = receiptItems.map((item) => {
+            const rawProductCode = item.productCode ?? item.code;
+            const numericProductCode =
+                typeof rawProductCode === "number"
+                    ? rawProductCode
+                    : parseInt(String(rawProductCode || "").replace(/\D/g, ""), 10) || 0;
+
+            return {
+                productId: item.id,
+                productCode: numericProductCode,
+                productName: item.productName || item.name || "",
+                quantity: 1,
+                inventory: item.inventory ?? 0,
+                actualInventory: item.actualInventory ?? item.inventory ?? 0,
+                costPrice: item.costPrice ?? item.price ?? 0,
+            };
+        });
 
         const payload = {
             date: getDate(formData.checkDate).format(),
@@ -214,7 +229,7 @@ const ReceiptCheckCreate: React.FC = () => {
     };
 
     return (
-        <>
+        <IonPage>
             <IonHeader>
                 <IonToolbar>
                     <IonButtons slot="start">
@@ -390,7 +405,7 @@ const ReceiptCheckCreate: React.FC = () => {
                     </div>
                 </div>
             </IonFooter>
-        </>
+        </IonPage>
     );
 };
 
