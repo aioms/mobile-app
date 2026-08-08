@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -18,6 +18,7 @@ import {
   IonRefresherContent,
 } from '@ionic/react';
 import { searchOutline, ellipsisVertical, filterOutline } from 'ionicons/icons';
+import { debounce } from 'radash';
 import useSupplier from '@/hooks/apis/useSupplier';
 import useReceiptImport from '@/hooks/apis/useReceiptImport';
 import { ReceiptImportStatus } from '@/common/enums/receipt';
@@ -57,6 +58,7 @@ const SupplierDetail: React.FC = () => {
   const [supplier, setSupplier] = useState<ISupplierDetail | null>(null);
 
   const [receiptSearchText, setReceiptSearchText] = useState('');
+  const [receiptSearchKeyword, setReceiptSearchKeyword] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [fromDate, setFromDate] = useState<string | undefined>(dayjs().startOf('month').toISOString());
   const [toDate, setToDate] = useState<string | undefined>(dayjs().endOf('day').toISOString());
@@ -109,8 +111,8 @@ const SupplierDetail: React.FC = () => {
         filters.toDate = dayjs(toDate).endOf('day').utc().format();
       }
 
-      if (receiptSearchText) {
-        filters.keyword = receiptSearchText;
+      if (receiptSearchKeyword) {
+        filters.keyword = receiptSearchKeyword;
       }
 
       const response: any = await getReceiptsList(filters, pageNum);
@@ -128,7 +130,16 @@ const SupplierDetail: React.FC = () => {
     } finally {
       setIsFetchingReceipts(false);
     }
-  }, [id, selectedStatus, fromDate, toDate, receiptSearchText, getReceiptsList]);
+  }, [id, selectedStatus, fromDate, toDate, receiptSearchKeyword, getReceiptsList]);
+
+  const debouncedSetKeyword = useMemo(
+    () => debounce({ delay: 500 }, (val: string) => setReceiptSearchKeyword(val)),
+    []
+  );
+
+  useEffect(() => {
+    debouncedSetKeyword(receiptSearchText);
+  }, [receiptSearchText, debouncedSetKeyword]);
 
   useEffect(() => {
     fetchReceipts(1, false);
@@ -185,7 +196,7 @@ const SupplierDetail: React.FC = () => {
                   <IonSearchbar
                     value={receiptSearchText}
                     onIonInput={(e) => setReceiptSearchText(e.detail.value!)}
-                    debounce={800}
+                    debounce={0}
                     placeholder="Tìm kiếm theo sản phẩm hoặc mã giao..."
                     className="custom-app-searchbar p-0 m-0 w-full"
                     searchIcon={searchOutline}

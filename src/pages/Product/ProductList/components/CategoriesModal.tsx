@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   IonContent,
   IonHeader,
@@ -26,7 +26,9 @@ const CategoriesModal: React.FC<Props> = ({
 }) => {
   const [selected, setSelected] = useState<string[]>(initialSelected);
   const [searchText, setSearchText] = useState("");
+  const [searchKeyword, setSearchKeyword] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
+  const keywordTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { getCategories } = useProduct();
 
@@ -43,9 +45,19 @@ const CategoriesModal: React.FC<Props> = ({
   };
 
   useEffect(() => {
+    if (keywordTimerRef.current) clearTimeout(keywordTimerRef.current);
+    keywordTimerRef.current = setTimeout(() => {
+      setSearchKeyword(searchText);
+    }, 500);
+    return () => {
+      if (keywordTimerRef.current) clearTimeout(keywordTimerRef.current);
+    };
+  }, [searchText]);
+
+  useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await getCategories({ keyword: searchText });
+        const response = await getCategories({ keyword: searchKeyword });
 
         if (!response.length) {
           return await Toast.show({
@@ -66,7 +78,7 @@ const CategoriesModal: React.FC<Props> = ({
     };
 
     fetchCategories();
-  }, [searchText]);
+  }, [searchKeyword]);
 
   return (
     <>
@@ -83,7 +95,7 @@ const CategoriesModal: React.FC<Props> = ({
           <IonSearchbar
             value={searchText}
             onIonInput={(e) => setSearchText(e.detail.value || "")}
-            debounce={800}
+            debounce={0}
             placeholder="Tìm kiếm nhóm hàng"
             className="mb-4"
           />

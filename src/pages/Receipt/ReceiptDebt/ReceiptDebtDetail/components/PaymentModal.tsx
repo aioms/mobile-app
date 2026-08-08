@@ -25,7 +25,11 @@ interface PaymentModalProps {
     code: string;
     remainingAmount: number;
   };
-  onPaymentComplete: (amount: number, method: PaymentMethod) => void;
+  onPaymentComplete: (
+    amount: number,
+    method: PaymentMethod,
+    description: string
+  ) => void;
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({
@@ -37,14 +41,16 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [currentStep, setCurrentStep] = useState<PaymentStep>("options");
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(null);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [paymentDescription, setPaymentDescription] = useState<string>("");
 
   const handleMethodSelect = (method: PaymentMethod) => {
     setSelectedMethod(method);
     setCurrentStep("amount");
   };
 
-  const handleAmountConfirm = (amount: number) => {
+  const handleAmountConfirm = (amount: number, description: string) => {
     setPaymentAmount(amount);
+    setPaymentDescription(description);
     if (selectedMethod === "qr") {
       setCurrentStep("qr");
     } else {
@@ -53,7 +59,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   const handlePaymentComplete = () => {
-    onPaymentComplete(paymentAmount, selectedMethod);
+    onPaymentComplete(paymentAmount, selectedMethod, paymentDescription);
     handleClose();
   };
 
@@ -61,6 +67,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     setCurrentStep("options");
     setSelectedMethod(null);
     setPaymentAmount(0);
+    setPaymentDescription("");
     onClose();
   };
 
@@ -138,6 +145,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           <PaymentCompletion
             amount={paymentAmount}
             method={selectedMethod}
+            description={paymentDescription}
             onComplete={handlePaymentComplete}
             onBack={handleBack}
           />

@@ -139,6 +139,7 @@ const SupplierList: React.FC = () => {
           placeholder="Tìm NCC theo tên, danh mục..."
           isFiltered={selectedSuppliers.length > 0 || searchText !== ""}
           onFilterClick={() => setShowFilterModal(true)}
+          debounceMs={0}
         />
         {selectedSuppliers.length > 0 && (
           <div className="px-4 pb-2 bg-white flex flex-wrap gap-2 overflow-x-auto no-scrollbar">

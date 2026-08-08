@@ -3,6 +3,7 @@ import {
   IonItem,
   IonLabel,
   IonInput,
+  IonTextarea,
   IonButton,
   IonText,
   IonGrid,
@@ -18,7 +19,7 @@ import { PaymentMethod } from "./PaymentModal";
 
 interface AmountInputProps {
   maxAmount: number;
-  onAmountConfirm: (amount: number) => void;
+  onAmountConfirm: (amount: number, description: string) => void;
   onBack: () => void;
   method: PaymentMethod;
 }
@@ -31,6 +32,7 @@ const AmountInput: React.FC<AmountInputProps> = ({
 }) => {
   const [displayAmount, setDisplayAmount] = useState<string>("");
   const [numericAmount, setNumericAmount] = useState<number>(0);
+  const [description, setDescription] = useState<string>("");
   const [error, setError] = useState<string>("");
 
   const handleAmountChange = (value: string | number | null | undefined) => {
@@ -61,7 +63,7 @@ const AmountInput: React.FC<AmountInputProps> = ({
       return;
     }
 
-    onAmountConfirm(numericAmount);
+    onAmountConfirm(numericAmount, description.trim());
   };
 
   const setMaxAmount = () => {
@@ -92,6 +94,17 @@ const AmountInput: React.FC<AmountInputProps> = ({
           placeholder="Nhập số tiền"
           onIonInput={(e) => handleAmountChange(e.detail.value!)}
           className={error ? "ion-invalid" : ""}
+        />
+      </IonItem>
+
+      <IonItem className="mb-4">
+        <IonLabel position="stacked">Mô tả</IonLabel>
+        <IonTextarea
+          value={description}
+          placeholder="Nhập mô tả (không bắt buộc)"
+          autoGrow
+          rows={2}
+          onIonInput={(e) => setDescription(e.detail.value ?? "")}
         />
       </IonItem>
 

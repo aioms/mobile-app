@@ -100,7 +100,7 @@ const ReceiptDebtDetail: React.FC = () => {
     try {
       const response = await getPaymentTransactions(id);
 
-      if (response.transactions && response.transactions.length > 0) {
+      if (response.transactions) {
         setTransactions(response.transactions);
       }
     } catch (err) {
@@ -158,7 +158,7 @@ const ReceiptDebtDetail: React.FC = () => {
 
   // Callback handler for payment completion
   const handlePaymentComplete = useCallback(
-    async (amount: number, method: PaymentMethod) => {
+    async (amount: number, method: PaymentMethod, description: string) => {
       await withLoading(async () => {
         try {
           // Validate input
@@ -195,7 +195,9 @@ const ReceiptDebtDetail: React.FC = () => {
             amount,
             paymentMethod: mapPaymentMethod(method),
             type: TransactionType.PAYMENT,
-            note: `Thanh toán cho phiếu thu ${receiptData.receipt.code}`,
+            note:
+              description ||
+              `Thanh toán cho phiếu thu ${receiptData.receipt.code}`,
           };
 
           const paymentData: PayDebtRequestDto = {
@@ -629,6 +631,7 @@ const ReceiptDebtDetail: React.FC = () => {
                       {transaction.description && (
                         <IonRow className="text-xs text-gray-500 mt-1">
                           <IonCol className="p-0">
+                            <span className="text-gray-400">Mô tả: </span>
                             {transaction.description}
                           </IonCol>
                         </IonRow>

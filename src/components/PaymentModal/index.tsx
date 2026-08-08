@@ -26,7 +26,11 @@ interface PaymentModalProps {
     totalAmount: number;
   };
   preSelectedMethod?: PaymentMethod;
-  onPaymentComplete: (amount: number, method: PaymentMethod) => void | Promise<void>;
+  onPaymentComplete: (
+    amount: number,
+    method: PaymentMethod,
+    description: string
+  ) => void | Promise<void>;
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({
@@ -41,6 +45,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   );
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(preSelectedMethod || null);
   const [paymentAmount, setPaymentAmount] = useState<number>(preSelectedMethod ? orderData.totalAmount : 0);
+  const [paymentDescription, setPaymentDescription] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const isProcessingRef = useRef(false);
 
@@ -49,8 +54,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     setCurrentStep("amount");
   };
 
-  const handleAmountConfirm = (amount: number) => {
+  const handleAmountConfirm = (amount: number, description: string) => {
     setPaymentAmount(amount);
+    setPaymentDescription(description);
     if (selectedMethod === "qr") {
       setCurrentStep("qr");
     } else {
@@ -64,7 +70,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     isProcessingRef.current = true;
     setIsProcessing(true);
     try {
-      await onPaymentComplete(paymentAmount, selectedMethod);
+      await onPaymentComplete(paymentAmount, selectedMethod, paymentDescription);
       handleClose();
     } finally {
       isProcessingRef.current = false;
@@ -78,6 +84,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     setCurrentStep(preSelectedMethod ? (preSelectedMethod === "qr" ? "qr" : "completion") : "options");
     setSelectedMethod(preSelectedMethod || null);
     setPaymentAmount(preSelectedMethod ? orderData.totalAmount : 0);
+    setPaymentDescription("");
     onClose();
   };
 
@@ -155,6 +162,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           <PaymentCompletion
             amount={paymentAmount}
             method={selectedMethod}
+            description={paymentDescription}
             onComplete={handlePaymentComplete}
             onBack={handleBack}
             isProcessing={isProcessing}

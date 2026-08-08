@@ -7,6 +7,7 @@ import { PaymentMethod } from "./index";
 interface PaymentCompletionProps {
   amount: number;
   method: PaymentMethod;
+  description?: string;
   onComplete: () => void;
   onBack: () => void;
   isProcessing: boolean;
@@ -15,6 +16,7 @@ interface PaymentCompletionProps {
 const PaymentCompletion: React.FC<PaymentCompletionProps> = ({
   amount,
   method,
+  description,
   onComplete,
   onBack,
   isProcessing,
@@ -70,6 +72,14 @@ const PaymentCompletion: React.FC<PaymentCompletionProps> = ({
                   {formatCurrency(amount)}
                 </span>
               </div>
+              {description && (
+                <div className="flex justify-between items-start text-left gap-3">
+                  <span className="text-gray-600 shrink-0">Mô tả:</span>
+                  <span className="font-medium text-gray-800 break-words">
+                    {description}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

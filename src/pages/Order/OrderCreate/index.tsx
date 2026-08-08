@@ -192,7 +192,8 @@ const OrderCreate: React.FC = () => {
   // Handle payment completion
   const handlePaymentComplete = async (
     amount: number,
-    method: PaymentModalMethod
+    method: PaymentModalMethod,
+    description: string
   ) => {
     if (!pendingOrderData) {
       presentToast({
@@ -223,7 +224,7 @@ const OrderCreate: React.FC = () => {
       amount,
       paymentMethod: mapPaymentMethod(method),
       type: TransactionType.PAYMENT,
-      note: `Thanh toán đơn hàng`,
+      note: description || `Thanh toán đơn hàng`,
     };
 
     // Update order data with completed status and transaction
