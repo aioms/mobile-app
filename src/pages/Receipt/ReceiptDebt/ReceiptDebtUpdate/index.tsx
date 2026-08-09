@@ -38,7 +38,8 @@ import {
   ReceiptDebtDetailResponse, 
   IEditableProductItem,
   IReceiptDebtUpdateForm,
-  IReceiptDebtUpdateErrors
+  IReceiptDebtUpdateErrors,
+  ReceiptPeriodSummary,
 } from "./receiptDebtUpdate.d";
 import useReceiptCalculations from "./hooks/useReceiptCalculations";
 import { Refresher } from "@/components/Refresher/Refresher";
@@ -61,13 +62,16 @@ const ReceiptDebtUpdate: React.FC = () => {
   const [productItems, setProductItems] = useState<
     Record<string, IEditableProductItem[]>
   >({});
+  const [periods, setPeriods] = useState<Record<string, ReceiptPeriodSummary>>(
+    {}
+  );
 
   const { withLoading, isLoading } = useLoading();
 
   const { getDetail, update } = useReceiptDebt();
 
-  // Calculate totals using the custom hook
-  const calculations = useReceiptCalculations(productItems);
+  // Calculate totals using the custom hook (includes VAT)
+  const calculations = useReceiptCalculations(productItems, periods);
 
   const fetchReceiptDebtDetails = async () => {
     if (!id) {
@@ -98,6 +102,7 @@ const ReceiptDebtUpdate: React.FC = () => {
 
       setReceiptDebt(response.receipt);
       setProductItems(response.items);
+      setPeriods(response.periods || {});
 
       setFormData({
         customer: customerName || "",
@@ -135,6 +140,19 @@ const ReceiptDebtUpdate: React.FC = () => {
   // Handle items change from enhanced component
   const handleItemsChange = (updatedItems: Record<string, IEditableProductItem[]>) => {
     setProductItems(updatedItems);
+  };
+
+  const handleVatChange = (periodDate: string, vatAmount: number) => {
+    setPeriods((prev) => {
+      if (!prev[periodDate]) return prev;
+      return {
+        ...prev,
+        [periodDate]: {
+          ...prev[periodDate],
+          vatAmount,
+        },
+      };
+    });
   };
 
   const validateForm = () => {
@@ -253,6 +271,9 @@ const ReceiptDebtUpdate: React.FC = () => {
                 </div>
                 <div className="text-sm text-gray-500 mt-1">
                   Tổng {calculations.totalQuantity} sản phẩm
+                  {calculations.totalVatAmount > 0
+                    ? ` • VAT ${formatCurrency(calculations.totalVatAmount)}`
+                    : ""}
                 </div>
               </div>
 
@@ -295,9 +316,12 @@ const ReceiptDebtUpdate: React.FC = () => {
             </div>
 
             <EnhancedPurchasePeriodList 
-              items={productItems} 
+              items={productItems}
+              periods={periods}
+              debtId={id!}
               receiptStatus={receiptDebt?.status as TReceiptDebtStatus}
               onItemsChange={handleItemsChange}
+              onVatChange={handleVatChange}
               calculations={calculations}
             />
 

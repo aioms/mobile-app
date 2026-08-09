@@ -15,6 +15,7 @@ import {
   IonIcon,
   IonTextarea,
   IonText,
+  IonInput,
   useIonToast,
   IonRefresher,
   IonRefresherContent,
@@ -26,7 +27,7 @@ import { RefresherEventDetail } from "@ionic/core";
 import { checkmarkCircleOutline, printOutline } from "ionicons/icons";
 
 import { getDate } from "@/helpers/date";
-import { formatCurrency } from "@/helpers/formatters";
+import { formatCurrency, formatCurrencyInput, parseCurrencyInput } from "@/helpers/formatters";
 import { getStatusLabel, getStatusColor, TReceiptDebtStatus, TReceiptDebtType } from "@/common/constants/receipt-debt.constant";
 import { IReceiptItemPeriod } from "@/types/receipt-debt.type";
 import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
@@ -65,9 +66,15 @@ interface IReceiptDebtDetail {
   customerName: string | null;
 }
 
+interface ReceiptPeriodSummary {
+  id: string;
+  vatAmount: number;
+}
+
 interface ReceiptDebtDetailResponse {
   receipt: IReceiptDebtDetail;
   items: Record<string, IReceiptItemPeriod[]>;
+  periods?: Record<string, ReceiptPeriodSummary>;
 }
 
 const ReceiptDebtPeriod: React.FC<{}> = () => {
@@ -77,6 +84,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
   const [presentToast] = useIonToast();
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [vatAmountDisplay, setVatAmountDisplay] = useState("");
   const [receiptDebt, setReceiptDebt] = useState<IReceiptDebtDetail | null>(
     null
   );
@@ -156,6 +164,12 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
         dueDate: getDate(dueDate || new Date()).format(),
         note,
       });
+
+      const currentDateKey = getDate(new Date()).format("YYYY-MM-DD");
+      const existingVat = response.periods?.[currentDateKey]?.vatAmount || 0;
+      setVatAmountDisplay(
+        existingVat > 0 ? formatCurrencyInput(String(existingVat)) : ""
+      );
     });
   };
 
@@ -622,6 +636,22 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
     }, 0);
   }, [productItems]);
 
+  const vatAmount = useMemo(
+    () => parseCurrencyInput(vatAmountDisplay),
+    [vatAmountDisplay]
+  );
+
+  const totalAmountWithVat = useMemo(
+    () => totalAmount + vatAmount,
+    [totalAmount, vatAmount]
+  );
+
+  const handleVatAmountChange = (value: string | null | undefined) => {
+    const stringValue = String(value || "");
+    const parsed = parseCurrencyInput(stringValue);
+    setVatAmountDisplay(parsed === 0 ? "" : formatCurrencyInput(stringValue));
+  };
+
   const handleFormChange = (field: string, value: any) => {
     setFormData((prev) => ({
       ...prev,
@@ -728,6 +758,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
         const payload = {
           dueDate: formData.dueDate,
           note: formData.note,
+          vatAmount,
           items: editedOrAddedItems.map((item) => ({
             productId: item.productId,
             productName: item.productName,
@@ -855,10 +886,33 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
             />
 
             <div className="bg-card rounded-lg shadow-sm p-4 mt-3">
-              <IonText className="text-lg">Tổng Tiền Đợt Thu Mới: </IonText>
-              <IonText className="text-lg font-semibold" color="primary">
-                {formatCurrency(totalAmount)}
-              </IonText>
+              <div className="mb-3">
+                <IonText className="text-lg">Tổng Tiền Đợt Thu Mới: </IonText>
+                <IonText className="text-lg font-semibold" color="primary">
+                  {formatCurrency(totalAmount)}
+                </IonText>
+              </div>
+
+              <div className="mb-3">
+                <h2 className="text-md font-medium text-foreground mb-2">
+                  VAT đợt thu
+                </h2>
+                <IonInput
+                  type="text"
+                  inputMode="numeric"
+                  value={vatAmountDisplay}
+                  placeholder="Nhập số tiền VAT"
+                  onIonInput={(e) => handleVatAmountChange(e.detail.value)}
+                  className="border border-input rounded-lg px-3"
+                />
+              </div>
+
+              <div>
+                <IonText className="text-lg">Tổng cộng (gồm VAT): </IonText>
+                <IonText className="text-lg font-semibold text-red-600">
+                  {formatCurrency(totalAmountWithVat)}
+                </IonText>
+              </div>
             </div>
 
             <div className="bg-card rounded-lg shadow-sm mt-3">

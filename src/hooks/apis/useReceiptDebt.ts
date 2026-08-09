@@ -55,7 +55,21 @@ const useReceiptDebt = () => {
     return response.data;
   };
 
-  const updateInventoryForNewPeriod = async (id: string, payload: any) => {
+  const updateInventoryForNewPeriod = async (id: string, payload: {
+    items: Array<{
+      productId: string;
+      productName: string;
+      productCode: number;
+      quantity: number;
+      originalQuantity: number;
+      costPrice: number;
+      receiptPeriodId?: string;
+      shipNow?: boolean;
+    }>;
+    dueDate?: string;
+    note?: string;
+    vatAmount?: number;
+  }) => {
     const response: IHttpResponse = await request.patch(
       `/${PREFIX_PATH}/${id}/inventory/update`,
       payload,
@@ -100,40 +114,43 @@ const useReceiptDebt = () => {
     return response.data;
   };
 
-  const updateReceiptItem = async (payload: {
-    receiptItemId: string;
-    quantity: number;
-    costPrice: number;
-  }) => {
+  const updateReceiptPeriod = async (
+    debtId: string,
+    periodId: string,
+    payload: {
+      vatAmount?: number;
+      items?: Array<{
+        receiptItemId: string;
+        quantity: number;
+        costPrice: number;
+      }>;
+    },
+  ) => {
     try {
       const response: IHttpResponse = await request.patch(
-        `/${PREFIX_PATH}/item/update`,
+        `/${PREFIX_PATH}/${debtId}/period/${periodId}`,
         payload,
       );
 
-      // Check if the API response indicates an error
       if (response && typeof response === "object" && "success" in response) {
         if (!response.success) {
-          // Handle API error responses with specific error messages
           const errorMessage = response.message ||
-            "Failed to update receipt item";
+            "Failed to update receipt period";
           throw new Error(errorMessage);
         }
       }
 
       return response.data || response;
     } catch (error) {
-      // Handle both API errors and network errors
       if (error instanceof Error) {
-        throw error; // Re-throw if it's already an Error (including our custom API errors)
+        throw error;
       }
 
-      // Handle unexpected error formats
       if (error && typeof error === "object" && "message" in error) {
         throw new Error(error.message as string);
       }
 
-      throw new Error("Failed to update receipt item");
+      throw new Error("Failed to update receipt period");
     }
   };
 
@@ -176,7 +193,7 @@ const useReceiptDebt = () => {
     updateInventoryForNewPeriod,
     payDebt,
     getPaymentTransactions,
-    updateReceiptItem,
+    updateReceiptPeriod,
     cancelReceiptDebt,
     getStatistics,
   };

@@ -10,13 +10,14 @@ import { IEditableProductItemProps } from "../receiptDebtUpdate.d";
 const EditableProductItem: React.FC<IEditableProductItemProps> = ({
   item,
   periodDate,
+  debtId,
   isDisabled,
   onItemChange,
   onToggleEdit,
 }) => {
   const [presentToast] = useIonToast();
   const { withLoading } = useLoading();
-  const { updateReceiptItem } = useReceiptDebt();
+  const { updateReceiptPeriod } = useReceiptDebt();
   const [editValues, setEditValues] = useState({
     quantity: item.quantity.toString(),
     costPrice: formatCurrencyInput(item.costPrice.toString()),
@@ -76,15 +77,30 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
       return;
     }
 
+    const periodId = item.receiptPeriodId;
+    if (!periodId) {
+      presentToast({
+        message: "Không tìm thấy thông tin đợt thu của sản phẩm",
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+      return;
+    }
+
     const quantity = parseInt(editValues.quantity);
     const costPrice = parseCurrencyInput(editValues.costPrice);
 
     await withLoading(async () => {
       try {
-        await updateReceiptItem({
-          receiptItemId: item.id,
-          quantity,
-          costPrice,
+        await updateReceiptPeriod(debtId, periodId, {
+          items: [
+            {
+              receiptItemId: item.id,
+              quantity,
+              costPrice,
+            },
+          ],
         });
 
         // Update local state after successful API call

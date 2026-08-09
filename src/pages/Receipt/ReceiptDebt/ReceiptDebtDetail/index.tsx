@@ -73,9 +73,15 @@ export interface ReceiptDebt {
   };
 }
 
+interface ReceiptPeriodSummary {
+  id: string;
+  vatAmount: number;
+}
+
 interface ResponseData {
   receipt: ReceiptDebt | null;
   items: Record<string, IProductItem[]>;
+  periods?: Record<string, ReceiptPeriodSummary>;
 }
 
 const ReceiptDebtDetail: React.FC = () => {
@@ -89,6 +95,7 @@ const ReceiptDebtDetail: React.FC = () => {
   const [receiptData, setReceiptData] = useState<ResponseData>({
     receipt: null,
     items: {}, // Fix: Initialize as empty object instead of array
+    periods: {},
   });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
@@ -363,7 +370,12 @@ const ReceiptDebtDetail: React.FC = () => {
     return <EmptyPage />
   }
 
-  const { receipt, items } = receiptData;
+  const { receipt, items, periods = {} } = receiptData;
+
+  const totalVatAmount = Object.values(periods).reduce(
+    (sum, period) => sum + (period?.vatAmount || 0),
+    0
+  );
 
   return (
     <IonPage>
@@ -479,9 +491,16 @@ const ReceiptDebtDetail: React.FC = () => {
                 >
                   {/* Period Header */}
                   <div className="bg-blue-50 px-4 py-2">
-                    <h4 className="text-sm font-medium text-blue-700">
-                      Đợt: {getDate(period).format("DD/MM/YYYY")}
-                    </h4>
+                    <div className="flex justify-between items-center gap-2">
+                      <h4 className="text-sm font-medium text-blue-700">
+                        Đợt: {getDate(period).format("DD/MM/YYYY")}
+                      </h4>
+                      {periods[period] && (
+                        <span className="text-xs font-medium text-blue-700 whitespace-nowrap">
+                          VAT: {formatCurrency(periods[period].vatAmount || 0)}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Table Header */}
@@ -656,21 +675,30 @@ const ReceiptDebtDetail: React.FC = () => {
                     Tổng công nợ
                   </span>
                   <span className="text-xl font-bold text-red-500">
-                    {receipt?.totalAmount &&
-                      formatCurrency(receipt?.totalAmount)}
+                    {receipt?.totalAmount != null &&
+                      formatCurrency(receipt.totalAmount)}
                   </span>
                 </div>
+                {totalVatAmount > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Tổng VAT:</span>
+                    <span className="text-orange-600 font-semibold">
+                      {formatCurrency(totalVatAmount)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Đã Thu:</span>
                   <span className="text-green-500 font-semibold">
-                    {receipt?.paidAmount && formatCurrency(receipt?.paidAmount)}
+                    {receipt?.paidAmount != null &&
+                      formatCurrency(receipt.paidAmount)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Còn Lại:</span>
                   <span className="text-blue-500 font-semibold">
-                    {receipt?.remainingAmount &&
-                      formatCurrency(receipt?.remainingAmount)}
+                    {receipt?.remainingAmount != null &&
+                      formatCurrency(receipt.remainingAmount)}
                   </span>
                 </div>
               </div>
