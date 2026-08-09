@@ -9,6 +9,7 @@ import {
   IonContent,
   IonHeader,
   IonIcon,
+  IonInput,
   IonLabel,
   IonList,
   IonPage,
@@ -84,18 +85,25 @@ interface ReceiptImport {
     name: string;
   };
   totalAmount: number;
+  vatPercent: number;
   items: ReceiptItem[];
 }
 
-type IFormData = Pick<ReceiptImport, "note" | "importDate" | "paymentDate"> & {
+type IFormData = Pick<
+  ReceiptImport,
+  "note" | "importDate" | "paymentDate" | "vatPercent"
+> & {
   supplier: string;
 };
+
+const VAT_PERCENT_OPTIONS = [8, 10];
 
 const initialFormData: IFormData = {
   note: "",
   importDate: "",
   paymentDate: "",
   supplier: "",
+  vatPercent: 0,
 };
 
 const receiptImportDateFormatOptions = {
@@ -398,6 +406,7 @@ const ReceiptImportDetail: React.FC = () => {
           paymentDate: receipt.paymentDate,
           importDate: receipt.importDate,
           supplier: receipt.supplier?.id,
+          vatPercent: receipt.vatPercent || 0,
         });
       } catch (error) {
         captureException(error as Error, createExceptionContext(
@@ -717,6 +726,23 @@ const ReceiptImportDetail: React.FC = () => {
     return supplierName;
   }, [receipt?.supplier, formData.supplier]);
 
+  // Whether receipt-level info (dates, supplier, note, VAT) can still be edited
+  const isReceiptInfoEditable = useMemo(() => {
+    if (!receipt || !user) return false;
+
+    const isEmployee = user.role === UserRole.EMPLOYEE;
+
+    if (
+      receipt.status === RECEIPT_IMPORT_STATUS.COMPLETED ||
+      receipt.status === RECEIPT_IMPORT_STATUS.PAID ||
+      (isEmployee && !isUserSpecial)
+    ) {
+      return false;
+    }
+
+    return true;
+  }, [receipt?.status, user, isUserSpecial]);
+
   const renderReceiptSummary = useMemo(() => {
     if (!receipt || !user) return null;
 
@@ -882,6 +908,37 @@ const ReceiptImportDetail: React.FC = () => {
     }, 0);
   }, [receipt?.items]);
 
+  // Current VAT percent, taken from the editable form while it can still be
+  // changed, and falling back to the persisted receipt value otherwise
+  const vatPercent = isReceiptInfoEditable
+    ? formData.vatPercent ?? 0
+    : receipt?.vatPercent || 0;
+
+  // VAT amount = Tổng tiền * VAT%
+  const vatAmount = useMemo(() => {
+    return calculatedTotalAmount * (vatPercent / 100);
+  }, [calculatedTotalAmount, vatPercent]);
+
+  // Thành tiền = Tổng tiền + VAT
+  const finalAmount = useMemo(() => {
+    return calculatedTotalAmount + vatAmount;
+  }, [calculatedTotalAmount, vatAmount]);
+
+  const handleVatPercentChange = (value: string) => {
+    if (value === "") {
+      setFormData((prev) => ({ ...prev, vatPercent: 0 }));
+      return;
+    }
+
+    const numericValue = Number(value);
+    if (Number.isNaN(numericValue)) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      vatPercent: Math.min(Math.max(numericValue, 0), 100),
+    }));
+  };
+
   const renderReceiptItems = useMemo(() => {
     if (!receipt || !user) return null;
 
@@ -1032,6 +1089,45 @@ const ReceiptImportDetail: React.FC = () => {
             <IonList lines="full">{renderReceiptItems}</IonList>
           </div>
 
+          {/* VAT Section - only shown when editable to avoid duplicating the VAT line in summary */}
+          {isReceiptInfoEditable && (
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <div className="flex justify-between items-center gap-3">
+                <span className="font-medium shrink-0">VAT (%)</span>
+
+                <div className="flex items-center gap-2 flex-wrap justify-end">
+                  {VAT_PERCENT_OPTIONS.map((rate) => (
+                    <button
+                      key={rate}
+                      type="button"
+                      onClick={() =>
+                        setFormData((prev) => ({ ...prev, vatPercent: rate }))
+                      }
+                      className={`px-2.5 py-1 rounded-lg border text-sm ${
+                        vatPercent === rate
+                          ? "bg-blue-500 text-white border-blue-500"
+                          : "border-gray-300 text-gray-600 bg-white"
+                      }`}
+                    >
+                      {rate}%
+                    </button>
+                  ))}
+                  <IonInput
+                    type="number"
+                    fill="outline"
+                    min={0}
+                    max={100}
+                    value={formData.vatPercent ?? 0}
+                    onIonInput={(e) =>
+                      handleVatPercentChange(String(e.detail.value ?? ""))
+                    }
+                    className="w-20 border-solid border-2 border-gray-500/25 rounded-lg ion-padding-start bg-white text-gray-900"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Summary Section */}
           <div className="bg-white rounded-lg p-4 shadow-sm">
             <div className="flex justify-between items-center">
@@ -1042,6 +1138,18 @@ const ReceiptImportDetail: React.FC = () => {
               <span className="font-medium">Tổng tiền:</span>
               <span className="font-bold text-lg text-blue-600">
                 {formatCurrency(calculatedTotalAmount)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center mt-2">
+              <span className="font-medium">VAT ({vatPercent}%):</span>
+              <span className="font-semibold text-gray-700">
+                {formatCurrency(vatAmount)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center mt-2 pt-2 border-t border-border">
+              <span className="font-medium">Thành tiền:</span>
+              <span className="font-bold text-lg text-green-600">
+                {formatCurrency(finalAmount)}
               </span>
             </div>
           </div>
