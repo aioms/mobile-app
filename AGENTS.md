@@ -4,6 +4,7 @@
 
 ## Table of Contents
 
+- [Engineering Rules](#engineering-rules-must-follow)
 - [System Overview](#system-overview)
 - [Technology Stack](#technology-stack)
 - [Project Architecture](#project-architecture)
@@ -14,6 +15,40 @@
 - [Development Guidelines](#development-guidelines)
 - [Key Components Reference](#key-components-reference)
 - [Troubleshooting](#troubleshooting)
+
+---
+
+## Engineering Rules (MUST FOLLOW)
+
+Also read the root `AGENTS.md` for repo-wide rules. The rest of this document is architecture reference; this section is normative.
+
+### Structure & file splitting
+
+- Pages live in `src/pages/<Domain>/<PageName>/`. The page file keeps layout + orchestration only; when it approaches ~300 lines, extract sections into a local `components/` subfolder and data logic into hooks. Hard ceiling: 500 lines per file.
+- Shared components: one folder per component under `src/components/<Name>/`. Reuse existing components (`Layout`, `EmptyPage`, `Counter`, modal pickers, …) before building new ones.
+- Types go in `src/types/<domain>.type.ts`; enums/constants in `src/common/`; pure functions in `src/helpers/`.
+
+### Data & state
+
+- **No Redux/global stores.** Local state + custom hooks only.
+- All API calls go through `src/hooks/apis/use<Domain>.ts` using the shared axios instance (`src/helpers/axios.ts`). Components never import axios directly.
+- Wrap async operations in `useLoading().withLoading(fn, errorMessage)` for consistent loading state and toast errors. Never use empty `catch`.
+- Persist data only through `useStorage` (Ionic Storage) — never raw `localStorage`.
+- Native features (camera, barcode, haptics, push) only via the existing hooks; platform (web vs native) branching lives inside the hook, never in components.
+
+### UI/UX
+
+- **Design System**: Always read and strictly follow [`DESIGN.md`](./DESIGN.md) for UI layout patterns, padding/margin rules, and color choices before implementing or refactoring screens.
+- Every list/detail view renders all four states: loading (`Loading`), error (retry option), empty (`EmptyPage` with call-to-action), success.
+- Lists get `Refresher` (pull-to-refresh) and pagination/infinite scroll.
+- Ionic components + Tailwind utilities; touch targets ≥ 44px; Vietnamese-first copy consistent with surrounding screens; toast/haptic feedback on user actions; confirmation dialog before destructive actions.
+- Forms use react-hook-form with field-level validation errors. Compress images with `browser-image-compression` before upload.
+- New routes register in `src/routes/index.tsx`; authenticated pages use `PrivateRoute`.
+
+### Documentation & verification
+
+- Complex flows (receipt state machines, payment/debt handling, offline sync) require a doc in `mobile-app/docs/` covering purpose, data model, status flow, and edge cases.
+- Before finishing: `npm run lint` and `npx tsc --noEmit` must pass.
 
 ---
 

@@ -55,7 +55,7 @@ import { cn } from "@/lib/utils";
 import OrderItem from "./components/OrderItem";
 import ModalSelectProduct from "../components/ModalSelectProduct";
 import ModalCreateProduct from "./components/ModalCreateProduct";
-import ModalSelectCustomer from "../components/ModalSelectCustomer";
+import ModalSelectCustomer from "@/components/ModalSelectCustomer";
 import ModalCreateCustomer from "@/components/ModalCreateCustomer";
 import ErrorMessage from "@/components/ErrorMessage";
 import PaymentModal, {

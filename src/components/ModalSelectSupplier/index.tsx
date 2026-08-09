@@ -1,6 +1,4 @@
-import ModalCustom from "@/components/Modal/ModalCustom";
-import useSupplier from "@/hooks/apis/useSupplier";
-import { useLoading } from "@/hooks";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   IonList,
   IonItem,
@@ -10,13 +8,22 @@ import {
   useIonToast,
   IonLabel,
   IonChip,
+  IonIcon,
   IonRadioGroup,
   IonRadio,
 } from "@ionic/react";
-import { useEffect, useState, useCallback } from "react";
+import { closeCircleOutline } from "ionicons/icons";
+
+import ModalCustom from "@/components/Modal/ModalCustom";
+import useSupplier from "@/hooks/apis/useSupplier";
+import { useLoading } from "@/hooks";
 import type { IModalSelectSupplierProps } from "@/types/supplierModal";
 
-const ModalSelectSupplier: React.FC<IModalSelectSupplierProps> = ({ dismiss, initialSelectedNames = [], multi = false }) => {
+const ModalSelectSupplier: React.FC<IModalSelectSupplierProps> = ({
+  dismiss,
+  initialSelectedNames = [],
+  multi = false,
+}) => {
   const [keyword, setKeyword] = useState("");
   const [suppliers, setSuppliers] = useState<any[]>([]);
 
@@ -65,7 +72,6 @@ const ModalSelectSupplier: React.FC<IModalSelectSupplierProps> = ({ dismiss, ini
       };
 
       if (append) {
-        // For infinite scroll, show loading indicator
         setIsLoadingMore(true);
         try {
           await loadFunction();
@@ -80,7 +86,6 @@ const ModalSelectSupplier: React.FC<IModalSelectSupplierProps> = ({ dismiss, ini
           setIsLoadingMore(false);
         }
       } else {
-        // For initial load, use withLoading
         await withLoading(loadFunction);
       }
     },
@@ -94,7 +99,7 @@ const ModalSelectSupplier: React.FC<IModalSelectSupplierProps> = ({ dismiss, ini
   }, [keyword]);
 
   const handleSearch = (e: any) => {
-    const keyword = e.detail.value || "";
+    const keyword = e.detail?.value || "";
     setKeyword(keyword);
   };
 
@@ -127,13 +132,11 @@ const ModalSelectSupplier: React.FC<IModalSelectSupplierProps> = ({ dismiss, ini
 
   const toggleSelection = (token: string) => {
     setSelectedValues((prev) => {
-      const set = new Set(prev);
-      if (set.has(token)) {
-        set.delete(token);
+      if (prev.includes(token)) {
+        return prev.filter((item) => item !== token);
       } else {
-        set.add(token);
+        return [...prev, token];
       }
-      return Array.from(set);
     });
   };
 
@@ -178,48 +181,94 @@ const ModalSelectSupplier: React.FC<IModalSelectSupplierProps> = ({ dismiss, ini
       }}
     >
       {/* Selected suppliers display (multi mode) */}
-      {multi && (
-        <div className="mb-2 flex flex-wrap gap-2">
+      {multi && selectedValues.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-1.5 p-2.5 bg-blue-50/50 rounded-xl border border-blue-100">
           {selectedValues.map((token) => {
-            const [, name] = token.split("__");
+            const parts = token.split("__");
+            const name = parts[1] || parts[0];
             return (
-              <IonChip key={`selected-${token}`} className="bg-blue-50 text-blue-600">
-                {name}
+              <IonChip
+                key={`selected-${token}`}
+                className="m-0 bg-blue-100 text-blue-800 text-xs py-1 px-2.5 font-medium flex items-center gap-1 cursor-pointer"
+                onClick={() => toggleSelection(token)}
+              >
+                <IonLabel>{name}</IonLabel>
+                <IonIcon icon={closeCircleOutline} className="text-blue-600 text-sm" />
               </IonChip>
             );
           })}
         </div>
       )}
-      <IonList>
+
+      <IonList lines="full" className="rounded-xl overflow-hidden shadow-sm border border-gray-100 bg-white">
         {multi ? (
-          suppliers.map((item, index) => (
-            <IonItem
-              key={`supplier-${item.id}-${index}`}
-              detail={false}
-              aria-label={`Chọn nhà cung cấp ${item.name}`}
-            >
-              <IonLabel>{item.name}</IonLabel>
-              <IonCheckbox
-                slot="end"
-                aria-label={`Nhà cung cấp ${item.name}`}
-                checked={selectedValues.includes(`${item.id}__${item.name}`)}
-                onIonChange={() => toggleSelection(`${item.id}__${item.name}`)}
-              />
-            </IonItem>
-          ))
+          suppliers.map((item, index) => {
+            const itemValue = `${item.id}__${item.name}`;
+            const isChecked = selectedValues.includes(itemValue);
+            return (
+              <IonItem
+                key={`supplier-${item.id}-${index}`}
+                button
+                detail={false}
+                onClick={() => toggleSelection(itemValue)}
+                className="--min-height-48 cursor-pointer"
+              >
+                <IonLabel className="py-2">
+                  <div className="font-medium text-gray-900">{item.name}</div>
+                  {(item.phone || item.code) && (
+                    <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-2">
+                      {item.phone && <span>{item.phone}</span>}
+                      {item.code && <span>• {item.code}</span>}
+                    </div>
+                  )}
+                </IonLabel>
+                <IonCheckbox
+                  slot="end"
+                  checked={isChecked}
+                  aria-label={`Nhà cung cấp ${item.name}`}
+                  className="pointer-events-none"
+                />
+              </IonItem>
+            );
+          })
         ) : (
           <IonRadioGroup
             value={selectedSingle}
             onIonChange={(e) => handleSingleChange(e.detail.value)}
           >
-            {suppliers.map((item, index) => (
-              <IonItem key={`supplier-${item.id}-${index}`}>
-                <IonRadio value={`${item.id}__${item.name}`}>{item.name}</IonRadio>
-              </IonItem>
-            ))}
+            {suppliers.map((item, index) => {
+              const itemValue = `${item.id}__${item.name}`;
+              return (
+                <IonItem
+                  key={`supplier-${item.id}-${index}`}
+                  button
+                  detail={false}
+                  onClick={() => handleSingleChange(itemValue)}
+                  className="--min-height-48 cursor-pointer"
+                >
+                  <IonLabel className="py-2">
+                    <div className="font-medium text-gray-900">{item.name}</div>
+                    {(item.phone || item.code) && (
+                      <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-2">
+                        {item.phone && <span>{item.phone}</span>}
+                        {item.code && <span>• {item.code}</span>}
+                      </div>
+                    )}
+                  </IonLabel>
+                  <IonRadio slot="end" value={itemValue} aria-label={`Nhà cung cấp ${item.name}`} />
+                </IonItem>
+              );
+            })}
           </IonRadioGroup>
         )}
       </IonList>
+
+      {/* Empty State */}
+      {!suppliers.length && (
+        <div className="py-12 text-center text-gray-500">
+          <p className="text-sm font-medium">Không tìm thấy nhà cung cấp phù hợp</p>
+        </div>
+      )}
 
       <IonInfiniteScroll
         threshold="100px"

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { AppCard } from '@/components/UI';
 import {
   IonCard,
   IonCardHeader,
@@ -470,12 +471,10 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
 
   return (
     <>
-      <IonCard className="rounded-xl mt-4 shadow-sm">
-        <IonCardHeader>
-          <IonCardTitle>Hình ảnh sản phẩm</IonCardTitle>
-        </IonCardHeader>
-
-        <IonCardContent>
+      <AppCard className="mx-4 mb-3 p-4">
+        <h2 className="text-xl font-bold mb-4">Hình ảnh sản phẩm</h2>
+        
+        <div>
           {/* Image Grid */}
           <IonGrid>
             <IonRow>
@@ -623,10 +622,10 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
               </p>
             </IonText>
           )}
-        </IonCardContent>
-      </IonCard>
+          </div>
+      </AppCard>
 
-      {/* Enhanced Camera Modal */}
+      {/* Camera Modal */}
       <IonModal isOpen={cameraModal.isOpen} onDidDismiss={closeCameraModal}>
         <IonHeader>
           <IonToolbar>

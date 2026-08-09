@@ -21,6 +21,7 @@ type Props = {
   onSearchChange?: (event: CustomEvent) => void;
   hasConfirmButton?: boolean;
   hasCancelButton?: boolean;
+  searchPlaceholder?: string;
 };
 
 const ModalCustom: FC<Props> = ({
@@ -34,10 +35,11 @@ const ModalCustom: FC<Props> = ({
   onSearchChange,
   dismiss,
   children,
+  searchPlaceholder = "Tìm kiếm...",
 }) => {
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader className="ion-no-border border-b border-gray-100">
         <IonToolbar>
           {hasCancelButton && (
             <IonButtons slot="start">
@@ -67,12 +69,13 @@ const ModalCustom: FC<Props> = ({
         </IonToolbar>
         <IonToolbar>
           <IonSearchbar
-            debounce={800}
+            debounce={400}
+            placeholder={searchPlaceholder}
             onIonInput={onSearchChange}
-          ></IonSearchbar>
+          />
         </IonToolbar>
       </IonHeader>
-      <IonContent className="ion-padding">{children}</IonContent>
+      <IonContent className="ion-padding bg-gray-50">{children}</IonContent>
     </IonPage>
   );
 };

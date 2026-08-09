@@ -46,13 +46,15 @@ interface BarcodeModalProps {
   onDidDismiss: () => void;
   productName?: string;
   productCode?: string;
+  mode?: 'view' | 'print' | 'both';
 }
 
 const BarcodeModal: React.FC<BarcodeModalProps> = ({
   isOpen,
   onDidDismiss,
   productName,
-  productCode
+  productCode,
+  mode = 'both'
 }) => {
   const barcodeRef = useRef<HTMLDivElement>(null);
   const { isLoading, withLoading } = useLoading();
@@ -587,7 +589,9 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
     <IonModal isOpen={isOpen} onDidDismiss={onDidDismiss}>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Mã vạch sản phẩm</IonTitle>
+          <IonTitle>
+            {mode === 'view' ? 'Xem mã vạch' : mode === 'print' ? 'In mã vạch' : 'Mã vạch sản phẩm'}
+          </IonTitle>
           <IonButtons slot="end">
             <IonButton onClick={onDidDismiss}>
               <IonIcon icon={close} />
@@ -601,6 +605,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
         {renderPrintingStatus()}
 
         {/* Barcode Display */}
+        {(mode === 'both' || mode === 'view') && (
         <IonCard className="mb-4">
           <IonCardHeader>
             <IonCardTitle className="text-center">
@@ -646,8 +651,10 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
             </div>
           </IonCardContent>
         </IonCard>
+        )}
 
         {/* Print Settings */}
+        {(mode === 'both' || mode === 'print') && (
         <IonCard className="mb-4">
           <IonCardHeader>
             <IonCardTitle>
@@ -783,8 +790,10 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
             )}
           </IonCardContent>
         </IonCard>
+        )}
 
         {/* Print Button */}
+        {(mode === 'both' || mode === 'print') && (
         <IonButton
           expand="block"
           onClick={handlePrint}
@@ -794,6 +803,7 @@ const BarcodeModal: React.FC<BarcodeModalProps> = ({
           <IonIcon icon={printOutline} slot="start" />
           {printingStatus.status === 'printing' ? 'Đang in...' : `In ${printQuantity} mã vạch`}
         </IonButton>
+        )}
 
         {/* Printer Discovery Modal */}
         <IonModal isOpen={showDiscovery} onDidDismiss={() => setShowDiscovery(false)}>

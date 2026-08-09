@@ -10,6 +10,7 @@ import {
   IonText,
   IonChip,
   useIonModal,
+  IonList,
   IonPage,
   IonHeader,
   IonToolbar,
@@ -34,6 +35,7 @@ import ContentSkeleton from "@/components/Loading/ContentSkeleton";
 import ProductCard from "./components/ProductCard";
 import CategoriesModal from "./components/CategoriesModal";
 import FilterModal, { FilterValues } from "./components/FilterModal";
+import BarcodeModal from "../ProductDetail/components/BarcodeModal";
 import { Refresher } from "@/components/Refresher/Refresher";
 import { AppSearchBar, AppFAB, AppCard, AppButton } from "@/components/UI";
 import { UserRole } from "@/common/enums/user";
@@ -98,6 +100,11 @@ const ProductListScreen: React.FC = () => {
   const [lowStockPage, setLowStockPage] = useState(1);
   const [lowStockLoading, setLowStockLoading] = useState(false);
   const [hasMoreLowStock, setHasMoreLowStock] = useState(true);
+  
+  const [showBarcodeModal, setShowBarcodeModal] = useState(false);
+  const [barcodeMode, setBarcodeMode] = useState<'view' | 'print'>('view');
+  const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(null);
+
   const { getList, getDetail, getTotalProductAndInventory } = useProduct();
 
   const isShowCostPrice = useMemo(() => {
@@ -462,12 +469,26 @@ const ProductListScreen: React.FC = () => {
           </div>
 
           <h3 className="text-md font-medium mb-4">Sản phẩm</h3>
-          <div className="space-y-4">
+          <IonList className="space-y-2 bg-transparent" style={{ background: 'transparent' }}>
             {isLoading ? (
               <ContentSkeleton lines={3} />
             ) : products.length ? (
               products.map((product) => (
-                <ProductCard key={`product-${product.id}`} product={product} isShowCostPrice={isShowCostPrice} />
+                <ProductCard 
+                  key={`product-${product.id}`} 
+                  product={product} 
+                  isShowCostPrice={isShowCostPrice}
+                  onQuickBarcode={() => {
+                    setSelectedProduct(product);
+                    setBarcodeMode('view');
+                    setShowBarcodeModal(true);
+                  }}
+                  onPrintBarcode={() => {
+                    setSelectedProduct(product);
+                    setBarcodeMode('print');
+                    setShowBarcodeModal(true);
+                  }}
+                />
               ))
             ) : null}
 
@@ -476,7 +497,7 @@ const ProductListScreen: React.FC = () => {
                 <i className="text-sm"> Không tìm thấy sản phẩm nào</i>
               </div>
             )}
-          </div>
+          </IonList>
           {/* Load More Button */}
           {hasMore && (
             <div className="flex justify-center my-4">
@@ -622,6 +643,19 @@ const ProductListScreen: React.FC = () => {
       </IonContent>
 
       <AppFAB onClick={() => history.push("/tabs/products/create")} />
+
+      {selectedProduct && (
+        <BarcodeModal
+          isOpen={showBarcodeModal}
+          onDidDismiss={() => {
+            setShowBarcodeModal(false);
+            setSelectedProduct(null);
+          }}
+          productName={selectedProduct.productName}
+          productCode={selectedProduct.code}
+          mode={barcodeMode}
+        />
+      )}
     </IonPage>
   );
 };

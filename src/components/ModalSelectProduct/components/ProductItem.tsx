@@ -54,8 +54,10 @@ const ProductItem: React.FC<ItemListProps> = ({
 
   return (
     <IonItem
+      button
+      detail={false}
       lines="none"
-      className="py-2 border-b-2 border-gray-500/10"
+      className="py-2 border-b border-gray-100 cursor-pointer"
       onClick={() =>
         onClick?.({
           id,
@@ -76,7 +78,7 @@ const ProductItem: React.FC<ItemListProps> = ({
       <IonCheckbox
         slot="start"
         checked={isSelected}
-        className="mr-2"
+        className="mr-2 pointer-events-none"
       />
       <IonGrid className="p-0">
         <IonRow>

@@ -7,6 +7,7 @@ import {
   IonRadioGroup,
   IonItem,
   IonRadio,
+  IonLabel,
   RadioGroupCustomEvent,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
@@ -104,15 +105,31 @@ const ModalSelectCategory: React.FC<IModalSelectCategoryProps> = ({ dismiss }) =
       onSearchChange={handleSearch}
       onConfirm={() => dismiss(selectedValue, "confirm")}
     >
-      <IonList>
-        <IonRadioGroup onIonChange={selectChange}>
+      <IonList lines="full" className="rounded-xl overflow-hidden shadow-sm border border-gray-100 bg-white">
+        <IonRadioGroup value={selectedValue} onIonChange={selectChange}>
           {categories.map((item, index) => (
-            <IonItem key={`category-${index}`}>
-              <IonRadio value={item}>{item}</IonRadio>
+            <IonItem
+              key={`category-${index}`}
+              button
+              detail={false}
+              onClick={() => setSelectedValue(item)}
+              className="--min-height-48 cursor-pointer"
+            >
+              <IonLabel className="py-2">
+                <div className="font-medium text-gray-900">{item}</div>
+              </IonLabel>
+              <IonRadio slot="end" value={item} aria-label={item} />
             </IonItem>
           ))}
         </IonRadioGroup>
       </IonList>
+
+      {/* Empty State */}
+      {!categories.length && (
+        <div className="py-12 text-center text-gray-500">
+          <p className="text-sm font-medium">Không tìm thấy nhóm hàng phù hợp</p>
+        </div>
+      )}
 
       <IonInfiniteScroll
         threshold="100px"
