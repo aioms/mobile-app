@@ -5,28 +5,21 @@ import {
     IonHeader,
     IonTitle,
     IonToolbar,
-    IonItem,
-    IonLabel,
-    IonButton,
     IonButtons,
     IonBackButton,
     IonIcon,
-    IonNote,
-    IonCard,
-    IonCardContent,
     useIonModal,
     IonFooter,
-    IonList,
     IonRefresher,
     IonRefresherContent,
     RefresherEventDetail,
     useIonToast,
-    IonSelect,
-    IonSelectOption,
     IonTextarea,
+    IonLabel,
 } from "@ionic/react";
 import { useHistory } from "react-router-dom";
-import { checkmark, search } from "ionicons/icons";
+import { checkmark, search, chevronDown } from "ionicons/icons";
+import clsx from "clsx";
 import { getDate } from "@/helpers/date";
 import { OverlayEventDetail } from "@ionic/react/dist/types/components/react-component-lib/interfaces";
 
@@ -38,6 +31,9 @@ import DatePicker from "@/components/DatePicker";
 import ModalSelectProduct from "@/components/ModalSelectProduct";
 import ReceiptCheckItem from "./components/ReceiptCheckItem";
 import { RECEIPT_CHECK_STATUS } from "@/common/constants/receipt-check.constant";
+import AppCard from "@/components/UI/AppCard";
+import AppButton from "@/components/UI/AppButton";
+import ErrorMessage from "@/components/ErrorMessage";
 
 const initialDefaultItem = {
     note: "",
@@ -239,7 +235,7 @@ const ReceiptCheckCreate: React.FC = () => {
                 </IonToolbar>
             </IonHeader>
 
-            <IonContent className="ion-padding">
+            <IonContent className="bg-gray-50 pb-20">
                 <IonRefresher
                     slot="fixed"
                     pullFactor={0.5}
@@ -250,54 +246,54 @@ const ReceiptCheckCreate: React.FC = () => {
                     <IonRefresherContent></IonRefresherContent>
                 </IonRefresher>
 
-                <IonCard className="p-2 mt-2">
-                    <IonCardContent>
+                <AppCard className="mx-4 mt-4 mb-3" noPadding>
+                    <div className="p-4 space-y-4">
                         {/* Check Date */}
-                        <IonItem
-                            className={`mt-3 ${errors.checkDate ? "ion-invalid" : ""}`}
-                        >
-                            <IonLabel position="stacked">Ngày kiểm *</IonLabel>
-                            <DatePicker
-                                attrs={{ id: "checkDate" }}
-                                value={formData.checkDate}
-                                onChange={(e) => {
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        checkDate: e.detail.value! as string,
-                                    }));
-                                    clearErrors("checkDate");
-                                }}
-                            />
-                            {errors.checkDate && (
-                                <IonNote slot="error">{errors.checkDate}</IonNote>
-                            )}
-                        </IonItem>
+                        <div className={clsx(errors.checkDate && "border-red-500")}>
+                            <IonLabel className="text-sm font-medium text-gray-700 mb-2 block">
+                                Ngày kiểm *
+                            </IonLabel>
+                            <div className="border border-gray-300 rounded-lg bg-white h-[46px] overflow-hidden">
+                                <DatePicker
+                                    attrs={{ id: "checkDate" }}
+                                    extraClassName="w-full h-full bg-white !rounded-none !px-3"
+                                    value={formData.checkDate}
+                                    onChange={(e) => {
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            checkDate: e.detail.value! as string,
+                                        }));
+                                        clearErrors("checkDate");
+                                    }}
+                                />
+                            </div>
+                            <ErrorMessage message={errors.checkDate || ""} />
+                        </div>
 
                         {/* Search Product */}
-                        <IonItem className="mt-3" lines="none">
-                            <div
-                                className="w-full p-3 rounded-lg border border-gray-300 flex items-center cursor-pointer hover:bg-gray-50"
+                        <div>
+                            <button
+                                className="w-full p-3.5 rounded-xl border border-blue-200 bg-blue-50/50 flex items-center justify-center active:bg-blue-100 transition-colors shadow-sm"
                                 onClick={openModalSelectProduct}
                             >
-                                <IonIcon icon={search} className="text-xl mr-2" />
-                                <span className="text-gray-500">
-                                    Tìm kiếm sản phẩm theo tên, mã
+                                <IonIcon icon={search} className="text-xl text-blue-600 mr-2" />
+                                <span className="text-blue-700 font-medium text-[15px]">
+                                    Chạm để tìm kiếm sản phẩm
                                 </span>
-                            </div>
-                        </IonItem>
-                    </IonCardContent>
-                </IonCard>
+                            </button>
+                        </div>
+                    </div>
+                </AppCard>
 
                 {/* Product List */}
                 {receiptItems.length > 0 && (
-                    <>
+                    <AppCard className="mx-4 mb-3" noPadding>
                         {/* Column Headers */}
-                        <div className="mt-4 px-4 py-2 flex justify-between items-center bg-gray-50">
-                            <div className="text-sm font-medium text-gray-500">Sản phẩm</div>
-                            <div className="text-sm font-medium text-gray-500 mr-16">Tồn kho</div>
+                        <div className="px-4 py-3 flex justify-between items-center text-sm font-medium text-gray-600 bg-gray-50/80 border-b border-gray-100 rounded-t-2xl">
+                            <div>Sản phẩm đã chọn</div>
                         </div>
 
-                        <IonList>
+                        <div className="bg-white rounded-b-2xl overflow-hidden">
                             {receiptItems.map((item, index) => (
                                 <ReceiptCheckItem
                                     key={index}
@@ -309,100 +305,114 @@ const ReceiptCheckCreate: React.FC = () => {
                                     }}
                                 />
                             ))}
-                        </IonList>
-                    </>
+                        </div>
+                    </AppCard>
                 )}
 
                 {/* Check Staff and Warehouse Selection */}
-                <IonCard className="mt-4">
-                    <IonCardContent>
+                <AppCard className="mx-4 mb-3">
+                    <div className="space-y-4">
                         {/* Check Staff Selection */}
-                        <IonItem
-                            className={`mt-3 ${errors.checkStaff ? "ion-invalid" : ""}`}
-                        >
-                            <IonLabel position="stacked">Nhân viên kiểm *</IonLabel>
-                            <IonSelect
-                                value={formData.checkStaff}
-                                placeholder="Chọn nhân viên"
-                                onIonChange={(e) => {
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        checkStaff: e.detail.value,
-                                    }));
-                                    clearErrors("checkStaff");
-                                }}
-                                interface="action-sheet"
-                                disabled={loadingStaff}
-                            >
-                                {checkStaffList.map((staff) => (
-                                    <IonSelectOption key={staff.id} value={staff.id}>
-                                        {staff.fullname || staff.username || staff.email}
-                                    </IonSelectOption>
-                                ))}
-                            </IonSelect>
-                            {errors.checkStaff && (
-                                <IonNote slot="error">{errors.checkStaff}</IonNote>
-                            )}
-                        </IonItem>
+                        <div className={clsx(errors.checkStaff && "border-red-500")}>
+                            <IonLabel className="text-sm font-medium text-gray-700 mb-2 block">
+                                Nhân viên kiểm *
+                            </IonLabel>
+                            <div className="relative border border-gray-300 rounded-lg bg-white">
+                                <select
+                                    value={formData.checkStaff}
+                                    onChange={(e) => {
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            checkStaff: e.target.value,
+                                        }));
+                                        clearErrors("checkStaff");
+                                    }}
+                                    disabled={loadingStaff}
+                                    className="w-full p-3 bg-transparent appearance-none outline-none z-10 relative"
+                                >
+                                    <option value="" disabled hidden>
+                                        Chọn nhân viên
+                                    </option>
+                                    {checkStaffList.map((staff) => (
+                                        <option key={staff.id} value={staff.id}>
+                                            {staff.fullname || staff.username || staff.email}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                                    <IonIcon icon={chevronDown} />
+                                </div>
+                            </div>
+                            <ErrorMessage message={errors.checkStaff || ""} />
+                        </div>
 
                         {/* Warehouse Selection */}
-                        <IonItem
-                            className={`mt-3 ${errors.warehouse ? "ion-invalid" : ""}`}
-                        >
-                            <IonLabel position="stacked">Kho *</IonLabel>
-                            <IonSelect
-                                value={formData.warehouse}
-                                placeholder="Chọn kho"
-                                onIonChange={(e) => {
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        warehouse: e.detail.value,
-                                    }));
-                                    clearErrors("warehouse");
-                                }}
-                                interface="action-sheet"
-                            >
-                                <IonSelectOption value="Kho KS">Kho KS</IonSelectOption>
-                                <IonSelectOption value="Kho KH">Kho KH</IonSelectOption>
-                            </IonSelect>
-                            {errors.warehouse && (
-                                <IonNote slot="error">{errors.warehouse}</IonNote>
-                            )}
-                        </IonItem>
+                        <div className={clsx(errors.warehouse && "border-red-500")}>
+                            <IonLabel className="text-sm font-medium text-gray-700 mb-2 block">
+                                Kho *
+                            </IonLabel>
+                            <div className="relative border border-gray-300 rounded-lg bg-white">
+                                <select
+                                    value={formData.warehouse}
+                                    onChange={(e) => {
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            warehouse: e.target.value,
+                                        }));
+                                        clearErrors("warehouse");
+                                    }}
+                                    className="w-full p-3 bg-transparent appearance-none outline-none z-10 relative"
+                                >
+                                    <option value="" disabled hidden>
+                                        Chọn kho
+                                    </option>
+                                    <option value="Kho KS">Kho KS</option>
+                                    <option value="Kho KH">Kho KH</option>
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                                    <IonIcon icon={chevronDown} />
+                                </div>
+                            </div>
+                            <ErrorMessage message={errors.warehouse || ""} />
+                        </div>
 
                         {/* Note */}
-                        <IonItem className="mt-3">
-                            <IonLabel position="stacked">Ghi chú</IonLabel>
-                            <IonTextarea
-                                value={formData.note}
-                                placeholder="Nhập ghi chú (không bắt buộc)"
-                                rows={3}
-                                onIonInput={(e) =>
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        note: e.detail.value || "",
-                                    }))
-                                }
-                            />
-                        </IonItem>
-                    </IonCardContent>
-                </IonCard>
+                        <div>
+                            <IonLabel className="text-sm font-medium text-gray-700 mb-2 block">
+                                Ghi chú
+                            </IonLabel>
+                            <div className="border border-gray-300 rounded-lg bg-white p-1">
+                                <IonTextarea
+                                    value={formData.note}
+                                    placeholder="Nhập ghi chú (không bắt buộc)"
+                                    rows={3}
+                                    className="!m-0 px-2"
+                                    onIonInput={(e) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            note: e.detail.value || "",
+                                        }))
+                                    }
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </AppCard>
             </IonContent>
 
-            <IonFooter>
-                <div className="p-4 border-t">
-                    <div className="text-gray-500 mb-4">
+            <IonFooter className="bg-white ion-no-border border-t border-gray-100">
+                <div className="px-4 py-3 pb-8 safe-area-bottom">
+                    <div className="text-gray-500 text-sm mb-3 font-medium">
                         {receiptItems.length} sản phẩm
                     </div>
-                    <div className="grid grid-cols-1 gap-4">
-                        <IonButton
-                            expand="block"
-                            onClick={handleSubmit}
-                        >
-                            <IonIcon icon={checkmark} slot="start" />
-                            Tạo phiếu
-                        </IonButton>
-                    </div>
+                    <AppButton
+                        fullWidth
+                        variant="primary"
+                        onClick={handleSubmit}
+                        icon={<IonIcon icon={checkmark} />}
+                    >
+                        Tạo phiếu
+                    </AppButton>
                 </div>
             </IonFooter>
         </IonPage>

@@ -1,10 +1,6 @@
 import { FC } from "react";
-import {
-    IonFabButton,
-    IonIcon,
-    IonItem,
-} from "@ionic/react";
-import { trash } from "ionicons/icons";
+import { IonIcon } from "@ionic/react";
+import { trashOutline } from "ionicons/icons";
 
 type Props = {
     id: string;
@@ -23,32 +19,26 @@ const ReceiptCheckItem: FC<Props> = ({
     onRemoveItem,
 }) => {
     return (
-        <IonItem lines="none" className="border-b border-gray-100">
-            <div className="py-3 w-full flex items-center justify-between">
-                <div className="flex-1">
-                    <h3 className="font-medium text-base">{productName}</h3>
-                    <p className="text-gray-500 text-sm">{code}</p>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    {/* Inventory Display */}
-                    <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full">
-                        <span className="font-medium text-gray-700">{inventory}</span>
-                    </div>
-
-                    {/* Remove Button */}
-                    <IonFabButton
-                        size="small"
-                        color="danger"
-                        onClick={() => {
-                            onRemoveItem?.(id);
-                        }}
-                    >
-                        <IonIcon icon={trash} size="small"></IonIcon>
-                    </IonFabButton>
-                </div>
+        <div className="flex items-center justify-between p-4 bg-white border-b border-gray-100 last:border-b-0">
+            <div className="flex-1 min-w-0 pr-4">
+                <h3 className="font-medium text-gray-900 text-sm truncate">{productName}</h3>
+                <p className="text-gray-500 text-xs mt-1">{code}</p>
             </div>
-        </IonItem>
+            
+            <div className="flex items-center gap-3">
+                <div className="flex flex-col items-center justify-center bg-gray-50 rounded-lg px-3 py-1.5 min-w-[3.5rem]">
+                    <span className="text-xs text-gray-500 mb-0.5">Tồn kho</span>
+                    <span className="font-semibold text-gray-700">{inventory}</span>
+                </div>
+                
+                <button
+                    onClick={() => onRemoveItem?.(id)}
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors flex-shrink-0"
+                >
+                    <IonIcon icon={trashOutline} className="text-xl" />
+                </button>
+            </div>
+        </div>
     );
 };
 

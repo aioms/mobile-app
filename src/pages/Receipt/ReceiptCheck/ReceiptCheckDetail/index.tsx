@@ -14,7 +14,7 @@ import {
   RefresherEventDetail,
   useIonToast,
 } from "@ionic/react";
-import { chevronBack, scanOutline } from "ionicons/icons";
+import { chevronBack, scanOutline, chevronDownOutline } from "ionicons/icons";
 
 import useReceiptCheck from "@/hooks/apis/useReceiptCheck";
 import { useAuth, useBarcodeScanner, useLoading } from "@/hooks";
@@ -555,11 +555,11 @@ const ReceiptCheckDetail: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar className="py-3 flex items-center justify-between border-b">
+      <IonHeader className="ion-no-border border-b border-gray-100">
+        <IonToolbar className="py-2 bg-white">
           <IonButtons slot="start">
             <IonButton
-              className="text-gray-600"
+              className="text-gray-900"
               onClick={() => {
                 history.goBack();
               }}
@@ -568,48 +568,42 @@ const ReceiptCheckDetail: React.FC = () => {
             </IonButton>
           </IonButtons>
 
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-2">
             <div>
-              <h1 className="text-base font-semibold">
+              <h1 className="text-[16px] font-semibold text-gray-900 leading-tight">
                 {receipt?.receiptNumber}
               </h1>
-              <p className="text-sm text-gray-500">
+              <p className="text-[13px] text-gray-500">
                 {dayjsFormat(receipt?.date || "")}
               </p>
             </div>
 
-            <IonChip color={receiptStatus !== "unknown" ? getStatusColor(receiptStatus) : "medium"}>
-              <span className="text-sm">{receiptStatus !== "unknown" ? getStatusLabel(receiptStatus) : "Unknown"}</span>
+            <IonChip 
+              color={receiptStatus !== "unknown" ? getStatusColor(receiptStatus) : "medium"}
+              className="h-7 text-xs font-medium m-0"
+            >
+              {receiptStatus !== "unknown" ? getStatusLabel(receiptStatus) : "Unknown"}
             </IonChip>
           </div>
-
-          {/* <IonButtons slot="end">
-            {isShowBalanceRequireButton && (
-              <IonButton className="text-gray-600" onClick={startScanning}>
-                <IonIcon slot="icon-only" icon={scanOutline} />
-              </IonButton>
-            )}
-          </IonButtons>
-          */}
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
+      <IonContent className="bg-gray-50">
         {isLoading && <LoadingScreen message="Đang tải dữ liệu..." />}
 
         <Refresher onRefresh={handleRefresh} />
 
-        <div className="space-y-6">
+        <div className="px-4 py-4 space-y-4 pb-20">
           {/* Receipt Summary Section */}
-          <div className="bg-white rounded-lg p-4 shadow-sm">
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Danh sách sản phẩm</h2>
+              <h2 className="text-[17px] font-semibold text-gray-900">Danh sách sản phẩm</h2>
               {isShowBalanceRequireButton && (
                 <div className="flex items-center space-x-2">
                   {!isScanning ? (
                     <IonButtons slot="end">
-                      <IonButton color="primary" onClick={startScanning}>
-                        <IonIcon icon={scanOutline} slot="icon-only" />
+                      <IonButton color="primary" onClick={startScanning} className="m-0 h-8">
+                        <IonIcon icon={scanOutline} slot="icon-only" className="text-2xl text-blue-600" />
                       </IonButton>
                     </IonButtons>
                   ) : (
@@ -618,6 +612,7 @@ const ReceiptCheckDetail: React.FC = () => {
                         color="success"
                         onClick={stopScanningAndConfirm}
                         size="small"
+                        className="m-0"
                       >
                         Xác nhận ({pendingScans.length})
                       </IonButton>
@@ -626,6 +621,7 @@ const ReceiptCheckDetail: React.FC = () => {
                         fill="outline"
                         onClick={() => setIsScanning(false)}
                         size="small"
+                        className="m-0"
                       >
                         Hủy
                       </IonButton>
@@ -637,13 +633,13 @@ const ReceiptCheckDetail: React.FC = () => {
 
             {/* Scanning Status */}
             {isScanning && (
-              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="mb-4 p-3 bg-blue-50 rounded-xl border border-blue-100">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-                    <span className="text-blue-700 font-medium">Đang quét mã vạch...</span>
+                    <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span className="text-blue-700 font-medium text-sm">Đang quét mã vạch...</span>
                   </div>
-                  <span className="text-blue-600 text-sm">
+                  <span className="text-blue-600 text-sm font-medium">
                     {pendingScans.length} sản phẩm
                   </span>
                 </div>
@@ -651,11 +647,11 @@ const ReceiptCheckDetail: React.FC = () => {
                 {/* Show scanned items */}
                 {pendingScans.length > 0 && (
                   <div className="mt-3 space-y-1">
-                    <p className="text-sm text-blue-600 font-medium">Đã quét:</p>
+                    <p className="text-xs text-blue-600 font-medium uppercase tracking-wider mb-2">Đã quét:</p>
                     {Array.from(scannedItems.entries()).map(([code, quantity]) => (
-                      <div key={code} className="flex justify-between text-sm text-blue-700">
-                        <span>{code}</span>
-                        <span>x{quantity}</span>
+                      <div key={code} className="flex justify-between text-sm text-blue-700 bg-white/60 px-3 py-1.5 rounded-lg">
+                        <span className="font-medium">{code}</span>
+                        <span className="font-semibold">x{quantity}</span>
                       </div>
                     ))}
                   </div>
@@ -674,23 +670,23 @@ const ReceiptCheckDetail: React.FC = () => {
           </div>
 
           {/* Values */}
-          <div className="space-y-4 border-t pt-4">
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-sm">Giá trị Tồn</span>
-              <span className="font-medium">
+              <span className="text-[15px] font-medium text-gray-600">Giá trị Tồn</span>
+              <span className="font-semibold text-gray-900 text-[15px]">
                 {formatCurrency(selectedItemValues.systemInventory)}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm">Giá trị Thực tế</span>
-              <span className="font-medium">
+              <span className="text-[15px] font-medium text-gray-600">Giá trị Thực tế</span>
+              <span className="font-semibold text-gray-900 text-[15px]">
                 {formatCurrency(selectedItemValues.actualInventory)}
               </span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Chênh lệch giá trị tăng / giảm</span>
+            <div className="flex justify-between items-center pt-1">
+              <span className="text-[15px] font-medium text-gray-600">Chênh lệch giá trị tăng / giảm</span>
               <span
-                className={`px-3 py-1 bg-gray-600 text-white rounded-full text-sm ${selectedItemDifference >= 0 ? "bg-green-600" : "bg-red-600"
+                className={`px-3 py-1.5 text-white rounded-lg text-sm font-semibold tracking-wide ${selectedItemDifference >= 0 ? "bg-[#22C55E]" : "bg-[#DC2626]"
                   }`}
               >
                 {selectedItemDifference > 0 ? "+" : ""}
@@ -701,10 +697,11 @@ const ReceiptCheckDetail: React.FC = () => {
 
           {isShowBalanceButton && (
             <IonButton
-              className="w-full"
+              className="w-full mt-2"
               color="dark"
               onClick={handleBalance}
               disabled={receiptStatus === RECEIPT_CHECK_STATUS.BALANCED}
+              style={{ '--border-radius': '12px' }}
             >
               Cân đối
             </IonButton>
@@ -712,21 +709,22 @@ const ReceiptCheckDetail: React.FC = () => {
 
           {isShowBalanceRequireButton && !isAdmin && (
             <IonButton
-              className="w-full"
+              className="w-full mt-2"
               color="dark"
               onClick={handleBalanceRequest}
               disabled={receiptStatus === RECEIPT_CHECK_STATUS.BALANCED}
+              style={{ '--border-radius': '12px' }}
             >
               Yêu cầu kiểm tra cân đối
             </IonButton>
           )}
 
           {/* Total Difference */}
-          <div className="bg-white rounded-lg p-4">
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Tổng chênh lệch phiếu</span>
+              <span className="text-[15px] font-medium text-gray-900">Tổng chênh lệch phiếu</span>
               <span
-                className={`px-3 py-1 bg-gray-600 text-white rounded-full text-sm ${totalValueDifference >= 0 ? "bg-green-600" : "bg-red-600"
+                className={`px-3 py-1.5 text-white rounded-lg text-sm font-semibold tracking-wide ${totalValueDifference >= 0 ? "bg-[#22C55E]" : "bg-[#DC2626]"
                   }`}
               >
                 {totalValueDifference > 0 ? "+" : ""}
@@ -736,14 +734,14 @@ const ReceiptCheckDetail: React.FC = () => {
           </div>
 
           {/* Reason Selection */}
-          <div className="bg-white rounded-lg p-4">
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm text-gray-600">Lý do</label>
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-gray-600 block">Lý do</label>
+              <div className="relative border border-gray-200 rounded-xl bg-white overflow-hidden">
                 <select
                   value={selectedReason}
                   onChange={(e) => handleReasonChange(e.target.value)}
-                  className="mt-1 w-full px-4 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-transparent appearance-none focus:outline-none text-gray-900"
                 >
                   <option value="">Chọn lý do</option>
                   {RECEIPT_CHECK_REASONS.map((reason) => (
@@ -752,16 +750,19 @@ const ReceiptCheckDetail: React.FC = () => {
                     </option>
                   ))}
                 </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                  <IonIcon icon={chevronDownOutline} />
+                </div>
               </div>
 
               {showReasonNote && (
-                <div>
+                <div className="pt-2">
                   <textarea
                     value={reasonNote}
                     onChange={(e) => handleReasonNoteChange(e.target.value)}
                     onBlur={handleReasonNoteBlur}
                     placeholder="Nhập lý do cụ thể..."
-                    className="w-full p-3 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-4 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     rows={3}
                   />
                 </div>
@@ -770,48 +771,49 @@ const ReceiptCheckDetail: React.FC = () => {
           </div>
 
           {/* User and Warehouse Selection */}
-          <div className="space-y-4">
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-4">
             <div className="flex space-x-4">
               <div className="flex-1">
-                <label className="text-sm text-gray-600 mb-1 block">
+                <label className="text-sm font-medium text-gray-600 mb-2 block">
                   Người kiểm
                 </label>
-                <button className="w-full flex items-center justify-between px-4 py-2 border rounded-lg bg-white">
-                  <span className="text-gray-500">
+                <div className="w-full flex items-center justify-between px-4 py-3 border border-gray-200 rounded-xl bg-gray-50">
+                  <span className="text-gray-900 font-medium text-sm">
                     {receipt?.checker?.fullname || "Chọn người kiểm"}
                   </span>
-                </button>
+                </div>
               </div>
               <div className="flex-1">
-                <label className="text-sm text-gray-600 mb-1 block">Kho</label>
-                <button className="w-full flex items-center justify-between px-4 py-2 border rounded-lg bg-white">
-                  <span className="text-gray-500">
+                <label className="text-sm font-medium text-gray-600 mb-2 block">Kho</label>
+                <div className="w-full flex items-center justify-between px-4 py-3 border border-gray-200 rounded-xl bg-gray-50">
+                  <span className="text-gray-900 font-medium text-sm">
                     {receipt?.warehouse || "Unknown"}
                   </span>
-                </button>
+                </div>
               </div>
+            </div>
+            
+            <div className="pt-2">
+              <label className="text-sm font-medium text-gray-600 mb-2 block">Ghi chú</label>
+              <textarea
+                value={note}
+                onBlur={() => {
+                  if (note.trim() && receipt?.id) {
+                    debouncedUpdateNote(note.trim());
+                  }
+                }}
+                onChange={(e) => handleNoteChange(e.target.value)}
+                placeholder="Nhập ghi chú..."
+                className="w-full p-4 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                rows={3}
+              />
             </div>
           </div>
 
-          <div>
-            <textarea
-              value={note}
-              onBlur={() => {
-                if (note.trim() && receipt?.id) {
-                  debouncedUpdateNote(note.trim());
-                }
-              }}
-              onChange={(e) => handleNoteChange(e.target.value)}
-              placeholder="Ghi chú"
-              className="w-full p-3 border rounded-lg bg-white"
-              rows={3}
-            />
-          </div>
-
           {/* History Section */}
-          <div className="bg-white rounded-lg overflow-hidden">
-            <div className="p-4 border-b">
-              <span className="font-medium">Lịch sử</span>
+          <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+            <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+              <span className="font-semibold text-gray-900">Lịch sử</span>
             </div>
 
             <ActivityHistory activityLog={receipt?.activityLog || []} />
