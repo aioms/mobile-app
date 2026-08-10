@@ -51,6 +51,7 @@ import { UserRole } from "@/common/enums/user";
 import { debounce } from "@/helpers/debounce";
 import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
 import { Refresher } from "@/components/Refresher/Refresher";
+import { AppCard } from "@/components/UI";
 import ModalSelectCategory from "@/components/ModalSelectCategory";
 import ModalSelectSupplier from "@/components/ModalSelectSupplier";
 import { OverlayEventDetail } from "@ionic/react/dist/types/components/react-component-lib/interfaces";
@@ -1057,10 +1058,10 @@ const ProductDetail: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent fullscreen className="ion-padding">
+      <IonContent fullscreen className="bg-gray-50 pb-20">
         <Refresher onRefresh={handleRefresh} />
         {/* Product Image Section */}
-        <div className="mb-6">
+        <div className="mx-4 mt-4 mb-3">
           <div className="relative w-full h-48 bg-gray-100 rounded-xl overflow-hidden">
             {primaryImageUrl ? (
               <img
@@ -1084,8 +1085,7 @@ const ProductDetail: React.FC = () => {
         </div>
 
         {/* Basic Info Card */}
-        <IonCard className="rounded-xl shadow-sm">
-          <IonCardContent className="p-4">
+        <AppCard className="mx-4 mb-3 p-4">
             {/* Product Code */}
             <div className="mb-4 flex gap-2 justify-between items-center">
               <div>
@@ -1225,8 +1225,10 @@ const ProductDetail: React.FC = () => {
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  <IonChip className="bg-blue-50 text-blue-600 text-lg">
-                    {product?.category || "--"}
+                  <IonChip className="bg-blue-50 text-blue-600 text-base font-medium h-auto min-h-[32px] py-1.5 px-3 max-w-full">
+                    <IonLabel className="whitespace-normal break-words max-w-full leading-snug">
+                      {product?.category || "--"}
+                    </IonLabel>
                   </IonChip>
                 </div>
               )}
@@ -1296,8 +1298,10 @@ const ProductDetail: React.FC = () => {
                   {editedValues.suppliers?.length ? (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {editedValues.suppliers.map((s) => (
-                        <IonChip key={s.id} className="bg-blue-50 text-blue-600">
-                          {s.name}
+                        <IonChip key={s.id} className="bg-blue-50 text-blue-600 h-auto min-h-[28px] py-1 px-2.5 max-w-full">
+                          <IonLabel className="whitespace-normal break-words max-w-full text-sm font-medium leading-snug">
+                            {s.name}
+                          </IonLabel>
                         </IonChip>
                       ))}
                     </div>
@@ -1309,13 +1313,17 @@ const ProductDetail: React.FC = () => {
                     product.suppliers.map((supplier) => (
                       <IonChip
                         key={supplier.id}
-                        className="bg-blue-50 text-blue-600 text-lg"
+                        className="bg-blue-50 text-blue-600 text-base font-medium h-auto min-h-[32px] py-1.5 px-3 max-w-full"
                       >
-                        {supplier.name}
+                        <IonLabel className="whitespace-normal break-words max-w-full leading-snug">
+                          {supplier.name}
+                        </IonLabel>
                       </IonChip>
                     ))
                   ) : (
-                    <IonChip className="bg-blue-50 text-blue-600">--</IonChip>
+                    <IonChip className="bg-blue-50 text-blue-600 text-base font-medium h-auto min-h-[32px] py-1.5 px-3">
+                      <IonLabel>--</IonLabel>
+                    </IonChip>
                   )}
                 </div>
               )}
@@ -1325,7 +1333,10 @@ const ProductDetail: React.FC = () => {
                 </IonText>
               )}
             </div>
+        </AppCard>
 
+        {/* Inventory & Pricing Card */}
+        <AppCard className="mx-4 mb-3 p-4">
             {/* Inventory */}
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
@@ -1665,7 +1676,10 @@ const ProductDetail: React.FC = () => {
                 </IonText>
               )}
             </div>
+        </AppCard>
 
+        {/* Notes Card */}
+        <AppCard className="mx-4 mb-3 p-4">
             {/* Notes */}
             <div>
               <div className="flex justify-between items-center mb-2">
@@ -1733,8 +1747,7 @@ const ProductDetail: React.FC = () => {
                 />
               )}
             </div>
-          </IonCardContent>
-        </IonCard>
+        </AppCard>
 
         {/* Media Upload Section */}
         <MediaUpload

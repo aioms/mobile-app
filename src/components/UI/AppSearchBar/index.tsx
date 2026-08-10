@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { IonSearchbar, IonIcon, IonButton } from '@ionic/react';
 import { filterOutline } from 'ionicons/icons';
 
@@ -10,6 +10,8 @@ interface AppSearchBarProps {
   placeholder?: string;
   showFilter?: boolean;
   extraAction?: React.ReactNode;
+  /** Debounce parent notify only. IonSearchbar always uses debounce={0} to avoid controlled-value race. */
+  debounceMs?: number;
 }
 
 const AppSearchBar: React.FC<AppSearchBarProps> = ({
@@ -20,14 +22,56 @@ const AppSearchBar: React.FC<AppSearchBarProps> = ({
   placeholder = 'Tìm kiếm...',
   showFilter = true,
   extraAction,
+  debounceMs = 500,
 }) => {
+  // Local display value updates on every keystroke so controlled `value` never lags behind typing.
+  const [localText, setLocalText] = useState(searchText);
+  const lastNotifiedRef = useRef(searchText);
+  const notifyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync from parent when cleared/reset externally (not from our own notify).
+  useEffect(() => {
+    if (searchText !== lastNotifiedRef.current) {
+      if (notifyTimerRef.current) {
+        clearTimeout(notifyTimerRef.current);
+        notifyTimerRef.current = null;
+      }
+      setLocalText(searchText);
+      lastNotifiedRef.current = searchText;
+    }
+  }, [searchText]);
+
+  useEffect(() => {
+    return () => {
+      if (notifyTimerRef.current) clearTimeout(notifyTimerRef.current);
+    };
+  }, []);
+
+  const notifyParent = (val: string) => {
+    if (debounceMs <= 0) {
+      lastNotifiedRef.current = val;
+      setSearchText(val);
+      return;
+    }
+    if (notifyTimerRef.current) clearTimeout(notifyTimerRef.current);
+    notifyTimerRef.current = setTimeout(() => {
+      lastNotifiedRef.current = val;
+      setSearchText(val);
+      notifyTimerRef.current = null;
+    }, debounceMs);
+  };
+
   return (
     <div className="w-full px-4 py-2 bg-white flex items-center justify-between gap-2 border-b border-gray-100">
       <div className="flex-1 min-w-0 flex items-center">
         <IonSearchbar
-          value={searchText}
-          onIonInput={(e) => setSearchText(e.detail.value!)}
-          debounce={500}
+          value={localText}
+          onIonInput={(e) => {
+            const next = e.detail.value ?? '';
+            setLocalText(next);
+            notifyParent(next);
+          }}
+          debounce={0}
           placeholder={placeholder}
           className="custom-app-searchbar p-0 m-0 w-full"
           mode="md"

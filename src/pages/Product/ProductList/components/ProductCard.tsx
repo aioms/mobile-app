@@ -4,13 +4,17 @@ import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
 import { getS3ImageUrl } from "@/helpers/fileHelper";
 import { AppCard } from "@/components/UI";
 import { IProduct } from "@/types";
+import { IonItemSliding, IonItem, IonItemOptions, IonItemOption, IonIcon, IonLabel } from "@ionic/react";
+import { barcodeOutline, printOutline } from "ionicons/icons";
 
 interface ProductCardProps {
   product: IProduct;
   isShowCostPrice: boolean;
+  onQuickBarcode?: () => void;
+  onPrintBarcode?: () => void;
 }
 
-const ProductCard: FC<ProductCardProps> = ({ product, isShowCostPrice }) => {
+const ProductCard: FC<ProductCardProps> = ({ product, isShowCostPrice, onQuickBarcode, onPrintBarcode }) => {
   const history = useHistory();
   const hasVatCostPrice = product.costPriceVatRate !== null && product.costPriceVatRate !== undefined;
 
@@ -41,7 +45,9 @@ const ProductCard: FC<ProductCardProps> = ({ product, isShowCostPrice }) => {
   }, [product?.images, product?.imageUrls])
 
   return (
-    <AppCard onClick={handleClickToCard} className="flex gap-4">
+    <IonItemSliding>
+      <IonItem className="ion-no-padding bg-transparent" lines="none" style={{ '--background': 'transparent' }}>
+        <AppCard onClick={handleClickToCard} className="flex gap-4 w-full">
       {/* Product Image */}
       <div className="w-20 h-20 bg-gray-100 rounded-xl flex-shrink-0 overflow-hidden">
         {primaryImageUrl ? (
@@ -117,7 +123,19 @@ const ProductCard: FC<ProductCardProps> = ({ product, isShowCostPrice }) => {
           </div>
         </div>
       </div>
-    </AppCard>
+        </AppCard>
+      </IonItem>
+      <IonItemOptions side="end">
+        <IonItemOption color="medium" onClick={onQuickBarcode}>
+          <IonIcon slot="top" icon={barcodeOutline} />
+          <IonLabel>Xem</IonLabel>
+        </IonItemOption>
+        <IonItemOption color="primary" onClick={onPrintBarcode}>
+          <IonIcon slot="top" icon={printOutline} />
+          <IonLabel>In tem</IonLabel>
+        </IonItemOption>
+      </IonItemOptions>
+    </IonItemSliding>
   );
 };
 

@@ -379,7 +379,7 @@ const CustomerDetail: React.FC = () => {
                   <IonSearchbar
                     value={activeTab === 'orders' ? orderSearchText : receiptSearchText}
                     onIonInput={(e) => activeTab === 'orders' ? setOrderSearchText(e.detail.value!) : setReceiptSearchText(e.detail.value!)}
-                    debounce={800}
+                    debounce={0}
                     placeholder={activeTab === 'orders' ? "Tìm tên sản phẩm hoặc mã đơn" : "Tìm mã phiếu hoặc ghi chú"}
                     className="custom-app-searchbar p-0 m-0 w-full"
                     searchIcon={searchOutline}

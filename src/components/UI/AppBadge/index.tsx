@@ -38,7 +38,7 @@ const AppBadge: React.FC<AppBadgeProps> = ({
 
   return (
     <span 
-      className={`inline-flex items-center justify-center px-2.5 py-1 text-xs font-medium rounded-full border ${colorClass} ${className}`}
+      className={`inline-flex items-center justify-center max-w-full whitespace-normal break-words leading-tight px-2.5 py-1 text-xs font-medium rounded-full border ${colorClass} ${className}`}
       {...rest}
     >
       {children}

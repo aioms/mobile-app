@@ -49,6 +49,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
         placeholder="Tìm kiếm khách hàng..."
         isFiltered={isFiltered}
         onFilterClick={onFilterClick}
+        debounceMs={0}
       />
 
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 px-4">

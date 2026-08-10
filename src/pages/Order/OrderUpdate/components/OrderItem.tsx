@@ -1,5 +1,5 @@
 import { FC, memo, useState, useEffect } from "react";
-import { IonInput, IonIcon, IonButton, IonCheckbox } from "@ionic/react";
+import { IonIcon, IonButton, IonCheckbox } from "@ionic/react";
 import { trashOutline } from "ionicons/icons";
 
 import {
@@ -24,6 +24,7 @@ type Props = {
   onRowChange?: (data: any) => void;
   onRemoveItem?: () => void;
   isInternalTransfer?: boolean;
+  isVatDisabled?: boolean;
 };
 
 const OrderItem: FC<Props> = memo(
@@ -38,6 +39,7 @@ const OrderItem: FC<Props> = memo(
     shipNow = false,
     orderStatus,
     isInternalTransfer = false,
+    isVatDisabled = false,
     onRowChange,
     onRemoveItem,
   }) => {
@@ -171,6 +173,13 @@ const OrderItem: FC<Props> = memo(
       }
     }, [quantity]);
 
+    useEffect(() => {
+      if (vatRate !== newVatRate) {
+        setNewVatRate(vatRate);
+        setVatInputValue(vatRate.toString());
+      }
+    }, [vatRate]);
+
 
 
     const totalPrice = newPrice * newQuantity;
@@ -292,8 +301,8 @@ const OrderItem: FC<Props> = memo(
                 onBlur={handleVatRateBlur}
                 min={0}
                 max={100}
-                className="border border-gray-300 bg-white text-gray-900 rounded-lg text-sm w-20 px-[10px] py-2 focus:outline-none focus:ring-2 focus:ring-teal-400"
-                disabled={isInternalTransfer}
+                className="border border-gray-300 bg-white text-gray-900 rounded-lg text-sm w-20 px-[10px] py-2 focus:outline-none focus:ring-2 focus:ring-teal-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100"
+                disabled={isInternalTransfer || isVatDisabled}
               />
             )}
           </div>

@@ -47,6 +47,7 @@ export interface IFormData {
   discountAmount?: number;
   discountAmountFormatted?: string;
   orderType?: OrderType;
+  orderVatPercentage?: number;
 }
 
 /**

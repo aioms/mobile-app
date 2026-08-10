@@ -355,18 +355,18 @@ const PurchasePeriod: FC<Props> = ({
 
       <div className="grid grid-cols-1 gap-2 items-center">
         {/* Product Name and Quantity */}
-        <div className="flex items-center justify-between">
-          <span className="text-md font-semibold mr-2 break-words">
+        <div className="flex items-start justify-between mb-1">
+          <span className="text-lg font-bold text-gray-900 mr-2 break-words leading-snug">
             {truncateProductName(currentItem.productName)}
           </span>
-          <div className="flex items-center">
+          <div className="flex items-center mt-1">
             {editable ? (
               <div className="flex items-center">
                 <button
                   type="button"
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${currentItem.quantity <= minQuantity
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl font-bold ${currentItem.quantity <= minQuantity
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-gray-100 text-teal-400 hover:bg-gray-200"
+                    : "bg-gray-100 text-teal-500 hover:bg-gray-200"
                     }`}
                   onClick={handleDecrement}
                   disabled={currentItem.quantity <= minQuantity || !isNewItem}
@@ -384,16 +384,16 @@ const PurchasePeriod: FC<Props> = ({
                   min={minQuantity}
                   max={maxQuantity}
                   disabled={!isNewItem}
-                  className={`quantity-input w-12 h-8 mx-1 text-center text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent ${quantityError ? 'border-red-400 bg-red-50' : 'border-gray-300'
+                  className={`quantity-input w-16 h-10 mx-2 text-center text-lg font-semibold border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent ${quantityError ? 'border-red-400 bg-red-50' : 'border-gray-300'
                     }`}
                   aria-label="Số lượng sản phẩm"
                   autoComplete="off"
                 />
                 <button
                   type="button"
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${currentItem.quantity >= maxQuantity
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl font-bold ${currentItem.quantity >= maxQuantity
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-gray-100 text-teal-400 hover:bg-gray-200"
+                    : "bg-gray-100 text-teal-500 hover:bg-gray-200"
                     }`}
                   onClick={() => {
                     if (updateQuantity(currentItem.quantity + 1)) {
@@ -408,15 +408,15 @@ const PurchasePeriod: FC<Props> = ({
                 </button>
               </div>
             ) : (
-              <span>SL: {currentItem.quantity || 0}</span>
+              <span className="text-lg font-bold text-gray-900">SL: {currentItem.quantity || 0}</span>
             )}
           </div>
         </div>
 
         {/* Inventory Display */}
         {editable && (
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-xs text-gray-500">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-sm text-gray-500 font-medium">
               SL khả dụng: {maxQuantity}
             </span>
           </div>
@@ -425,14 +425,14 @@ const PurchasePeriod: FC<Props> = ({
         {/* Quantity Error */}
         {quantityError && (
           <div className="mb-2">
-            <span className="text-xs text-red-600">{quantityError}</span>
+            <span className="text-sm text-red-600">{quantityError}</span>
           </div>
         )}
 
         {/* Product Code and Price */}
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-gray-500 mr-2 min-w-max">
-            {currentItem.code}
+        <div className="flex items-center justify-between mb-3 mt-1">
+          <span className="text-base text-gray-600 mr-2 min-w-max">
+            Mã: {currentItem.code}
           </span>
           <div className="flex items-center">
             {editable && editingPrice ? (
@@ -443,12 +443,12 @@ const PurchasePeriod: FC<Props> = ({
                   handlePriceInputChange(e.detail.value!);
                 }}
                 onIonBlur={handlePriceBlur}
-                className="text-sm border border-gray-300 rounded w-32"
+                className="text-base border border-gray-300 rounded-lg px-2 py-1 w-32"
                 placeholder="0"
               />
             ) : (
               <div className="flex items-center">
-                <span className="text-sm text-gray-500 mr-1 min-w-max">
+                <span className="text-base font-bold text-gray-900 mr-1 min-w-max">
                   {/* Nếu là đợt cũ thì sử dụng costPrice từ receipt item */}
                   {formatCurrency(editable && isNewItem ? currentItem.sellingPrice : currentItem.costPrice)}
                 </span>
@@ -457,9 +457,9 @@ const PurchasePeriod: FC<Props> = ({
                     fill="clear"
                     size="small"
                     onClick={handlePriceEdit}
-                    className="ml-1"
+                    className="ml-1 text-blue-500"
                   >
-                    <IonIcon icon={createOutline} className="text-xs" />
+                    <IonIcon icon={createOutline} className="text-lg" />
                   </IonButton>
                 )}
               </div>
@@ -468,7 +468,7 @@ const PurchasePeriod: FC<Props> = ({
         </div>
 
         {/* Navigation and Total Price */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-100">
           {/* Navigation controls - only show if multiple items */}
           {totalItems > 1 ? (
             <span className="text-sm text-gray-500 min-w-max flex items-center">
@@ -476,15 +476,15 @@ const PurchasePeriod: FC<Props> = ({
                 onClick={handlePrevious}
                 disabled={currentIndex === 0}
                 className={`p-2 rounded-full transition-colors ${currentIndex === 0
-                  ? "text-gray-300 cursor-not-allowed"
-                  : "text-gray-600 hover:bg-gray-200 active:bg-gray-300"
+                  ? "text-gray-300 cursor-not-allowed bg-gray-50"
+                  : "text-gray-600 hover:bg-gray-200 active:bg-gray-300 bg-gray-100"
                   }`}
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
 
-              <div className="text-center mx-2">
-                <span className="text-sm font-medium text-gray-700">
+              <div className="text-center mx-3">
+                <span className="text-base font-bold text-gray-700">
                   {currentIndex + 1} / {totalItems}
                 </span>
               </div>
@@ -493,19 +493,20 @@ const PurchasePeriod: FC<Props> = ({
                 onClick={handleNext}
                 disabled={currentIndex === totalItems - 1}
                 className={`p-2 rounded-full transition-colors ${currentIndex === totalItems - 1
-                  ? "text-gray-300 cursor-not-allowed"
-                  : "text-gray-600 hover:bg-gray-200 active:bg-gray-300"
+                  ? "text-gray-300 cursor-not-allowed bg-gray-50"
+                  : "text-gray-600 hover:bg-gray-200 active:bg-gray-300 bg-gray-100"
                   }`}
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
             </span>
           ) : (
-            <span className="text-sm text-gray-500">Sản phẩm duy nhất</span>
+            <span className="text-base font-medium text-gray-500">Sản phẩm duy nhất</span>
           )}
 
-          <div className="flex items-center">
-            <span className={`text-sm font-semibold ${isShipNow ? 'text-orange-600' : 'text-blue-600'}`}>
+          <div className="flex flex-col items-end">
+            <span className="text-sm text-gray-500 mb-1">Thành tiền</span>
+            <span className={`text-lg font-bold ${isShipNow ? 'text-orange-600' : 'text-blue-600'}`}>
               {formatCurrency(totalPrice)}
             </span>
           </div>
@@ -513,21 +514,21 @@ const PurchasePeriod: FC<Props> = ({
 
         {/* Ship Now Checkbox */}
         {editable ? (
-          <div className="flex items-center mt-3">
+          <div className="flex items-center mt-3 p-2">
             <IonCheckbox
               checked={isShipNow}
               disabled={getAvailableInventory(currentItem) === 0}
               onIonChange={handleShipNowChange}
-              className="ship-now-checkbox"
-              style={{ "--border-radius": "4px" }}
+              className="ship-now-checkbox scale-110"
+              style={{ "--border-radius": "6px" }}
             />
-            <span className={`ml-2 text-sm ${isShipNow ? 'text-orange-600 font-medium' : 'text-gray-600'}`}>
+            <span className={`ml-3 text-base ${isShipNow ? 'text-orange-600 font-bold' : 'text-gray-700 font-medium'}`}>
               Giao ngay
             </span>
           </div>
         ) : (
-          <div className="flex items-center mt-3">
-            <span className={`text-sm ${isShipNow ? 'text-orange-600 font-medium' : 'text-gray-600'}`}>
+          <div className="flex items-center mt-3 p-2">
+            <span className={`text-base ${isShipNow ? 'text-orange-600 font-bold' : 'text-gray-700 font-medium'}`}>
               {isShipNow && 'Giao ngay'}
             </span>
           </div>

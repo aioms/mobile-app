@@ -360,3 +360,17 @@ ion-searchbar.custom-app-searchbar .searchbar-clear-button {
   margin: 0 !important;
   height: 32px !important;
 }
+
+/* Global IonChip text wrapping & responsive height */
+ion-chip {
+  height: auto;
+  min-height: 28px;
+  max-width: 100%;
+}
+
+ion-chip ion-label,
+ion-chip span {
+  white-space: normal;
+  word-break: break-word;
+  max-width: 100%;
+}

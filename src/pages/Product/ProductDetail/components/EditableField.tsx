@@ -55,8 +55,8 @@ export const EditableField: React.FC<EditableFieldProps> = ({
       return value.length > 0 ? (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
           {value.map((item, index) => (
-            <IonChip key={index} color="primary">
-              {item}
+            <IonChip key={index} color="primary" className="h-auto min-h-[28px] max-w-full">
+              <IonLabel className="whitespace-normal break-words max-w-full">{item}</IonLabel>
             </IonChip>
           ))}
         </div>

@@ -27,7 +27,19 @@ ion-content {
 /* Custom chip styles */
 ion-chip {
   margin: 0;
-  height: 28px;
+  height: auto;
+  min-height: 28px;
+  max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
+}
+
+ion-chip ion-label,
+ion-chip span {
+  white-space: normal;
+  word-break: break-word;
+  max-width: 100%;
+  line-height: 1.35;
 }
 
 /* Custom badge styles */

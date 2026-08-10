@@ -1,50 +1,82 @@
 import React, { useState } from "react";
+import { IonButton, IonIcon, IonInput, useIonToast } from "@ionic/react";
+import {
+  checkmarkOutline,
+  closeOutline,
+  createOutline,
+} from "ionicons/icons";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { getDate } from "@/helpers/date";
-import { formatCurrency } from "@/helpers/formatters";
+import {
+  formatCurrency,
+  formatCurrencyInput,
+  parseCurrencyInput,
+} from "@/helpers/formatters";
 import { RECEIPT_DEBT_STATUS } from "@/common/constants/receipt-debt.constant";
-import { IEnhancedPurchasePeriodListProps, IItemChangeData } from "../receiptDebtUpdate.d";
+import { useLoading } from "@/hooks/useLoading";
+import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
+import {
+  IEnhancedPurchasePeriodListProps,
+  IItemChangeData,
+} from "../receiptDebtUpdate.d";
 import EditableProductItem from "./EditableProductItem";
 
 const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = ({
   items = {},
+  periods = {},
+  debtId,
   receiptStatus,
   onItemsChange,
+  onVatChange,
   calculations,
 }) => {
   // State to track current item index for each period
-  const [currentItemIndexes, setCurrentItemIndexes] = useState<Record<string, number>>({});
+  const [currentItemIndexes, setCurrentItemIndexes] = useState<
+    Record<string, number>
+  >({});
+  const [editingVatPeriod, setEditingVatPeriod] = useState<string | null>(null);
+  const [vatDisplayValues, setVatDisplayValues] = useState<
+    Record<string, string>
+  >({});
+
+  const [presentToast] = useIonToast();
+  const { withLoading } = useLoading();
+  const { updateReceiptPeriod } = useReceiptDebt();
 
   // Sort dates in descending order (newest first)
-  const sortedDates = Object.keys(items).sort((a, b) =>
-    new Date(b).getTime() - new Date(a).getTime()
+  const sortedDates = Object.keys(items).sort(
+    (a, b) => new Date(b).getTime() - new Date(a).getTime()
   );
 
   // Get all items as a flat array for counting
   const allItems = Object.values(items).flat();
 
   // Check if editing is disabled based on receipt status
-  const isEditingDisabled = receiptStatus === RECEIPT_DEBT_STATUS.CANCELLED || 
-                           receiptStatus === RECEIPT_DEBT_STATUS.COMPLETED;
+  const isEditingDisabled =
+    receiptStatus === RECEIPT_DEBT_STATUS.CANCELLED ||
+    receiptStatus === RECEIPT_DEBT_STATUS.COMPLETED;
 
   // Handle navigation for a specific period
-  const handleNavigation = (periodDate: string, direction: 'prev' | 'next') => {
+  const handleNavigation = (periodDate: string, direction: "prev" | "next") => {
     const periodItems = items[periodDate];
     if (!periodItems || periodItems.length <= 1) return;
 
     const currentIndex = currentItemIndexes[periodDate] || 0;
     let newIndex = currentIndex;
 
-    if (direction === 'prev' && currentIndex > 0) {
+    if (direction === "prev" && currentIndex > 0) {
       newIndex = currentIndex - 1;
-    } else if (direction === 'next' && currentIndex < periodItems.length - 1) {
+    } else if (
+      direction === "next" &&
+      currentIndex < periodItems.length - 1
+    ) {
       newIndex = currentIndex + 1;
     }
 
-    setCurrentItemIndexes(prev => ({
+    setCurrentItemIndexes((prev) => ({
       ...prev,
-      [periodDate]: newIndex
+      [periodDate]: newIndex,
     }));
   };
 
@@ -52,9 +84,11 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
   const handleItemChange = (changeData: IItemChangeData) => {
     const updatedItems = { ...items };
     const periodItems = updatedItems[changeData.periodDate];
-    
+
     if (periodItems) {
-      const itemIndex = periodItems.findIndex(item => item.id === changeData.id);
+      const itemIndex = periodItems.findIndex(
+        (item) => item.id === changeData.id
+      );
       if (itemIndex !== -1) {
         updatedItems[changeData.periodDate][itemIndex] = {
           ...periodItems[itemIndex],
@@ -71,10 +105,12 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
   // Handle toggle edit mode
   const handleToggleEdit = (itemId: string) => {
     const updatedItems = { ...items };
-    
+
     // Find and toggle the item's editing state
-    Object.keys(updatedItems).forEach(periodDate => {
-      const itemIndex = updatedItems[periodDate].findIndex(item => item.id === itemId);
+    Object.keys(updatedItems).forEach((periodDate) => {
+      const itemIndex = updatedItems[periodDate].findIndex(
+        (item) => item.id === itemId
+      );
       if (itemIndex !== -1) {
         updatedItems[periodDate][itemIndex] = {
           ...updatedItems[periodDate][itemIndex],
@@ -86,10 +122,70 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
     onItemsChange(updatedItems);
   };
 
+  const startEditVat = (periodDate: string) => {
+    const currentVat = periods[periodDate]?.vatAmount || 0;
+    setVatDisplayValues((prev) => ({
+      ...prev,
+      [periodDate]:
+        currentVat > 0 ? formatCurrencyInput(String(currentVat)) : "",
+    }));
+    setEditingVatPeriod(periodDate);
+  };
+
+  const cancelEditVat = () => {
+    setEditingVatPeriod(null);
+  };
+
+  const handleVatInputChange = (periodDate: string, value: string) => {
+    const parsed = parseCurrencyInput(value);
+    setVatDisplayValues((prev) => ({
+      ...prev,
+      [periodDate]: parsed === 0 ? "" : formatCurrencyInput(value),
+    }));
+  };
+
+  const saveVat = async (periodDate: string) => {
+    const periodId = periods[periodDate]?.id;
+    if (!periodId) {
+      presentToast({
+        message: "Không tìm thấy thông tin đợt thu",
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+      return;
+    }
+
+    const vatAmount = parseCurrencyInput(vatDisplayValues[periodDate] || "");
+
+    await withLoading(async () => {
+      try {
+        await updateReceiptPeriod(debtId, periodId, { vatAmount });
+        onVatChange(periodDate, vatAmount);
+        setEditingVatPeriod(null);
+        presentToast({
+          message: "Cập nhật VAT thành công",
+          duration: 2000,
+          position: "top",
+          color: "success",
+        });
+      } catch (error) {
+        presentToast({
+          message: (error as Error).message,
+          duration: 3000,
+          position: "top",
+          color: "danger",
+        });
+      }
+    });
+  };
+
   if (allItems.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-sm overflow-hidden mt-3">
-        <h2 className="text-xl font-bold text-foreground mt-2 px-4 pt-4">Sản phẩm</h2>
+        <h2 className="text-xl font-bold text-foreground mt-2 px-4 pt-4">
+          Sản phẩm
+        </h2>
         <div className="p-4 text-center text-gray-500 text-base">
           Chưa có sản phẩm nào
         </div>
@@ -99,7 +195,9 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
 
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden mt-3">
-      <h2 className="text-xl font-bold text-foreground mt-2 px-4 pt-4">Sản phẩm</h2>
+      <h2 className="text-xl font-bold text-foreground mt-2 px-4 pt-4">
+        Sản phẩm
+      </h2>
 
       <div className="divide-y divide-gray-100">
         {sortedDates.map((date) => {
@@ -108,6 +206,8 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
           const currentItem = dateItems[currentIndex];
           const formattedDate = getDate(date).format("DD/MM/YYYY");
           const periodTotal = calculations.periodTotals[date];
+          const isEditingVat = editingVatPeriod === date;
+          const periodVat = periodTotal?.vatAmount || 0;
 
           return (
             <div key={date} className="p-4">
@@ -119,17 +219,83 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
                   </h3>
                   <div className="text-right">
                     <div className="text-lg font-bold text-green-600">
-                      {formatCurrency(periodTotal?.amount || 0)}
+                      {formatCurrency(periodTotal?.totalWithVat || 0)}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-2">
                   <p className="text-sm text-gray-500">
-                    {dateItems.length} sản phẩm • {periodTotal?.quantity || 0} tổng số lượng
+                    {dateItems.length} sản phẩm •{" "}
+                    {periodTotal?.quantity || 0} tổng số lượng
                   </p>
-                  <p className="text-xs text-gray-400">
-                    Tổng đợt thu
-                  </p>
+                  <p className="text-xs text-gray-400">Tổng đợt thu (gồm VAT)</p>
+                </div>
+
+                {/* VAT per period */}
+                <div className="mt-3 p-4 bg-gray-50 rounded-xl border border-gray-200/60">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-base font-bold text-gray-800">
+                      VAT đợt thu
+                    </span>
+                    {!isEditingDisabled && !isEditingVat && (
+                      <IonButton
+                        size="small"
+                        fill="clear"
+                        className="text-blue-600 font-semibold"
+                        onClick={() => startEditVat(date)}
+                      >
+                        <IonIcon icon={createOutline} slot="start" />
+                        Sửa
+                      </IonButton>
+                    )}
+                  </div>
+
+                  {isEditingVat ? (
+                    <div className="mt-2">
+                      <div className="border border-gray-300 rounded-lg px-3 py-2 bg-white mb-3 shadow-sm focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500">
+                        <IonInput
+                          type="text"
+                          inputMode="numeric"
+                          value={vatDisplayValues[date] || ""}
+                          placeholder="Nhập số tiền VAT"
+                          className="text-base font-semibold text-gray-900"
+                          onIonInput={(e) =>
+                            handleVatInputChange(date, e.detail.value || "")
+                          }
+                        />
+                      </div>
+                      <div className="flex items-center justify-center space-x-3 mt-3">
+                        <IonButton
+                          size="default"
+                          color="medium"
+                          fill="outline"
+                          className="flex-1 max-w-[130px] font-semibold"
+                          onClick={cancelEditVat}
+                        >
+                          <IonIcon icon={closeOutline} slot="start" />
+                          Hủy
+                        </IonButton>
+                        <IonButton
+                          size="default"
+                          color="success"
+                          fill="solid"
+                          className="flex-1 max-w-[130px] font-semibold"
+                          onClick={() => saveVat(date)}
+                        >
+                          <IonIcon icon={checkmarkOutline} slot="start" />
+                          Lưu
+                        </IonButton>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-lg font-bold text-gray-900 mb-1">
+                      {formatCurrency(periodVat)}
+                    </div>
+                  )}
+
+                  <div className="text-sm font-medium text-gray-500 mt-2">
+                    Tiền hàng: {formatCurrency(periodTotal?.amount || 0)}
+                  </div>
                 </div>
               </div>
 
@@ -138,6 +304,7 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
                 <EditableProductItem
                   item={currentItem}
                   periodDate={date}
+                  debtId={debtId}
                   isDisabled={isEditingDisabled}
                   onItemChange={handleItemChange}
                   onToggleEdit={handleToggleEdit}
@@ -148,7 +315,7 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
               {dateItems.length > 1 && (
                 <div className="flex items-center justify-between">
                   <button
-                    onClick={() => handleNavigation(date, 'prev')}
+                    onClick={() => handleNavigation(date, "prev")}
                     disabled={currentIndex === 0}
                     className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors ${
                       currentIndex === 0
@@ -166,7 +333,7 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
                   </div>
 
                   <button
-                    onClick={() => handleNavigation(date, 'next')}
+                    onClick={() => handleNavigation(date, "next")}
                     disabled={currentIndex === dateItems.length - 1}
                     className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors ${
                       currentIndex === dateItems.length - 1
@@ -185,14 +352,18 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
 
       {/* Grand Total Section */}
       {allItems.length > 0 && (
-        <div className="px-4 py-4 bg-blue-50 border-t border-blue-100">
+        <div className="px-4 py-4 bg-blue-50 border-t border-blue-100 mt-2">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-bold text-blue-800">
                 Tổng tất cả đợt thu
               </h3>
-              <p className="text-sm text-blue-600">
+              <p className="text-base text-blue-600 mt-1">
                 {sortedDates.length} đợt thu • {calculations.totalQuantity} sản phẩm
+                <br/>
+                {calculations.totalVatAmount > 0
+                  ? `VAT ${formatCurrency(calculations.totalVatAmount)}`
+                  : ""}
               </p>
             </div>
             <div className="text-right">
@@ -208,7 +379,8 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
       {isEditingDisabled && (
         <div className="px-4 py-3 bg-yellow-50 border-t border-yellow-100">
           <div className="text-sm text-yellow-800">
-            <strong>Lưu ý:</strong> Không thể chỉnh sửa sản phẩm do trạng thái phiếu hiện tại.
+            <strong>Lưu ý:</strong> Không thể chỉnh sửa sản phẩm do trạng thái
+            phiếu hiện tại.
           </div>
         </div>
       )}

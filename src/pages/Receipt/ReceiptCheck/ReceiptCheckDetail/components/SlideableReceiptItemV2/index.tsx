@@ -123,13 +123,13 @@ const SlideableReceiptItem: React.FC<SlideableReceiptItemProps> = ({
   }, [currentItem]);
 
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+    <div className="border border-gray-100 rounded-xl overflow-hidden">
       {/* Navigation Controls */}
-      <div className="flex items-center justify-between px-4 py-2 border-b bg-gray-50">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 bg-gray-50/80">
         <button
           onClick={handlePrevious}
           disabled={currentIndex === 0}
-          className={`p-1 rounded ${
+          className={`p-1 rounded-lg ${
             currentIndex === 0
               ? "text-gray-300"
               : "text-gray-600 hover:bg-gray-200"
@@ -137,13 +137,13 @@ const SlideableReceiptItem: React.FC<SlideableReceiptItemProps> = ({
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <span className="text-sm text-gray-500">
+        <span className="text-[13px] font-medium text-gray-500">
           {currentIndex + 1} / {items.length}
         </span>
         <button
           onClick={handleNext}
           disabled={currentIndex === items.length - 1}
-          className={`p-1 rounded ${
+          className={`p-1 rounded-lg ${
             currentIndex === items.length - 1
               ? "text-gray-300"
               : "text-gray-600 hover:bg-gray-200"
@@ -154,36 +154,36 @@ const SlideableReceiptItem: React.FC<SlideableReceiptItemProps> = ({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto bg-white">
         <table className="w-full table-fixed">
           <colgroup>
-            <col className="w-[45%]" />
+            <col className="w-[42%]" />
             <col className="w-[18%]" />
             <col className="w-[18%]" />
-            <col className="w-[19%]" />
+            <col className="w-[22%]" />
           </colgroup>
           <thead>
-            <tr className="bg-gray-50">
-              <th className="px-3 py-2 text-left text-sm font-medium text-gray-500">
+            <tr className="border-b border-gray-50">
+              <th className="px-3 py-2 text-left text-[12px] font-medium text-gray-500 uppercase tracking-wide">
                 Sản phẩm
               </th>
-              <th className="px-2 py-2 text-center text-sm font-medium text-gray-500">
+              <th className="px-1 py-2 text-center text-[12px] font-medium text-gray-500 uppercase tracking-wide">
                 Tồn kho
               </th>
-              <th className="px-2 py-2 text-center text-sm font-medium text-gray-500">
+              <th className="px-1 py-2 text-center text-[12px] font-medium text-gray-500 uppercase tracking-wide">
                 Thực tế
               </th>
-              <th className="px-2 py-2 text-center text-sm font-medium text-gray-500">
+              <th className="px-1 py-2 text-center text-[12px] font-medium text-gray-500 uppercase tracking-wide">
                 Chênh lệch
               </th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td className="px-3 py-3 border-b">
+              <td className="px-3 py-3 align-middle">
                 <div className="space-y-1">
                   <div
-                    className="text-[13px] text-gray-900"
+                    className="text-[13px] font-medium text-gray-900 leading-snug"
                     title={currentItem.productName}
                   >
                     {truncateProductName(currentItem.productName)}
@@ -193,12 +193,12 @@ const SlideableReceiptItem: React.FC<SlideableReceiptItemProps> = ({
                   </div>
                 </div>
               </td>
-              <td className="px-2 py-3 border-b text-center">
-                <IonChip className="m-0 justify-center w-6 min-w-[2rem]">
+              <td className="px-1 py-3 text-center align-middle">
+                <div className="inline-flex items-center justify-center min-w-[1.75rem] h-7 px-2 bg-gray-100 text-gray-800 rounded-lg text-[13px] font-medium whitespace-nowrap">
                   {currentItem.systemInventory}
-                </IonChip>
+                </div>
               </td>
-              <td className="px-2 py-3 border-b text-center">
+              <td className="px-1 py-3 text-center align-middle">
                 {isEditable && isEditing ? (
                   <input
                     type="number"
@@ -207,25 +207,26 @@ const SlideableReceiptItem: React.FC<SlideableReceiptItemProps> = ({
                     onBlur={handleInventoryBlur}
                     onKeyDown={handleInventoryKeyDown}
                     autoFocus
-                    className="w-full px-2 py-1 text-center border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-12 h-7 px-1 text-center border border-blue-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-[13px] font-medium"
                   />
                 ) : (
-                  <IonChip 
-                    className={`m-0 justify-center w-6 min-w-[2rem] ${isEditable ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                  <div 
+                    className={`inline-flex items-center justify-center min-w-[1.75rem] h-7 px-2 bg-gray-100 text-gray-800 rounded-lg text-[13px] font-medium whitespace-nowrap ${isEditable ? 'cursor-pointer hover:bg-gray-200 border border-transparent hover:border-gray-300' : ''}`}
                     onClick={handleInventoryClick}
                   >
                     {currentItem.actualInventory}
-                  </IonChip>
+                  </div>
                 )}
               </td>
-              <td className="px-2 py-3 border-b text-center">
-                <IonChip
-                  color={getDifferenceColor(totalDifference)}
-                  className="m-0 justify-center w-6 min-w-[2rem]"
+              <td className="px-1 py-3 text-center align-middle">
+                <div
+                  className={`inline-flex items-center justify-center min-w-[2rem] h-7 px-2 text-white rounded-lg text-[13px] font-medium whitespace-nowrap ${
+                    totalDifference === 0 ? 'bg-[#22C55E]' : totalDifference > 0 ? 'bg-orange-500' : 'bg-[#DC2626]'
+                  }`}
                 >
                   {getDifferencePrefix(totalDifference)}
                   {totalDifference}
-                </IonChip>
+                </div>
               </td>
             </tr>
           </tbody>

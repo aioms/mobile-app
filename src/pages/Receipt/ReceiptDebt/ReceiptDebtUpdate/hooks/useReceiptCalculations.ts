@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import {
   ICalculationResults,
   IEditableProductItem,
+  ReceiptPeriodSummary,
 } from "../receiptDebtUpdate.d";
 
 /**
@@ -9,12 +10,16 @@ import {
  */
 export const useReceiptCalculations = (
   items: Record<string, IEditableProductItem[]>,
+  periods: Record<string, ReceiptPeriodSummary> = {},
 ): ICalculationResults => {
   return useMemo(() => {
-    const periodTotals: Record<string, { quantity: number; amount: number }> =
-      {};
+    const periodTotals: Record<
+      string,
+      { quantity: number; amount: number; vatAmount: number; totalWithVat: number }
+    > = {};
     let totalQuantity = 0;
     let totalAmount = 0;
+    let totalVatAmount = 0;
 
     // Calculate totals for each period
     Object.entries(items).forEach(([periodDate, periodItems]) => {
@@ -35,21 +40,27 @@ export const useReceiptCalculations = (
         periodAmount += itemTotal;
       });
 
+      const vatAmount = periods[periodDate]?.vatAmount || 0;
+
       periodTotals[periodDate] = {
         quantity: periodQuantity,
         amount: periodAmount,
+        vatAmount,
+        totalWithVat: periodAmount + vatAmount,
       };
 
       totalQuantity += periodQuantity;
       totalAmount += periodAmount;
+      totalVatAmount += vatAmount;
     });
 
     return {
       totalQuantity,
-      totalAmount,
+      totalAmount: totalAmount + totalVatAmount,
+      totalVatAmount,
       periodTotals,
     };
-  }, [items]);
+  }, [items, periods]);
 };
 
 export default useReceiptCalculations;

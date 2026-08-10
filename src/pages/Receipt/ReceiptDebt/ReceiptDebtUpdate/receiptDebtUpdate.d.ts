@@ -36,9 +36,15 @@ export interface IReceiptDebtDetail {
 /**
  * Receipt debt detail response from API
  */
+export interface ReceiptPeriodSummary {
+  id: string;
+  vatAmount: number;
+}
+
 export interface ReceiptDebtDetailResponse {
   receipt: IReceiptDebtDetail;
   items: Record<string, IEditableProductItem[]>;
+  periods: Record<string, ReceiptPeriodSummary>;
 }
 
 /**
@@ -79,9 +85,12 @@ export interface IItemChangeData {
 export interface ICalculationResults {
   totalQuantity: number;
   totalAmount: number;
+  totalVatAmount: number;
   periodTotals: Record<string, {
     quantity: number;
     amount: number;
+    vatAmount: number;
+    totalWithVat: number;
   }>;
 }
 
@@ -91,6 +100,7 @@ export interface ICalculationResults {
 export interface IEditableProductItemProps {
   item: IEditableProductItem;
   periodDate: string;
+  debtId: string;
   isDisabled: boolean;
   onItemChange: (data: IItemChangeData) => void;
   onToggleEdit: (itemId: string) => void;
@@ -101,7 +111,10 @@ export interface IEditableProductItemProps {
  */
 export interface IEnhancedPurchasePeriodListProps {
   items: Record<string, IEditableProductItem[]>;
+  periods: Record<string, ReceiptPeriodSummary>;
+  debtId: string;
   receiptStatus: TReceiptDebtStatus;
   onItemsChange: (updatedItems: Record<string, IEditableProductItem[]>) => void;
+  onVatChange: (periodDate: string, vatAmount: number) => void;
   calculations: ICalculationResults;
 }

@@ -8,11 +8,10 @@ import {
   IonItemOptions,
   IonItemSliding,
   IonLabel,
-  IonText,
   useIonViewDidLeave,
 } from "@ionic/react";
 import { AppBadge } from "@/components/UI";
-import { createOutline, playOutline } from "ionicons/icons";
+import { createOutline, playOutline, chevronForward } from "ionicons/icons";
 
 import useReceiptCheck from "@/hooks/apis/useReceiptCheck";
 import { useAuth, useBarcodeScanner } from "@/hooks";
@@ -24,10 +23,10 @@ import {
 } from "@/common/constants/receipt-check.constant";
 import { formatDate } from "@/helpers/formatters";
 
-const getDifferenceColor = (difference: number) => {
-  if (difference === 0) return "text-green-500";
-  if (difference > 0) return "text-yellow-500";
-  return "text-red-500";
+const getDifferenceBadgeClasses = (difference: number) => {
+  if (difference === 0) return "bg-emerald-50 text-emerald-600 border border-emerald-200/60";
+  if (difference > 0) return "bg-amber-50 text-amber-600 border border-amber-200/60";
+  return "bg-rose-50 text-rose-600 border border-rose-200/60";
 };
 
 const getDifferencePrefix = (difference: number) => {
@@ -138,7 +137,6 @@ export const ItemList: FC<Props> = ({ receipt }) => {
     );
   }, [receipt, user]);
 
-  const differenceColor = getDifferenceColor(totalValueDifference);
   const differencePrefix = getDifferencePrefix(totalValueDifference);
 
   useIonViewDidLeave(() => {
@@ -150,66 +148,78 @@ export const ItemList: FC<Props> = ({ receipt }) => {
       <IonItemSliding ref={slidingRef}>
         <IonItem
           lines="none"
-          className="ion-activatable ripple-parent rounded-2xl shadow-sm border border-gray-100 mb-3 mx-4 mt-1 [&::part(native)]:bg-white [&::part(native)]:px-4"
+          detail={false}
+          className="ion-activatable ripple-parent rounded-2xl shadow-sm border border-gray-100 mb-3 mx-4 mt-1 [&::part(native)]:bg-white [&::part(native)]:px-4 [&::part(native)]:py-3"
           routerLink={`/tabs/receipt-check/detail/${receipt.id}`}
         >
-          <IonLabel className="ml-4">
-            <div className="md:flex md:items-center mb-2">
-              <div className="flex items-center">
-                <IonText>
-                  <span className="font-semibold text-sm mr-1">
-                    Mã: {receipt.receiptNumber}
-                  </span>
-                </IonText>
-
-                <AppBadge color={getStatusColor(receipt.status)}>
-                  <span className="text-[11px] font-bold">
-                    {getStatusLabel(receiptStatus)}
-                  </span>
-                </AppBadge>
-              </div>
-
-              <div className="text-gray-500 text-sm">
-                Số mặt hàng: {receipt.totalItems}
-              </div>
+          <IonLabel className="w-full m-0 p-0 font-sans">
+            {/* Header: Receipt Code (Full, No Truncation) + Status Badge */}
+            <div className="flex items-center justify-between gap-2 mb-0.5">
+              <span className="font-bold text-gray-900 text-sm sm:text-base whitespace-nowrap shrink-0">
+                Mã: {receipt.receiptNumber}
+              </span>
+              <AppBadge color={getStatusColor(receipt.status)}>
+                <span className="text-[11px] font-bold whitespace-nowrap">
+                  {getStatusLabel(receiptStatus)}
+                </span>
+              </AppBadge>
             </div>
-            <div className="flex justify-between items-center">
-              <div>
-                <div className="mt-1 text-xs text-gray-600">
-                  {receipt.items.map((item) => (
-                    <p key={item.id}>
-                      {item.productName.length > 15
-                        ? `${item.productName.slice(0, 15)}...`
-                        : item.productName}{" "}
-                      - SL: {item.inventory}
-                    </p>
-                  ))}
 
-                  {receipt.totalItems > receipt.items.length && (
-                    <button
-                      className="text-blue-600 text-sm mt-1"
-                      onClick={() => {
-                        history.push(`/tabs/receipt-check/detail/${receipt.id}`);
-                      }}
-                    >
-                      Xem thêm...
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="flex flex-col">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm">Chênh lệch</span>
-                  <span className={`font-bold text-sm ${differenceColor}`}>
-                    {differencePrefix}
-                    {totalValueDifference}
-                  </span>
-                </div>
-                <div className="mt-auto text-right">
-                  <div className="flex items-center text-gray-600">
-                    <span className="text-sm">{formatDate(receipt.date)}</span>
+            {/* Sub-header: Creation Date */}
+            <div className="text-[11px] text-gray-400 font-medium mb-2">
+              {formatDate(receipt.date)}
+            </div>
+
+            {/* Middle: Structured Product List Box */}
+            {receipt.items && receipt.items.length > 0 && (
+              <div className="bg-gray-50/80 rounded-xl p-2.5 mb-2.5 space-y-1.5 border border-gray-100/60">
+                {receipt.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between text-xs gap-2"
+                  >
+                    <span className="text-gray-700 font-medium truncate flex-1 min-w-0">
+                      {item.productName}
+                    </span>
+                    <span className="text-gray-500 bg-white px-2 py-0.5 rounded border border-gray-200/80 font-medium text-[11px] shrink-0">
+                      SL: {item.inventory}
+                    </span>
                   </div>
-                </div>
+                ))}
+
+                {receipt.totalItems > receipt.items.length && (
+                  <div className="pt-0.5 flex justify-end">
+                    <span className="text-blue-600 text-[11px] font-medium">
+                      + {receipt.totalItems - receipt.items.length} mặt hàng khác...
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Footer: Item Count (Left), Discrepancy + Arrow (Right) */}
+            <div className="flex items-center justify-between text-xs pt-0.5">
+              <span className="text-gray-500 font-medium">
+                Số mặt hàng:{" "}
+                <strong className="text-gray-800 font-semibold">
+                  {receipt.totalItems}
+                </strong>
+              </span>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-gray-500 font-medium">Chênh lệch:</span>
+                <span
+                  className={`font-bold text-xs px-2 py-0.5 rounded-full ${getDifferenceBadgeClasses(
+                    totalValueDifference
+                  )}`}
+                >
+                  {differencePrefix}
+                  {totalValueDifference}
+                </span>
+                <IonIcon
+                  icon={chevronForward}
+                  className="text-gray-400 text-sm ml-0.5"
+                />
               </div>
             </div>
           </IonLabel>
@@ -231,3 +241,4 @@ export const ItemList: FC<Props> = ({ receipt }) => {
     </>
   );
 };
+

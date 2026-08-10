@@ -237,24 +237,21 @@ const ReceiptDebtCreate: React.FC = () => {
 
       <IonContent className="ion-padding">
         {/* Khách hàng section */}
-        <div className="bg-card rounded-lg shadow-sm">
-          <div className="p-4">
-            <h2 className="text-md font-medium text-foreground mb-2">
-              Ngày tạo
-            </h2>
-            <div>{getDate(new Date()).format("DD/MM/YYYY")}</div>
+        <div className="bg-white rounded-lg shadow-sm">
+          <div className="p-4 border-b border-gray-100">
+            <div className="text-gray-900 font-medium text-base">{getDate(new Date()).format("DD/MM/YYYY")}</div>
           </div>
 
           {/* Khách hàng */}
           <div className="p-4">
-            <h2 className="text-md font-medium text-foreground mb-2">
+            <h2 className="text-base font-semibold text-gray-800 mb-2">
               Khách hàng
             </h2>
             <div
-              className="ion-activatable receipt-debt-ripple-parent break-normal p-2"
+              className={`ion-activatable receipt-debt-ripple-parent break-normal p-3 border rounded-lg flex items-center text-base ${selectedCustomerName ? "border-gray-400 text-gray-900 font-medium" : "border-gray-300 text-gray-500"}`}
               onClick={() => openModalSelectCustomer()}
             >
-              <IonIcon icon={search} className="text-2xl mr-2" />
+              <IonIcon icon={search} className="text-xl mr-2 text-gray-500" />
               {selectedCustomerName || "Chọn khách hàng"}
               <IonRippleEffect className="custom-ripple"></IonRippleEffect>
             </div>
@@ -297,20 +294,20 @@ const ReceiptDebtCreate: React.FC = () => {
           }}
         />
 
-        <div className="bg-card rounded-lg shadow-sm p-4 mt-3">
-          <IonText className="text-lg">Tổng Tiền Phải Thu: </IonText>
-          <IonText className="text-lg font-semibold" color="danger">
+        <div className="bg-white rounded-lg shadow-sm p-4 mt-3 flex justify-between items-center">
+          <IonText className="text-base font-semibold text-gray-800">Tổng Tiền Phải Thu: </IonText>
+          <IonText className="text-xl font-bold" color="danger">
             {formatCurrency(totalAmount)}
           </IonText>
         </div>
 
         <div className="bg-card rounded-lg shadow-sm mt-3">
           {/* Dự kiến thu */}
-          <div className="p-4">
-            <h2 className="text-md font-medium text-foreground mb-2">
+          <div className="p-4 border-b border-gray-100">
+            <h2 className="text-base font-semibold text-gray-800 mb-2">
               Dự kiến thu
             </h2>
-            <div>
+            <div className="bg-gray-50 rounded-lg">
               <DatePicker
                 value={formData.estimatedDate}
                 presentation="date"
@@ -318,14 +315,14 @@ const ReceiptDebtCreate: React.FC = () => {
                   handleFormChange("estimatedDate", e.detail.value)
                 }
                 attrs={{ id: "estimated-date" }}
-                extraClassName="w-full flex items-center justify-start"
+                extraClassName="w-full flex items-center justify-start py-2.5 text-base"
               />
             </div>
           </div>
 
           {/* Ghi chú */}
           <div className="p-4">
-            <h2 className="text-lg font-medium text-foreground mb-2">
+            <h2 className="text-base font-semibold text-gray-800 mb-2">
               Ghi chú
             </h2>
             <IonTextarea
@@ -334,7 +331,7 @@ const ReceiptDebtCreate: React.FC = () => {
               onIonInput={(e) => handleFormChange("note", e.target.value)}
               placeholder="Nhập ghi chú đơn hàng"
               rows={3}
-              className="border border-input rounded-lg px-2"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-base"
             ></IonTextarea>
           </div>
         </div>
