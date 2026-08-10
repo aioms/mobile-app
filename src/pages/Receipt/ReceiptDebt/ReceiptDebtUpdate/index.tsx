@@ -243,30 +243,28 @@ const ReceiptDebtUpdate: React.FC = () => {
         ) : (
           <>
             {/* Display receipt information */}
-            <div className="bg-card rounded-lg shadow-sm">
+            <div className="bg-white rounded-lg shadow-sm">
               <div className="px-4 pt-4">
-                <h2 className="text-lg font-semibold text-foreground mb-3">
+                <h2 className="text-base font-semibold text-gray-800 mb-1">
                   Mã phiếu thu
                 </h2>
-                <div className="text-base">{receiptDebt?.code}</div>
+                <div className="text-base text-gray-900">{receiptDebt?.code}</div>
               </div>
 
               <div className="px-4 mt-4">
-                <h2 className="text-lg font-semibold text-foreground mb-3">
+                <h2 className="text-base font-semibold text-gray-800 mb-1">
                   Trạng thái
                 </h2>
-                <IonChip color={getStatusColor(receiptDebt?.status as any)}>
-                  <IonLabel>
-                    {getStatusLabel(receiptDebt?.status as any)}
-                  </IonLabel>
+                <IonChip color={getStatusColor(receiptDebt?.status as any)} className="m-0 text-sm px-3 py-1 font-medium mt-1">
+                  {getStatusLabel(receiptDebt?.status as any)}
                 </IonChip>
               </div>
 
               <div className="px-4 mt-4">
-                <h2 className="text-lg font-semibold text-foreground mb-3">
+                <h2 className="text-base font-semibold text-gray-800 mb-1">
                   Tổng tiền
                 </h2>
-                <div className="text-base text-blue-600 font-semibold">
+                <div className="text-xl font-bold text-blue-600 mt-1">
                   {formatCurrency(calculations.totalAmount)}
                 </div>
                 <div className="text-sm text-gray-500 mt-1">
@@ -287,29 +285,29 @@ const ReceiptDebtUpdate: React.FC = () => {
               </div> */}
 
               <div className="px-4 mt-4">
-                <h2 className="text-lg font-semibold text-foreground mb-3">
+                <h2 className="text-base font-semibold text-gray-800 mb-1">
                   Đã thanh toán
                 </h2>
-                <div className="text-base">
+                <div className="text-base text-gray-900 font-medium">
                   {formatCurrency(receiptDebt?.paidAmount || 0)}
                 </div>
               </div>
 
               <div className="px-4 mt-4 pb-4">
-                <h2 className="text-lg font-semibold text-foreground mb-3">
+                <h2 className="text-base font-semibold text-gray-800 mb-1">
                   Còn lại
                 </h2>
-                <div className="text-red-600 font-semibold text-base">
+                <div className="text-red-600 font-bold text-lg">
                   {formatCurrency(Math.max(0, calculations.totalAmount - (receiptDebt?.paidAmount || 0)))}
                 </div>
               </div>
 
               {/* Khách hàng - Only show customer name, no modal */}
               <div className="px-4 pb-4">
-                <h2 className="text-lg font-semibold text-foreground mb-3">
+                <h2 className="text-base font-semibold text-gray-800 mb-2">
                   Khách hàng
                 </h2>
-                <div className="p-2 bg-gray-50 rounded-lg text-base">
+                <div className="p-3 bg-gray-50 rounded-lg text-base text-gray-900 font-medium">
                   {receiptDebt?.customerName || "Chưa có thông tin khách hàng"}
                 </div>
               </div>
@@ -334,13 +332,13 @@ const ReceiptDebtUpdate: React.FC = () => {
               </IonText>
             </div> */}
 
-            <div className="bg-card rounded-lg shadow-sm mt-3">
+            <div className="bg-white rounded-lg shadow-sm mt-3">
               {/* Dự kiến thu */}
-              <div className="p-4">
-                <h2 className="text-lg font-semibold text-foreground mb-3">
+              <div className="p-4 border-b border-gray-100">
+                <h2 className="text-base font-semibold text-gray-800 mb-2">
                   Dự kiến thu
                 </h2>
-                <div>
+                <div className="bg-gray-50 rounded-lg">
                   <DatePicker
                     value={formData.dueDate}
                     presentation="date"
@@ -348,7 +346,7 @@ const ReceiptDebtUpdate: React.FC = () => {
                       handleFormChange("dueDate", e.detail.value)
                     }
                     attrs={{ id: "estimated-date", disabled: isEditingDisabled }}
-                    extraClassName="w-full flex items-center justify-start"
+                    extraClassName="w-full flex items-center justify-start py-2.5 text-base"
                   />
                 </div>
                 {errors.dueDate && (
@@ -360,7 +358,7 @@ const ReceiptDebtUpdate: React.FC = () => {
 
               {/* Ghi chú */}
               <div className="p-4">
-                <h2 className="text-xl font-semibold text-foreground mb-3">
+                <h2 className="text-base font-semibold text-gray-800 mb-2">
                   Ghi chú
                 </h2>
                 <IonTextarea
@@ -369,7 +367,7 @@ const ReceiptDebtUpdate: React.FC = () => {
                   onIonInput={(e) => handleFormChange("note", e.target.value)}
                   placeholder="Nhập ghi chú đơn hàng"
                   rows={3}
-                  className="border border-input rounded-lg px-2"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-base"
                   disabled={isEditingDisabled}
                 ></IonTextarea>
               </div>

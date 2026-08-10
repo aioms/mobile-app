@@ -232,15 +232,16 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
                 </div>
 
                 {/* VAT per period */}
-                <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-semibold text-gray-700">
+                <div className="mt-3 p-4 bg-gray-50 rounded-xl border border-gray-200/60">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-base font-bold text-gray-800">
                       VAT đợt thu
                     </span>
                     {!isEditingDisabled && !isEditingVat && (
                       <IonButton
                         size="small"
                         fill="clear"
+                        className="text-blue-600 font-semibold"
                         onClick={() => startEditVat(date)}
                       >
                         <IonIcon icon={createOutline} slot="start" />
@@ -250,46 +251,49 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
                   </div>
 
                   {isEditingVat ? (
-                    <div>
-                      <div className="border border-input rounded-md px-3 py-2 bg-white mb-2">
+                    <div className="mt-2">
+                      <div className="border border-gray-300 rounded-lg px-3 py-2 bg-white mb-3 shadow-sm focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500">
                         <IonInput
                           type="text"
                           inputMode="numeric"
                           value={vatDisplayValues[date] || ""}
                           placeholder="Nhập số tiền VAT"
+                          className="text-base font-semibold text-gray-900"
                           onIonInput={(e) =>
                             handleVatInputChange(date, e.detail.value || "")
                           }
                         />
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center justify-center space-x-3 mt-3">
                         <IonButton
-                          size="small"
-                          color="success"
-                          fill="solid"
-                          onClick={() => saveVat(date)}
-                        >
-                          <IonIcon icon={checkmarkOutline} slot="start" />
-                          Lưu
-                        </IonButton>
-                        <IonButton
-                          size="small"
+                          size="default"
                           color="medium"
                           fill="outline"
+                          className="flex-1 max-w-[130px] font-semibold"
                           onClick={cancelEditVat}
                         >
                           <IonIcon icon={closeOutline} slot="start" />
                           Hủy
                         </IonButton>
+                        <IonButton
+                          size="default"
+                          color="success"
+                          fill="solid"
+                          className="flex-1 max-w-[130px] font-semibold"
+                          onClick={() => saveVat(date)}
+                        >
+                          <IonIcon icon={checkmarkOutline} slot="start" />
+                          Lưu
+                        </IonButton>
                       </div>
                     </div>
                   ) : (
-                    <div className="text-base font-bold text-gray-900">
+                    <div className="text-lg font-bold text-gray-900 mb-1">
                       {formatCurrency(periodVat)}
                     </div>
                   )}
 
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-sm font-medium text-gray-500 mt-2">
                     Tiền hàng: {formatCurrency(periodTotal?.amount || 0)}
                   </div>
                 </div>
@@ -348,17 +352,17 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
 
       {/* Grand Total Section */}
       {allItems.length > 0 && (
-        <div className="px-4 py-4 bg-blue-50 border-t border-blue-100">
+        <div className="px-4 py-4 bg-blue-50 border-t border-blue-100 mt-2">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-bold text-blue-800">
                 Tổng tất cả đợt thu
               </h3>
-              <p className="text-sm text-blue-600">
-                {sortedDates.length} đợt thu • {calculations.totalQuantity} sản
-                phẩm
+              <p className="text-base text-blue-600 mt-1">
+                {sortedDates.length} đợt thu • {calculations.totalQuantity} sản phẩm
+                <br/>
                 {calculations.totalVatAmount > 0
-                  ? ` • VAT ${formatCurrency(calculations.totalVatAmount)}`
+                  ? `VAT ${formatCurrency(calculations.totalVatAmount)}`
                   : ""}
               </p>
             </div>

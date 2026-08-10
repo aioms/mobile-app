@@ -105,15 +105,15 @@ const PurchasePeriodList: FC<Props> = ({
   return (
     <div className="bg-card rounded-lg shadow-sm p-4 mt-3 overflow-hidden">
       {/* Header with action buttons */}
-      <h2 className="text-md font-medium text-foreground mt-2 mb-2">
+      <h2 className="text-lg font-bold text-gray-800 mt-2 mb-3">
         Đợt Thu Sản Phẩm
       </h2>
       <div className="flex items-center space-x-2 mb-3">
         <div
-          className="ion-activatable receipt-debt-ripple-parent p-2"
+          className="ion-activatable receipt-debt-ripple-parent p-3 bg-gray-50 rounded-lg flex items-center justify-center flex-1 text-base font-medium text-gray-700"
           onClick={onAddPeriod}
         >
-          <IonIcon icon={search} className="text-2xl mr-1" />
+          <IonIcon icon={search} className="text-2xl mr-2 text-gray-500" />
           Tìm kiếm hàng hóa
           <IonRippleEffect className="custom-ripple"></IonRippleEffect>
         </div>
@@ -133,10 +133,10 @@ const PurchasePeriodList: FC<Props> = ({
         data-product-items-container="true"
       >
         {Object.keys(items).length === 0 ? (
-          <div className="p-4 text-center text-gray-500">
-            <p className="text-sm">Chưa có đợt thu nào</p>
-            <p className="text-xs mt-1">
-              Nhấn "Quét mã" hoặc "Thêm" để bắt đầu
+          <div className="p-6 text-center text-gray-500 mt-4 bg-gray-50 rounded-lg">
+            <p className="text-base font-medium">Chưa có đợt thu nào</p>
+            <p className="text-sm mt-2">
+              Nhấn "Tìm kiếm hàng hóa" hoặc biểu tượng quét mã để bắt đầu
             </p>
           </div>
         ) : (

@@ -410,65 +410,55 @@ const ReceiptDebtDetail: React.FC = () => {
 
         <div className="p-4 space-y-4">
           {/* Receipt Information */}
-          <IonCard className="shadow-sm">
-            <IonCardContent className="p-4">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 text-sm">Mã phiếu:</span>
-                  <span className="text-gray-800 font-medium">
-                    {receipt?.code}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 text-sm">Ngày Tạo:</span>
-                  <span className="text-gray-800 font-medium">
-                    {dayjsFormat(receipt?.createdAt)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 text-sm">
-                    Ngày Thu Dự Kiến:
-                  </span>
-                  <span className="text-gray-800 font-medium">
-                    {dayjsFormat(receipt?.dueDate)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 text-sm">
-                    {receipt?.type === RECEIPT_DEBT_TYPE.CUSTOMER_DEBT
-                      ? "Khách Hàng:"
-                      : "Nhà Cung Cấp:"}
-                  </span>
-                  <span className="text-gray-800 font-medium">
-                    {receipt?.type === RECEIPT_DEBT_TYPE.CUSTOMER_DEBT
-                      ? receipt?.customerName
-                      : receipt?.supplierName}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 text-sm">Trạng Thái:</span>
-                  {receipt?.status && (
-                    <IonChip
-                      color={getStatusColor(
-                        receipt?.status as TReceiptDebtStatus
-                      )}
-                      className="text-xs px-3 py-1 rounded-full"
-                    >
-                      {getStatusLabel(receipt?.status as TReceiptDebtStatus)}
-                    </IonChip>
-                  )}
-                </div>
-                {receipt?.note && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600 text-sm">Ghi Chú:</span>
-                    <span className="text-gray-800 font-medium">
-                      {receipt?.note}
-                    </span>
-                  </div>
-                )}
+          <div className="bg-white rounded-lg shadow-sm p-4 space-y-3">
+            <div className="flex justify-between items-start">
+              <span className="text-gray-600 text-base">Mã phiếu:</span>
+              <span className="text-gray-900 font-semibold text-base">{receipt?.code}</span>
+            </div>
+            <div className="flex justify-between items-start">
+              <span className="text-gray-600 text-base">Ngày Tạo:</span>
+              <span className="text-gray-900 font-medium text-base">
+                {dayjsFormat(receipt?.createdAt)}
+              </span>
+            </div>
+            <div className="flex justify-between items-start">
+              <span className="text-gray-600 text-base">Ngày Thu Dự Kiến:</span>
+              <span className="text-gray-900 font-medium text-base">
+                {dayjsFormat(receipt?.dueDate)}
+              </span>
+            </div>
+            <div className="flex justify-between items-start">
+              <span className="text-gray-600 text-base">
+                {receipt?.type === RECEIPT_DEBT_TYPE.CUSTOMER_DEBT
+                  ? "Khách Hàng:"
+                  : "Nhà Cung Cấp:"}
+              </span>
+              <span className="text-gray-900 font-semibold text-base">
+                {receipt?.type === RECEIPT_DEBT_TYPE.CUSTOMER_DEBT
+                  ? receipt?.customerName
+                  : receipt?.supplierName}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 text-base">Trạng Thái:</span>
+              {receipt?.status && (
+                <IonChip
+                  color={getStatusColor(receipt?.status as TReceiptDebtStatus)}
+                  className="text-sm font-medium px-3 py-1 m-0 rounded-full"
+                >
+                  {getStatusLabel(receipt?.status as TReceiptDebtStatus)}
+                </IonChip>
+              )}
+            </div>
+            {receipt?.note && (
+              <div className="flex justify-between items-start">
+                <span className="text-gray-600 text-base">Ghi Chú:</span>
+                <span className="text-gray-900 font-medium text-base text-right max-w-[60%]">
+                  {receipt?.note}
+                </span>
               </div>
-            </IonCardContent>
-          </IonCard>
+            )}
+          </div>
 
           {/* Product List by Period */}
           <div className="bg-white rounded-lg shadow-sm">
@@ -490,13 +480,13 @@ const ReceiptDebtDetail: React.FC = () => {
                   className="border-b border-gray-100 last:border-b-0"
                 >
                   {/* Period Header */}
-                  <div className="bg-blue-50 px-4 py-2">
+                  <div className="bg-blue-50 px-4 py-2.5">
                     <div className="flex justify-between items-center gap-2">
-                      <h4 className="text-sm font-medium text-blue-700">
+                      <h4 className="text-base font-semibold text-blue-800">
                         Đợt: {getDate(period).format("DD/MM/YYYY")}
                       </h4>
                       {periods[period] && (
-                        <span className="text-xs font-medium text-blue-700 whitespace-nowrap">
+                        <span className="text-sm font-semibold text-blue-800 whitespace-nowrap">
                           VAT: {formatCurrency(periods[period].vatAmount || 0)}
                         </span>
                       )}
@@ -506,14 +496,14 @@ const ReceiptDebtDetail: React.FC = () => {
                   {/* Table Header */}
                   <div className="bg-green-50 px-4 py-3">
                     <IonGrid className="p-0">
-                      <IonRow className="text-xs font-medium text-green-700">
-                        <IonCol size="2" className="p-0">
+                      <IonRow className="text-sm font-semibold text-green-800">
+                        <IonCol size="3" className="p-0 text-left">
                           Mã SP
                         </IonCol>
-                        <IonCol size="4" className="p-0 text-center">
+                        <IonCol size="4" className="p-0 text-left">
                           Tên SP
                         </IonCol>
-                        <IonCol size="2" className="p-0 text-right">
+                        <IonCol size="1" className="p-0 text-center">
                           SL
                         </IonCol>
                         <IonCol size="4" className="p-0 text-right">
@@ -530,26 +520,17 @@ const ReceiptDebtDetail: React.FC = () => {
                       className={`px-4 py-3 border-b border-gray-100 last:border-b-0 ${item.metadata?.shipNow ? 'bg-orange-50' : ''}`}
                     >
                       <IonGrid className="p-0">
-                        <IonRow className="text-xs">
-                          <IonCol
-                            size="3"
-                            className="p-0 text-left text-gray-600"
-                          >
+                        <IonRow className="text-sm items-start">
+                          <IonCol size="3" className="p-0 text-left text-gray-600 font-medium">
                             {item.code}
                           </IonCol>
-                          <IonCol size="4" className="p-0 text-gray-800">
+                          <IonCol size="4" className="p-0 text-left text-gray-900 pr-1">
                             {item.productName}
                           </IonCol>
-                          <IonCol
-                            size="1"
-                            className="p-0 text-center text-gray-800"
-                          >
+                          <IonCol size="1" className="p-0 text-center text-gray-900 font-medium">
                             {item.quantity}
                           </IonCol>
-                          <IonCol
-                            size="4"
-                            className="p-0 text-right text-gray-800 font-medium"
-                          >
+                          <IonCol size="4" className="p-0 text-right text-gray-900 font-semibold">
                             {formatCurrencyWithoutSymbol(item.costPrice)}đ
                           </IonCol>
                         </IonRow>
@@ -557,7 +538,7 @@ const ReceiptDebtDetail: React.FC = () => {
                         {item.metadata?.shipNow && (
                           <IonRow className="text-xs mt-1">
                             <IonCol className="p-0">
-                              <IonChip color="warning" className="text-xs h-5">
+                              <IonChip color="warning" className="text-xs h-6 px-2.5 border-0 m-0 rounded-md font-semibold bg-orange-100 text-orange-700">
                                 Giao ngay
                               </IonChip>
                             </IonCol>
@@ -566,7 +547,7 @@ const ReceiptDebtDetail: React.FC = () => {
                         {(item.returnedQuantity && item.returnedQuantity > 0) ? (
                           <IonRow className="text-xs mt-1">
                             <IonCol className="p-0">
-                              <IonChip color="warning" className="text-xs h-5">
+                              <IonChip color="warning" className="text-xs h-6 px-2.5">
                                 Đã trả: {item.returnedQuantity}
                               </IonChip>
                             </IonCol>
@@ -599,17 +580,17 @@ const ReceiptDebtDetail: React.FC = () => {
                 {/* Payment Header */}
                 <div className="bg-green-50 px-4 py-3">
                   <IonGrid className="p-0">
-                    <IonRow className="text-xs font-medium text-green-700">
-                      <IonCol size="3" className="p-0">
+                    <IonRow className="text-sm font-semibold text-green-800">
+                      <IonCol size="3" className="p-0 text-left">
                         Ngày Thu
                       </IonCol>
-                      <IonCol size="3" className="p-0">
+                      <IonCol size="3" className="p-0 text-left">
                         Số Tiền
                       </IonCol>
                       <IonCol size="3" className="p-0 text-center">
                         Hình Thức
                       </IonCol>
-                      <IonCol size="3" className="p-0 text-center">
+                      <IonCol size="3" className="p-0 text-right">
                         Trạng Thái
                       </IonCol>
                     </IonRow>
@@ -623,25 +604,22 @@ const ReceiptDebtDetail: React.FC = () => {
                     className="px-4 py-3 border-b border-gray-100 last:border-b-0"
                   >
                     <IonGrid className="p-0">
-                      <IonRow className="text-xs">
-                        <IonCol size="3" className="p-0 text-gray-800">
-                          {dayjsFormat(transaction.processedAt)}
+                      <IonRow className="text-sm items-center">
+                        <IonCol size="3" className="p-0 text-gray-800 text-left font-medium">
+                          {dayjsFormat(transaction.processedAt, "DD/MM/YYYY")}
                         </IonCol>
-                        <IonCol
-                          size="4"
-                          className="p-0 text-gray-800 font-medium"
-                        >
+                        <IonCol size="3" className="p-0 text-gray-900 font-semibold text-left">
                           {formatCurrency(transaction.amount)}
                         </IonCol>
-                        <IonCol size="3" className="p-0 text-gray-600">
+                        <IonCol size="3" className="p-0 text-gray-700 text-center">
                           {getPaymentMethodLabel(transaction.paymentMethod)}
                         </IonCol>
-                        <IonCol size="2" className="p-0">
+                        <IonCol size="3" className="p-0 flex justify-end">
                           <IonChip
                             color={getTransactionStatusColor(
                               transaction.status
                             )}
-                            className="text-xs rounded-full"
+                            className="text-xs font-semibold rounded-lg h-auto py-1 px-2 m-0 flex text-center justify-center w-full"
                           >
                             {getTransactionStatusLabel(transaction.status)}
                           </IonChip>
@@ -667,43 +645,39 @@ const ReceiptDebtDetail: React.FC = () => {
           </div>
 
           {/* Summary */}
-          <IonCard className="shadow-sm">
-            <IonCardContent className="p-4">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-base font-semibold text-gray-800">
-                    Tổng công nợ
-                  </span>
-                  <span className="text-xl font-bold text-red-500">
-                    {receipt?.totalAmount != null &&
-                      formatCurrency(receipt.totalAmount)}
-                  </span>
-                </div>
-                {totalVatAmount > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Tổng VAT:</span>
-                    <span className="text-orange-600 font-semibold">
-                      {formatCurrency(totalVatAmount)}
-                    </span>
-                  </div>
-                )}
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Đã Thu:</span>
-                  <span className="text-green-500 font-semibold">
-                    {receipt?.paidAmount != null &&
-                      formatCurrency(receipt.paidAmount)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Còn Lại:</span>
-                  <span className="text-blue-500 font-semibold">
-                    {receipt?.remainingAmount != null &&
-                      formatCurrency(receipt.remainingAmount)}
-                  </span>
-                </div>
+          <div className="bg-white rounded-lg shadow-sm p-4 space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-lg font-bold text-gray-900">
+                Tổng công nợ
+              </span>
+              <span className="text-2xl font-extrabold text-red-600">
+                {receipt?.totalAmount != null &&
+                  formatCurrency(receipt.totalAmount)}
+              </span>
+            </div>
+            {totalVatAmount > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-base text-gray-700 font-medium">Tổng VAT:</span>
+                <span className="text-lg text-orange-600 font-bold">
+                  {formatCurrency(totalVatAmount)}
+                </span>
               </div>
-            </IonCardContent>
-          </IonCard>
+            )}
+            <div className="flex justify-between items-center">
+              <span className="text-base text-gray-700 font-medium">Đã Thu:</span>
+              <span className="text-lg text-green-600 font-bold">
+                {receipt?.paidAmount != null &&
+                  formatCurrency(receipt.paidAmount)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-base text-gray-700 font-medium">Còn Lại:</span>
+              <span className="text-lg text-blue-600 font-bold">
+                {receipt?.remainingAmount != null &&
+                  formatCurrency(receipt.remainingAmount)}
+              </span>
+            </div>
+          </div>
 
           {/* Cancel debt receipt section */}
           {receipt?.status === RECEIPT_DEBT_STATUS.CANCELLED ? (

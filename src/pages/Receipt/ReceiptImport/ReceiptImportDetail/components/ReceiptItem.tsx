@@ -1,5 +1,5 @@
 import { FC, useEffect, useMemo, useState } from "react";
-import { IonInput, IonItem, IonLabel, IonIcon, IonSpinner, useIonToast, IonSegment, IonSegmentButton, IonText } from "@ionic/react";
+import { IonIcon, IonSpinner, useIonToast } from "@ionic/react";
 
 import { formatCurrencyWithoutSymbol, parseCurrencyInput } from "@/helpers/formatters";
 import { createOutline, checkmark, closeOutline, trashOutline } from "ionicons/icons";
@@ -238,202 +238,163 @@ const ReceiptItem: FC<Props> = (
     }, [newCostPrice, newDiscount, quantity, discountMode]);
 
     return (
-      <IonItem>
-        <div className="py-4 shadow-sm space-y-4 border-b-2 w-full">
-          <div className="flex items-start space-x-3">
-            <div className="flex-1">
-              <div className="flex justify-between">
-                <div>
-                  <h3 className="font-medium text-lg">{productName}</h3>
-                  <p className="text-gray-500">{code}</p>
-                  <div className="text-gray-500">
-                    Giá nhập: {formattedCostPrice}
-                  </div>
-                </div>
-                {!disabled && onDelete && (
+      <div className="p-4 bg-white border-b border-gray-100 last:border-b-0 space-y-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1 pr-2">
+            <h3 className="font-medium text-gray-900 text-sm leading-tight">{productName}</h3>
+            <p className="text-gray-500 text-xs mt-0.5">{code}</p>
+          </div>
+          {!disabled && onDelete && (
+            <button
+              className="p-1.5 -mr-1.5 -mt-1.5 rounded-full hover:bg-red-50 transition-colors disabled:opacity-50"
+              onClick={handleDelete}
+              aria-label="Xóa sản phẩm khỏi phiếu nhập"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <IonSpinner name="dots" className="w-4 h-4 text-red-500" />
+              ) : (
+                <IonIcon icon={trashOutline} className="text-red-500 text-lg" />
+              )}
+            </button>
+          )}
+        </div>
+
+        {/* Inputs Section */}
+        {((isEmployee && !isUserSpecial) || disabled) ? (
+          <div className="grid grid-cols-2 gap-3 mt-2">
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Giá nhập</label>
+              <div className="font-medium text-sm text-gray-900">{costPrice.toLocaleString("vi-VN")}</div>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Chiết khấu (%)</label>
+              <div className="font-medium text-sm text-gray-900">{newDiscount}%</div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 mt-2">
+            <div>
+              <label className="text-xs font-medium text-gray-700 mb-1 block">Giá nhập</label>
+              <input
+                type="text"
+                value={formattedCostPrice}
+                onChange={(e) => handleCostPriceChange(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-lg h-9 px-3 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
+                disabled={disabled}
+              />
+            </div>
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-xs font-medium text-gray-700 block">Chiết khấu</label>
+                <div className="flex bg-gray-100 rounded p-0.5">
                   <button
-                    className="p-2 rounded-full hover:bg-red-50 disabled:opacity-50"
-                    onClick={handleDelete}
-                    aria-label="Xóa sản phẩm khỏi phiếu nhập"
-                    disabled={isDeleting}
+                    onClick={() => setDiscountMode(DiscountType.PERCENTAGE)}
+                    className={`text-[10px] px-2 py-0.5 rounded leading-none ${discountMode === DiscountType.PERCENTAGE ? "bg-white shadow-sm font-medium text-gray-900" : "text-gray-500"}`}
                   >
-                    {isDeleting ? (
-                      <IonSpinner name="dots" className="w-5 h-5" />
+                    %
+                  </button>
+                  <button
+                    onClick={() => setDiscountMode(DiscountType.FIXED)}
+                    className={`text-[10px] px-2 py-0.5 rounded leading-none ${discountMode === DiscountType.FIXED ? "bg-white shadow-sm font-medium text-gray-900" : "text-gray-500"}`}
+                  >
+                    $
+                  </button>
+                </div>
+              </div>
+              <div className="relative">
+                {discountMode === DiscountType.PERCENTAGE ? (
+                  <input
+                    type="number"
+                    value={newDiscount}
+                    onChange={(e) => handleDiscountPercentChange(parseFloat(e.target.value) || 0)}
+                    min={0}
+                    max={100}
+                    className={`w-full bg-gray-50 border ${discountError ? 'border-red-500' : 'border-gray-200'} rounded-lg h-9 pl-3 pr-6 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-colors`}
+                    disabled={disabled}
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={formattedDiscountAmount}
+                    onChange={(e) => handleDiscountAmountChange(e.target.value)}
+                    className={`w-full bg-gray-50 border ${discountError ? 'border-red-500' : 'border-gray-200'} rounded-lg h-9 pl-3 pr-6 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-colors`}
+                    disabled={disabled}
+                  />
+                )}
+                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                  {discountMode === DiscountType.PERCENTAGE ? '%' : 'đ'}
+                </span>
+              </div>
+              {discountError && (
+                <span className="text-red-500 text-[10px] mt-0.5 block">{discountError}</span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Quantity Controls and Total */}
+        <div className="flex items-center justify-between pt-3 mt-1 border-t border-gray-50">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-gray-600">SL:</span>
+            {!isEditingQty ? (
+              <div className="flex items-center gap-1">
+                <span className="font-semibold text-sm text-gray-900">{quantity}</span>
+                {!disabled && (
+                  <button
+                    className="p-1 -m-1 text-gray-400 hover:text-blue-500 transition-colors"
+                    onClick={startEditQuantity}
+                    aria-label="Chỉnh sửa số lượng"
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? (
+                      <IonSpinner name="dots" className="w-3.5 h-3.5" />
                     ) : (
-                      <IonIcon icon={trashOutline} className="text-red-600 text-xl" />
+                      <IonIcon icon={createOutline} className="text-sm" />
                     )}
                   </button>
                 )}
               </div>
-            </div>
-          </div>
-
-          {/* Cost Price Input */}
-          {(isEmployee || disabled) && !isUserSpecial ? (
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <IonLabel position="stacked">Giá nhập</IonLabel>
-                <div className="text-lg font-medium text-primary">
-                  {costPrice.toLocaleString("vi-VN")}
-                </div>
-              </div>
-              <div className="flex-1">
-                <IonLabel position="stacked">Chiết khấu (%)</IonLabel>
-                <div className="text-lg font-medium text-primary">
-                  {newDiscount}%
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center">
-              <div className="flex-1 mr-2">
-                <IonLabel position="stacked">Giá nhập</IonLabel>
-                <IonInput
-                  type="text"
-                  fill="outline"
-                  color="primary"
-                  labelPlacement="floating"
-                  value={formattedCostPrice}
-                  onIonInput={(e) => handleCostPriceChange(e.detail.value!)}
-                  className="border-solid border-2 border-gray-500/25 rounded-lg ion-padding-start"
-                  disabled={disabled}
+            ) : (
+              <div className="flex items-center gap-1">
+                <input
+                  type="number"
+                  value={editQuantity}
+                  min={1}
+                  onChange={(e) => setEditQuantity(e.target.value)}
+                  className="w-16 bg-gray-50 border border-gray-200 rounded h-7 text-center text-sm focus:outline-none focus:border-blue-500"
+                  disabled={isUpdating}
                 />
-              </div>
-              <div className="flex-1">
-                <div>
-
-
-                  <div className="flex justify-between items-center mb-1">
-                    <IonLabel position="stacked">Chiết khấu</IonLabel>
-                    {/* <div className="scale-75 origin-right">
-                    <IonSegment
-                      value={discountMode}
-                      onIonChange={e => setDiscountMode(e.detail.value as "percent" | "amount")}
-                      mode="ios"
-                      className="h-6 min-h-[2rem]"
-                    >
-                      <IonSegmentButton value="percent" className="min-h-[2rem]">
-                        <IonLabel>%</IonLabel>
-                      </IonSegmentButton>
-                      <IonSegmentButton value="amount" className="min-h-[2rem]">
-                        <IonLabel>$</IonLabel>
-                      </IonSegmentButton>
-                    </IonSegment>
-                  </div> */}
-                  </div>
-
-                  {discountMode === DiscountType.PERCENTAGE ? (
-                    <IonInput
-                      type="number"
-                      fill="outline"
-                      value={newDiscount}
-                      onIonInput={(e) =>
-                        handleDiscountPercentChange(parseFloat(e.detail.value!) || 0)
-                      }
-                      min={0}
-                      max={100}
-                      className={`border-solid border-2 ${discountError ? 'border-red-500' : 'border-gray-500/25'} rounded-lg ion-padding-start`}
-                      disabled={disabled}
-                    >
-                      <div slot="end" className="pr-2 text-gray-500">%</div>
-                    </IonInput>
+                <button
+                  className="p-1 -m-1 text-green-500 hover:text-green-600 transition-colors"
+                  onClick={saveEditQuantity}
+                  aria-label="Lưu số lượng"
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? (
+                    <IonSpinner name="dots" className="w-3.5 h-3.5" />
                   ) : (
-                    <IonInput
-                      type="text"
-                      fill="outline"
-                      value={formattedDiscountAmount}
-                      onIonInput={(e) => handleDiscountAmountChange(e.detail.value!)}
-                      className={`border-solid border-2 ${discountError ? 'border-red-500' : 'border-gray-500/25'} rounded-lg ion-padding-start`}
-                      disabled={disabled}
-                    >
-                      <div slot="end" className="pr-2 text-gray-500">đ</div>
-                    </IonInput>
+                    <IonIcon icon={checkmark} className="text-lg" />
                   )}
-                  {discountError && (
-                    <IonText color="danger" className="text-xs mt-1 block">
-                      {discountError}
-                    </IonText>
-                  )}
-                </div>
-
-                <div>
-                  <IonSegment
-                    value={discountMode}
-                    onIonChange={e => setDiscountMode(e.detail.value as DiscountType)}
-                    mode="ios"
-                    className="min-h-[2rem]"
-                  >
-                    <IonSegmentButton value={DiscountType.PERCENTAGE} className="min-h-[2rem]">
-                      <IonLabel>%</IonLabel>
-                    </IonSegmentButton>
-                    <IonSegmentButton value={DiscountType.FIXED} className="min-h-[2rem]">
-                      <IonLabel>$</IonLabel>
-                    </IonSegmentButton>
-                  </IonSegment>
-                </div>
+                </button>
+                <button
+                  className="p-1 -m-1 text-gray-400 hover:text-gray-500 transition-colors"
+                  onClick={cancelEditQuantity}
+                  aria-label="Hủy chỉnh sửa"
+                  disabled={isUpdating}
+                >
+                  <IonIcon icon={closeOutline} className="text-lg" />
+                </button>
               </div>
+            )}
+          </div>
+          <div className="text-right">
+            <div className="font-bold text-sm text-blue-600">
+              {formatCurrencyWithoutSymbol(totalPrice)}
             </div>
-          )}
-
-          {/* Quantity Controls */}
-          <div className="flex items-center justify-between mt-4">
-            <div className="flex items-center space-x-2">
-              {!isEditingQty ? (
-                <>
-                  <span className="text-sm">SL: {quantity}</span>
-                  {!disabled && (
-                    <button
-                      className="p-1 rounded hover:bg-gray-100"
-                      onClick={startEditQuantity}
-                      aria-label="Chỉnh sửa số lượng"
-                      disabled={isUpdating}
-                    >
-                      {isUpdating ? (
-                        <IonSpinner name="dots" className="w-4 h-4" />
-                      ) : (
-                        <IonIcon icon={createOutline} className="text-gray-500" />
-                      )}
-                    </button>
-                  )}
-                </>
-              ) : (
-                <div className="flex items-center space-x-2">
-                  <IonInput
-                    type="number"
-                    fill="outline"
-                    value={editQuantity}
-                    min={1}
-                    onIonInput={(e) => setEditQuantity(e.detail.value!)}
-                    className="w-24 border-solid border-2 border-gray-500/25 rounded-lg ion-padding-start"
-                    disabled={isUpdating}
-                  />
-                  <button
-                    className="p-1 rounded hover:bg-gray-100"
-                    onClick={saveEditQuantity}
-                    aria-label="Lưu số lượng"
-                    disabled={isUpdating}
-                  >
-                    {isUpdating ? (
-                      <IonSpinner name="dots" className="w-4 h-4" />
-                    ) : (
-                      <IonIcon icon={checkmark} className="text-green-600" />
-                    )}
-                  </button>
-                  <button
-                    className="p-1 rounded hover:bg-gray-100"
-                    onClick={cancelEditQuantity}
-                    aria-label="Hủy chỉnh sửa"
-                    disabled={isUpdating}
-                  >
-                    <IonIcon icon={closeOutline} className="text-gray-500" />
-                  </button>
-                </div>
-              )}
-            </div>
-            <div className="text-lg font-medium">{formatCurrencyWithoutSymbol(totalPrice)}</div>
           </div>
         </div>
-      </IonItem>
+      </div>
     );
   }
 );

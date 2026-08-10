@@ -89,97 +89,86 @@ const ReceiptItem: FC<Props> = ({
   }, [newCostPrice, newDiscount, quantity]);
 
   return (
-    <IonItem>
-      <div className="py-4 shadow-sm space-y-4 border-b-2 border-gray-500/10">
-        <div className="flex items-start space-x-3">
-          <div className="flex-1">
-            <div className="flex justify-between">
-              <div>
-                <h3 className="font-medium text-lg">{productName}</h3>
-                <p className="text-gray-500">{code}</p>
-                <div className="text-gray-500">
-                  Tồn kho: {inventory} • Giá:{" "}
-                  {costPrice.toLocaleString("vi-VN")}
-                </div>
-              </div>
-              <IonFabButton
-                size="small"
-                color="danger"
-                onClick={() => {
-                  onRemoveItem?.(id);
-                }}
-              >
-                <IonIcon icon={trash} size="small"></IonIcon>
-              </IonFabButton>
-            </div>
+    <div className="p-4 bg-white border-b border-gray-100 last:border-b-0 space-y-3">
+      <div className="flex items-start justify-between">
+        <div className="flex-1 pr-2">
+          <h3 className="font-medium text-gray-900 text-sm leading-tight">{productName}</h3>
+          <p className="text-gray-500 text-xs mt-0.5">{code}</p>
+          <div className="text-gray-500 text-xs mt-1">
+            Tồn kho: <span className="font-medium">{inventory}</span>
           </div>
         </div>
+        <button
+          className="p-1.5 -mr-1.5 -mt-1.5 rounded-full hover:bg-red-50 transition-colors"
+          onClick={() => onRemoveItem?.(id)}
+          aria-label="Xóa sản phẩm"
+        >
+          <IonIcon icon={trash} className="text-red-500 text-lg" />
+        </button>
+      </div>
 
-        {/* Cost Price Input */}
-        <div className="flex items-center">
-          <div className="flex-1 mr-2">
-            <IonLabel position="stacked">Giá nhập</IonLabel>
-            <IonInput
-              type="text"
-              fill="outline"
-              color="primary"
-              labelPlacement="floating"
-              value={formattedCostPrice}
-              onIonInput={(e) => handleCostPriceChange(e.detail.value!)}
-              className="border-solid border-2 border-gray-500/25 rounded-lg ion-padding-start"
-            />
-          </div>
-          <div className="flex-1">
-            <IonLabel position="stacked">Chiết khấu (%)</IonLabel>
-            <IonInput
+      {/* Inputs Section */}
+      <div className="grid grid-cols-2 gap-3 mt-2">
+        <div>
+          <label className="text-xs font-medium text-gray-700 mb-1 block">Giá nhập</label>
+          <input
+            type="text"
+            value={formattedCostPrice}
+            onChange={(e) => handleCostPriceChange(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg h-9 px-3 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-gray-700 mb-1 block">Chiết khấu (%)</label>
+          <div className="relative">
+            <input
               type="number"
-              fill="outline"
-              labelPlacement="floating"
               value={newDiscount}
-              onIonInput={(e) =>
-                handleDiscountChange(parseFloat(e.detail.value!) || 0)
-              }
+              onChange={(e) => handleDiscountChange(parseFloat(e.target.value) || 0)}
               min={0}
               max={100}
-              className="border-solid border-2 border-gray-500/25 rounded-lg ion-padding-start"
+              className="w-full bg-gray-50 border border-gray-200 rounded-lg h-9 pl-3 pr-6 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
             />
+            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">%</span>
           </div>
         </div>
+      </div>
 
-        {/* Quantity Controls */}
-        <div className="flex items-center justify-between mt-4">
-          <div className="flex items-center space-x-2 border rounded-full p-1">
-            <IonButton
-              fill="clear"
+      {/* Quantity Controls and Total */}
+      <div className="flex items-center justify-between pt-3 mt-1 border-t border-gray-50">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-gray-600">SL:</span>
+          <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg h-8 px-1">
+            <button
+              className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-blue-500 hover:bg-white rounded"
               onClick={() => handleQuantityChange(quantity - 1)}
             >
-              <IonIcon icon={remove} />
-            </IonButton>
-            <IonInput
-              aria-label="Counter"
-              className="w-8 text-center"
+              <IonIcon icon={remove} className="text-sm" />
+            </button>
+            <input
               type="number"
+              className="w-10 bg-transparent text-center text-sm font-medium focus:outline-none"
               value={quantity}
               onChange={(e) => {
-                const value = e.currentTarget.value
-                  ? parseInt(e.currentTarget.value.toString())
-                  : 0;
+                const value = e.currentTarget.value ? parseInt(e.currentTarget.value.toString()) : 0;
                 handleQuantityChange(value);
               }}
-            ></IonInput>
-            <IonButton
-              fill="clear"
+            />
+            <button
+              className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-blue-500 hover:bg-white rounded"
               onClick={() => handleQuantityChange(quantity + 1)}
             >
-              <IonIcon icon={add} />
-            </IonButton>
+              <IonIcon icon={add} className="text-sm" />
+            </button>
           </div>
-          <div className="text-lg font-medium">
+        </div>
+        <div className="text-right">
+          <div className="font-bold text-sm text-blue-600">
             {formatCurrency(quantity * newCostPrice * (1 - newDiscount / 100))}
           </div>
         </div>
       </div>
-    </IonItem>
+    </div>
   );
 };
 

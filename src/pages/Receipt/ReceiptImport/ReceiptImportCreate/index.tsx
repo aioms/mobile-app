@@ -339,7 +339,7 @@ const ReceiptImportCreate: React.FC = () => {
 
   return (
     <>
-      <IonContent className="ion-padding">
+      <IonContent className="bg-gray-50">
         <IonRefresher
           slot="fixed"
           pullFactor={0.5}
@@ -357,7 +357,7 @@ const ReceiptImportCreate: React.FC = () => {
             </IonButtons>
             <IonTitle> Tạo mới phiếu nhập </IonTitle>
           </IonToolbar>
-          <IonToolbar className="mt-2 flex justify-between">
+          <IonToolbar className="mt-1 flex justify-between px-2">
             <div
               className="ion-activatable receipt-import-ripple-parent"
               onClick={() => openModalSelectProduct()}
@@ -375,8 +375,9 @@ const ReceiptImportCreate: React.FC = () => {
           </IonToolbar>
         </IonHeader>
 
-        <IonCard className="p-2 mt-2">
-          <IonCardContent>
+        <div className="px-4 py-4 space-y-4 pb-24">
+          <IonCard className="m-0 rounded-xl shadow-sm border border-gray-100">
+            <IonCardContent className="p-4">
             <div className="flex justify-between items-center">
               <IonText color="medium">
                 Mã phiếu: {`NH${dayjs().format("YYMMDDHHmm")}`}
@@ -430,8 +431,8 @@ const ReceiptImportCreate: React.FC = () => {
               onClick={openModalSelectSupplier}
               className={clsx("mt-3", errors.supplier ? "ion-invalid" : "")}
             >
-              <IonLabel position="stacked">Chọn nhà cung cấp *</IonLabel>
-              <button className="w-full p-4 rounded-lg border border-gray-300 text-left flex items-center justify-between">
+              <IonLabel position="stacked" className="text-sm font-medium text-gray-700 mb-1">Chọn nhà cung cấp *</IonLabel>
+              <button className="w-full py-2 px-3 rounded-lg border border-gray-200 bg-gray-50 text-left flex items-center justify-between">
                 <span className="text-gray-500">
                   {formData.supplier
                     ? formData.supplier.split("__")[1]
@@ -446,9 +447,13 @@ const ReceiptImportCreate: React.FC = () => {
           </IonCardContent>
         </IonCard>
 
-        {receiptItems.length > 0 && (
-          <IonList>
-            {receiptItems.map((item, index) => (
+          {receiptItems.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="p-3 border-b border-gray-100 bg-gray-50/50">
+                <span className="font-medium text-sm text-gray-700">Danh sách sản phẩm ({receiptItems.length})</span>
+              </div>
+              <div className="flex flex-col">
+                {receiptItems.map((item, index) => (
               <ReceiptItem
                 key={index}
                 {...item}
@@ -466,9 +471,11 @@ const ReceiptImportCreate: React.FC = () => {
                   );
                 }}
               />
-            ))}
-          </IonList>
-        )}
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </IonContent>
 
       <IonFooter>

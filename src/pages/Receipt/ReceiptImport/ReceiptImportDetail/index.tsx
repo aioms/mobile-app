@@ -10,9 +10,8 @@ import {
   IonHeader,
   IonIcon,
   IonInput,
-  IonLabel,
-  IonList,
   IonPage,
+  IonSpinner,
   IonTextarea,
   IonToolbar,
   RefresherEventDetail,
@@ -128,6 +127,8 @@ const ReceiptImportDetail: React.FC = () => {
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [scannedItems, setScannedItems] = useState<Map<string, number>>(new Map());
   const [pendingImports, setPendingImports] = useState<string[]>([]);
+  const [noteInput, setNoteInput] = useState<string>("");
+  const [isSavingNote, setIsSavingNote] = useState<boolean>(false);
 
   const { isLoading, withLoading } = useLoading();
   const { user } = useAuth();
@@ -401,6 +402,7 @@ const ReceiptImportDetail: React.FC = () => {
         };
 
         setReceipt(receipt);
+        setNoteInput(receipt.note || "");
         setFormData({
           note: receipt.note,
           paymentDate: receipt.paymentDate,
@@ -735,6 +737,7 @@ const ReceiptImportDetail: React.FC = () => {
     if (
       receipt.status === RECEIPT_IMPORT_STATUS.COMPLETED ||
       receipt.status === RECEIPT_IMPORT_STATUS.PAID ||
+      receipt.status === RECEIPT_IMPORT_STATUS.CANCELLED ||
       (isEmployee && !isUserSpecial)
     ) {
       return false;
@@ -743,15 +746,50 @@ const ReceiptImportDetail: React.FC = () => {
     return true;
   }, [receipt?.status, user, isUserSpecial]);
 
+  const isNoteChanged = useMemo(() => {
+    return noteInput !== (receipt?.note || "");
+  }, [noteInput, receipt?.note]);
+
+  const handleSaveNote = async () => {
+    if (!receipt?.id || !isNoteChanged || isSavingNote) return;
+
+    await withLoading(async () => {
+      try {
+        await updateReceiptImport(receipt.id, {
+          note: noteInput,
+        });
+
+        await presentToast({
+          message: "Đã cập nhật ghi chú thành công",
+          duration: 2000,
+          position: "top",
+          color: "success",
+        });
+
+        await fetchReceiptImport();
+      } catch (error) {
+        captureException(error as Error, createExceptionContext(
+          'ReceiptImport',
+          'ReceiptImportDetail',
+          'handleSaveNote'
+        ));
+
+        await presentToast({
+          message: (error as Error).message || "Cập nhật ghi chú thất bại",
+          duration: 2500,
+          position: "top",
+          color: "danger",
+        });
+      }
+    });
+  };
+
   const renderReceiptSummary = useMemo(() => {
     if (!receipt || !user) return null;
 
-    const userRole = user.role;
-    const isEmployee = userRole === UserRole.EMPLOYEE;
-
-    if (receipt.status === RECEIPT_IMPORT_STATUS.COMPLETED || receipt.status === RECEIPT_IMPORT_STATUS.PAID || isEmployee && !isUserSpecial) {
+    if (!isReceiptInfoEditable) {
       return (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex justify-between">
             <span className="text-gray-500">Ngày nhập:</span>
             <span>
@@ -772,12 +810,41 @@ const ReceiptImportDetail: React.FC = () => {
             <span className="text-gray-500">Kho:</span>
             <span>{receipt?.warehouse || "--"}</span>
           </div>
-          {receipt?.note && (
-            <div className="flex justify-between">
-              <span className="text-gray-500">Ghi chú:</span>
-              <span>{receipt?.note || "--"}</span>
+          <div className="flex flex-col mt-4 pt-3 border-t border-gray-100">
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-sm font-medium text-gray-700">Ghi chú</label>
+              {isNoteChanged && (
+                <button
+                  type="button"
+                  onClick={handleSaveNote}
+                  disabled={isSavingNote}
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-2.5 py-1 rounded-md transition-colors"
+                >
+                  {isSavingNote ? (
+                    <IonSpinner name="dots" className="w-3 h-3 text-blue-600" />
+                  ) : (
+                    "Lưu ghi chú"
+                  )}
+                </button>
+              )}
             </div>
-          )}
+            <IonTextarea
+              placeholder="Nhập ghi chú..."
+              rows={3}
+              className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:bg-white focus:border-blue-400 transition-colors"
+              value={noteInput}
+              onIonInput={(e) => {
+                const val = (e.detail.value as string) || "";
+                setNoteInput(val);
+                setFormData((prev) => ({ ...prev, note: val }));
+              }}
+              onBlur={() => {
+                if (isNoteChanged) {
+                  handleSaveNote();
+                }
+              }}
+            />
+          </div>
         </div>
       );
     }
@@ -785,8 +852,8 @@ const ReceiptImportDetail: React.FC = () => {
     return (
       <>
         {/* Expect import date selection */}
-        <div className="flex flex-col mt-3">
-          <IonLabel position="stacked">Ngày nhập dự kiến</IonLabel>
+        <div className="flex flex-col mt-4">
+          <label className="text-sm font-medium text-gray-700 mb-1">Ngày nhập dự kiến</label>
           <DatePicker
             extraClassName="w-full justify-start"
             attrs={{ id: "importDate", locale: "en-GB" }}
@@ -812,8 +879,8 @@ const ReceiptImportDetail: React.FC = () => {
         </div>
 
         {/* Payment date selection */}
-        <div className="flex flex-col mt-3">
-          <IonLabel position="stacked">Ngày thanh toán</IonLabel>
+        <div className="flex flex-col mt-4">
+          <label className="text-sm font-medium text-gray-700 mb-1">Ngày thanh toán</label>
           <DatePicker
             extraClassName="w-full justify-start"
             attrs={{ id: "paymentDate", locale: "en-GB" }}
@@ -840,10 +907,10 @@ const ReceiptImportDetail: React.FC = () => {
 
         {/* Supplier selection */}
         <div className="flex flex-col mt-4">
-          <IonLabel position="stacked">Nhà cung cấp</IonLabel>
+          <label className="text-sm font-medium text-gray-700 mb-1">Nhà cung cấp</label>
           <div className="flex items-center gap-2">
             <button
-              className="flex-1 py-1 px-1.5 rounded-lg border border-solid border-gray-300 text-left flex items-center justify-between"
+              className="flex-1 py-2 px-3 rounded-lg border border-gray-200 bg-gray-50 text-left flex items-center justify-between"
               onClick={openModalSelectSupplier}
             >
               <span className="text-gray-500">
@@ -862,24 +929,52 @@ const ReceiptImportDetail: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex flex-col mt-3">
-          <IonLabel position="stacked">Ghi chú</IonLabel>
+        <div className="flex flex-col mt-4">
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-sm font-medium text-gray-700">Ghi chú</label>
+            {isNoteChanged && (
+              <button
+                type="button"
+                onClick={handleSaveNote}
+                disabled={isSavingNote}
+                className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-2.5 py-1 rounded-md transition-colors"
+              >
+                {isSavingNote ? (
+                  <IonSpinner name="dots" className="w-3 h-3 text-blue-600" />
+                ) : (
+                  "Lưu ghi chú"
+                )}
+              </button>
+            )}
+          </div>
           <IonTextarea
             placeholder="Nhập ghi chú..."
             rows={3}
-            className="border rounded-lg px-2"
-            value={formData.note || receipt?.note}
-            onBlur={(e) => {
-              setFormData((prev) => ({
-                ...prev,
-                note: e.target.value! as string,
-              }));
+            className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:bg-white focus:border-blue-400 transition-colors"
+            value={noteInput}
+            onIonInput={(e) => {
+              const val = (e.detail.value as string) || "";
+              setNoteInput(val);
+              setFormData((prev) => ({ ...prev, note: val }));
+            }}
+            onBlur={() => {
+              if (isNoteChanged) {
+                handleSaveNote();
+              }
             }}
           />
         </div>
       </>
     );
-  }, [user?.role, supplierName, receipt, formData]);
+  }, [
+    isReceiptInfoEditable,
+    supplierName,
+    receipt,
+    formData,
+    noteInput,
+    isNoteChanged,
+    isSavingNote,
+  ]);
 
   // Calculate total amount from items
   const calculatedTotalAmount = useMemo(() => {
@@ -974,8 +1069,8 @@ const ReceiptImportDetail: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar className="px-4 py-3 flex items-center justify-between border-b">
+      <IonHeader className="ion-no-border border-b border-gray-100">
+        <IonToolbar className="px-2 py-1">
           <IonButtons slot="start">
             <IonButton
               className="text-gray-600"
@@ -1008,16 +1103,16 @@ const ReceiptImportDetail: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
+      <IonContent className="bg-gray-50">
         {isLoading && <LoadingScreen message="Đang tải dữ liệu..." />}
 
         <Refresher onRefresh={handleRefresh} />
 
-        <div className="space-y-6">
+        <div className="px-4 py-4 space-y-4 pb-24">
           {/* Receipt Summary Section */}
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Thông tin phiếu nhập</h2>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-base font-semibold text-gray-900">Thông tin phiếu nhập</h2>
               {showScanProduct && (
                 <div className="flex items-center space-x-2">
                   {!isScanning ? (
@@ -1081,17 +1176,20 @@ const ReceiptImportDetail: React.FC = () => {
           </div>
 
           {/* Items Section */}
-          <div className="bg-white rounded-lg overflow-hidden shadow-sm">
-            <div className="p-4 border-b">
-              <span className="font-medium">Danh sách sản phẩm</span>
+          {receipt?.items && receipt.items.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+              <div className="p-3 border-b border-gray-100 bg-gray-50/50">
+                <span className="font-medium text-sm text-gray-700">Danh sách sản phẩm ({receipt.items.length})</span>
+              </div>
+              <div className="flex flex-col">
+                {renderReceiptItems}
+              </div>
             </div>
-
-            <IonList lines="full">{renderReceiptItems}</IonList>
-          </div>
+          )}
 
           {/* VAT Section - only shown when editable to avoid duplicating the VAT line in summary */}
           {isReceiptInfoEditable && (
-            <div className="bg-white rounded-lg p-4 shadow-sm">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
               <div className="flex justify-between items-center gap-3">
                 <span className="font-medium shrink-0">VAT (%)</span>
 
@@ -1121,7 +1219,7 @@ const ReceiptImportDetail: React.FC = () => {
                     onIonInput={(e) =>
                       handleVatPercentChange(String(e.detail.value ?? ""))
                     }
-                    className="w-20 border-solid border-2 border-gray-500/25 rounded-lg ion-padding-start bg-white text-gray-900"
+                    className="w-16 bg-gray-50 border border-gray-200 rounded-lg text-center h-8 text-sm"
                   />
                 </div>
               </div>
@@ -1129,25 +1227,25 @@ const ReceiptImportDetail: React.FC = () => {
           )}
 
           {/* Summary Section */}
-          <div className="bg-white rounded-lg p-4 shadow-sm">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <div className="flex justify-between items-center">
-              <span className="font-medium">Tổng số lượng:</span>
+              <span className="text-gray-600 text-sm font-medium">Tổng số lượng:</span>
               <span className="font-semibold">{calculatedTotalQuantity}</span>
             </div>
-            <div className="flex justify-between items-center mt-2">
-              <span className="font-medium">Tổng tiền:</span>
-              <span className="font-bold text-lg text-blue-600">
+            <div className="flex justify-between items-center mt-2.5">
+              <span className="text-gray-600 text-sm font-medium">Tổng tiền:</span>
+              <span className="font-bold text-base text-blue-600">
                 {formatCurrency(calculatedTotalAmount)}
               </span>
             </div>
-            <div className="flex justify-between items-center mt-2">
-              <span className="font-medium">VAT ({vatPercent}%):</span>
-              <span className="font-semibold text-gray-700">
+            <div className="flex justify-between items-center mt-2.5">
+              <span className="text-gray-600 text-sm font-medium">VAT ({vatPercent}%):</span>
+              <span className="font-semibold text-sm text-gray-700">
                 {formatCurrency(vatAmount)}
               </span>
             </div>
-            <div className="flex justify-between items-center mt-2 pt-2 border-t border-border">
-              <span className="font-medium">Thành tiền:</span>
+            <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
+              <span className="font-semibold text-gray-900">Thành tiền:</span>
               <span className="font-bold text-lg text-green-600">
                 {formatCurrency(finalAmount)}
               </span>

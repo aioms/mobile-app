@@ -198,20 +198,20 @@ const ProductList: React.FC<Props> = ({
     <>
       <div className="bg-card rounded-lg shadow-sm p-4 mt-3">
         <ErrorMessage message={error} />
-        <h2 className="text-md font-medium text-foreground mt-2 mb-2">
+        <h2 className="text-base font-semibold text-gray-800 mt-2 mb-2">
           Sản phẩm
         </h2>
         <div className="flex items-center space-x-2 mb-3">
           <div
-            className="ion-activatable receipt-debt-ripple-parent p-2"
+            className="flex-1 ion-activatable receipt-debt-ripple-parent p-3 border border-gray-300 rounded-lg flex items-center text-base text-gray-500"
             onClick={() => openModalSelectProduct()}
           >
-            <IonIcon icon={search} className="text-2xl mr-1" />
+            <IonIcon icon={search} className="text-xl mr-2 text-gray-500" />
             Tìm kiếm hàng hóa
             <IonRippleEffect className="custom-ripple"></IonRippleEffect>
           </div>
           <div
-            className="w-14 h-14 bg-teal-50 rounded-full flex items-center justify-center ion-activatable ripple-parent"
+            className="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center ion-activatable ripple-parent shrink-0"
             onClick={() => startScan()}
           >
             <IonIcon icon={scanOutline} className="text-2xl text-teal-400" />

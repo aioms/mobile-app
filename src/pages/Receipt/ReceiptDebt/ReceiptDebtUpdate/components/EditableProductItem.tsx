@@ -167,40 +167,40 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
       {/* Product Info */}
       <div className="mb-4">
         <h4
-          className="text-md font-bold text-gray-900 mb-3"
+          className="text-lg font-bold text-gray-900 mb-2 leading-snug"
           title={item.productName}
         >
           {truncateProductName(item.productName)}
         </h4>
-        <div className="flex items-center space-x-2 text-base text-gray-600">
-          <span>Mã: {item.code}</span>
+        <div className="flex flex-col items-start space-y-2">
+          <span className="text-base text-gray-600">Mã: {item.code}</span>
+          {/* Show ship now badge */}
+          {item.metadata?.shipNow && (
+            <span className="inline-flex items-center px-3 py-1 bg-yellow-50 text-yellow-600 text-sm font-medium rounded-full">
+              Giao ngay
+            </span>
+          )}
+          {/* Show badge for returned items */}
+          {(item.returnedQuantity && item.returnedQuantity > 0) ? (
+            <IonChip color="warning" className="text-xs m-0">
+              Đã trả: {item.returnedQuantity}
+            </IonChip>
+          ) : null}
         </div>
-        {/* Show ship now badge */}
-        {item.metadata?.shipNow && (
-          <IonChip color="warning" className="text-xs mt-2">
-            Giao ngay
-          </IonChip>
-        )}
-        {/* Show badge for returned items */}
-        {(item.returnedQuantity && item.returnedQuantity > 0) ? (
-          <IonChip color="warning" className="text-xs mt-2">
-            Đã trả: {item.returnedQuantity}
-          </IonChip>
-        ) : null}
       </div>
 
       {/* Quantity and Price Info */}
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <span className="text-base font-semibold text-gray-600">Số lượng:</span>
+          <div className="text-base font-bold text-gray-800 mb-1.5">Số lượng:</div>
           {item.isEditing ? (
             <div>
-              <div className={`mt-1 border rounded-md px-3 py-2 bg-white ${errors.quantity ? 'border-red-500' : 'border-input'}`}>
+              <div className={`border rounded-lg px-3 py-2 bg-white shadow-sm focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500 ${errors.quantity ? 'border-red-500' : 'border-gray-300'}`}>
                 <IonInput
                   type="text"
                   value={editValues.quantity}
                   onIonInput={(e) => handleQuantityChange(e.detail.value!)}
-                  className={`w-full text-base`}
+                  className="w-full text-base font-semibold text-gray-900"
                   placeholder="Nhập số lượng"
                 />
               </div>
@@ -209,20 +209,20 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
               )}
             </div>
           ) : (
-            <div className="text-md font-bold text-gray-900">{item.quantity}</div>
+            <div className="text-lg font-bold text-gray-900">{item.quantity}</div>
           )}
         </div>
 
         <div>
-          <span className="text-base font-semibold text-gray-600">Đơn giá:</span>
+          <div className="text-base font-bold text-gray-800 mb-1.5">Đơn giá:</div>
           {item.isEditing ? (
             <div>
-              <div className={`mt-1 border rounded-md px-3 py-2 bg-white ${errors.costPrice ? 'border-red-500' : 'border-input'}`}>
+              <div className={`border rounded-lg px-3 py-2 bg-white shadow-sm focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500 ${errors.costPrice ? 'border-red-500' : 'border-gray-300'}`}>
                 <IonInput
                   type="text"
                   value={editValues.costPrice}
                   onIonInput={(e) => handleCostPriceChange(e.detail.value!)}
-                  className={`w-full text-base`}
+                  className="w-full text-base font-semibold text-gray-900"
                   placeholder="Nhập đơn giá"
                 />
               </div>
@@ -231,7 +231,7 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
               )}
             </div>
           ) : (
-            <div className="text-md font-bold text-gray-900">
+            <div className="text-lg font-bold text-gray-900">
               {formatCurrency(item.costPrice)}
             </div>
           )}
@@ -239,8 +239,8 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
       </div>
 
       {/* Total Price */}
-      <div className="mb-4 p-4 bg-white rounded-lg">
-        <span className="text-lg font-semibold text-gray-600">Tổng tiền:</span>
+      <div className="mb-4 flex justify-between items-center bg-white p-3 rounded-lg">
+        <span className="text-base font-semibold text-gray-600">Tổng tiền:</span>
         <div className="text-lg font-bold text-blue-600">
           {formatCurrency(totalPrice)}
         </div>
@@ -248,33 +248,36 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
 
       {/* Edit Controls - disable for returned items */}
       {!isDisabled && !(item.returnedQuantity && item.returnedQuantity > 0) && (
-        <div className="flex items-center justify-center space-x-2">
+        <div className="flex items-center justify-center space-x-3 mt-4">
           {item.isEditing ? (
             <>
               <IonButton
-                size="small"
-                color="success"
-                fill="solid"
-                onClick={handleSave}
-              >
-                <IonIcon icon={checkmarkOutline} slot="start" />
-                Lưu
-              </IonButton>
-              <IonButton
-                size="small"
+                size="default"
                 color="medium"
                 fill="outline"
+                className="flex-1 max-w-[130px] font-semibold"
                 onClick={handleCancel}
               >
                 <IonIcon icon={closeOutline} slot="start" />
                 Hủy
               </IonButton>
+              <IonButton
+                size="default"
+                color="success"
+                fill="solid"
+                className="flex-1 max-w-[130px] font-semibold"
+                onClick={handleSave}
+              >
+                <IonIcon icon={checkmarkOutline} slot="start" />
+                Lưu
+              </IonButton>
             </>
           ) : (
             <IonButton
-              size="small"
+              size="default"
               color="primary"
               fill="outline"
+              className="w-full font-semibold"
               onClick={() => onToggleEdit(item.id)}
             >
               <IonIcon icon={createOutline} slot="start" />

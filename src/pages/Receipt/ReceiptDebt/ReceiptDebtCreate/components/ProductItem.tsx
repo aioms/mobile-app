@@ -155,25 +155,25 @@ const ProductItem: FC<Props> = memo(
             <div className="font-medium">{productName}</div>
             <div className="text-xs text-gray-500">Mã SP: {code}</div>
           </div>
-          <IonButton
-            fill="clear"
-            color="danger"
-            size="small"
+          <button
+            type="button"
+            className="text-red-500 p-1"
             onClick={onRemoveItem}
+            aria-label="Xóa"
           >
-            <IonIcon icon={trashOutline} />
-          </IonButton>
+            <IonIcon icon={trashOutline} className="text-xl" />
+          </button>
         </div>
 
         <div className="grid grid-cols-1 gap-2 items-center">
           {/* Quantity Block */}
           <div className="mb-2">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm text-gray-500 min-w-max">
+              <span className="text-base text-gray-700 font-medium min-w-max">
                 Số lượng
               </span>
               {inventory !== undefined && (
-                <span className="text-xs text-gray-400">
+                <span className="text-sm text-gray-500">
                   Tồn kho: {inventory}
                 </span>
               )}
@@ -181,7 +181,7 @@ const ProductItem: FC<Props> = memo(
             <div className="flex items-center">
               <button
                 type="button"
-                className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-lg text-teal-400 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-xl font-bold text-teal-600 active:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() =>
                   handleQuantityChange(newQuantity > minQuantity ? newQuantity - 1 : minQuantity)
                 }
@@ -199,14 +199,14 @@ const ProductItem: FC<Props> = memo(
                 onKeyDown={handleQuantityInputKeyPress}
                 min={minQuantity}
                 max={maxQuantity}
-                className={`quantity-input w-12 h-8 mx-1 text-center text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent ${quantityError ? 'border-red-400 bg-red-50' : 'border-gray-300'
+                className={`quantity-input w-14 h-10 mx-2 text-center text-base font-semibold border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent ${quantityError ? 'border-red-400 bg-red-50' : 'border-gray-300'
                   } `}
                 aria-label="Số lượng sản phẩm"
                 autoComplete="off"
               />
               <button
                 type="button"
-                className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-lg text-teal-400 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-xl font-bold text-teal-600 active:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => handleQuantityChange(newQuantity + 1)}
                 style={{ border: "none" }}
                 disabled={newQuantity >= maxQuantity}
@@ -223,16 +223,16 @@ const ProductItem: FC<Props> = memo(
           </div>
           {/* Price Block */}
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500 min-w-max">Đơn giá</span>
+            <span className="text-base text-gray-700 font-medium min-w-max">Đơn giá</span>
             <IonInput
               value={formattedPrice}
               onIonInput={(e) => handlePriceChange(e.detail.value)}
-              className="border rounded-lg text-sm w-28 custom-padding"
+              className="border border-gray-200 rounded-lg text-base font-semibold w-36 custom-padding bg-white text-right"
             />
           </div>
         </div>
 
-        <div className="flex justify-between items-center mt-2">
+        <div className="flex justify-between items-center mt-3">
           <div className="flex items-center">
             <IonCheckbox
               checked={isShipNow}
@@ -240,15 +240,15 @@ const ProductItem: FC<Props> = memo(
               className="ship-now-checkbox"
               style={{ "--border-radius": "4px" }}
             />
-            <span className={`ml-2 text-sm ${isShipNow ? 'text-orange-600 font-medium' : 'text-gray-600'} `}>
+            <span className={`ml-2 text-base ${isShipNow ? 'text-orange-600 font-semibold' : 'text-gray-700'} `}>
               Giao ngay
             </span>
           </div>
           <div className="text-right">
-            <div className="text-xs text-gray-500">
+            <div className="text-sm text-gray-500">
               {formatCurrency(newPrice)} × {newQuantity}
             </div>
-            <div className="font-medium text-green-600">
+            <div className="font-bold text-base text-green-600">
               {formatCurrency(totalPrice)}
             </div>
           </div>
