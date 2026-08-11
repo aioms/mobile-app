@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   IonList,
-  IonRadioGroup,
   IonItem,
-  IonRadio,
   IonCheckbox,
   IonLabel,
   IonChip,
@@ -12,7 +10,7 @@ import {
   IonInfiniteScrollContent,
   useIonToast,
 } from "@ionic/react";
-import { closeCircleOutline, radioOutline, ellipseOutline } from "ionicons/icons";
+import { closeCircleOutline, checkmarkCircle, ellipseOutline } from "ionicons/icons";
 
 import useCustomer from "@/hooks/apis/useCustomer";
 import { useLoading } from "@/hooks";
@@ -191,7 +189,7 @@ const ModalSelectCustomer: React.FC<IModalSelectCustomerProps> = ({
                 </IonLabel>
                 <IonIcon 
                   slot="end" 
-                  icon={selectedValue === "individual__Khách lẻ" ? radioOutline : ellipseOutline} 
+                  icon={selectedValue === "individual__Khách lẻ" ? checkmarkCircle : ellipseOutline} 
                   color={selectedValue === "individual__Khách lẻ" ? "primary" : "medium"} 
                   className="text-xl"
                 />
@@ -219,7 +217,7 @@ const ModalSelectCustomer: React.FC<IModalSelectCustomerProps> = ({
                   </IonLabel>
                   <IonIcon 
                     slot="end" 
-                    icon={selectedValue === itemValue ? radioOutline : ellipseOutline} 
+                    icon={selectedValue === itemValue ? checkmarkCircle : ellipseOutline} 
                     color={selectedValue === itemValue ? "primary" : "medium"} 
                     className="text-xl"
                   />

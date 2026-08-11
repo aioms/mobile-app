@@ -12,7 +12,7 @@ import {
   useIonToast,
   IonIcon,
 } from "@ionic/react";
-import { radioOutline, ellipseOutline } from "ionicons/icons";
+import { checkmarkCircle, ellipseOutline } from "ionicons/icons";
 
 import type { IModalSelectCategoryProps } from "@/types/categoryModal";
 
@@ -120,7 +120,7 @@ const ModalSelectCategory: React.FC<IModalSelectCategoryProps> = ({ dismiss }) =
               </IonLabel>
               <IonIcon 
                 slot="end" 
-                icon={selectedValue === item ? radioOutline : ellipseOutline} 
+                icon={selectedValue === item ? checkmarkCircle : ellipseOutline} 
                 color={selectedValue === item ? "primary" : "medium"} 
                 className="text-xl"
               />

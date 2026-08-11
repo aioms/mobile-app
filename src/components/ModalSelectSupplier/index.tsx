@@ -9,10 +9,8 @@ import {
   IonLabel,
   IonChip,
   IonIcon,
-  IonRadioGroup,
-  IonRadio,
 } from "@ionic/react";
-import { closeCircleOutline, radioOutline, ellipseOutline } from "ionicons/icons";
+import { closeCircleOutline, checkmarkCircle, ellipseOutline } from "ionicons/icons";
 
 import ModalCustom from "@/components/Modal/ModalCustom";
 import useSupplier from "@/hooks/apis/useSupplier";
@@ -259,7 +257,7 @@ const ModalSelectSupplier: React.FC<IModalSelectSupplierProps> = ({
                   </IonLabel>
                   <IonIcon 
                     slot="end" 
-                    icon={selectedSingle === itemValue ? radioOutline : ellipseOutline} 
+                    icon={selectedSingle === itemValue ? checkmarkCircle : ellipseOutline} 
                     color={selectedSingle === itemValue ? "primary" : "medium"} 
                     className="text-xl"
                   />
