@@ -1,5 +1,6 @@
 import { IProduct } from "@/types/product.type";
 import { request } from "../../helpers/axios";
+import { buildQueryString } from "../../helpers/common";
 import { IHttpResponse } from "@/types";
 
 interface ProductFilters {
@@ -86,16 +87,14 @@ const useProduct = () => {
   };
 
   const getCategories = async (
-    filters?: Record<string, string>,
+    filters?: Record<string, any>,
     page: number = 1,
     limit: number = 10
   ) => {
-    const query = new URLSearchParams(filters);
+    const queryString = buildQueryString(filters, page, limit);
 
-    const response = await request.get(
-      `/categories?${query.toString()}&page=${page}&limit=${limit}`
-    );
-    return response.data;
+    const response = await request.get(`/categories?${queryString}`);
+    return response;
   };
 
   const getHistory = async (

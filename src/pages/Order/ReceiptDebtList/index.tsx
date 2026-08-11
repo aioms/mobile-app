@@ -16,7 +16,7 @@ import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
 import useProduct from "@/hooks/apis/useProduct";
 
 import { TReceiptDebtStatus } from "@/common/constants/receipt-debt.constant";
-import { capitalizeFirstLetter } from "@/helpers/common";
+import { capitalizeFirstLetter, parseArrayData } from "@/helpers/common";
 import { dayjsFormat, formatCurrency, formatCurrencyWithoutSymbol } from "@/helpers/formatters";
 
 import LoadingScreen from "@/components/Loading/LoadingScreen";
@@ -185,13 +185,15 @@ const ReceiptDebtList: FC = () => {
           requestFilters.status = appliedFilters.status;
         }
 
-        const { data, metadata } = await getList(
+        const response = await getList(
           requestFilters,
           pageNum,
           LIMIT
         );
+        const data = parseArrayData(response);
+        const metadata = response?.metadata;
 
-        if (!data || !data.length) {
+        if (!data.length) {
           Toast.show({
             text: "Không tìm thấy phiếu thu",
             duration: "short",
@@ -199,7 +201,7 @@ const ReceiptDebtList: FC = () => {
           });
         }
 
-        setReceiptDebts((prev) => [...prev, ...(data || [])]);
+        setReceiptDebts((prev) => [...prev, ...data]);
         setTotalCount(metadata?.totalItems || 0);
         setHasMore(metadata?.hasNext || false);
       } catch (error) {

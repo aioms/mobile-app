@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import React, { FC, useRef, useEffect } from "react";
 import {
   IonButtons,
   IonButton,
@@ -37,6 +37,22 @@ const ModalCustom: FC<Props> = ({
   children,
   searchPlaceholder = "Tìm kiếm...",
 }) => {
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const handleSearchInput = (e: CustomEvent) => {
+    if (!onSearchChange) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      onSearchChange(e);
+    }, 300);
+  };
+
   return (
     <IonPage>
       <IonHeader className="ion-no-border border-b border-gray-100">
@@ -69,9 +85,9 @@ const ModalCustom: FC<Props> = ({
         </IonToolbar>
         <IonToolbar>
           <IonSearchbar
-            debounce={400}
+            debounce={0}
             placeholder={searchPlaceholder}
-            onIonInput={onSearchChange}
+            onIonInput={handleSearchInput}
           />
         </IonToolbar>
       </IonHeader>

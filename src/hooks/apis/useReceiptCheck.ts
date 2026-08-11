@@ -1,17 +1,18 @@
 import { IHttpResponse } from "@/types";
 import { request } from "../../helpers/axios";
+import { buildQueryString } from "../../helpers/common";
 import { CHANGE_QUANTITY_TYPE } from "@/common/constants/product";
 
 const useReceiptCheck = () => {
   const getList = async (
-    filters?: Record<string, string>,
+    filters?: Record<string, any>,
     page: number = 1,
     limit: number = 10,
   ) => {
-    const query = new URLSearchParams(filters);
+    const queryString = buildQueryString(filters, page, limit);
 
     const response: IHttpResponse = await request.get(
-      `/receipt-check?${query.toString()}&page=${page}&limit=${limit}`,
+      `/receipt-check?${queryString}`,
     );
     return response;
   };

@@ -3,19 +3,20 @@ import { PayDebtRequestDto } from "@/types/payment.type";
 import { TransactionListResponse } from "@/types/transaction.type";
 import { CancelReceiptDebtRequestDto } from "@/types/receipt-debt.type";
 import { request } from "../../helpers/axios";
+import { buildQueryString } from "../../helpers/common";
 
 const PREFIX_PATH = "receipt-debt";
 
 const useReceiptDebt = () => {
   const getList = async (
-    filters?: Record<string, string>,
+    filters?: Record<string, any>,
     page: number = 1,
     limit: number = 10,
   ) => {
-    const query = new URLSearchParams(filters);
+    const queryString = buildQueryString(filters, page, limit);
 
     const response: IHttpResponse = await request.get(
-      `/${PREFIX_PATH}?${query.toString()}&page=${page}&limit=${limit}`,
+      `/${PREFIX_PATH}?${queryString}`,
     );
     return response;
   };

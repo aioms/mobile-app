@@ -76,7 +76,7 @@ const ModalSelectReceiptImport: React.FC<IModalSelectReceiptImportProps> = ({
 
   useEffect(() => {
     const filtered = allUnpaidReceipts.filter(
-      (r) => r.code.toLowerCase().includes(keyword.toLowerCase())
+      (r) => (r.code || "").toLowerCase().includes(keyword.toLowerCase())
     );
     setReceipts(filtered);
   }, [keyword, allUnpaidReceipts]);

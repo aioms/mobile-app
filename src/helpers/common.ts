@@ -42,10 +42,48 @@ export const stringifySafe = (data: any) => {
   }
 };
 
+export const buildQueryString = (
+  filters?: Record<string, any>,
+  page?: number,
+  limit?: number
+): string => {
+  const query = new URLSearchParams();
+
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value === null || value === undefined || value === "") return;
+
+      if (Array.isArray(value)) {
+        value.forEach((item) => {
+          if (item !== null && item !== undefined && item !== "") {
+            query.append(key, item.toString());
+          }
+        });
+      } else {
+        query.append(key, value.toString());
+      }
+    });
+  }
+
+  if (page !== undefined && page !== null) {
+    query.append("page", page.toString());
+  }
+  if (limit !== undefined && limit !== null) {
+    query.append("limit", limit.toString());
+  }
+
+  return query.toString();
+};
+
+export const parseArrayData = <T = any>(response: any): T[] => {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.items)) return response.items;
+  return [];
+};
+
 export const convertObjectToQueryString = (params: Record<string, any>) => {
-  return Object.keys(params)
-    .map((key) => key + "=" + params[key])
-    .join("&");
+  return buildQueryString(params);
 };
 
 export const isHasProperty = (obj: Record<string, unknown>) => {

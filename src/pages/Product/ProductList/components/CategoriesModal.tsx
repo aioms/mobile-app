@@ -18,16 +18,20 @@ import { closeCircleOutline } from "ionicons/icons";
 import useProduct from "@/hooks/apis/useProduct";
 import { Toast } from "@capacitor/toast";
 
+import { parseArrayData } from "@/helpers/common";
+
 interface Props {
-  dismiss: (data?: any, role?: string) => void;
-  selectedCategories: string[];
+  dismiss: (data?: string[], role?: string) => void;
+  selectedCategories?: string[];
+  initialSelected?: string[];
 }
 
 const CategoriesModal: React.FC<Props> = ({
   dismiss,
-  selectedCategories: initialSelected,
+  selectedCategories = [],
+  initialSelected = [],
 }) => {
-  const [selected, setSelected] = useState<string[]>(initialSelected);
+  const [selected, setSelected] = useState<string[]>(selectedCategories.length > 0 ? selectedCategories : initialSelected);
   const [searchText, setSearchText] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
@@ -61,8 +65,10 @@ const CategoriesModal: React.FC<Props> = ({
     const fetchCategories = async () => {
       try {
         const response = await getCategories({ keyword: searchKeyword });
+        const list = parseArrayData<string>(response);
 
-        if (!response.length) {
+        if (!list.length) {
+          setCategories([]);
           return await Toast.show({
             text: "Không tìm thấy kết quả",
             duration: "short",
@@ -70,10 +76,11 @@ const CategoriesModal: React.FC<Props> = ({
           });
         }
 
-        setCategories(response);
+        setCategories(list);
       } catch (error) {
+        setCategories([]);
         await Toast.show({
-          text: (error as Error).message,
+          text: (error as Error).message || "Có lỗi xảy ra",
           duration: "short",
           position: "top",
         });

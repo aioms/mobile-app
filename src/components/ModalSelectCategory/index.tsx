@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import ModalCustom from "@/components/Modal/ModalCustom";
 import { useLoading } from "@/hooks";
 import useProduct from "@/hooks/apis/useProduct";
+import { parseArrayData } from "@/helpers/common";
 import {
   IonList,
   IonRadioGroup,
@@ -25,6 +26,7 @@ const ModalSelectCategory: React.FC<IModalSelectCategoryProps> = ({ dismiss }) =
   const [currentPage, setCurrentPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const requestIdRef = useRef(0);
 
   const { getCategories } = useProduct();
   const { withLoading } = useLoading();
@@ -32,9 +34,12 @@ const ModalSelectCategory: React.FC<IModalSelectCategoryProps> = ({ dismiss }) =
 
   const fetchCategories = useCallback(
     async (page: number = 1, append: boolean = false) => {
+      const currentRequestId = ++requestIdRef.current;
       const loadFunction = async () => {
         const response = await getCategories({ keyword }, page, LIMIT);
-        const newCategories: string[] = response || [];
+        if (currentRequestId !== requestIdRef.current) return;
+
+        const newCategories = parseArrayData<string>(response);
 
         if (append) {
           setCategories((prev) => {

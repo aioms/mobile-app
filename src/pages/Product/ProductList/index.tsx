@@ -31,6 +31,7 @@ import { Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 
+import { parseArrayData } from "@/helpers/common";
 import ContentSkeleton from "@/components/Loading/ContentSkeleton";
 import ProductCard from "./components/ProductCard";
 import CategoriesModal from "./components/CategoriesModal";
@@ -180,7 +181,9 @@ const ProductListScreen: React.FC = () => {
 
       if (requestId !== productsRequestIdRef.current) return;
 
-      if (!response.length) {
+      const list = parseArrayData(response);
+
+      if (!list.length) {
         if (!isLoadMore) {
           setProducts([]);
           presentToast({
@@ -193,9 +196,9 @@ const ProductListScreen: React.FC = () => {
         setHasMore(false);
       } else {
         setProducts((prev) =>
-          isLoadMore ? [...prev, ...response] : response
+          isLoadMore ? [...prev, ...list] : list
         );
-        setHasMore(response.length === LIMIT);
+        setHasMore(list.length === LIMIT);
       }
     } catch (error) {
       if (requestId !== productsRequestIdRef.current) return;

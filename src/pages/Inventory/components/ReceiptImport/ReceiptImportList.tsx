@@ -15,6 +15,7 @@ import { Dialog } from "@capacitor/dialog";
 import { close } from "ionicons/icons";
 
 import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
+import { parseArrayData } from "@/helpers/common";
 
 import useReceiptImport from "@/hooks/apis/useReceiptImport";
 import ImportItemList from "./components/ItemList";
@@ -95,7 +96,7 @@ const ReceiptImportList = () => {
         pageSize,
       );
 
-      const data = response?.data || [];
+      const data = parseArrayData(response);
 
       if (isLoadMore) {
         if (data.length < pageSize) {

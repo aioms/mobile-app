@@ -5,6 +5,7 @@ import { Toast } from "@capacitor/toast";
 import useProduct from "@/hooks/apis/useProduct";
 import ModalCustom from "@/components/Modal/ModalCustom";
 import ProductItem from "./components/ProductItem";
+import { parseArrayData } from "@/helpers/common";
 
 type Props = {
   dismiss: (data?: any, role?: string) => void;
@@ -35,9 +36,10 @@ const ModalSelectProduct: React.FC<Props> = ({ dismiss }) => {
 
       if (requestId !== productsRequestIdRef.current) return;
 
-      setProducts(response);
+      const list = parseArrayData(response);
+      setProducts(list);
 
-      if (!response.length) {
+      if (!list.length) {
         await Toast.show({
           text: "Không tìm thấy kết quả",
           duration: "short",
@@ -48,8 +50,9 @@ const ModalSelectProduct: React.FC<Props> = ({ dismiss }) => {
     } catch (error) {
       if (requestId !== productsRequestIdRef.current) return;
 
+      setProducts([]);
       await Toast.show({
-        text: (error as Error).message,
+        text: (error as Error).message || "Có lỗi xảy ra",
         duration: "short",
         position: "top",
       });

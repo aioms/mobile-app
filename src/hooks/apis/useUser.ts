@@ -1,4 +1,5 @@
 import { request } from "../../helpers/axios";
+import { buildQueryString } from "../../helpers/common";
 
 const useUser = () => {
   const getDetail = async (id: string) => {
@@ -7,15 +8,13 @@ const useUser = () => {
   };
 
   const getList = async (
-    filters?: Record<string, string>,
+    filters?: Record<string, any>,
     page: number = 1,
     limit: number = 10
   ) => {
-    const query = new URLSearchParams(filters);
+    const queryString = buildQueryString(filters, page, limit);
 
-    const response = await request.get(
-      `/users?${query.toString()}&page=${page}&limit=${limit}`
-    );
+    const response = await request.get(`/users?${queryString}`);
     return response.data;
   };
 

@@ -17,6 +17,8 @@ import { closeCircleOutline } from "ionicons/icons";
 
 import useCustomer from "@/hooks/apis/useCustomer";
 import { useLoading } from "@/hooks";
+import { parseArrayData } from "@/helpers/common";
+import { useRef } from "react";
 import ModalCustom from "@/components/Modal/ModalCustom";
 
 export interface IModalSelectCustomerProps {
@@ -43,6 +45,7 @@ const ModalSelectCustomer: React.FC<IModalSelectCustomerProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const requestIdRef = useRef(0);
 
   const { getList: getListCustomers } = useCustomer();
   const { withLoading } = useLoading();
@@ -50,6 +53,7 @@ const ModalSelectCustomer: React.FC<IModalSelectCustomerProps> = ({
 
   const fetchCustomers = useCallback(
     async (page: number = 1, append: boolean = false) => {
+      const currentRequestId = ++requestIdRef.current;
       const loadFunction = async () => {
         const response = await getListCustomers(
           {
@@ -59,9 +63,9 @@ const ModalSelectCustomer: React.FC<IModalSelectCustomerProps> = ({
           LIMIT
         );
 
-        const newCustomers: any[] = Array.isArray(response)
-          ? response
-          : response?.data || [];
+        if (currentRequestId !== requestIdRef.current) return;
+
+        const newCustomers = parseArrayData(response);
 
         if (append) {
           setCustomers((prev) => {
