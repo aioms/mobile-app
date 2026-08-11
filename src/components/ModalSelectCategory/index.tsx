@@ -5,15 +5,14 @@ import useProduct from "@/hooks/apis/useProduct";
 import { parseArrayData } from "@/helpers/common";
 import {
   IonList,
-  IonRadioGroup,
   IonItem,
-  IonRadio,
   IonLabel,
-  RadioGroupCustomEvent,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
   useIonToast,
+  IonIcon,
 } from "@ionic/react";
+import { radioOutline, ellipseOutline } from "ionicons/icons";
 
 import type { IModalSelectCategoryProps } from "@/types/categoryModal";
 
@@ -86,10 +85,7 @@ const ModalSelectCategory: React.FC<IModalSelectCategoryProps> = ({ dismiss }) =
     setKeyword(kw);
   };
 
-  const selectChange = (event: RadioGroupCustomEvent) => {
-    const { value } = event.detail;
-    setSelectedValue(value);
-  };
+
 
   const handleInfiniteScroll = async (event: CustomEvent) => {
     if (!hasNextPage || isLoadingMore) {
@@ -111,7 +107,6 @@ const ModalSelectCategory: React.FC<IModalSelectCategoryProps> = ({ dismiss }) =
       onConfirm={() => dismiss(selectedValue, "confirm")}
     >
       <IonList lines="full" className="rounded-xl overflow-hidden shadow-sm border border-gray-100 bg-white">
-        <IonRadioGroup value={selectedValue} onIonChange={selectChange}>
           {categories.map((item, index) => (
             <IonItem
               key={`category-${index}`}
@@ -123,10 +118,14 @@ const ModalSelectCategory: React.FC<IModalSelectCategoryProps> = ({ dismiss }) =
               <IonLabel className="py-2">
                 <div className="font-medium text-gray-900">{item}</div>
               </IonLabel>
-              <IonRadio slot="end" value={item} aria-label={item} />
+              <IonIcon 
+                slot="end" 
+                icon={selectedValue === item ? radioOutline : ellipseOutline} 
+                color={selectedValue === item ? "primary" : "medium"} 
+                className="text-xl"
+              />
             </IonItem>
           ))}
-        </IonRadioGroup>
       </IonList>
 
       {/* Empty State */}
