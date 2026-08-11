@@ -15,6 +15,8 @@ import {
   ProductEditField
 } from '@/pages/Product/ProductDetail/types/productEdit.d';
 
+import { parseArrayData } from '@/helpers/common';
+
 const initialFormData: ProductEditFormData = {
   productName: '',
   category: '',
@@ -101,7 +103,7 @@ export const useProductEdit = (productId: string): UseProductEdit => {
     setIsLoadingCategories(true);
     try {
       const response = await productApi.getCategories({}, 1, 100);
-      setCategories(response || []);
+      setCategories(parseArrayData(response));
     } catch (error) {
       presentToast({
         message: `Lỗi khi tải danh mục: ${(error as Error).message}`,

@@ -15,6 +15,7 @@ import {
 import { closeCircle } from "ionicons/icons";
 import { debounce } from "radash";
 import useSupplier from "@/hooks/apis/useSupplier";
+import { parseArrayData } from "@/helpers/common";
 import ModalSelectSupplier from "@/components/ModalSelectSupplier";
 import SupplierCard from "./components/SupplierCard";
 import { AppSearchBar, AppFAB, AppButton } from "@/components/UI";
@@ -53,8 +54,7 @@ const SupplierList: React.FC = () => {
 
       const response = await getList(apiFilters, currentPage, 15);
 
-      // Adaptation to match API response structure
-      const fetchedSuppliers = response?.data || [];
+      const fetchedSuppliers = parseArrayData(response);
       const metadata = response?.metadata || { totalCount: 0, totalPages: 0 };
 
       if (isRefresh) {
