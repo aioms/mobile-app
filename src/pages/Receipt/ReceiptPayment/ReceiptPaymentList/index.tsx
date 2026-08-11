@@ -18,6 +18,7 @@ import {
 import { filterOutline, searchOutline, add, receiptOutline } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
 import { formatCurrency } from "@/helpers/formatters";
+import { parseArrayData } from "@/helpers/common";
 import dayjs from "dayjs";
 
 import { AppButton } from "@/components/UI";
@@ -116,15 +117,17 @@ const PaymentReceiptListScreen: React.FC = () => {
 
       const limit = 15;
       const response = await getList(apiFilters, pageNumber, limit);
-      if (response && response.success && Array.isArray(response.data)) {
-        const mapped = response.data.map((item: any) => mapBackendToReceiptPayment(item));
+      const rawData = parseArrayData(response);
+      
+      if (rawData.length > 0) {
+        const mapped = rawData.map((item: any) => mapBackendToReceiptPayment(item));
         if (isRefresh) {
           setReceipts(mapped);
         } else {
           setReceipts((prev) => [...prev, ...mapped]);
         }
 
-        const metadata = response.metadata;
+        const metadata = response?.metadata;
         if (metadata && typeof metadata.totalPages === "number") {
           setHasMore(pageNumber < metadata.totalPages);
         } else {

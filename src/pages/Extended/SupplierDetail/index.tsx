@@ -21,6 +21,7 @@ import { searchOutline, ellipsisVertical, filterOutline } from 'ionicons/icons';
 import { debounce } from 'radash';
 import useSupplier from '@/hooks/apis/useSupplier';
 import useReceiptImport from '@/hooks/apis/useReceiptImport';
+import { parseArrayData } from '@/helpers/common';
 import { ReceiptImportStatus } from '@/common/enums/receipt';
 
 // Components
@@ -116,13 +117,14 @@ const SupplierDetail: React.FC = () => {
       }
 
       const response: any = await getReceiptsList(filters, pageNum);
-      if (response?.success) {
+      const fetchedData = parseArrayData(response);
+      if (response) {
         if (shouldAppend) {
-          setReceipts(prev => [...prev, ...response.data]);
+          setReceipts(prev => [...prev, ...fetchedData]);
         } else {
-          setReceipts(response.data);
+          setReceipts(fetchedData);
         }
-        setMetadata(response.metadata);
+        if (response.metadata) setMetadata(response.metadata);
         setPage(pageNum);
       }
     } catch (error) {

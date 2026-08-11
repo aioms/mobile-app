@@ -25,13 +25,12 @@ const LIMIT = 25;
 const ModalSelectSupplier: React.FC<IModalSelectSupplierProps> = ({
   dismiss,
   multi = false,
-  initialSelectedValues: initialPropsValues = [],
   initialSelectedNames = [],
 }) => {
   const [keyword, setKeyword] = useState("");
   const [suppliers, setSuppliers] = useState<any[]>([]);
-  const [selectedValue, setSelectedValue] = useState<string>("");
-  const [selectedValues, setSelectedValues] = useState<string[]>(initialPropsValues);
+  const [selectedSingle, setSelectedSingle] = useState<string>("");
+  const [selectedValues, setSelectedValues] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);

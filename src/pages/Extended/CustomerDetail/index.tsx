@@ -16,6 +16,7 @@ import {
 } from "@ionic/react";
 import { ellipsisVertical, searchOutline, optionsOutline, filterOutline, calendarOutline } from "ionicons/icons";
 import { Toast } from "@capacitor/toast";
+import { parseArrayData } from "@/helpers/common";
 import { debounce } from "radash";
 import dayjs from "dayjs";
 
@@ -110,7 +111,7 @@ const CustomerDetail: React.FC = () => {
       }
 
       const response = await getOrderList(filters, page, limit);
-      const newOrders = response?.data || [];
+      const newOrders = parseArrayData(response);
 
       if (isRefresh) {
         setOrders(newOrders);
@@ -153,7 +154,7 @@ const CustomerDetail: React.FC = () => {
       }
 
       const response = await getDebtList(filters, page, limit);
-      const newReceipts = response?.data || [];
+      const newReceipts = parseArrayData(response);
 
       if (isRefresh) {
         setReceiptDebts(newReceipts);
