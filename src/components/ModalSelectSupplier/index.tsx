@@ -9,10 +9,8 @@ import {
   IonLabel,
   IonChip,
   IonIcon,
-  IonRadioGroup,
-  IonRadio,
 } from "@ionic/react";
-import { closeCircleOutline } from "ionicons/icons";
+import { closeCircleOutline, checkmarkCircle, ellipseOutline } from "ionicons/icons";
 
 import ModalCustom from "@/components/Modal/ModalCustom";
 import useSupplier from "@/hooks/apis/useSupplier";
@@ -237,10 +235,7 @@ const ModalSelectSupplier: React.FC<IModalSelectSupplierProps> = ({
             );
           })
         ) : (
-          <IonRadioGroup
-            value={selectedSingle}
-            onIonChange={(e) => handleSingleChange(e.detail.value)}
-          >
+          <>
             {suppliers.map((item, index) => {
               const itemValue = `${item.id}__${item.name}`;
               return (
@@ -260,11 +255,16 @@ const ModalSelectSupplier: React.FC<IModalSelectSupplierProps> = ({
                       </div>
                     )}
                   </IonLabel>
-                  <IonRadio slot="end" value={itemValue} aria-label={`Nhà cung cấp ${item.name}`} />
+                  <IonIcon 
+                    slot="end" 
+                    icon={selectedSingle === itemValue ? checkmarkCircle : ellipseOutline} 
+                    color={selectedSingle === itemValue ? "primary" : "medium"} 
+                    className="text-xl"
+                  />
                 </IonItem>
               );
             })}
-          </IonRadioGroup>
+          </>
         )}
       </IonList>
 

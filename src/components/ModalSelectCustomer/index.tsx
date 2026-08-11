@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   IonList,
-  IonRadioGroup,
   IonItem,
-  IonRadio,
   IonCheckbox,
   IonLabel,
   IonChip,
@@ -11,9 +9,8 @@ import {
   IonInfiniteScroll,
   IonInfiniteScrollContent,
   useIonToast,
-  RadioGroupCustomEvent,
 } from "@ionic/react";
-import { closeCircleOutline } from "ionicons/icons";
+import { closeCircleOutline, checkmarkCircle, ellipseOutline } from "ionicons/icons";
 
 import useCustomer from "@/hooks/apis/useCustomer";
 import { useLoading } from "@/hooks";
@@ -112,10 +109,7 @@ const ModalSelectCustomer: React.FC<IModalSelectCustomerProps> = ({
     setKeyword(kw);
   };
 
-  const selectChange = (event: RadioGroupCustomEvent) => {
-    const { value } = event.detail;
-    setSelectedValue(value);
-  };
+
 
   const toggleSelection = (token: string) => {
     setSelectedValues((prev) => {
@@ -182,11 +176,7 @@ const ModalSelectCustomer: React.FC<IModalSelectCustomerProps> = ({
 
       <IonList lines="full" className="rounded-xl overflow-hidden shadow-sm border border-gray-100 bg-white">
         {!multiple ? (
-          <IonRadioGroup
-            allowEmptySelection
-            onIonChange={selectChange}
-            value={selectedValue}
-          >
+          <>
             {showRetailCustomer && (
               <IonItem
                 button
@@ -197,10 +187,11 @@ const ModalSelectCustomer: React.FC<IModalSelectCustomerProps> = ({
                 <IonLabel className="py-2">
                   <div className="font-medium text-gray-900">Khách lẻ</div>
                 </IonLabel>
-                <IonRadio
-                  slot="end"
-                  value="individual__Khách lẻ"
-                  aria-label="Khách lẻ"
+                <IonIcon 
+                  slot="end" 
+                  icon={selectedValue === "individual__Khách lẻ" ? checkmarkCircle : ellipseOutline} 
+                  color={selectedValue === "individual__Khách lẻ" ? "primary" : "medium"} 
+                  className="text-xl"
                 />
               </IonItem>
             )}
@@ -224,11 +215,16 @@ const ModalSelectCustomer: React.FC<IModalSelectCustomerProps> = ({
                       </div>
                     )}
                   </IonLabel>
-                  <IonRadio slot="end" value={itemValue} aria-label={item.name} />
+                  <IonIcon 
+                    slot="end" 
+                    icon={selectedValue === itemValue ? checkmarkCircle : ellipseOutline} 
+                    color={selectedValue === itemValue ? "primary" : "medium"} 
+                    className="text-xl"
+                  />
                 </IonItem>
               );
             })}
-          </IonRadioGroup>
+          </>
         ) : (
           <>
             {customers.map((item) => {
