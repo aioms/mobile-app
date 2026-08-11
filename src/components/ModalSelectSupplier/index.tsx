@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   IonList,
   IonItem,
@@ -18,21 +18,24 @@ import ModalCustom from "@/components/Modal/ModalCustom";
 import useSupplier from "@/hooks/apis/useSupplier";
 import { useLoading } from "@/hooks";
 import type { IModalSelectSupplierProps } from "@/types/supplierModal";
+import { parseArrayData } from "@/helpers/common";
+
+const LIMIT = 25;
 
 const ModalSelectSupplier: React.FC<IModalSelectSupplierProps> = ({
   dismiss,
-  initialSelectedNames = [],
   multi = false,
+  initialSelectedValues: initialPropsValues = [],
+  initialSelectedNames = [],
 }) => {
   const [keyword, setKeyword] = useState("");
   const [suppliers, setSuppliers] = useState<any[]>([]);
-
-  // Store tokens in format `${id}__${name}` for robust ID handling
-  const [selectedValues, setSelectedValues] = useState<string[]>([]);
-  const [selectedSingle, setSelectedSingle] = useState<string>("");
+  const [selectedValue, setSelectedValue] = useState<string>("");
+  const [selectedValues, setSelectedValues] = useState<string[]>(initialPropsValues);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const requestIdRef = useRef(0);
 
   const { getList: getListSuppliers } = useSupplier();
   const { withLoading } = useLoading();
@@ -40,16 +43,19 @@ const ModalSelectSupplier: React.FC<IModalSelectSupplierProps> = ({
 
   const fetchSuppliers = useCallback(
     async (page: number = 1, append: boolean = false) => {
+      const currentRequestId = ++requestIdRef.current;
       const loadFunction = async () => {
         const response = await getListSuppliers(
           {
             keyword,
           },
           page,
-          25
+          LIMIT
         );
 
-        const newSuppliers = response.data || [];
+        if (currentRequestId !== requestIdRef.current) return;
+
+        const newSuppliers = parseArrayData(response);
 
         if (append) {
           // For infinite scroll, append new suppliers

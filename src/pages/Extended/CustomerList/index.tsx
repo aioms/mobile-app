@@ -15,6 +15,7 @@ import {
 import { ellipsisVertical, personAdd } from "ionicons/icons";
 import { debounce } from "radash";
 import useCustomer from "@/hooks/apis/useCustomer";
+import { parseArrayData } from "@/helpers/common";
 import ModalSelectCustomer from "@/components/ModalSelectCustomer";
 import FilterSection from "./components/FilterSection";
 import CustomerItem from "./components/CustomerItem";
@@ -53,8 +54,7 @@ const CustomerList: React.FC = () => {
 
       const response = await getListV2(filters, currentPage, 15);
 
-      // Handle the new response structure { data: [], metadata: {}, success: true, statusCode: 200 }
-      const fetchedCustomers = response?.data || [];
+      const fetchedCustomers = parseArrayData(response);
       const metadata = response?.metadata || { totalCount: 0, totalPages: 0 };
 
       if (isRefresh) {

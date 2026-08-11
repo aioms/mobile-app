@@ -12,7 +12,7 @@ import useOrder from "@/hooks/apis/useOrder";
 import useProduct from "@/hooks/apis/useProduct";
 import { useBarcodeScanner, useLoading, useStorage } from "@/hooks";
 import { dayjsFormat } from "@/helpers/formatters";
-import { capitalizeFirstLetter } from "@/helpers/common";
+import { capitalizeFirstLetter, parseArrayData } from "@/helpers/common";
 import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
 
 import { Refresher } from "@/components/Refresher/Refresher";
@@ -144,7 +144,9 @@ const OrderList: React.FC = () => {
   ) => {
     return await withLoading(async () => {
       try {
-        const { data, metadata } = await getList(filters, pageNumber, LIMIT);
+        const response = await getList(filters, pageNumber, LIMIT);
+        const data = parseArrayData(response);
+        const metadata = response?.metadata;
 
         if (!data.length) {
           if (!isLoadMore) {

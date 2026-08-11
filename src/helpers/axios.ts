@@ -147,7 +147,7 @@ export class HttpRequest {
         //   })
         // );
 
-        if (resp.status === 401 || resp.statusText === "Unauthorized") {
+        if (resp && (resp.status === 401 || resp.statusText === "Unauthorized")) {
           await Promise.allSettled([
             storage.remove("token"),
             storage.remove("user"),

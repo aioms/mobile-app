@@ -3,19 +3,18 @@ import {
   ICustomerFilters,
 } from "@/pages/Extended/CustomerList/types";
 import { request } from "../../helpers/axios";
+import { buildQueryString } from "../../helpers/common";
 import { IHttpResponse } from "@/types";
 
 const useCustomer = () => {
   const getList = async (
-    filters?: Record<string, string>,
+    filters?: Record<string, any>,
     page: number = 1,
     limit: number = 10,
   ) => {
-    const query = new URLSearchParams(filters);
+    const queryString = buildQueryString(filters, page, limit);
 
-    const response = await request.get(
-      `/customers?${query.toString()}&page=${page}&limit=${limit}`,
-    );
+    const response = await request.get(`/customers?${queryString}`);
     return response.data;
   };
 
@@ -24,14 +23,10 @@ const useCustomer = () => {
     page: number = 1,
     limit: number = 10,
   ): Promise<IHttpResponse<ICustomer[]>> => {
-    const query = new URLSearchParams({
-      ...filters,
-      page,
-      limit,
-    } as any);
+    const queryString = buildQueryString(filters, page, limit);
 
     const response: IHttpResponse = await request.get(
-      `/customers/v2?${query.toString()}`,
+      `/customers/v2?${queryString}`,
     );
     return response;
   };

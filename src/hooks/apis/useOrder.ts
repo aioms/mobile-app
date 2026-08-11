@@ -1,16 +1,17 @@
 import { IHttpResponse } from "@/types/index.d";
 import { request } from "../../helpers/axios";
+import { buildQueryString } from "../../helpers/common";
 
 const useOrder = () => {
   const getList = async (
-    filters?: Record<string, string>,
+    filters?: Record<string, any>,
     page: number = 1,
     limit: number = 10
   ) => {
-    const query = new URLSearchParams(filters);
+    const queryString = buildQueryString(filters, page, limit);
 
     const response: IHttpResponse = await request.get(
-      `/orders?${query.toString()}&page=${page}&limit=${limit}`
+      `/orders?${queryString}`
     );
 
     return response;
@@ -43,10 +44,10 @@ const useOrder = () => {
     return response.data;
   };
 
-  const getTotalOrderByDateRange = async (params?: Record<string, string>) => {
-    const query = new URLSearchParams(params);
+  const getTotalOrderByDateRange = async (params?: Record<string, any>) => {
+    const queryString = buildQueryString(params);
     const response = await request.get(
-      `/orders/total?${query.toString()}`
+      `/orders/total?${queryString}`
     );
     return response.data;
   };

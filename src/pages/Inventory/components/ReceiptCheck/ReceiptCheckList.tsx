@@ -18,6 +18,7 @@ import { FilterSection } from "./components/FilterSection";
 import { defaultReceiptCheckFilters, ReceiptCheckFilterValues } from "./components/FilterModal";
 
 import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
+import { parseArrayData } from "@/helpers/common";
 
 interface ReceiptItem {
   id: string;
@@ -85,7 +86,7 @@ const ReceiptCheckScreen = () => {
         setIsLoading(true);
       }
 
-      const { data, metadata, success, statusCode } = await getListReceiptCheck(
+      const response: any = await getListReceiptCheck(
         {
           keyword: searchText,
           startDate: filters.startDate,
@@ -96,9 +97,13 @@ const ReceiptCheckScreen = () => {
         pagination.limit
       );
 
-      if (!success || statusCode !== 200) {
-        throw new Error("Có lỗi xảy ra khi tải dữ liệu");
-      }
+      const data = parseArrayData(response);
+      const metadata = response?.metadata || {
+        currentPage: page,
+        totalPages: 1,
+        totalItems: data.length,
+        limit: pagination.limit,
+      };
 
       setReceipts((prev) => (isLoadMore ? [...prev, ...data] : data));
       setPagination(metadata);

@@ -1,17 +1,18 @@
 import { IHttpResponse } from "@/types";
 import { request } from "../../helpers/axios";
+import { buildQueryString } from "../../helpers/common";
 import { ISupplierListItem, ISupplierDetail } from "@/types/supplier";
 
 const useSupplier = () => {
   const getList = async (
-    filters?: Record<string, string>,
+    filters?: Record<string, any>,
     page: number = 1,
     limit: number = 10,
   ) => {
-    const query = new URLSearchParams(filters);
+    const queryString = buildQueryString(filters, page, limit);
 
     const response: IHttpResponse<ISupplierListItem[]> = await request.get(
-      `/suppliers?${query.toString()}&page=${page}&limit=${limit}`,
+      `/suppliers?${queryString}`,
     );
     return response;
   };
