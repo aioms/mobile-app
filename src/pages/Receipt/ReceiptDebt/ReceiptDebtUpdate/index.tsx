@@ -377,13 +377,11 @@ const ReceiptDebtUpdate: React.FC = () => {
       </IonContent>
 
       {/* Footer */}
-      <IonFooter>
-        <div className="ion-padding">
-          <IonButton expand="block" size="default" onClick={handleSubmit} disabled={isEditingDisabled}>
-            <IonIcon icon={checkmarkCircleOutline} slot="start" />
-            Cập nhật
-          </IonButton>
-        </div>
+      <IonFooter className="bg-white ion-no-border border-t border-gray-100 p-4">
+        <IonButton expand="block" size="default" onClick={handleSubmit} disabled={isEditingDisabled}>
+          <IonIcon icon={checkmarkCircleOutline} slot="start" />
+          Cập nhật
+        </IonButton>
       </IonFooter>
     </IonPage>
   );

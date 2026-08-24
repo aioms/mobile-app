@@ -45,11 +45,10 @@ const OrderPage: React.FC = () => {
       </IonHeader>
 
       <IonContent className="bg-gray-50">
-
         {segment === "orders" ? <OrderList /> : <ReceiptDebtList />}
-
-        <AppFAB onClick={() => history.push(`/tabs/${segment}/create`)} />
       </IonContent>
+
+      <AppFAB onClick={() => history.push(`/tabs/${segment}/create`)} />
     </IonPage>
   );
 };

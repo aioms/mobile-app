@@ -1,4 +1,4 @@
-import { IProduct } from "@/types/product.type";
+import { IProduct, ProductImagesResponse } from "@/types/product.type";
 import { request } from "../../helpers/axios";
 import { buildQueryString } from "../../helpers/common";
 import { IHttpResponse } from "@/types";
@@ -76,6 +76,22 @@ const useProduct = () => {
     return response.data;
   };
 
+  const replaceImages = async (
+    id: string,
+    imageIds: string[],
+  ): Promise<ProductImagesResponse["images"]> => {
+    const response: IHttpResponse<ProductImagesResponse> = await request.put(
+      `/products/${id}/images`,
+      { imageIds },
+    );
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || "Failed to update product images");
+    }
+
+    return response.data.images;
+  };
+
   const remove = async (id: string) => {
     const response = await request.delete(`/products/${id}`);
     return response.data;
@@ -130,6 +146,7 @@ const useProduct = () => {
     getDetail,
     create,
     update,
+    replaceImages,
     remove,
     getTotalProductAndInventory,
     getCategories,

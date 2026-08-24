@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { IonIcon } from "@ionic/react";
+import { useCallback, useMemo, useState } from "react";
+import { IonIcon, useIonViewWillEnter } from "@ionic/react";
+import { useHistory } from "react-router-dom";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import utc from "dayjs/plugin/utc";
@@ -13,6 +14,7 @@ import {
 } from "ionicons/icons";
 
 import useActivity from "@/hooks/apis/useActivity";
+import { getActivityRoute } from "@/helpers/activity";
 import {
   GetRecentActivitiesQueryDto,
   PaginationMetadataDto,
@@ -54,18 +56,19 @@ const ACTIVITY_ICON_MAP: Partial<Record<UserActivityType, string>> = {
 };
 
 const RecentActivities: React.FC = () => {
+  const history = useHistory();
   const { getRecentActivities } = useActivity();
   const [activities, setActivities] = useState<RecentActivityItemDto[]>([]);
   const [metadata, setMetadata] = useState<PaginationMetadataDto>(INITIAL_METADATA);
   const [page, setPage] = useState<number>(DEFAULT_QUERY.page);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const fetchRecentActivities = useCallback(async () => {
+  const fetchRecentActivities = useCallback(async (targetPage: number) => {
     setIsLoading(true);
 
     try {
       const response = await getRecentActivities({
-        page,
+        page: targetPage,
         limit: DEFAULT_QUERY.limit,
       });
 
@@ -74,11 +77,16 @@ const RecentActivities: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [getRecentActivities, page]);
+  }, [getRecentActivities]);
 
-  useEffect(() => {
-    fetchRecentActivities();
-  }, [fetchRecentActivities]);
+  useIonViewWillEnter(() => {
+    void fetchRecentActivities(page);
+  }, [fetchRecentActivities, page]);
+
+  const changePage = (nextPage: number) => {
+    setPage(nextPage);
+    void fetchRecentActivities(nextPage);
+  };
 
   const canGoPrevious = metadata.hasPrevious;
   const canGoNext = metadata.hasNext;
@@ -87,6 +95,7 @@ const RecentActivities: React.FC = () => {
     () =>
       activities.map((activity) => ({
         ...activity,
+        route: getActivityRoute(activity),
         icon:
           ACTIVITY_ICON_MAP[activity.type as UserActivityType] || checkmarkCircle,
         time: dayjs
@@ -111,20 +120,44 @@ const RecentActivities: React.FC = () => {
       ) : null}
 
       <div className="divide-y divide-gray-100 mb-4">
-        {activityRows.map((activity) => (
-          <div key={activity.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
-            <div className="bg-blue-50/80 text-blue-600 p-2 rounded-xl flex-shrink-0 flex items-center justify-center mt-0.5">
-              <IonIcon icon={activity.icon} className="text-lg" />
+        {activityRows.map((activity) => {
+          const content = (
+            <>
+              <div className="bg-blue-50/80 text-blue-600 p-2 rounded-xl flex-shrink-0 flex items-center justify-center mt-0.5">
+                <IonIcon icon={activity.icon} className="text-lg" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm text-gray-700 leading-snug">
+                  <span className="font-semibold text-gray-900">
+                    {activity.fullname || activity.username}
+                  </span>{" "}
+                  <span>{activity.description}</span>
+                </p>
+                <span className="text-gray-400 text-xs mt-1 block font-medium">
+                  {activity.time}
+                </span>
+              </div>
+            </>
+          );
+
+          return activity.route ? (
+            <button
+              key={activity.id}
+              type="button"
+              className="w-full min-h-11 flex items-start gap-3 py-3 first:pt-0 last:pb-0 text-left hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer"
+              onClick={() => activity.route && history.push(activity.route)}
+            >
+              {content}
+            </button>
+          ) : (
+            <div
+              key={activity.id}
+              className="min-h-11 flex items-start gap-3 py-3 first:pt-0 last:pb-0"
+            >
+              {content}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-sm text-gray-700 leading-snug">
-                <span className="font-semibold text-gray-900">{activity.fullname || activity.username}</span>{" "}
-                <span>{activity.description}</span>
-              </p>
-              <span className="text-gray-400 text-xs mt-1 block font-medium">{activity.time}</span>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100">
@@ -132,7 +165,7 @@ const RecentActivities: React.FC = () => {
           type="button"
           className="px-3.5 py-1.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium text-gray-600 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-40 transition-colors cursor-pointer"
           disabled={!canGoPrevious || isLoading}
-          onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+          onClick={() => changePage(Math.max(1, page - 1))}
         >
           Trước
         </button>
@@ -145,7 +178,7 @@ const RecentActivities: React.FC = () => {
           type="button"
           className="px-3.5 py-1.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium text-gray-600 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-40 transition-colors cursor-pointer"
           disabled={!canGoNext || isLoading}
-          onClick={() => setPage((prev) => prev + 1)}
+          onClick={() => changePage(page + 1)}
         >
           Sau
         </button>

@@ -195,6 +195,25 @@ Uses the `useUploadFile` hook for:
    - Canvas cleared after capture
    - Event listeners removed on unmount
 
+## Product detail multi-select flow
+
+The product detail action sheet includes **Chọn nhiều ảnh từ thư viện** below
+the camera actions. The picker requests only the number of remaining slots, with
+a maximum of 5 images per product.
+
+```text
+Select several gallery images
+  -> validate type and 5 MB source-size limit
+  -> compress each image to at most 1 MB / 1920 px
+  -> upload at most 3 images concurrently through presigned S3 URLs
+  -> keep successful images when one upload fails
+  -> save the complete ordered ID list with PUT /products/:id/images
+```
+
+The final API call replaces the complete image collection. An empty list is
+valid, so users can remove the final image. The legacy product update endpoint
+remains available for older clients.
+
 ## Accessibility Features
 
 1. **Keyboard Navigation**
@@ -217,15 +236,11 @@ Uses the `useUploadFile` hook for:
    - Rotation
    - Filters
 
-2. **Batch Upload**
-   - Multiple image selection from gallery
-   - Drag-and-drop support
-
-3. **Image Optimization**
+2. **Image Optimization**
    - WebP format support
    - Adaptive quality based on network
 
-4. **Advanced Camera Features**
+3. **Advanced Camera Features**
    - Grid overlay for composition
    - Timer for delayed capture
    - Burst mode

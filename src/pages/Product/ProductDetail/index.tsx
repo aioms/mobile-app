@@ -160,7 +160,12 @@ const ProductDetail: React.FC = () => {
 
   const [presentToast] = useIonToast();
 
-  const { getDetail, getHistory, update: updateProduct } = useProduct();
+  const {
+    getDetail,
+    getHistory,
+    update: updateProduct,
+    replaceImages: replaceProductImages,
+  } = useProduct();
 
   // Product edit functionality
   const { suppliers } = useProductEdit(id!);
@@ -994,26 +999,15 @@ const ProductDetail: React.FC = () => {
   // Handle image upload
   const handleImageUpload = async (images: ProductImage[]): Promise<boolean> => {
     try {
-      if (!images || images.length === 0) {
-        presentToast({
-          message: 'Vui lòng chọn ít nhất 1 hình ảnh',
-          duration: 3000,
-          position: 'top',
-          color: 'warning'
-        });
-        return false;
-      }
-
-      // Update product with new fileIds
-      const updatedProductImages = {
-        images: images.map(image => image.id)
-      };
-
-      // Call API to update product with new images
-      await updateProduct(id, updatedProductImages);
-
-      // Update original images to reflect the new state
-      setOriginalProductImages(images);
+      const updatedImages = await replaceProductImages(
+        id,
+        images.map((image) => image.id),
+      );
+      setProductImages(updatedImages);
+      setOriginalProductImages(updatedImages);
+      setProduct((currentProduct) => currentProduct
+        ? { ...currentProduct, images: updatedImages }
+        : currentProduct);
 
       presentToast({
         message: 'Cập nhật hình ảnh thành công',
@@ -1756,7 +1750,6 @@ const ProductDetail: React.FC = () => {
           onImagesChange={setProductImages}
           onConfirmUpload={handleImageUpload}
           maxImages={VALIDATION_RULES.IMAGES.MAX_COUNT}
-          disabled={productImages.length >= VALIDATION_RULES.IMAGES.MAX_COUNT}
           hasChanges={hasImageChanges}
           enableCompression={true}
         />

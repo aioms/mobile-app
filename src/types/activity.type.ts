@@ -24,6 +24,7 @@ export interface RecentActivityItemDto {
   id: string;
   type: UserActivityType | string;
   description: string;
+  referenceId?: string | null;
   username: string;
   fullname: string;
   createdAt: string;

@@ -185,11 +185,12 @@ const ReceiptImportDetail: React.FC = () => {
 
         try {
           // Create the supplier
-          const { data: result } = await createSupplier(data);
+          const response = await createSupplier(data);
+          const result = response?.data;
 
-          if (!result || !result.id) {
+          if (!response?.success || !result || !result.id) {
             await presentToast({
-              message: "Tạo nhà cung cấp thất bại",
+              message: response?.message || "Tạo nhà cung cấp thất bại",
               duration: 2000,
               position: "top",
               color: "danger",
