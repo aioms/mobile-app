@@ -1,7 +1,7 @@
 import { IHttpResponse } from "@/types";
 import { request } from "../../helpers/axios";
 import { buildQueryString } from "../../helpers/common";
-import { ISupplierListItem, ISupplierDetail } from "@/types/supplier";
+import { ISupplier, ISupplierListItem, ISupplierDetail } from "@/types/supplier";
 
 const useSupplier = () => {
   const getList = async (
@@ -22,7 +22,7 @@ const useSupplier = () => {
     phone: string;
     note: string;
   }) => {
-    const response = await request.post("/suppliers", data);
+    const response: IHttpResponse<ISupplier> = await request.post("/suppliers", data);
     return response;
   };
 
