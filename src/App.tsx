@@ -39,11 +39,20 @@ import { Routes } from "./routes";
 import { AuthProvider } from "./hooks";
 import FallbackError from "./components/FallbackError";
 import AppUpdatePrompt from "./components/AppUpdatePrompt/AppUpdatePrompt";
-import { getEnvironment } from "./helpers/common";
+import { getEnvironment, isNative } from "./helpers/common";
+import { webNavAnimation } from "./helpers/navAnimation";
 import { PWAUpdateProvider } from "./pwa";
 
 setupIonicReact({
   backButtonText: "Trở lại",
+  /**
+   * On web/PWA the browser already owns the edge-swipe back gesture. Leaving
+   * Ionic's gesture enabled makes both run on a single swipe: the browser pops
+   * immediately, then Ionic's gesture finishes and calls goBack() on the
+   * already-popped route, which has no pushedByRoute and falls back to "/".
+   */
+  swipeBackEnabled: isNative(),
+  ...(isNative() ? {} : { navAnimation: webNavAnimation }),
 });
 
 const App: React.FC = () => {
