@@ -59,7 +59,16 @@ const MenuBar: React.FC = () => {
   const displayAvatar = defaultAvatar; // You can add user.avatar if available in the User type
 
   return (
-    <IonMenu type="push" contentId="main-content">
+    <IonMenu
+      type="push"
+      contentId="main-content"
+      /**
+       * The left edge belongs to the platform's back gesture. Without this the
+       * menu drags open whenever the user swipes back. It stays reachable via
+       * the menu button in MenuLayout.
+       */
+      swipeGesture={false}
+    >
       <IonHeader translucent className="ion-no-border">
         <IonToolbar>
           <div className="flex items-center justify-center w-full py-3 px-4">
