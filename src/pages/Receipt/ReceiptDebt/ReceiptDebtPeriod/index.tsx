@@ -968,13 +968,11 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
         )}
       </IonContent>
 
-      <IonFooter>
-        <div className="ion-padding">
-          <IonButton expand="block" size="default" onClick={handleSubmit}>
-            <IonIcon icon={checkmarkCircleOutline} slot="start" />
-            Cập nhật Đợt Thu
-          </IonButton>
-        </div>
+      <IonFooter className="bg-white ion-no-border border-t border-gray-100 p-4">
+        <IonButton expand="block" size="default" onClick={handleSubmit}>
+          <IonIcon icon={checkmarkCircleOutline} slot="start" />
+          Cập nhật Đợt Thu
+        </IonButton>
       </IonFooter>
     </IonPage>
   );

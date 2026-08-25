@@ -24,6 +24,13 @@ export interface IProduct {
   }>;
 }
 
+export interface ProductImagesResponse {
+  images: Array<{
+    id: string;
+    path: string;
+  }>;
+}
+
 export interface IProductItem {
   id: string;
   code: string;

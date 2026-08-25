@@ -15,6 +15,7 @@ export interface UploadFileOptions {
   onSuccess?: (response: SignedUrlResponse) => void;
   onError?: (error: Error) => void;
   enableCompression?: boolean;
+  showToast?: boolean;
   compressionOptions?: {
     maxSizeMB?: number;
     maxWidthOrHeight?: number;

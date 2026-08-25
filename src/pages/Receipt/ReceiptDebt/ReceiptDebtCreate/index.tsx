@@ -221,10 +221,10 @@ const ReceiptDebtCreate: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader className="ion-no-border border-b border-gray-100">
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/tabs/home" />
+            <IonBackButton defaultHref="/tabs/orders" />
           </IonButtons>
           <IonTitle>Tạo mới Phiếu Thu</IonTitle>
           <IonButtons slot="end">
@@ -235,7 +235,7 @@ const ReceiptDebtCreate: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
+      <IonContent className="bg-gray-50 ion-padding">
         {/* Khách hàng section */}
         <div className="bg-white rounded-lg shadow-sm">
           <div className="p-4 border-b border-gray-100">
@@ -337,22 +337,19 @@ const ReceiptDebtCreate: React.FC = () => {
         </div>
       </IonContent>
 
-      <IonFooter>
-        <div className="ion-padding">
-          <IonButton
-            expand="block"
-            size="default"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-          // className="submit-button"
-          >
-            {isSubmitting ? (
-              <><IonSpinner name="crescent" slot="start" />Đang xử lý...</>
-            ) : (
-              <><IonIcon icon={checkmarkCircleOutline} slot="start" />Xác nhận tạo Phiếu Thu</>
-            )}
-          </IonButton>
-        </div>
+      <IonFooter className="bg-white ion-no-border border-t border-gray-100 p-4">
+        <IonButton
+          expand="block"
+          size="default"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <><IonSpinner name="crescent" slot="start" />Đang xử lý...</>
+          ) : (
+            <><IonIcon icon={checkmarkCircleOutline} slot="start" />Xác nhận tạo Phiếu Thu</>
+          )}
+        </IonButton>
       </IonFooter>
     </IonPage>
   );

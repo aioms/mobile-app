@@ -20,15 +20,14 @@ const useUploadFile = (): UseUploadFileReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<SignedUrlResponse | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const abortControllersRef = useRef<Set<AbortController>>(new Set());
   const [presentToast] = useIonToast();
 
   // Cleanup function to abort pending requests
   useEffect(() => {
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+      abortControllersRef.current.forEach((controller) => controller.abort());
+      abortControllersRef.current.clear();
     };
   }, []);
 
@@ -40,13 +39,8 @@ const useUploadFile = (): UseUploadFileReturn => {
     file: File,
     options?: UploadFileOptions,
   ): Promise<SignedUrlResponse | null> => {
-    // Abort any pending request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    // Create new abort controller for this request
-    abortControllerRef.current = new AbortController();
+    const abortController = new AbortController();
+    abortControllersRef.current.add(abortController);
 
     try {
       setIsLoading(true);
@@ -95,14 +89,16 @@ const useUploadFile = (): UseUploadFileReturn => {
           );
 
           // Show compression info toast
-          presentToast({
-            message: `Ảnh đã được nén: ${
-              compressionResult.compressionRatio.toFixed(1)
-            }% giảm dung lượng`,
-            duration: 2000,
-            position: "top",
-            color: "primary",
-          });
+          if (options?.showToast !== false) {
+            presentToast({
+              message: `Ảnh đã được nén: ${
+                compressionResult.compressionRatio.toFixed(1)
+              }% giảm dung lượng`,
+              duration: 2000,
+              position: "top",
+              color: "primary",
+            });
+          }
         } catch (compressionError) {
           console.warn(
             "Image compression failed, using original file:",
@@ -137,7 +133,7 @@ const useUploadFile = (): UseUploadFileReturn => {
         "/files/signed-url",
         requestBody,
         {
-          signal: abortControllerRef.current.signal,
+          signal: abortController.signal,
         },
       );
 
@@ -160,7 +156,7 @@ const useUploadFile = (): UseUploadFileReturn => {
           "x-amz-acl": "public-read", // Set ACL to public-read to make file publicly accessible
         },
         body: processedFile,
-        signal: abortControllerRef.current.signal,
+        signal: abortController.signal,
       });
 
       if (!uploadResponse.ok) {
@@ -186,12 +182,14 @@ const useUploadFile = (): UseUploadFileReturn => {
         }% nén)`
         : `Tệp ${processedFile.name} (${response.data.type}) đã được tải lên thành công`;
 
-      presentToast({
-        message: successMessage,
-        duration: 2000,
-        position: "top",
-        color: "success",
-      });
+      if (options?.showToast !== false) {
+        presentToast({
+          message: successMessage,
+          duration: 2000,
+          position: "top",
+          color: "success",
+        });
+      }
 
       return response.data;
     } catch (err) {
@@ -246,18 +244,19 @@ const useUploadFile = (): UseUploadFileReturn => {
         ? errorMessage
         : `Lỗi khi tải lên tệp: ${errorMessage}`;
 
-      presentToast({
-        message: toastMessage,
-        duration: isCompressionError ? 4000 : 3000,
-        position: "top",
-        color: isCompressionError ? "warning" : "danger",
-      });
+      if (options?.showToast !== false) {
+        presentToast({
+          message: toastMessage,
+          duration: isCompressionError ? 4000 : 3000,
+          position: "top",
+          color: isCompressionError ? "warning" : "danger",
+        });
+      }
 
       return null;
     } finally {
-      setIsLoading(false);
-      // Clear abort controller after request completes
-      abortControllerRef.current = null;
+      abortControllersRef.current.delete(abortController);
+      setIsLoading(abortControllersRef.current.size > 0);
     }
   }, []);
 

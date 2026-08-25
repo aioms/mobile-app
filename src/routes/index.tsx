@@ -4,7 +4,7 @@ import { Redirect, Route } from "react-router-dom";
 // Type workaround for React 18 + react-router v5 compatibility
 const RouteCompat = Route as any;
 const RedirectCompat = Redirect as any;
-import { IonRouterOutlet, IonTabs } from "@ionic/react";
+import { IonRouterOutlet } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
 
 import TabBar from "../components/TabBar/TabBar";
@@ -32,28 +32,26 @@ export const Routes: React.FC = () => {
 
   return (
     <IonReactRouter>
-      <IonTabs>
-        <IonRouterOutlet>
-          {/* Public routes - only accessible when not authenticated */}
-          <PublicRoute exact path="/login" component={Login} />
-          <PublicRoute exact path="/auth/login" component={Login} />
+      <IonRouterOutlet>
+        {/* Public routes - only accessible when not authenticated */}
+        <PublicRoute exact path="/login" component={Login} />
+        <PublicRoute exact path="/auth/login" component={Login} />
 
-          {/* Private routes - only accessible when authenticated */}
-          <PrivateRoute path="/tabs" component={TabBar} />
+        {/* Private routes - only accessible when authenticated */}
+        <PrivateRoute path="/tabs" component={TabBar} />
 
-          {/* Default redirect based on authentication status */}
-          <RouteCompat exact path="/">
-            {isAuthenticated ? (
-              <RedirectCompat to="/tabs/home" />
-            ) : (
-              <RedirectCompat to="/login" />
-            )}
-          </RouteCompat>
+        {/* Default redirect based on authentication status */}
+        <RouteCompat exact path="/">
+          {isAuthenticated ? (
+            <RedirectCompat to="/tabs/home" />
+          ) : (
+            <RedirectCompat to="/login" />
+          )}
+        </RouteCompat>
 
-          {/* Catch all route */}
-          <RouteCompat component={NotFound} />
-        </IonRouterOutlet>
-      </IonTabs>
+        {/* Catch all route */}
+        <RouteCompat component={NotFound} />
+      </IonRouterOutlet>
     </IonReactRouter>
   );
 };
