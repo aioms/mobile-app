@@ -1,347 +1,447 @@
 import React, { useState } from 'react';
 import {
-    IonIcon,
-    IonImg,
-    IonButton,
-    IonSpinner,
-    IonProgressBar,
-    IonText,
-    IonAlert,
-    useIonToast
+  IonIcon,
+  IonImg,
+  IonButton,
+  IonSpinner,
+  IonProgressBar,
+  IonText,
+  IonAlert,
+  IonActionSheet,
+  useIonToast
 } from '@ionic/react';
 import {
-    cameraOutline,
-    trashOutline,
-    checkmarkOutline
+  cameraOutline,
+  trashOutline,
+  checkmarkOutline,
+  imagesOutline,
+  addOutline
 } from 'ionicons/icons';
 
 import useCamera, { CameraOptions } from '@/hooks/useCamera';
+import useMultiImageUpload from '@/hooks/useMultiImageUpload';
+import usePhotoLibrary from '@/hooks/usePhotoLibrary';
 import useUploadFile from '@/hooks/useUploadFile';
-import { dataURLtoFile, getDataURLFileSize, getS3ImageUrl } from '@/helpers/fileHelper';
+import { dataURLtoFile, getS3ImageUrl } from '@/helpers/fileHelper';
 import { ImagePreview } from '@/components/ImagePreview/ImagePreview';
-
-interface ProductImage {
-    id: string;
-    path: string;
-}
+import { CustomCameraModal } from '@/components/CustomCameraModal';
+import { ProductImage, VALIDATION_RULES } from '@/pages/Product/ProductDetail/types/productEdit.d';
 
 interface ProductImageUploadProps {
-    images: ProductImage[];
-    onImagesChange: (images: ProductImage[]) => void;
-    maxImages?: number;
-    disabled?: boolean;
+  images: ProductImage[];
+  onImagesChange: (images: ProductImage[]) => void;
+  maxImages?: number;
+  disabled?: boolean;
+  enableCompression?: boolean;
 }
 
-const MAX_IMAGES = 5;
-const VALIDATION_RULES = {
-    IMAGES: {
-        MAX_SIZE: 10 * 1024 * 1024, // 10MB
-        ALLOWED_TYPES: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-    }
-};
-
 export const ProductImageUpload: React.FC<ProductImageUploadProps> = ({
-    images = [],
-    onImagesChange,
-    maxImages = MAX_IMAGES,
-    disabled = false
+  images = [],
+  onImagesChange,
+  maxImages = VALIDATION_RULES.IMAGES.MAX_COUNT,
+  disabled = false,
+  enableCompression = true
 }) => {
-    const [presentToast] = useIonToast();
-    const { takePhoto, isLoading: cameraLoading } = useCamera();
-    const { uploadFile } = useUploadFile();
+  const [presentToast] = useIonToast();
+  const { takePhoto, isLoading: cameraLoading } = useCamera();
+  const { uploadFile } = useUploadFile();
+  const { isSelecting, selectMultipleImages } = usePhotoLibrary();
+  const {
+    isUploading,
+    completedCount,
+    totalCount,
+    progress: uploadProgress,
+    uploadImages
+  } = useMultiImageUpload();
 
-    const [compressionProgress, setCompressionProgress] = useState<number>(0);
-    const [isCompressing, setIsCompressing] = useState(false);
-    const [showDeleteAlert, setShowDeleteAlert] = useState(false);
-    const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
-    const [previewOpen, setPreviewOpen] = useState(false);
-    const [previewIndex, setPreviewIndex] = useState(0);
+  const [showActionSheet, setShowActionSheet] = useState(false);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
+  const [compressionProgress, setCompressionProgress] = useState<number>(0);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [showCustomCamera, setShowCustomCamera] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
 
-    const handleTakePhoto = async () => {
-        // Check if we've reached the maximum number of images
-        if (images.length >= maxImages) {
-            presentToast({
-                message: `Chỉ được tải lên tối đa ${maxImages} hình ảnh`,
-                duration: 3000,
-                position: 'top',
-                color: 'warning'
-            });
-            return;
+  const isBusy = cameraLoading || isSelecting || isCompressing || isUploading;
+
+  const handleAddImage = () => {
+    if (images.length >= maxImages) {
+      presentToast({
+        message: `Chỉ được tải lên tối đa ${maxImages} hình ảnh`,
+        duration: 3000,
+        position: 'top',
+        color: 'warning'
+      });
+      return;
+    }
+    setShowActionSheet(true);
+  };
+
+  const openCameraModal = () => {
+    if (images.length >= maxImages) {
+      presentToast({
+        message: `Chỉ được tải lên tối đa ${maxImages} hình ảnh`,
+        duration: 3000,
+        position: 'top',
+        color: 'warning'
+      });
+      return;
+    }
+    setShowCustomCamera(true);
+  };
+
+  const isValidImage = (
+    fileSize: number,
+    mimeType: string,
+    showValidationToast = true
+  ) => {
+    const allowedTypes = VALIDATION_RULES.IMAGES.ALLOWED_TYPES;
+    if (!allowedTypes.includes(mimeType as (typeof allowedTypes)[number])) {
+      if (showValidationToast) {
+        presentToast({
+          message: `Định dạng ảnh không được hỗ trợ. Vui lòng chọn ảnh có định dạng: ${allowedTypes.join(', ')}`,
+          duration: 3000,
+          position: 'top',
+          color: 'warning'
+        });
+      }
+      return false;
+    }
+
+    const maxSize = VALIDATION_RULES.IMAGES.MAX_SIZE;
+    if (fileSize > maxSize) {
+      const maxSizeMB = Math.round(maxSize / (1024 * 1024));
+      if (showValidationToast) {
+        presentToast({
+          message: `Kích thước ảnh quá lớn. Ảnh chụp có kích thước ${(fileSize / 1024).toFixed(2)}KB vượt quá giới hạn ${maxSizeMB}MB`,
+          duration: 3000,
+          position: 'top',
+          color: 'warning'
+        });
+      }
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleUploadImage = async (
+    imageData: string,
+    fileName: string,
+    fileSize: number
+  ) => {
+    const file = dataURLtoFile(imageData, fileName);
+    if (!isValidImage(file.size || fileSize, file.type)) return;
+
+    setCompressionProgress(0);
+    setIsCompressing(false);
+
+    const uploadResult = await uploadFile(file, {
+      enableCompression,
+      compressionOptions: {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        preserveExif: true,
+        onProgress: (progress: number) => {
+          setCompressionProgress(progress);
+          setIsCompressing(progress > 0 && progress < 100);
         }
-
-        try {
-            const options: CameraOptions = {
-                quality: 90,
-                allowEditing: true,
-                width: 1920,
-                height: 1920
-            };
-
-            const photo = await takePhoto(options);
-
-            if (photo?.dataUrl) {
-                // Extract metadata if available
-                const mimeType = photo.mimeType || `image/${photo.format}`;
-                const fileSize = photo.fileSize || getDataURLFileSize(photo.dataUrl);
-                const fileName = photo.fileName || `product_${Date.now()}.${photo.format}`;
-
-                // Validate file type
-                if (!isValidImage(fileSize, mimeType)) {
-                    return;
-                }
-
-                // Upload file using useUploadFile hook
-                await handleUploadImage(photo.dataUrl, fileName, fileSize);
-            }
-        } catch (error) {
-            presentToast({
-                message: `Lỗi khi chụp ảnh: ${(error as Error).message}`,
-                duration: 3000,
-                position: 'top',
-                color: 'danger'
-            });
-        }
-    };
-
-    const isValidImage = (fileSize: number, mimeType: string) => {
-        // Validate file type
-        const allowedTypes = VALIDATION_RULES.IMAGES.ALLOWED_TYPES;
-        if (!allowedTypes.includes(mimeType as typeof allowedTypes[number])) {
-            presentToast({
-                message: `Định dạng ảnh không được hỗ trợ. Vui lòng chọn ảnh có định dạng: ${allowedTypes.join(', ')}`,
-                duration: 3000,
-                position: 'top',
-                color: 'warning'
-            });
-            return false;
-        }
-
-        // Validate file size
-        const maxSize = VALIDATION_RULES.IMAGES.MAX_SIZE;
-        if (fileSize > maxSize) {
-            const maxSizeMB = Math.round(maxSize / (1024 * 1024));
-            presentToast({
-                message: `Kích thước ảnh quá lớn. Ảnh chụp có kích thước ${(fileSize / 1024).toFixed(2)}KB vượt quá giới hạn ${maxSizeMB}MB`,
-                duration: 3000,
-                position: 'top',
-                color: 'warning'
-            });
-            return false;
-        }
-
-        return true;
-    };
-
-    const handleUploadImage = async (imageData: string, fileName: string, fileSize: number) => {
-        const file = dataURLtoFile(imageData, fileName);
-
+      },
+      onError: () => {
         setCompressionProgress(0);
         setIsCompressing(false);
+      }
+    });
 
-        await uploadFile(file, {
-            enableCompression: true,
-            compressionOptions: {
-                maxSizeMB: 1,
-                maxWidthOrHeight: 1920,
-                preserveExif: true,
-                onProgress: (progress: number) => {
-                    setCompressionProgress(progress);
-                    setIsCompressing(progress > 0 && progress < 100);
-                }
-            },
-            onSuccess: async (response) => {
-                const { fileId, filePath } = response;
+    if (uploadResult) {
+      onImagesChange([
+        ...images,
+        { id: uploadResult.fileId, path: uploadResult.filePath }
+      ]);
+    }
+    setCompressionProgress(0);
+    setIsCompressing(false);
+  };
 
-                setTimeout(() => {
-                    const newImages = [...images, { id: fileId, path: filePath }];
-                    onImagesChange(newImages);
+  const handleTakePhoto = async () => {
+    try {
+      const options: CameraOptions = {
+        quality: 80,
+        allowEditing: true,
+        width: 1024,
+        height: 1024
+      };
 
-                    setCompressionProgress(0);
-                    setIsCompressing(false);
-                }, 500);
-            },
-            onError: (error) => {
-                setCompressionProgress(0);
-                setIsCompressing(false);
+      const photo = await takePhoto(options);
 
-                const isCompressionError = error.message.includes('nén') ||
-                    error.message.includes('định dạng') ||
-                    error.message.includes('kích thước');
+      if (photo?.dataUrl) {
+        const mimeType = photo.mimeType || `image/${photo.format}`;
+        const fileSize = photo.fileSize || 0;
+        const fileName = photo.fileName || `photo_take_${Date.now()}.${photo.format}`;
 
-                presentToast({
-                    message: error.message,
-                    duration: isCompressionError ? 4000 : 3000,
-                    position: 'top',
-                    color: isCompressionError ? 'warning' : 'danger'
-                });
-            }
-        });
-    };
-
-    const handleDeleteImage = (index: number) => {
-        setSelectedImageIndex(index);
-        setShowDeleteAlert(true);
-    };
-
-    const confirmDeleteImage = () => {
-        if (selectedImageIndex >= 0) {
-            const newImages = images.filter((_, index) => index !== selectedImageIndex);
-            onImagesChange(newImages);
-
-            presentToast({
-                message: 'Đã xóa ảnh',
-                duration: 2000,
-                position: 'top',
-                color: 'success'
-            });
+        if (!isValidImage(fileSize, mimeType)) {
+          return;
         }
-        setSelectedImageIndex(-1);
-        setShowDeleteAlert(false);
-    };
 
-    return (
-        <>
-            {/* Product Image Upload Area */}
-            <div className="mb-6">
-                {images.length > 0 ? (
-                    <>
-                        {/* Image Grid */}
-                        <div className="grid grid-cols-3 gap-2 mb-3">
-                            {images.map((image, index) => (
-                                <div
-                                    key={index}
-                                    className="relative aspect-square rounded-lg overflow-hidden border border-gray-200"
-                                    onClick={() => {
-                                        setPreviewIndex(index);
-                                        setPreviewOpen(true);
-                                    }}
-                                >
-                                    <IonImg
-                                        src={getS3ImageUrl(image.path)}
-                                        alt={`Product image ${index + 1}`}
-                                        className="w-full h-full object-cover"
-                                    />
-                                    {!disabled && (
-                                        <IonButton
-                                            fill="solid"
-                                            color="danger"
-                                            size="small"
-                                            className="absolute top-1 right-1 w-8 h-8"
-                                            style={{
-                                                '--border-radius': '50%',
-                                                '--padding-start': '0',
-                                                '--padding-end': '0'
-                                            }}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDeleteImage(index);
-                                            }}
-                                        >
-                                            <IonIcon icon={trashOutline} />
-                                        </IonButton>
-                                    )}
-                                </div>
-                            ))}
+        await handleUploadImage(photo.dataUrl, fileName, fileSize);
+      }
+    } catch (error) {
+      presentToast({
+        message: `Lỗi khi chụp ảnh: ${(error as Error).message}`,
+        duration: 3000,
+        position: 'top',
+        color: 'danger'
+      });
+    }
+  };
 
-                            {/* Add More Button */}
-                            {!disabled && images.length < maxImages && (
-                                <button
-                                    className="aspect-square border-2 border-dashed border-teal-300 rounded-lg flex flex-col items-center justify-center bg-teal-50 hover:bg-teal-100 transition-colors"
-                                    onClick={handleTakePhoto}
-                                    disabled={isCompressing || cameraLoading}
-                                >
-                                    {isCompressing || cameraLoading ? (
-                                        <IonSpinner name="crescent" color="primary" />
-                                    ) : (
-                                        <>
-                                            <IonIcon
-                                                icon={cameraOutline}
-                                                className="text-2xl text-teal-600 mb-1"
-                                            />
-                                            <p className="text-xs text-teal-600 font-medium">Thêm ảnh</p>
-                                        </>
-                                    )}
-                                </button>
-                            )}
-                        </div>
+  const handleSelectMultipleFromGallery = async () => {
+    const remainingSlots = maxImages - images.length;
+    const selectedFiles = await selectMultipleImages(remainingSlots);
+    const validFiles = selectedFiles.filter((file) =>
+      isValidImage(file.size, file.type, false)
+    );
 
-                        {/* Image Count */}
-                        <IonText color="medium">
-                            <p className="text-center text-xs">
-                                {images.length}/{maxImages} ảnh
-                            </p>
-                        </IonText>
-                    </>
-                ) : (
-                    /* Empty State - Click to Add First Image */
-                    <button
-                        className="w-full h-48 border-2 border-dashed border-teal-300 rounded-lg flex flex-col items-center justify-center bg-teal-50 hover:bg-teal-100 transition-colors"
-                        onClick={handleTakePhoto}
-                        disabled={disabled || isCompressing || cameraLoading}
+    if (selectedFiles.length !== validFiles.length) {
+      presentToast({
+        message: `${selectedFiles.length - validFiles.length} ảnh không hợp lệ đã được bỏ qua`,
+        duration: 3000,
+        position: 'top',
+        color: 'warning'
+      });
+    }
+    if (validFiles.length === 0) return;
+
+    const { uploadedImages, failedCount } = await uploadImages(validFiles);
+    if (uploadedImages.length > 0) {
+      onImagesChange([...images, ...uploadedImages]);
+    }
+
+    presentToast({
+      message:
+        failedCount > 0
+          ? `Đã tải ${uploadedImages.length}/${validFiles.length} ảnh. ${failedCount} ảnh thất bại.`
+          : `Đã tải ${uploadedImages.length} ảnh từ thư viện`,
+      duration: failedCount > 0 ? 3500 : 2000,
+      position: 'top',
+      color: failedCount > 0 ? 'warning' : 'success'
+    });
+  };
+
+  const handleDeleteImage = (index: number) => {
+    setSelectedImageIndex(index);
+    setShowDeleteAlert(true);
+  };
+
+  const confirmDeleteImage = () => {
+    if (selectedImageIndex >= 0) {
+      const newImages = images.filter((_, index) => index !== selectedImageIndex);
+      onImagesChange(newImages);
+
+      presentToast({
+        message: 'Đã xóa ảnh',
+        duration: 2000,
+        position: 'top',
+        color: 'success'
+      });
+    }
+    setSelectedImageIndex(-1);
+    setShowDeleteAlert(false);
+  };
+
+  return (
+    <>
+      <div className="mb-6">
+        {images.length > 0 ? (
+          <>
+            {/* Image Grid */}
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              {images.map((image, index) => (
+                <div
+                  key={image.id || index}
+                  className="relative aspect-square rounded-lg overflow-hidden border border-gray-200"
+                  onClick={() => {
+                    setPreviewIndex(index);
+                    setPreviewOpen(true);
+                  }}
+                >
+                  <IonImg
+                    src={getS3ImageUrl(image.path)}
+                    alt={`Product image ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  {!disabled && (
+                    <IonButton
+                      fill="solid"
+                      color="danger"
+                      size="small"
+                      className="absolute top-1 right-1 w-8 h-8"
+                      style={{
+                        '--border-radius': '50%',
+                        '--padding-start': '0',
+                        '--padding-end': '0'
+                      }}
+                      disabled={isBusy}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteImage(index);
+                      }}
                     >
-                        {isCompressing || cameraLoading ? (
-                            <IonSpinner name="crescent" color="primary" />
-                        ) : (
-                            <>
-                                <div className="w-16 h-16 bg-teal-200 rounded-full flex items-center justify-center mb-3">
-                                    <IonIcon
-                                        icon={cameraOutline}
-                                        className="text-2xl text-teal-600"
-                                    />
-                                </div>
-                                <p className="text-teal-600 font-medium">Thêm ảnh sản phẩm</p>
-                                <p className="text-teal-500 text-sm mt-1">Nhấn để chụp ảnh</p>
-                            </>
-                        )}
-                    </button>
-                )}
+                      <IonIcon icon={trashOutline} />
+                    </IonButton>
+                  )}
+                </div>
+              ))}
 
-                {/* Compression Progress */}
-                {isCompressing && (
-                    <div className="mt-3">
-                        <IonText>
-                            <p className="mb-2 text-sm">
-                                Đang nén ảnh... {Math.round(compressionProgress)}%
-                            </p>
-                        </IonText>
-                        <IonProgressBar value={compressionProgress / 100} color="primary" />
-                    </div>
-                )}
-
-                {/* Compression Info */}
-                <IonText color="medium">
-                    <p className="text-center mt-2 text-xs">
-                        <IonIcon icon={checkmarkOutline} className="align-middle" /> Ảnh sẽ được tự động nén để tối ưu dung lượng
-                    </p>
-                </IonText>
+              {/* Add More Button */}
+              {!disabled && images.length < maxImages && (
+                <button
+                  type="button"
+                  className="aspect-square border-2 border-dashed border-teal-300 rounded-lg flex flex-col items-center justify-center bg-teal-50 hover:bg-teal-100 transition-colors"
+                  onClick={handleAddImage}
+                  disabled={isBusy}
+                >
+                  {isBusy ? (
+                    <IonSpinner name="crescent" color="primary" />
+                  ) : (
+                    <>
+                      <IonIcon
+                        icon={addOutline}
+                        className="text-2xl text-teal-600 mb-1"
+                      />
+                      <p className="text-xs text-teal-600 font-medium">Thêm ảnh</p>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
 
-            {/* Delete Confirmation Alert */}
-            <IonAlert
-                isOpen={showDeleteAlert}
-                onDidDismiss={() => setShowDeleteAlert(false)}
-                header="Xác nhận xóa"
-                message="Bạn có chắc chắn muốn xóa ảnh này?"
-                buttons={[
-                    {
-                        text: 'Hủy',
-                        role: 'cancel'
-                    },
-                    {
-                        text: 'Xóa',
-                        role: 'destructive',
-                        handler: confirmDeleteImage
-                    }
-                ]}
-            />
+            {/* Image Count */}
+            <IonText color="medium">
+              <p className="text-center text-xs">
+                {images.length}/{maxImages} ảnh
+              </p>
+            </IonText>
+          </>
+        ) : (
+          /* Empty State - Click to Add First Image */
+          <button
+            type="button"
+            className="w-full h-48 border-2 border-dashed border-teal-300 rounded-lg flex flex-col items-center justify-center bg-teal-50 hover:bg-teal-100 transition-colors"
+            onClick={handleAddImage}
+            disabled={disabled || isBusy}
+          >
+            {isBusy ? (
+              <IonSpinner name="crescent" color="primary" />
+            ) : (
+              <>
+                <div className="w-16 h-16 bg-teal-200 rounded-full flex items-center justify-center mb-3">
+                  <IonIcon
+                    icon={cameraOutline}
+                    className="text-2xl text-teal-600"
+                  />
+                </div>
+                <p className="text-teal-600 font-medium">Thêm ảnh sản phẩm</p>
+                <p className="text-teal-500 text-sm mt-1">Nhấn để chụp hoặc chọn ảnh</p>
+              </>
+            )}
+          </button>
+        )}
 
-            {/* Image Preview Component */}
-            <ImagePreview
-                images={images.map(img => getS3ImageUrl(img.path))}
-                initialIndex={previewIndex}
-                isOpen={previewOpen}
-                onClose={() => setPreviewOpen(false)}
-            />
-        </>
-    );
+        {/* Compression Progress */}
+        {isCompressing && (
+          <div className="mt-3">
+            <IonText>
+              <p className="mb-2 text-sm">
+                Đang nén ảnh... {Math.round(compressionProgress)}%
+              </p>
+            </IonText>
+            <IonProgressBar value={compressionProgress / 100} color="primary" />
+          </div>
+        )}
+
+        {/* Upload Progress */}
+        {isUploading && (
+          <div className="mt-3">
+            <IonText>
+              <p className="mb-2 text-sm">
+                Đang tải ảnh {completedCount}/{totalCount}... {uploadProgress}%
+              </p>
+            </IonText>
+            <IonProgressBar value={uploadProgress / 100} />
+          </div>
+        )}
+
+        {/* Compression Info */}
+        {enableCompression && (
+          <IonText color="medium">
+            <p className="text-center mt-2 text-xs">
+              <IonIcon icon={checkmarkOutline} className="align-middle" /> Ảnh sẽ được tự động nén để tối ưu dung lượng
+            </p>
+          </IonText>
+        )}
+      </div>
+
+      <CustomCameraModal
+        isOpen={showCustomCamera}
+        onDismiss={() => setShowCustomCamera(false)}
+        onAcceptPhoto={handleUploadImage}
+      />
+
+      {/* Action Sheet for Image Source */}
+      <IonActionSheet
+        isOpen={showActionSheet}
+        onDidDismiss={() => setShowActionSheet(false)}
+        buttons={[
+          {
+            text: 'Chụp ảnh (Native)',
+            icon: cameraOutline,
+            handler: handleTakePhoto
+          },
+          {
+            text: 'Chụp ảnh (Custom)',
+            icon: cameraOutline,
+            handler: openCameraModal
+          },
+          {
+            text: 'Chọn ảnh từ thư viện',
+            icon: imagesOutline,
+            handler: handleSelectMultipleFromGallery
+          },
+          {
+            text: 'Hủy',
+            role: 'cancel'
+          }
+        ]}
+      />
+
+      {/* Delete Confirmation Alert */}
+      <IonAlert
+        isOpen={showDeleteAlert}
+        onDidDismiss={() => setShowDeleteAlert(false)}
+        header="Xác nhận xóa"
+        message="Bạn có chắc chắn muốn xóa ảnh này?"
+        buttons={[
+          {
+            text: 'Hủy',
+            role: 'cancel'
+          },
+          {
+            text: 'Xóa',
+            role: 'destructive',
+            handler: confirmDeleteImage
+          }
+        ]}
+      />
+
+      {/* Image Preview Component */}
+      <ImagePreview
+        images={images.map((img) => getS3ImageUrl(img.path))}
+        initialIndex={previewIndex}
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+      />
+    </>
+  );
 };

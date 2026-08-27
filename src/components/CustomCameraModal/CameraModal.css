@@ -1,0 +1,341 @@
+/* PWA Camera Modal Styles */
+.camera-modal-content {
+  --background: #000;
+  --color: #fff;
+}
+
+.camera-modal-content ion-content {
+  --background: #000;
+  --color: #fff;
+}
+
+/* Camera preview container */
+.camera-preview-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+.camera-preview-container video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror front camera */
+}
+
+.camera-preview-container video.rear-camera {
+  transform: none; /* Don't mirror rear camera */
+}
+
+/* Camera overlay styles */
+.camera-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.camera-focus-frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 250px;
+  height: 250px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.3);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    border-color: rgba(255, 255, 255, 0.8);
+  }
+  50% {
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+  100% {
+    border-color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+/* Corner indicators */
+.camera-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #fff;
+}
+
+.camera-corner.top-left {
+  top: calc(50% - 125px);
+  left: calc(50% - 125px);
+  border-bottom: none;
+  border-right: none;
+}
+
+.camera-corner.top-right {
+  top: calc(50% - 125px);
+  right: calc(50% - 125px);
+  border-bottom: none;
+  border-left: none;
+}
+
+.camera-corner.bottom-left {
+  bottom: calc(50% - 125px);
+  left: calc(50% - 125px);
+  border-top: none;
+  border-right: none;
+}
+
+.camera-corner.bottom-right {
+  bottom: calc(50% - 125px);
+  right: calc(50% - 125px);
+  border-top: none;
+  border-left: none;
+}
+
+/* Camera controls */
+.camera-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  z-index: 20;
+}
+
+.camera-capture-button {
+  transform: scale(1.2);
+  --box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.camera-capture-button.capturing {
+  animation: captureFlash 0.3s ease-out;
+}
+
+@keyframes captureFlash {
+  0% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+/* Zoom control */
+.camera-zoom-control {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 200px;
+  z-index: 20;
+}
+
+.camera-zoom-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 8px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.camera-zoom-container ion-icon {
+  color: white;
+  font-size: 16px;
+}
+
+.camera-zoom-container ion-range {
+  flex: 1;
+  --bar-background: rgba(255, 255, 255, 0.3);
+  --bar-background-active: #fff;
+  --knob-background: #fff;
+}
+
+.camera-zoom-text {
+  color: white;
+  font-size: 12px;
+  min-width: 30px;
+  text-align: center;
+}
+
+/* Camera info */
+.camera-info {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 8px 12px;
+  border-radius: 20px;
+  z-index: 20;
+  backdrop-filter: blur(10px);
+}
+
+.camera-info-text {
+  color: white;
+  font-size: 12px;
+  margin: 0;
+}
+
+/* Photo preview styles */
+.photo-preview-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+}
+
+.photo-preview-image-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+.photo-preview-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.photo-preview-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 16px;
+  z-index: 20;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .camera-focus-frame {
+    width: 200px;
+    height: 200px;
+  }
+  
+  .camera-corner.top-left,
+  .camera-corner.bottom-left {
+    left: calc(50% - 100px);
+  }
+  
+  .camera-corner.top-right,
+  .camera-corner.bottom-right {
+    right: calc(50% - 100px);
+  }
+  
+  .camera-corner.top-left,
+  .camera-corner.top-right {
+    top: calc(50% - 100px);
+  }
+  
+  .camera-corner.bottom-left,
+  .camera-corner.bottom-right {
+    bottom: calc(50% - 100px);
+  }
+  
+  .camera-zoom-control {
+    width: 150px;
+    top: 10px;
+    right: 10px;
+  }
+  
+  .camera-info {
+    top: 10px;
+    left: 10px;
+  }
+  
+  .camera-controls {
+    bottom: 10px;
+    gap: 15px;
+  }
+}
+
+/* PWA specific styles */
+@media (display-mode: standalone) {
+  .camera-modal-content {
+    /* Ensure full screen usage in PWA mode */
+    --padding-top: 0;
+    --padding-bottom: 0;
+  }
+}
+
+/* Landscape orientation */
+@media (orientation: landscape) {
+  .camera-focus-frame {
+    width: 300px;
+    height: 200px;
+  }
+  
+  .camera-zoom-control {
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    width: 120px;
+  }
+  
+  .camera-zoom-container {
+    flex-direction: column;
+    height: 150px;
+    width: auto;
+  }
+  
+  .camera-zoom-container ion-range {
+    writing-mode: bt-lr; /* IE */
+    -webkit-appearance: slider-vertical; /* WebKit */
+    width: 20px;
+    height: 100px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .camera-modal-content {
+    --background: #000;
+    --color: #fff;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .camera-focus-frame {
+    border-color: #fff;
+    border-width: 3px;
+  }
+  
+  .camera-corner {
+    border-color: #fff;
+    border-width: 4px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .camera-focus-frame {
+    animation: none;
+  }
+  
+  .camera-capture-button.capturing {
+    animation: none;
+  }
+}
