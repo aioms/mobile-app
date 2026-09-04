@@ -28,10 +28,12 @@
     "@capacitor/camera": "^7.0.1",
     "@capacitor/core": "^7.0.0",
     "@capacitor/dialog": "7.0.1",
+    "@capacitor/filesystem": "^7.0.1",
     "@capacitor/haptics": "7.0.1",
     "@capacitor/ios": "^7.0.0",
     "@capacitor/keyboard": "7.0.1",
     "@capacitor/push-notifications": "7.0.1",
+    "@capacitor/share": "^7.0.1",
     "@capacitor/status-bar": "7.0.1",
     "@capacitor/toast": "7.0.1",
     "@ionic/core": "^8.6.2",
@@ -48,7 +50,9 @@
     "clsx": "^2.1.1",
     "cordova-sqlite-storage": "^7.0.0",
     "dayjs": "^1.11.13",
+    "html-to-image": "^1.11.13",
     "ionicons": "^7.0.0",
+    "jspdf": "^4.2.1",
     "localforage-cordovasqlitedriver": "^1.8.0",
     "lucide-react": "^0.469.0",
     "posthog-js": "^1.230.4",
@@ -63,7 +67,8 @@
     "swiper": "^11.2.5",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
-    "vietqr": "^1.1.9"
+    "vietqr": "^1.1.9",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.0",
