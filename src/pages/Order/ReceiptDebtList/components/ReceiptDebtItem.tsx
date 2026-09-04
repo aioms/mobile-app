@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import {
   IonIcon,
   IonItem,
@@ -21,7 +21,10 @@ import {
   RECEIPT_DEBT_STATUS,
   TReceiptDebtStatus,
 } from "@/common/constants/receipt-debt.constant";
-import { useBarcodeScanner } from "@/hooks";
+import { useAuth, useBarcodeScanner } from "@/hooks";
+import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
+import ExportReceiptBillModal from "@/pages/Receipt/ReceiptDebt/components/ExportReceiptBill/ExportReceiptBillModal";
+import { IProductItem } from "@/types/product.type";
 
 interface ReceiptDebt {
   id: string;
@@ -40,6 +43,17 @@ const ReceiptDebtItem: React.FC<ReceiptDebtItemProps> = ({ receiptDebt }) => {
   const slidingRef = useRef<HTMLIonItemSlidingElement>(null);
   const history = useHistory();
   const [presentToast] = useIonToast();
+  const { user } = useAuth();
+  const { getDetail } = useReceiptDebt();
+
+  // Export modal state
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportData, setExportData] = useState<{
+    items: Record<string, IProductItem[]>;
+    periods: Record<string, { id: string; vatAmount: number }>;
+    paidAmount: number;
+    remainingAmount: number;
+  } | null>(null);
 
   // Barcode scanner hook
   const { stopScan } = useBarcodeScanner({
@@ -58,7 +72,25 @@ const ReceiptDebtItem: React.FC<ReceiptDebtItemProps> = ({ receiptDebt }) => {
     },
   });
 
-  const onPrint = () => { };
+  const onPrint = async () => {
+    slidingRef.current?.close();
+    try {
+      const result = await getDetail(receiptDebt.id);
+      if (!result?.receipt) {
+        presentToast({ message: "Không thể tải dữ liệu phiếu thu", duration: 2000, position: "top", color: "danger" });
+        return;
+      }
+      setExportData({
+        items: result.items || {},
+        periods: result.periods || {},
+        paidAmount: result.receipt.paidAmount ?? 0,
+        remainingAmount: result.receipt.remainingAmount ?? 0,
+      });
+      setIsExportOpen(true);
+    } catch {
+      presentToast({ message: "Có lỗi xảy ra", duration: 2000, position: "top", color: "danger" });
+    }
+  };
 
   const handleAddPeriod = async () => {
     // Close the sliding item first
@@ -75,6 +107,7 @@ const ReceiptDebtItem: React.FC<ReceiptDebtItemProps> = ({ receiptDebt }) => {
   });
 
   return (
+    <>
     <IonItemSliding ref={slidingRef}>
       <IonItem
         lines="none"
@@ -137,6 +170,21 @@ const ReceiptDebtItem: React.FC<ReceiptDebtItemProps> = ({ receiptDebt }) => {
           </IonItemOptions>
         )}
     </IonItemSliding>
+
+    {exportData && (
+      <ExportReceiptBillModal
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+        receiptCode={receiptDebt.code}
+        customerName={receiptDebt.customerName}
+        storeCode={user?.storeCode || "KS"}
+        paidAmount={exportData.paidAmount}
+        remainingAmount={exportData.remainingAmount}
+        items={exportData.items}
+        periods={exportData.periods}
+      />
+    )}
+    </>
   );
 };
 

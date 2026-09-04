@@ -19,6 +19,8 @@ import {
   useIonActionSheet,
 } from "@ionic/react";
 import { chevronBack, ellipsisVertical, removeCircleOutline } from "ionicons/icons";
+import ExportReceiptBillModal from "../components/ExportReceiptBill/ExportReceiptBillModal";
+import { useAuth } from "@/hooks";
 import CancelConfirmationModal from "./components/CancelConfirmationModal";
 import {
   dayjsFormat,
@@ -91,6 +93,8 @@ const ReceiptDebtDetail: React.FC = () => {
   const [presentActionSheet] = useIonActionSheet();
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const { user } = useAuth();
 
   const [receiptData, setReceiptData] = useState<ResponseData>({
     receipt: null,
@@ -343,11 +347,7 @@ const ReceiptDebtDetail: React.FC = () => {
         {
           text: "In phiếu",
           handler: () => {
-            presentToast({
-              message: "Tính năng này đang được phát triển",
-              duration: 2000,
-              position: "top",
-            });
+            setIsExportModalOpen(true);
           },
         },
         ...(receipt?.status !== RECEIPT_DEBT_STATUS.CANCELLED ? [
@@ -726,6 +726,21 @@ const ReceiptDebtDetail: React.FC = () => {
           onConfirm={handleCancelConfirm}
           isLoading={isLoading}
           receiptCode={receipt.code}
+        />
+      )}
+
+      {/* Export receipt bill modal */}
+      {receipt && (
+        <ExportReceiptBillModal
+          isOpen={isExportModalOpen}
+          onClose={() => setIsExportModalOpen(false)}
+          receiptCode={receipt.code}
+          customerName={receipt.customerName || receipt.supplierName || ""}
+          storeCode={user?.storeCode || "KS"}
+          paidAmount={receipt.paidAmount}
+          remainingAmount={receipt.remainingAmount}
+          items={items}
+          periods={periods}
         />
       )}
     </IonPage>

@@ -228,7 +228,13 @@ const ReceiptDebtCreate: React.FC = () => {
           </IonButtons>
           <IonTitle>Tạo mới Phiếu Thu</IonTitle>
           <IonButtons slot="end">
-            <IonButton fill="clear" size="default">
+            <IonButton fill="clear" size="default" onClick={() => {
+              presentToast({
+                message: "Vui lòng lưu phiếu trước khi in",
+                duration: 2000,
+                position: "top",
+              });
+            }}>
               <IonIcon icon={printOutline} />
             </IonButton>
           </IonButtons>

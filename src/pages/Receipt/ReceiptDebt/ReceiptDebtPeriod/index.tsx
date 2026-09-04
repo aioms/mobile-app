@@ -32,7 +32,9 @@ import { getStatusLabel, getStatusColor, TReceiptDebtStatus, TReceiptDebtType } 
 import { IReceiptItemPeriod } from "@/types/receipt-debt.type";
 import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
 import useProduct from "@/hooks/apis/useProduct";
-import { useBarcodeScanner, useLoading } from "@/hooks";
+import { useAuth, useBarcodeScanner, useLoading } from "@/hooks";
+import ExportReceiptBillModal from "../components/ExportReceiptBill/ExportReceiptBillModal";
+import { IProductItem } from "@/types/product.type";
 
 import DatePicker from "@/components/DatePicker";
 import ContentSkeleton from "@/components/Loading/ContentSkeleton";
@@ -93,6 +95,12 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
   >({});
 
   const { withLoading, isLoading } = useLoading();
+  const { user } = useAuth();
+
+  // Export modal state
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportItems, setExportItems] = useState<Record<string, IProductItem[]>>({});
+  const [exportPeriods, setExportPeriods] = useState<Record<string, { id: string; vatAmount: number }>>({});
 
   const { getDetail, updateInventoryForNewPeriod } = useReceiptDebt();
   const { getDetail: getProductDetail } = useProduct();
@@ -805,7 +813,19 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
           </IonButtons>
           <IonTitle>Quản lý Đợt Thu</IonTitle>
           <IonButtons slot="end">
-            <IonButton fill="clear" size="default">
+            <IonButton fill="clear" size="default" onClick={async () => {
+              if (!id) return;
+              try {
+                const res = await getDetail(id);
+                if (res?.receipt) {
+                  setExportItems(res.items || {});
+                  setExportPeriods(res.periods || {});
+                  setIsExportOpen(true);
+                }
+              } catch {
+                presentToast({ message: "Không thể tải dữ liệu", duration: 2000, position: "top", color: "danger" });
+              }
+            }}>
               <IonIcon icon={printOutline} />
             </IonButton>
           </IonButtons>
@@ -974,6 +994,20 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
           Cập nhật Đợt Thu
         </IonButton>
       </IonFooter>
+
+      {receiptDebt && (
+        <ExportReceiptBillModal
+          isOpen={isExportOpen}
+          onClose={() => setIsExportOpen(false)}
+          receiptCode={receiptDebt.code}
+          customerName={receiptDebt.customerName || receiptDebt.supplierName || ""}
+          storeCode={user?.storeCode || "KS"}
+          paidAmount={receiptDebt.paidAmount}
+          remainingAmount={receiptDebt.remainingAmount}
+          items={exportItems}
+          periods={exportPeriods}
+        />
+      )}
     </IonPage>
   );
 };

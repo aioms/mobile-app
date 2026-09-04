@@ -30,8 +30,10 @@ import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
 import DatePicker from "@/components/DatePicker";
 import ContentSkeleton from "@/components/Loading/ContentSkeleton";
 import EnhancedPurchasePeriodList from "./components/EnhancedPurchasePeriodList";
-import { useLoading } from "@/hooks";
+import { useAuth, useLoading } from "@/hooks";
 import { Dialog } from "@capacitor/dialog";
+import ExportReceiptBillModal from "../components/ExportReceiptBill/ExportReceiptBillModal";
+import { IProductItem } from "@/types/product.type";
 import LoadingScreen from "@/components/Loading/LoadingScreen";
 import { 
   IReceiptDebtDetail, 
@@ -67,6 +69,12 @@ const ReceiptDebtUpdate: React.FC = () => {
   );
 
   const { withLoading, isLoading } = useLoading();
+  const { user } = useAuth();
+
+  // Export modal state
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportItems, setExportItems] = useState<Record<string, IProductItem[]>>({});
+  const [exportPeriods, setExportPeriods] = useState<Record<string, { id: string; vatAmount: number }>>({});
 
   const { getDetail, update } = useReceiptDebt();
 
@@ -227,7 +235,19 @@ const ReceiptDebtUpdate: React.FC = () => {
 
           <IonTitle>Cập nhật Phiếu Thu</IonTitle>
           <IonButtons slot="end">
-            <IonButton fill="clear" size="default">
+            <IonButton fill="clear" size="default" onClick={async () => {
+              if (!id) return;
+              try {
+                const res = await getDetail(id);
+                if (res?.receipt) {
+                  setExportItems(res.items || {});
+                  setExportPeriods(res.periods || {});
+                  setIsExportOpen(true);
+                }
+              } catch {
+                presentToast({ message: "Không thể tải dữ liệu", duration: 2000, position: "top", color: "danger" });
+              }
+            }}>
               <IonIcon icon={printOutline} />
             </IonButton>
           </IonButtons>
@@ -383,6 +403,20 @@ const ReceiptDebtUpdate: React.FC = () => {
           Cập nhật
         </IonButton>
       </IonFooter>
+
+      {receiptDebt && (
+        <ExportReceiptBillModal
+          isOpen={isExportOpen}
+          onClose={() => setIsExportOpen(false)}
+          receiptCode={receiptDebt.code}
+          customerName={receiptDebt.customerName || ""}
+          storeCode={user?.storeCode || "KS"}
+          paidAmount={receiptDebt.paidAmount}
+          remainingAmount={receiptDebt.remainingAmount}
+          items={exportItems}
+          periods={exportPeriods}
+        />
+      )}
     </IonPage>
   );
 };

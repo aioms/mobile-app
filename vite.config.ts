@@ -95,7 +95,7 @@ export default defineConfig(({ mode }) => {
         registerType: "prompt",
         injectRegister: false,
         workbox: {
-          maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MB
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
           cleanupOutdatedCaches: true,
           clientsClaim: false,
           skipWaiting: false,
