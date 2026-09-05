@@ -61,8 +61,8 @@ const SupplierDetail: React.FC = () => {
   const [receiptSearchText, setReceiptSearchText] = useState('');
   const [receiptSearchKeyword, setReceiptSearchKeyword] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
-  const [fromDate, setFromDate] = useState<string | undefined>(dayjs().startOf('month').toISOString());
-  const [toDate, setToDate] = useState<string | undefined>(dayjs().endOf('day').toISOString());
+  const [fromDate, setFromDate] = useState<string | undefined>(dayjs().startOf('month').format('YYYY-MM-DD'));
+  const [toDate, setToDate] = useState<string | undefined>(dayjs().format('YYYY-MM-DD'));
 
   const [receipts, setReceipts] = useState<IReceiptImport[]>([]);
   const [page, setPage] = useState(1);

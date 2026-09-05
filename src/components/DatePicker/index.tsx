@@ -39,17 +39,30 @@ const DatePicker: React.FC<Props> = ({
   else if (presentation === 'time') inputType = 'time';
   else if (presentation === 'month-year' || presentation === 'month') inputType = 'month';
 
-  const todayIso = new Date().toISOString();
-  let currentValue = value;
-  if (!hasValue && useCurrentDateAsDefault) {
-    currentValue = todayIso;
-  }
+  const currentValue = useMemo(() => {
+    if (hasValue) return value;
+    if (!useCurrentDateAsDefault) return '';
+    if (inputType === 'date') return dayjs().format('YYYY-MM-DD');
+    if (inputType === 'time') return dayjs().format('HH:mm');
+    if (inputType === 'month') return dayjs().format('YYYY-MM');
+    return dayjs().format('YYYY-MM-DDTHH:mm');
+  }, [hasValue, value, useCurrentDateAsDefault, inputType]);
+
+  const parseDate = (val: string) => {
+    if (!val) return null;
+    if (inputType === 'time' && !val.includes('-')) {
+      const d = dayjs(`2000-01-01T${val}`);
+      return d.isValid() ? d : null;
+    }
+    const d = dayjs(val);
+    return d.isValid() ? d : null;
+  };
 
   const internalValue = useMemo(() => {
     if (!currentValue) return '';
     try {
-      const d = dayjs(currentValue);
-      if (!d.isValid()) return '';
+      const d = parseDate(currentValue);
+      if (!d) return '';
       
       if (inputType === 'date') return d.format('YYYY-MM-DD');
       if (inputType === 'time') return d.format('HH:mm');
@@ -63,8 +76,8 @@ const DatePicker: React.FC<Props> = ({
   const displayValue = useMemo(() => {
     if (!currentValue) return '';
     try {
-      const d = dayjs(currentValue);
-      if (!d.isValid()) return '';
+      const d = parseDate(currentValue);
+      if (!d) return currentValue;
       
       if (inputType === 'date') return d.format('DD/MM/YYYY');
       if (inputType === 'time') return d.format('HH:mm');
@@ -87,23 +100,22 @@ const DatePicker: React.FC<Props> = ({
       return;
     }
 
-    let isoString = val;
+    let emittedValue = val;
     try {
       if (inputType === 'date') {
-        isoString = dayjs(val, 'YYYY-MM-DD').toISOString();
+        emittedValue = val;
       } else if (inputType === 'time') {
-        const today = dayjs().format('YYYY-MM-DD');
-        isoString = dayjs(`${today}T${val}`).toISOString();
+        emittedValue = val;
       } else if (inputType === 'month') {
-        isoString = dayjs(val, 'YYYY-MM').toISOString();
+        emittedValue = val;
       } else {
-        isoString = dayjs(val).toISOString();
+        emittedValue = dayjs(val).format();
       }
     } catch {
-      isoString = val;
+      emittedValue = val;
     }
 
-    onChange?.({ detail: { value: isoString } });
+    onChange?.({ detail: { value: emittedValue } });
   };
 
   const handleClear = (e: React.MouseEvent) => {
@@ -116,8 +128,8 @@ const DatePicker: React.FC<Props> = ({
   const formatAttrDate = (isoString?: string | string[]) => {
      if (!isoString || typeof isoString !== 'string') return undefined;
      try {
-       const d = dayjs(isoString);
-       if (!d.isValid()) return undefined;
+       const d = parseDate(isoString);
+       if (!d) return undefined;
        if (inputType === 'date') return d.format('YYYY-MM-DD');
        if (inputType === 'time') return d.format('HH:mm');
        if (inputType === 'month') return d.format('YYYY-MM');

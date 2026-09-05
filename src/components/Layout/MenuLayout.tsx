@@ -15,7 +15,7 @@ type Props = {
 
 const MenuLayout: React.FC<Props> = ({ component, title, isHeaderDefault }) => {
   return (
-    <IonPage id="main-content">
+    <IonPage>
       {isHeaderDefault && (
         <IonHeader translucent>
           <IonToolbar>

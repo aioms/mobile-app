@@ -81,7 +81,7 @@ const ReceiptPaymentUpdateScreen: React.FC = () => {
           : [];
 
         setFormData({
-          paymentDate: result.paymentDate ? dayjs(result.paymentDate).toISOString() : "",
+          paymentDate: result.paymentDate ? dayjs(result.paymentDate).format("YYYY-MM-DD") : "",
           expenseType: result.expenseType as ReceiptPaymentExpenseType,
           expenseTypeName: result.expenseTypeName || "",
           supplier: supplierStr,

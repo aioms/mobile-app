@@ -21,7 +21,6 @@ const Route = RouterRoute as any;
 const Redirect = RouterRedirect as any;
 
 /* Screens */
-import MenuLayout from "../Layout/MenuLayout";
 import MenuBar from "../MenuBar/MenuBar";
 import NotFound from "@/pages/Error/NotFound";
 
@@ -76,17 +75,7 @@ const TabBar: React.FC = () => {
     <IonTabs>
       <MenuBar />
       <IonRouterOutlet id="main-content">
-        <Route
-          exact
-          path="/tabs/home"
-          children={
-            <MenuLayout
-              component={<HomeScreen />}
-              isHeaderDefault
-              title="Trang chủ"
-            />
-          }
-        />
+        <Route exact path="/tabs/home" component={HomeScreen} />
 
         {/* Inventory Screens */}
         <Route
@@ -198,17 +187,7 @@ const TabBar: React.FC = () => {
         />
 
         {/* Extended Screens */}
-        <Route
-          exact
-          path="/tabs/extended"
-          children={
-            <MenuLayout
-              component={<ExtendedScreen />}
-              isHeaderDefault
-              title="Tính năng mở rộng"
-            />
-          }
-        />
+        <Route exact path="/tabs/extended" component={ExtendedScreen} />
         <Route
           exact
           path="/tabs/extended/cashbook"
@@ -236,11 +215,11 @@ const TabBar: React.FC = () => {
           component={SupplierDetailScreen}
         />
 
-        <Route component={NotFound} />
-
         <Route exact path="/tabs">
           <Redirect to="/tabs/home" />
         </Route>
+
+        <Route component={NotFound} />
       </IonRouterOutlet>
 
       <IonTabBar slot="bottom" className="custom-tab-bar">
