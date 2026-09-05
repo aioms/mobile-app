@@ -24,12 +24,23 @@
   object-fit: contain;
 }
 
-.preview-close-button {
+.preview-top-actions {
   position: absolute;
   top: env(safe-area-inset-top, 20px);
-  right: 20px;
+  right: 16px;
   z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preview-action-button {
   --color: white;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.45);
   border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  --padding-start: 0;
+  --padding-end: 0;
+  margin: 0;
 }
