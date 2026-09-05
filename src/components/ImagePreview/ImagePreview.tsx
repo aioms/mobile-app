@@ -1,15 +1,23 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   IonModal,
   IonContent,
   IonButton,
-  IonIcon
+  IonIcon,
+  IonSpinner,
+  useIonToast
 } from '@ionic/react';
-import { closeOutline } from 'ionicons/icons';
+import { closeOutline, downloadOutline, shareSocialOutline } from 'ionicons/icons';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Zoom, Navigation, Pagination } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
 import { ImagePreviewProps } from './types/imagePreview';
+import {
+  canShareFiles,
+  downloadImageFromUrl,
+  shareImageFromUrl,
+  sanitizeFileName
+} from '@/helpers/imageDownloadHelper';
 
 import 'swiper/css';
 import 'swiper/css/zoom';
@@ -21,16 +29,95 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
   images,
   initialIndex = 0,
   isOpen,
-  onClose
+  onClose,
+  fileNamePrefix
 }) => {
   const swiperRef = useRef<SwiperType>();
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(initialIndex);
+  const [isActionLoading, setIsActionLoading] = useState(false);
+  const [canShare, setCanShare] = useState(false);
+  const [presentToast] = useIonToast();
 
   useEffect(() => {
-    if (isOpen && swiperRef.current) {
-      // Ensure we jump to the correct slide without animation when opening
-      swiperRef.current.slideTo(initialIndex, 0);
+    setCanShare(canShareFiles());
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentSlideIndex(initialIndex);
+      if (swiperRef.current) {
+        swiperRef.current.slideTo(initialIndex, 0);
+      }
     }
   }, [isOpen, initialIndex]);
+
+  const getCurrentFileName = () => {
+    const currentUrl = images[currentSlideIndex] || images[0] || '';
+    const extension = currentUrl.split('.').pop()?.split('?')[0] || 'jpg';
+    const cleanExt = extension.length <= 4 && extension.length >= 3 ? extension : 'jpg';
+    const safePrefix = sanitizeFileName(fileNamePrefix || 'san_pham');
+    return `${safePrefix}_${currentSlideIndex + 1}.${cleanExt}`;
+  };
+
+  const handleDownload = async () => {
+    const currentUrl = images[currentSlideIndex] || images[0];
+    if (!currentUrl || isActionLoading) return;
+
+    setIsActionLoading(true);
+    try {
+      const fileName = getCurrentFileName();
+      await downloadImageFromUrl(currentUrl, fileName);
+      presentToast({
+        message: 'Đã tải ảnh về thiết bị',
+        duration: 2000,
+        position: 'top',
+        color: 'success'
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      presentToast({
+        message: 'Không thể tải ảnh, vui lòng thử lại',
+        duration: 3000,
+        position: 'top',
+        color: 'danger'
+      });
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleShare = async () => {
+    const currentUrl = images[currentSlideIndex] || images[0];
+    if (!currentUrl || isActionLoading) return;
+
+    setIsActionLoading(true);
+    try {
+      const fileName = getCurrentFileName();
+      const shared = await shareImageFromUrl(
+        currentUrl,
+        fileName,
+        fileNamePrefix || 'Hình ảnh sản phẩm'
+      );
+      if (shared) {
+        presentToast({
+          message: 'Đã mở chia sẻ ảnh',
+          duration: 1500,
+          position: 'top',
+          color: 'success'
+        });
+      }
+    } catch (error) {
+      console.error('Share error:', error);
+      presentToast({
+        message: 'Không thể chia sẻ ảnh, vui lòng thử lại',
+        duration: 3000,
+        position: 'top',
+        color: 'danger'
+      });
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
 
   return (
     <IonModal
@@ -40,13 +127,42 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
     >
       <IonContent className="ion-no-padding" scrollY={false}>
         <div style={{ position: 'relative', height: '100%', width: '100%', backgroundColor: '#000' }}>
-          <IonButton
-            fill="clear"
-            className="preview-close-button"
-            onClick={onClose}
-          >
-            <IonIcon icon={closeOutline} size="large" />
-          </IonButton>
+          <div className="preview-top-actions">
+            {canShare && (
+              <IonButton
+                fill="clear"
+                className="preview-action-button"
+                onClick={handleShare}
+                disabled={isActionLoading}
+                aria-label="Chia sẻ ảnh"
+              >
+                <IonIcon icon={shareSocialOutline} size="large" />
+              </IonButton>
+            )}
+
+            <IonButton
+              fill="clear"
+              className="preview-action-button"
+              onClick={handleDownload}
+              disabled={isActionLoading}
+              aria-label="Tải ảnh"
+            >
+              {isActionLoading ? (
+                <IonSpinner name="crescent" style={{ width: '22px', height: '22px', color: '#fff' }} />
+              ) : (
+                <IonIcon icon={downloadOutline} size="large" />
+              )}
+            </IonButton>
+
+            <IonButton
+              fill="clear"
+              className="preview-action-button"
+              onClick={onClose}
+              aria-label="Đóng"
+            >
+              <IonIcon icon={closeOutline} size="large" />
+            </IonButton>
+          </div>
 
           <Swiper
             modules={[Zoom, Navigation, Pagination]}
@@ -60,6 +176,9 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
             className="image-preview-swiper"
             onSwiper={(swiper) => {
               swiperRef.current = swiper;
+            }}
+            onSlideChange={(swiper) => {
+              setCurrentSlideIndex(swiper.activeIndex);
             }}
           >
             {images.map((img, index) => (

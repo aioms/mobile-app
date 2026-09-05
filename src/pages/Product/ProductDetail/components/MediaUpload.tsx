@@ -18,6 +18,7 @@ import {
   cameraOutline,
   trashOutline,
   cloudUploadOutline,
+  cloudDownloadOutline,
   addOutline,
   checkmarkOutline,
   imagesOutline
@@ -29,6 +30,7 @@ import usePhotoLibrary from '@/hooks/usePhotoLibrary';
 import useUploadFile from '@/hooks/useUploadFile';
 import { ProductImage, VALIDATION_RULES } from '@/pages/Product/ProductDetail/types/productEdit.d';
 import { dataURLtoFile, getS3ImageUrl } from '@/helpers/fileHelper';
+import { downloadMultipleImagesFromUrls } from '@/helpers/imageDownloadHelper';
 
 import { ImagePreview } from '@/components/ImagePreview/ImagePreview';
 import { CustomCameraModal } from './CustomCameraModal';
@@ -42,6 +44,7 @@ interface MediaUploadProps {
   disabled?: boolean;
   hasChanges?: boolean;
   enableCompression?: boolean;
+  productName?: string;
 }
 
 export const MediaUpload: React.FC<MediaUploadProps> = ({
@@ -52,7 +55,8 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
   maxImages = VALIDATION_RULES.IMAGES.MAX_COUNT,
   disabled = false,
   hasChanges = false,
-  enableCompression = true
+  enableCompression = true,
+  productName
 }) => {
   const [presentToast] = useIonToast();
   const {
@@ -280,10 +284,72 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
     setShowDeleteAlert(false);
   };
 
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
+  const allImages = [
+    ...(imageUrls || []),
+    ...images.map(img => getS3ImageUrl(img.path))
+  ];
+
+  const handleDownloadAll = async () => {
+    if (allImages.length === 0 || isDownloadingAll) return;
+    setIsDownloadingAll(true);
+    presentToast({
+      message: `Đang tải ${allImages.length} ảnh...`,
+      duration: 2000,
+      position: 'top',
+      color: 'primary'
+    });
+
+    try {
+      const result = await downloadMultipleImagesFromUrls(
+        allImages,
+        productName || 'san_pham'
+      );
+      if (result.success > 0) {
+        presentToast({
+          message: `Đã tải ${result.success} ảnh về thiết bị`,
+          duration: 2000,
+          position: 'top',
+          color: 'success'
+        });
+      }
+    } catch (error) {
+      console.error('Download all images error:', error);
+      presentToast({
+        message: 'Có lỗi xảy ra khi tải ảnh',
+        duration: 3000,
+        position: 'top',
+        color: 'danger'
+      });
+    } finally {
+      setIsDownloadingAll(false);
+    }
+  };
+
   return (
     <>
       <AppCard className="mx-4 mb-3 p-4">
-        <h2 className="text-xl font-bold mb-4">Hình ảnh sản phẩm</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">Hình ảnh sản phẩm</h2>
+          {allImages.length > 0 && (
+            <IonButton
+              fill="clear"
+              size="small"
+              onClick={handleDownloadAll}
+              disabled={isDownloadingAll}
+              style={{ minHeight: '36px' }}
+            >
+              {isDownloadingAll ? (
+                <IonSpinner name="crescent" style={{ width: '18px', height: '18px' }} />
+              ) : (
+                <>
+                  <IonIcon slot="start" icon={cloudDownloadOutline} />
+                  Tải tất cả
+                </>
+              )}
+            </IonButton>
+          )}
+        </div>
         
         <div>
           {/* Image Grid */}
@@ -490,10 +556,11 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
 
       {/* Image Preview Component */}
       <ImagePreview
-        images={[...(imageUrls || []), ...images.map(img => getS3ImageUrl(img.path))]}
+        images={allImages}
         initialIndex={previewIndex}
         isOpen={previewOpen}
         onClose={() => setPreviewOpen(false)}
+        fileNamePrefix={productName}
       />
     </>
   );

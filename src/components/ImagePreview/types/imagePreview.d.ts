@@ -15,4 +15,8 @@ export interface ImagePreviewProps {
    * Callback function when the preview is closed
    */
   onClose: () => void;
+  /**
+   * Optional prefix for file names when downloading/sharing (e.g. product name)
+   */
+  fileNamePrefix?: string;
 }

@@ -1752,6 +1752,7 @@ const ProductDetail: React.FC = () => {
           maxImages={VALIDATION_RULES.IMAGES.MAX_COUNT}
           hasChanges={hasImageChanges}
           enableCompression={true}
+          productName={product?.productName}
         />
 
         <InventoryHistory
