@@ -21,6 +21,7 @@ import { useHistory } from "react-router-dom";
 import { checkmark, search, chevronDown } from "ionicons/icons";
 import clsx from "clsx";
 import { getDate } from "@/helpers/date";
+import dayjs from "dayjs";
 import { OverlayEventDetail } from "@ionic/react/dist/types/components/react-component-lib/interfaces";
 
 import useUser from "@/hooks/apis/useUser";
@@ -37,7 +38,7 @@ import ErrorMessage from "@/components/ErrorMessage";
 
 const initialDefaultItem = {
     note: "",
-    checkDate: getDate(new Date()).format(),
+    checkDate: dayjs().format("YYYY-MM-DD"),
     checkStaff: "",
     warehouse: "Kho KS",
     totalProduct: 0,
@@ -258,6 +259,7 @@ const ReceiptCheckCreate: React.FC = () => {
                                     attrs={{ id: "checkDate" }}
                                     extraClassName="w-full h-full bg-white !rounded-none !px-3"
                                     value={formData.checkDate}
+                                    presentation="date"
                                     onChange={(e) => {
                                         setFormData((prev) => ({
                                             ...prev,

@@ -32,11 +32,12 @@ import ModalSelectReceiptImport, { IReceiptImportMock } from "./components/Modal
 import { formatCurrency, formatCurrencyInput, parseCurrencyInput } from "@/helpers/formatters";
 import { ReceiptPaymentExpenseType, ReceiptPaymentStatus } from "@/common/enums/receipt";
 import { PaymentMethod } from "@/common/enums/payment";
+import dayjs from "dayjs";
 import { EXPENSE_TYPE_LABELS } from "../common/utils";
 import useReceiptPayment from "@/hooks/apis/useReceiptPayment";
 
 const initialFormData = () => ({
-  paymentDate: new Date().toISOString(),
+  paymentDate: dayjs().format("YYYY-MM-DD"),
   expenseType: ReceiptPaymentExpenseType.SUPPLIER_PAYMENT,
   expenseTypeName: "",
   supplier: "", // format: id__name

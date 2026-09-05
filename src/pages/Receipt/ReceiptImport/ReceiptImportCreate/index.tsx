@@ -47,8 +47,8 @@ import "./ReceiptImportCreate.css";
 
 const initialDefaultItem = {
   note: "",
-  importDate: getDate(new Date()).format(),
-  paymentDate: getDate(new Date()).format(),
+  importDate: dayjs().format("YYYY-MM-DD"),
+  paymentDate: dayjs().format("YYYY-MM-DD"),
   quantity: 0,
   supplier: "",
   warehouse: "Kho KS1",
@@ -390,6 +390,7 @@ const ReceiptImportCreate: React.FC = () => {
             >
               <IonLabel position="stacked">Ngày nhập dự kiến *</IonLabel>
               <DatePicker
+                presentation="date"
                 attrs={{ id: "importDate" }}
                 value={formData.importDate}
                 onChange={(e) =>
@@ -410,6 +411,7 @@ const ReceiptImportCreate: React.FC = () => {
             >
               <IonLabel position="stacked">Ngày thanh toán *</IonLabel>
               <DatePicker
+                presentation="date"
                 attrs={{ id: "paymentDate" }}
                 value={formData.paymentDate}
                 onChange={(e) =>
