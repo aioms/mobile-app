@@ -38,4 +38,14 @@ export interface IOrder {
   vatInfo: IVatInfo;
   items: IOrderItem[];
   createdAt: string;
+  returnHistory?: Array<{
+    id: string;
+    receiptNumber: string;
+    operationType: "return" | "exchange";
+    originalReturnAmount: number;
+    replacementAmount: number;
+    differenceAmount: number;
+    exchangeItems?: Array<{ productName: string; quantity: number; unitPrice: number }>;
+    returnDate?: string;
+  }>;
 }

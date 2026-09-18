@@ -24,6 +24,7 @@ interface OrderItem {
   productName: string;
   quantity: number;
   price: number;
+  vatRate?: number;
   returnedQuantity?: number;
   periodId?: string;
   periodDate?: string;
@@ -52,11 +53,12 @@ const ModalSelectReturnProduct: FC<Props> = ({ dismiss, orderProducts, refType }
         code: product.code,
         productCode: getNumberFromStringOrThrow(product.code),
         productName: product.productName,
-        quantity: product.quantity,
+        quantity: Math.max(0, product.quantity - (product.returnedQuantity || 0)),
         costPrice: product.price,
+        vatRate: product.vatRate,
         originalQuantity: product.quantity,
         metadata: {
-          returnedQuantity: product.quantity,
+          returnedQuantity: Math.max(0, product.quantity - (product.returnedQuantity || 0)),
           periodId: product.periodId,
         },
       } as any; // Cast as any to allow periodId in metadata if needed or handle it in parent
@@ -98,7 +100,7 @@ const ModalSelectReturnProduct: FC<Props> = ({ dismiss, orderProducts, refType }
     const uniqueId = product.periodId ? `${product.id}_${product.periodId}` : product.id;
     const isSelected = selectedProducts.has(uniqueId);
     const returnedQty = product.returnedQuantity || 0;
-    const returnableQty = product.quantity;
+    const returnableQty = Math.max(0, product.quantity - returnedQty);
     const isDisabled = returnableQty <= 0;
 
     return (

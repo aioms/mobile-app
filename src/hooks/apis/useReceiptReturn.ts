@@ -36,7 +36,9 @@ const useReceiptReturn = () => {
   };
 
   const create = async (data: CreateReceiptReturnRequestDto) => {
-    const response: IHttpResponse = await request.post(`/receipt-return`, data);
+    const response: IHttpResponse = await request.post(`/receipt-return`, data, {
+      headers: data.requestId ? { "X-Request-ID": data.requestId } : undefined,
+    });
 
     if (!response.success) {
       throw new Error(response?.message || "Failed to create receipt return");

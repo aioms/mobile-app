@@ -10,6 +10,11 @@ interface PaymentInfoSectionProps {
   discount: number;
   paymentMethod: string;
   items: IOrderItem[];
+  exchangeSummary?: {
+    returnedAmount: number;
+    replacementAmount: number;
+    differenceAmount: number;
+  };
 }
 
 const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
@@ -17,6 +22,7 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
   discount,
   paymentMethod,
   items,
+  exchangeSummary,
 }) => {
   // Calculate money using the same logic as OrderUpdate
   const calculateTotalVat = () => {
@@ -64,6 +70,24 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
           <span className="text-muted-foreground">Phương thức thanh toán:</span>
           <span>{paymentMethod}</span>
         </div>
+        {exchangeSummary && (
+          <div className="border-t border-border pt-2 mt-2 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Giá trị trả:</span>
+              <span>{formatCurrency(exchangeSummary.returnedAmount)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Giá trị đổi:</span>
+              <span>{formatCurrency(exchangeSummary.replacementAmount)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Chênh lệch:</span>
+              <span className={exchangeSummary.differenceAmount < 0 ? "text-red-500" : "text-green-500"}>
+                {formatCurrency(Math.abs(exchangeSummary.differenceAmount))}
+              </span>
+            </div>
+          </div>
+        )}
         <div className="flex justify-between items-center pt-2 border-t border-border">
           <span className="font-medium">Tổng thanh toán:</span>
           <span className="text-green-500 font-medium">

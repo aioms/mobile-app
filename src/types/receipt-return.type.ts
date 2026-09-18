@@ -41,6 +41,17 @@ export interface CreateReceiptReturnRequestDto {
   returnDate: string;
   items: CreateReceiptItemRequestDto[];
   paymentMethod?: PaymentMethod;
+  operationType?: "return" | "exchange";
+  exchangeItems?: Array<{
+    productId: string;
+    productCode: string | number;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    costPrice?: number;
+    vatRate?: number;
+  }>;
+  requestId?: string;
 }
 
 // Enhanced types for form management
@@ -49,6 +60,7 @@ export interface IReceiptReturnItem extends CreateReceiptItemRequestDto {
   code: string;
   inventory?: number;
   originalQuantity?: number;
+  vatRate?: number;
 }
 
 export interface IReceiptReturnFormData {
