@@ -1,37 +1,41 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  IonModal,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonContent,
-  IonButton,
   IonButtons,
+  IonButton,
+  IonContent,
+  IonHeader,
   IonIcon,
+  IonModal,
+  IonTitle,
+  IonToolbar,
 } from "@ionic/react";
 import { close } from "ionicons/icons";
 import PaymentOptions from "./PaymentOptions";
-import AmountInput from "./AmountInput";
+import SplitAmountInput from "./SplitAmountInput";
 import QRCodeDisplay from "./QRCodeDisplay";
 import PaymentCompletion from "./PaymentCompletion";
 import { getDate } from "@/helpers/date";
+import { PaymentMethod as TransactionPaymentMethod } from "@/common/enums/payment";
+import { TransactionType } from "@/common/enums/transaction";
+import { PaymentTransactionDto } from "@/types/payment.type";
 
-export type PaymentMethod = "cash" | "qr" | null;
-export type PaymentStep = "options" | "amount" | "qr" | "completion";
+export type PaymentMethod = "cash" | "qr" | "mixed" | null;
+export type PaymentStep = "options" | "split" | "qr" | "completion";
 
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  orderData: {
-    totalAmount: number;
-  };
+  orderData: { totalAmount: number };
   preSelectedMethod?: PaymentMethod;
-  onPaymentComplete: (
-    amount: number,
-    method: PaymentMethod,
-    description: string
-  ) => void | Promise<void>;
+  onPaymentComplete: (transactions: PaymentTransactionDto[]) => void | Promise<void>;
 }
+
+const getInitialStep = (method: PaymentMethod): PaymentStep => {
+  if (method === "mixed") return "split";
+  if (method === "qr") return "qr";
+  if (method === "cash") return "completion";
+  return "options";
+};
 
 const PaymentModal: React.FC<PaymentModalProps> = ({
   isOpen,
@@ -40,37 +44,46 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   preSelectedMethod,
   onPaymentComplete,
 }) => {
-  const [currentStep, setCurrentStep] = useState<PaymentStep>(
-    preSelectedMethod ? (preSelectedMethod === "qr" ? "qr" : "completion") : "options"
-  );
+  const [currentStep, setCurrentStep] = useState<PaymentStep>(getInitialStep(preSelectedMethod || null));
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(preSelectedMethod || null);
-  const [paymentAmount, setPaymentAmount] = useState<number>(preSelectedMethod ? orderData.totalAmount : 0);
-  const [paymentDescription, setPaymentDescription] = useState<string>("");
+  const [splitAmounts, setSplitAmounts] = useState({ cash: 0, bank: 0 });
   const [isProcessing, setIsProcessing] = useState(false);
   const isProcessingRef = useRef(false);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    setSelectedMethod(preSelectedMethod || null);
+    setCurrentStep(getInitialStep(preSelectedMethod || null));
+    setSplitAmounts({ cash: 0, bank: 0 });
+    setIsProcessing(false);
+  }, [isOpen, preSelectedMethod, orderData.totalAmount]);
+
   const handleMethodSelect = (method: PaymentMethod) => {
     setSelectedMethod(method);
-    setCurrentStep("amount");
+    setCurrentStep(getInitialStep(method));
   };
 
-  const handleAmountConfirm = (amount: number, description: string) => {
-    setPaymentAmount(amount);
-    setPaymentDescription(description);
-    if (selectedMethod === "qr") {
-      setCurrentStep("qr");
-    } else {
-      setCurrentStep("completion");
+  const buildTransactions = (): PaymentTransactionDto[] => {
+    if (selectedMethod === "mixed") {
+      return [
+        { amount: splitAmounts.cash, paymentMethod: TransactionPaymentMethod.CASH, type: TransactionType.PAYMENT },
+        { amount: splitAmounts.bank, paymentMethod: TransactionPaymentMethod.BANK_TRANSFER, type: TransactionType.PAYMENT },
+      ];
     }
+
+    return [{
+      amount: orderData.totalAmount,
+      paymentMethod: selectedMethod === "qr" ? TransactionPaymentMethod.BANK_TRANSFER : TransactionPaymentMethod.CASH,
+      type: TransactionType.PAYMENT,
+    }];
   };
 
   const handlePaymentComplete = async () => {
     if (isProcessingRef.current) return;
-
     isProcessingRef.current = true;
     setIsProcessing(true);
     try {
-      await onPaymentComplete(paymentAmount, selectedMethod, paymentDescription);
+      await onPaymentComplete(buildTransactions());
       handleClose();
     } finally {
       isProcessingRef.current = false;
@@ -80,45 +93,29 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handleClose = () => {
     if (isProcessingRef.current) return;
-
-    setCurrentStep(preSelectedMethod ? (preSelectedMethod === "qr" ? "qr" : "completion") : "options");
+    setCurrentStep(getInitialStep(preSelectedMethod || null));
     setSelectedMethod(preSelectedMethod || null);
-    setPaymentAmount(preSelectedMethod ? orderData.totalAmount : 0);
-    setPaymentDescription("");
+    setSplitAmounts({ cash: 0, bank: 0 });
     onClose();
   };
 
   const handleBack = () => {
-    switch (currentStep) {
-      case "amount":
-        setCurrentStep("options");
-        setSelectedMethod(null);
-        break;
-      case "qr":
-        setCurrentStep("amount");
-        break;
-      case "completion":
-        if (selectedMethod === "qr") {
-          setCurrentStep("qr");
-        } else {
-          setCurrentStep("amount");
-        }
-        break;
+    if (currentStep === "split") {
+      setCurrentStep("options");
+      setSelectedMethod(null);
+    } else if (currentStep === "qr") {
+      setCurrentStep(selectedMethod === "mixed" ? "split" : "options");
+    } else if (currentStep === "completion") {
+      setCurrentStep(selectedMethod === "mixed" ? "split" : selectedMethod === "qr" ? "qr" : "options");
     }
   };
 
   const getStepTitle = () => {
     switch (currentStep) {
-      case "options":
-        return "Chọn hình thức thanh toán";
-      case "amount":
-        return "Nhập số tiền thanh toán";
-      case "qr":
-        return "Quét mã QR để thanh toán";
-      case "completion":
-        return "Hoàn tất thanh toán";
-      default:
-        return "Thanh toán";
+      case "options": return "Chọn hình thức thanh toán";
+      case "split": return "Chia khoản thanh toán";
+      case "qr": return "Quét mã QR để thanh toán";
+      case "completion": return "Hoàn tất thanh toán";
     }
   };
 
@@ -128,7 +125,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         <IonToolbar>
           <IonTitle>{getStepTitle()}</IonTitle>
           <IonButtons slot="end">
-            <IonButton fill="clear" onClick={handleClose} disabled={isProcessing}>
+            <IonButton fill="clear" aria-label="Đóng thanh toán" onClick={handleClose} disabled={isProcessing}>
               <IonIcon icon={close} />
             </IonButton>
           </IonButtons>
@@ -136,33 +133,31 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       </IonHeader>
 
       <IonContent className="ion-padding">
-        {currentStep === "options" && (
-          <PaymentOptions onMethodSelect={handleMethodSelect} />
-        )}
-
-        {currentStep === "amount" && (
-          <AmountInput
-            maxAmount={orderData.totalAmount}
-            onAmountConfirm={handleAmountConfirm}
+        {currentStep === "options" && <PaymentOptions onMethodSelect={handleMethodSelect} />}
+        {currentStep === "split" && (
+          <SplitAmountInput
+            totalAmount={orderData.totalAmount}
             onBack={handleBack}
-            method={selectedMethod}
+            onConfirm={(cash, bank) => {
+              setSplitAmounts({ cash, bank });
+              setCurrentStep("qr");
+            }}
           />
         )}
-
         {currentStep === "qr" && (
           <QRCodeDisplay
-            amount={paymentAmount}
+            amount={selectedMethod === "mixed" ? splitAmounts.bank : orderData.totalAmount}
             orderCode={getDate(new Date()).format("DDMMYYYY HHmmss")}
             onBack={handleBack}
             onContinue={() => setCurrentStep("completion")}
           />
         )}
-
         {currentStep === "completion" && (
           <PaymentCompletion
-            amount={paymentAmount}
-            method={selectedMethod}
-            description={paymentDescription}
+            transactions={buildTransactions().map((transaction) => ({
+              amount: transaction.amount,
+              method: transaction.paymentMethod === TransactionPaymentMethod.CASH ? "cash" : "qr",
+            }))}
             onComplete={handlePaymentComplete}
             onBack={handleBack}
             isProcessing={isProcessing}

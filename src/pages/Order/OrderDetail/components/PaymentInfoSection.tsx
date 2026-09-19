@@ -4,6 +4,8 @@ import { cardOutline } from "ionicons/icons";
 
 import { formatCurrency } from "@/helpers/formatters";
 import { IOrderItem } from "@/types";
+import { OrderPaymentDetails } from "@/types/payment.type";
+import { PaymentMethod } from "@/common/enums/payment";
 
 interface PaymentInfoSectionProps {
   subtotal: number;
@@ -15,6 +17,7 @@ interface PaymentInfoSectionProps {
     replacementAmount: number;
     differenceAmount: number;
   };
+  paymentDetails?: OrderPaymentDetails | null;
 }
 
 const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
@@ -23,6 +26,7 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
   paymentMethod,
   items,
   exchangeSummary,
+  paymentDetails,
 }) => {
   // Calculate money using the same logic as OrderUpdate
   const calculateTotalVat = () => {
@@ -70,6 +74,14 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
           <span className="text-muted-foreground">Phương thức thanh toán:</span>
           <span>{paymentMethod}</span>
         </div>
+        {paymentDetails?.transactions.map((transaction) => (
+          <div className="flex justify-between items-center mb-2 pl-4" key={transaction.id}>
+            <span className="text-muted-foreground">
+              {transaction.paymentMethod === PaymentMethod.CASH ? "Tiền mặt" : "Chuyển khoản"}:
+            </span>
+            <span>{formatCurrency(Number(transaction.amount))}</span>
+          </div>
+        ))}
         {exchangeSummary && (
           <div className="border-t border-border pt-2 mt-2 space-y-2">
             <div className="flex justify-between items-center">

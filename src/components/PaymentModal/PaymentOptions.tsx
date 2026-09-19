@@ -57,6 +57,42 @@ const PaymentOptions: React.FC<PaymentOptionsProps> = ({ onMethodSelect }) => {
 
       <IonCard
         className="cursor-pointer hover:shadow-md transition-shadow"
+        onClick={() => onMethodSelect("mixed")}
+      >
+        <IonCardContent className="p-6">
+          <div className="flex items-center space-x-4">
+            <div className="bg-amber-100 p-3 rounded-full text-amber-700 font-bold">
+              TM + CK
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-800">
+                Tiền mặt + Chuyển khoản
+              </h3>
+              <p className="text-gray-600 text-sm mt-1">
+                Chia số tiền thanh toán theo hai phương thức
+              </p>
+            </div>
+            <div className="text-gray-400">
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </div>
+          </div>
+        </IonCardContent>
+      </IonCard>
+
+      <IonCard
+        className="cursor-pointer hover:shadow-md transition-shadow"
         onClick={() => onMethodSelect("qr")}
       >
         <IonCardContent className="p-6">
