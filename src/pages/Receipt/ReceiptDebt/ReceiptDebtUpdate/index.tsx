@@ -10,6 +10,7 @@ import {
   IonPage,
   IonIcon,
   IonTextarea,
+  IonCheckbox,
   useIonToast,
   IonChip,
   IonLabel,
@@ -50,6 +51,7 @@ const initialFormData: IReceiptDebtUpdateForm = {
   customer: "",
   dueDate: "",
   note: "",
+  isOrderRevenue: false,
 };
 
 const ReceiptDebtUpdate: React.FC = () => {
@@ -106,7 +108,7 @@ const ReceiptDebtUpdate: React.FC = () => {
         return;
       }
 
-      const { customerName, dueDate, note } = response.receipt;
+      const { customerName, dueDate, note, isOrderRevenue } = response.receipt;
 
       setReceiptDebt(response.receipt);
       setProductItems(response.items);
@@ -116,6 +118,7 @@ const ReceiptDebtUpdate: React.FC = () => {
         customer: customerName || "",
         dueDate: getDate(dueDate || new Date()).format(),
         note,
+        isOrderRevenue,
       });
     });
   };
@@ -198,6 +201,7 @@ const ReceiptDebtUpdate: React.FC = () => {
       const payload = {
         dueDate: formData.dueDate,
         note: formData.note,
+        isOrderRevenue: formData.isOrderRevenue,
       };
 
       await update(id!, payload);
@@ -216,6 +220,9 @@ const ReceiptDebtUpdate: React.FC = () => {
   // Check if editing is disabled based on receipt status
   const isEditingDisabled = receiptDebt?.status === RECEIPT_DEBT_STATUS.CANCELLED || 
                            receiptDebt?.status === RECEIPT_DEBT_STATUS.COMPLETED;
+  const isOrderRevenueLocked =
+    Number(receiptDebt?.paidAmount || 0) > 0 ||
+    receiptDebt?.status === RECEIPT_DEBT_STATUS.CANCELLED;
 
   return (
     <IonPage>
@@ -374,6 +381,30 @@ const ReceiptDebtUpdate: React.FC = () => {
                     {errors.dueDate}
                   </div>
                 )}
+              </div>
+
+              {/* Ghi chú */}
+              <div className="px-4 pt-4">
+                <IonCheckbox
+                  checked={formData.isOrderRevenue}
+                  disabled={isEditingDisabled || isOrderRevenueLocked}
+                  onIonChange={(event) =>
+                    handleFormChange("isOrderRevenue", event.detail.checked)
+                  }
+                  labelPlacement="end"
+                  justify="start"
+                  className="w-full"
+                  style={{ "--label-gap": "4px" }}
+                >
+                  <span className="whitespace-normal text-sm font-medium leading-tight text-gray-800">
+                    Doanh thu của Đơn hàng
+                  </span>
+                </IonCheckbox>
+                <p className="mt-1 text-xs text-gray-500">
+                  {isOrderRevenueLocked
+                    ? "Đã phát sinh thanh toán hoặc phiếu đã hủy nên không thể thay đổi."
+                    : "Khoản thanh toán sẽ được xếp vào mục Đơn hàng trong Sổ Thu Chi."}
+                </p>
               </div>
 
               {/* Ghi chú */}
