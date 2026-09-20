@@ -1,111 +1,55 @@
 import React from "react";
-import { IonCard, IonCardContent, IonButton, IonIcon, IonSpinner } from "@ionic/react";
-import { chevronBack, checkmarkCircle, cash, qrCode } from "ionicons/icons";
+import { IonButton, IonCard, IonCardContent, IonIcon, IonSpinner } from "@ionic/react";
+import { cash, chevronBack, checkmarkCircle, qrCode } from "ionicons/icons";
 import { formatCurrency } from "@/helpers/formatters";
-import { PaymentMethod } from "./index";
 
 interface PaymentCompletionProps {
-  amount: number;
-  method: PaymentMethod;
-  description?: string;
+  transactions: Array<{ amount: number; method: "cash" | "qr" }>;
   onComplete: () => void;
   onBack: () => void;
   isProcessing: boolean;
 }
 
 const PaymentCompletion: React.FC<PaymentCompletionProps> = ({
-  amount,
-  method,
-  description,
+  transactions,
   onComplete,
   onBack,
   isProcessing,
-}) => {
-  const getMethodIcon = () => {
-    return method === "cash" ? cash : qrCode;
-  };
-
-  const getMethodLabel = () => {
-    return method === "cash" ? "Tiền mặt" : "Chuyển khoản QR";
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center space-x-3 mb-6">
-        <IonButton fill="clear" onClick={onBack} className="p-0" disabled={isProcessing}>
-          <IonIcon icon={chevronBack} className="text-xl" />
-        </IonButton>
-        <span className="text-lg font-semibold text-gray-800">
-          Hoàn tất thanh toán
-        </span>
-      </div>
-
-      <IonCard>
-        <IonCardContent className="p-6 text-center">
-          <div className="mb-6">
-            <div className="bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <IonIcon
-                icon={checkmarkCircle}
-                className="text-4xl text-green-600"
-              />
-            </div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">
-              Xác nhận thanh toán
-            </h2>
-            <p className="text-gray-600">
-              Vui lòng xác nhận thông tin thanh toán dưới đây
-            </p>
-          </div>
-
-          <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Hình thức thanh toán:</span>
-                <div className="flex items-center space-x-2">
-                  <IonIcon icon={getMethodIcon()} className="text-blue-600" />
-                  <span className="font-semibold">{getMethodLabel()}</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Số tiền thanh toán:</span>
-                <span className="text-xl font-bold text-green-600">
-                  {formatCurrency(amount)}
-                </span>
-              </div>
-              {description && (
-                <div className="flex justify-between items-start text-left gap-3">
-                  <span className="text-gray-600 shrink-0">Mô tả:</span>
-                  <span className="font-medium text-gray-800 break-words">
-                    {description}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <IonButton
-              expand="block"
-              onClick={onComplete}
-              className="font-semibold"
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <><IonSpinner name="crescent" slot="start" />Đang xử lý...</>
-              ) : (
-                "Hoàn tất thanh toán"
-              )}
-            </IonButton>
-
-            <p className="text-xs text-gray-500">
-              Bằng cách nhấn "Hoàn tất thanh toán", bạn xác nhận đã nhận được số
-              tiền trên
-            </p>
-          </div>
-        </IonCardContent>
-      </IonCard>
+}) => (
+  <div className="space-y-4">
+    <div className="flex items-center space-x-3 mb-6">
+      <IonButton fill="clear" onClick={onBack} disabled={isProcessing}>
+        <IonIcon icon={chevronBack} className="text-xl" />
+      </IonButton>
+      <span className="text-lg font-semibold text-gray-800">Hoàn tất thanh toán</span>
     </div>
-  );
-};
+
+    <IonCard>
+      <IonCardContent className="p-6 text-center">
+        <div className="mb-6">
+          <IonIcon icon={checkmarkCircle} className="text-5xl text-green-600" />
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Xác nhận thanh toán</h2>
+          <p className="text-gray-600">Vui lòng xác nhận thông tin thanh toán dưới đây</p>
+        </div>
+
+        <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-3">
+          {transactions.map((transaction) => (
+            <div className="flex justify-between items-center" key={transaction.method}>
+              <div className="flex items-center gap-2 text-gray-600">
+                <IonIcon icon={transaction.method === "cash" ? cash : qrCode} className="text-blue-600" />
+                <span>{transaction.method === "cash" ? "Tiền mặt" : "Chuyển khoản"}</span>
+              </div>
+              <span className="font-bold text-green-600">{formatCurrency(transaction.amount)}</span>
+            </div>
+          ))}
+        </div>
+
+        <IonButton expand="block" onClick={onComplete} disabled={isProcessing} color="success">
+          {isProcessing ? <><IonSpinner name="crescent" slot="start" />Đang xử lý...</> : "Xác nhận"}
+        </IonButton>
+      </IonCardContent>
+    </IonCard>
+  </div>
+);
 
 export default PaymentCompletion;

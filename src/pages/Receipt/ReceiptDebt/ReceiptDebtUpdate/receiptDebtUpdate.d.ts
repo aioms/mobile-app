@@ -25,6 +25,7 @@ export interface IReceiptDebtDetail {
   dueDate: string;
   paymentDate: string | null;
   note: string;
+  isOrderRevenue: boolean;
   receiptImportId: string | null;
   receiptReturnId: string | null;
   createdAt: string;
@@ -54,6 +55,7 @@ export interface IReceiptDebtUpdateForm {
   customer: string;
   dueDate: string;
   note: string;
+  isOrderRevenue: boolean;
 }
 
 /**
@@ -63,6 +65,7 @@ export interface IReceiptDebtUpdateErrors {
   customer?: string;
   dueDate?: string;
   note?: string;
+  isOrderRevenue?: string;
   items?: Record<string, {
     quantity?: string;
     costPrice?: string;

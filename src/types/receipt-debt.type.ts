@@ -10,6 +10,7 @@ export interface IReceiptDebt {
   totalAmount: number;
   paidAmount: number;
   remainingAmount: number;
+  isOrderRevenue?: boolean;
   status: ReceiptDebtStatus;
   note?: string;
   customerId?: string;

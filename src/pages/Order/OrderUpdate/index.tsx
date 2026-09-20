@@ -60,8 +60,6 @@ import PaymentModal, {
   PaymentMethod as PaymentModalMethod,
 } from "@/components/PaymentModal";
 import { PaymentTransactionDto } from "@/types/payment.type";
-import { PaymentMethod as PaymentMethodEnum } from "@/common/enums/payment";
-import { TransactionType } from "@/common/enums/transaction";
 import OrderSummarySection from "./components/OrderSummarySection";
 import VATSection from "./components/VATSection";
 import OrderNotesSection from "./components/OrderNotesSection";
@@ -103,6 +101,12 @@ const initialFormData: IFormData = {
   discountAmountFormatted: "",
   orderType: OrderType.SALES,
   orderVatPercentage: 0,
+};
+
+const mapOrderPaymentMethodToModal = (method: PaymentMethod): PaymentModalMethod => {
+  if (method === PaymentMethod.BANK_TRANSFER) return "qr";
+  if (method === PaymentMethod.MIXED) return "mixed";
+  return "cash";
 };
 
 const OrderUpdate: React.FC = () => {
@@ -717,11 +721,7 @@ const OrderUpdate: React.FC = () => {
     }
   };
 
-  const handlePaymentComplete = async (
-    amount: number,
-    method: PaymentModalMethod,
-    description: string
-  ) => {
+  const handlePaymentComplete = async (transactions: PaymentTransactionDto[]) => {
     if (!pendingOrderData) {
       presentToast({
         message: "Không tìm thấy thông tin đơn hàng",
@@ -733,29 +733,14 @@ const OrderUpdate: React.FC = () => {
     }
 
     try {
-      // Map PaymentModalMethod to PaymentMethodEnum
-      const paymentMethodEnum = method === "cash"
-        ? PaymentMethodEnum.CASH
-        : PaymentMethodEnum.BANK_TRANSFER;
-
-      // Create transaction data
-      const transactionData: PaymentTransactionDto = {
-        amount,
-        paymentMethod: paymentMethodEnum,
-        type: TransactionType.PAYMENT,
-        note: description || `Thanh toán đơn hàng ${formData.code}`,
-      };
-
       // Prepare order data with transaction and status
       const orderData = {
         ...pendingOrderData,
-        transaction: transactionData,
+        transactions,
       };
-      console.log({ orderData });
 
       // Update order with payment information
       const orderUpdated = await updateOrder(id, orderData);
-      console.log({ orderUpdated });
 
       if (!orderUpdated?.id) {
         throw new Error("Cập nhật đơn hàng thất bại");
@@ -1321,54 +1306,28 @@ const OrderUpdate: React.FC = () => {
               <h2 className="text-lg font-medium text-foreground mb-3">
                 Phương thức thanh toán
               </h2>
-              <IonRadioGroup
-                value={formData.paymentMethod}
-                onIonChange={isEditMode ? handlePaymentMethodChange : () => { }}
-                className="mt-2"
-              >
-                <div className="flex gap-4">
-                  <IonItem
-                    lines="none"
-                    className={cn(
-                      `rounded-lg transition-colors`,
-                      {
-                        "bg-custom-primary border border-custom-primary":
-                          formData.paymentMethod === PaymentMethod.CASH ||
-                          !formData.paymentMethod,
-                        border:
-                          formData.paymentMethod ===
-                          PaymentMethod.BANK_TRANSFER,
-                        "opacity-50 cursor-not-allowed": !isEditMode,
-                      }
-                    )}
+              <div className="grid grid-cols-3 gap-2 mt-2" role="radiogroup" aria-label="Phương thức thanh toán">
+                {[
+                  [PaymentMethod.CASH, "Tiền mặt"],
+                  [PaymentMethod.BANK_TRANSFER, "Chuyển khoản"],
+                  [PaymentMethod.MIXED, "Cả hai"],
+                ].map(([value, label]) => (
+                  <button
+                    type="button"
+                    key={value}
+                    role="radio"
+                    aria-checked={formData.paymentMethod === value}
+                    disabled={!isEditMode}
+                    className={cn("rounded-lg border p-3 text-sm transition-colors", {
+                      "bg-custom-primary border-custom-primary": formData.paymentMethod === value,
+                      "opacity-50 cursor-not-allowed": !isEditMode,
+                    })}
+                    onClick={() => handlePaymentMethodChange({ detail: { value } } as CustomEvent)}
                   >
-                    <IonRadio value={PaymentMethod.CASH} disabled={!isEditMode}>
-                      Tiền mặt
-                    </IonRadio>
-                  </IonItem>
-                  <IonItem
-                    lines="none"
-                    className={cn(
-                      `rounded-lg transition-colors`,
-                      {
-                        "bg-custom-primary border border-custom-primary":
-                          formData.paymentMethod ===
-                          PaymentMethod.BANK_TRANSFER ||
-                          !formData.paymentMethod,
-                        border: formData.paymentMethod === PaymentMethod.CASH,
-                        "opacity-50 cursor-not-allowed": !isEditMode,
-                      }
-                    )}
-                  >
-                    <IonRadio
-                      value={PaymentMethod.BANK_TRANSFER}
-                      disabled={!isEditMode}
-                    >
-                      Chuyển khoản
-                    </IonRadio>
-                  </IonItem>
-                </div>
-              </IonRadioGroup>
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -1487,6 +1446,7 @@ const OrderUpdate: React.FC = () => {
         orderData={{
           totalAmount: calculateFinalTotal,
         }}
+        preSelectedMethod={mapOrderPaymentMethodToModal(formData.paymentMethod)}
         onPaymentComplete={handlePaymentComplete}
       />
 

@@ -37,6 +37,7 @@ import OrderItemDetail from "./components/OrderItemDetail";
 import OrderInfoSection from "./components/OrderInfoSection";
 import PaymentInfoSection from "./components/PaymentInfoSection";
 import VatInfoSection from "./components/VatInfoSection";
+import ReturnExchangeHistory from "./components/ReturnExchangeHistory";
 
 import "./OrderDetail.css";
 
@@ -48,6 +49,22 @@ const OrderDetail: React.FC = () => {
 
   const { isLoading, withLoading } = useLoading();
   const { getDetail } = useOrder();
+
+  const exchangeSummary = useMemo(() => {
+    const exchanges = order?.returnHistory?.filter(
+      (entry) => entry.operationType === "exchange",
+    );
+    if (!exchanges?.length) return undefined;
+
+    return exchanges.reduce(
+      (summary, entry) => ({
+        returnedAmount: summary.returnedAmount + Number(entry.originalReturnAmount || 0),
+        replacementAmount: summary.replacementAmount + Number(entry.replacementAmount || 0),
+        differenceAmount: summary.differenceAmount + Number(entry.differenceAmount || 0),
+      }),
+      { returnedAmount: 0, replacementAmount: 0, differenceAmount: 0 },
+    );
+  }, [order?.returnHistory]);
 
   const fetchOrderDetail = async () => {
     await withLoading(async () => {
@@ -94,6 +111,7 @@ const OrderDetail: React.FC = () => {
               refType: 'order',
               customerId: order.customer?.id,
               customerName: order.customer?.name || "Khách lẻ",
+              orderTotal: order.totalAmount,
               orderProducts: order.items.map(item => ({
                 id: item.productId,
                 productId: item.productId,
@@ -101,6 +119,7 @@ const OrderDetail: React.FC = () => {
                 productName: item.productName,
                 quantity: item.quantity,
                 price: item.price,
+                vatRate: item.vatRate,
                 returnedQuantity: item.returnedQuantity,
               })),
             },
@@ -243,12 +262,18 @@ const OrderDetail: React.FC = () => {
               </div>
             </div>
 
+            {!!order.returnHistory?.length && (
+              <ReturnExchangeHistory entries={order.returnHistory} />
+            )}
+
             {/* Payment Info Section */}
             <PaymentInfoSection
               subtotal={order.totalAmount + order.discountAmount}
               discount={order.discountAmount}
               items={order.items}
               paymentMethod={getPaymentMethodLabel(order.paymentMethod)}
+              paymentDetails={order.paymentDetails}
+              exchangeSummary={exchangeSummary}
             />
 
             {/* VAT Info Section */}

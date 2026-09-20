@@ -13,9 +13,9 @@ import {
   IonItem,
   IonInput,
   IonButton,
-  IonTextarea,
   IonRadioGroup,
   IonRadio,
+  IonTextarea,
   IonToggle,
   IonIcon,
   useIonModal,
@@ -62,8 +62,6 @@ import PaymentModal, {
   PaymentMethod as PaymentModalMethod,
 } from "@/components/PaymentModal";
 import { PaymentTransactionDto } from "@/types/payment.type";
-import { PaymentMethod as PaymentMethodEnum } from "@/common/enums/payment";
-import { TransactionType } from "@/common/enums/transaction";
 import { IOrderItemEnhanced, IOrderSubmissionData } from "./OrderCreate.d";
 
 import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
@@ -111,6 +109,8 @@ const mapOrderPaymentMethodToModal = (
       return "cash";
     case PaymentMethod.BANK_TRANSFER:
       return "qr";
+    case PaymentMethod.MIXED:
+      return "mixed";
     default:
       return "cash";
   }
@@ -191,9 +191,7 @@ const OrderCreate: React.FC = () => {
 
   // Handle payment completion
   const handlePaymentComplete = async (
-    amount: number,
-    method: PaymentModalMethod,
-    description: string
+    transactions: PaymentTransactionDto[],
   ) => {
     if (!pendingOrderData) {
       presentToast({
@@ -205,40 +203,16 @@ const OrderCreate: React.FC = () => {
       return;
     }
 
-    // Map payment method from modal to API enum
-    const mapPaymentMethod = (
-      method: PaymentModalMethod
-    ): PaymentMethodEnum => {
-      switch (method) {
-        case "cash":
-          return PaymentMethodEnum.CASH;
-        case "qr":
-          return PaymentMethodEnum.BANK_TRANSFER;
-        default:
-          return PaymentMethodEnum.CASH;
-      }
-    };
-
-    // Create payment transaction data
-    const paymentTransaction: PaymentTransactionDto = {
-      amount,
-      paymentMethod: mapPaymentMethod(method),
-      type: TransactionType.PAYMENT,
-      note: description || `Thanh toán đơn hàng`,
-    };
-
     // Update order data with completed status and transaction
     const finalOrderData = {
       ...pendingOrderData,
       status: OrderStatus.COMPLETED,
-      transaction: paymentTransaction,
+      transactions,
     };
 
     return handleCreateOrder(finalOrderData, () => {
       presentToast({
-        message: `Tạo đơn hàng và thanh toán ${formatCurrency(
-          calculateFinalTotal()
-        )} thành công!`,
+        message: `Tạo đơn hàng và thanh toán ${formatCurrency(calculateFinalTotal())} thành công!`,
         duration: 2000,
         position: "top",
         color: "success",
@@ -1175,40 +1149,26 @@ const OrderCreate: React.FC = () => {
               <h2 className="text-lg font-medium text-foreground mb-3">
                 Phương thức thanh toán
               </h2>
-              <IonRadioGroup
-                value={formData.paymentMethod}
-                onIonChange={handlePaymentMethodChange}
-                className="mt-2"
-              >
-                <div className="flex gap-4">
-                  <IonItem
-                    lines="none"
-                    className={cn(`rounded-lg transition-colors`, {
-                      "bg-custom-primary border border-custom-primary":
-                        formData.paymentMethod === PaymentMethod.CASH ||
-                        !formData.paymentMethod,
-                      border:
-                        formData.paymentMethod === PaymentMethod.BANK_TRANSFER,
+              <div className="grid grid-cols-3 gap-2 mt-2" role="radiogroup" aria-label="Phương thức thanh toán">
+                {[
+                  [PaymentMethod.CASH, "Tiền mặt"],
+                  [PaymentMethod.BANK_TRANSFER, "Chuyển khoản"],
+                  [PaymentMethod.MIXED, "Cả hai"],
+                ].map(([value, label]) => (
+                  <button
+                    type="button"
+                    key={value}
+                    role="radio"
+                    aria-checked={formData.paymentMethod === value}
+                    className={cn("rounded-lg border p-3 text-sm transition-colors", {
+                      "bg-custom-primary border-custom-primary": formData.paymentMethod === value,
                     })}
+                    onClick={() => handlePaymentMethodChange({ detail: { value } } as CustomEvent)}
                   >
-                    <IonRadio value={PaymentMethod.CASH}>Tiền mặt</IonRadio>
-                  </IonItem>
-                  <IonItem
-                    lines="none"
-                    className={cn(`rounded-lg transition-colors`, {
-                      "bg-custom-primary border border-custom-primary":
-                        formData.paymentMethod ===
-                        PaymentMethod.BANK_TRANSFER ||
-                        !formData.paymentMethod,
-                      border: formData.paymentMethod === PaymentMethod.CASH,
-                    })}
-                  >
-                    <IonRadio value={PaymentMethod.BANK_TRANSFER}>
-                      Chuyển khoản
-                    </IonRadio>
-                  </IonItem>
-                </div>
-              </IonRadioGroup>
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>

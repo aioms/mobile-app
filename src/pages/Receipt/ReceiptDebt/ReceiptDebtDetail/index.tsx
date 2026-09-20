@@ -18,7 +18,8 @@ import {
   useIonToast,
   useIonActionSheet,
 } from "@ionic/react";
-import { chevronBack, ellipsisVertical, removeCircleOutline } from "ionicons/icons";
+import { chevronBack, ellipsisVertical, removeCircleOutline, calendarOutline } from "ionicons/icons";
+import { AppBadge, AppCard } from "@/components/UI";
 import ExportReceiptBillModal from "../components/ExportReceiptBill/ExportReceiptBillModal";
 import { useAuth } from "@/hooks";
 import CancelConfirmationModal from "./components/CancelConfirmationModal";
@@ -62,6 +63,7 @@ export interface ReceiptDebt {
   totalAmount: number;
   paidAmount: number;
   remainingAmount: number;
+  isOrderRevenue: boolean;
   status: TReceiptDebtStatus;
   dueDate: Date;
   paymentDate: Date | null;
@@ -409,69 +411,77 @@ const ReceiptDebtDetail: React.FC = () => {
         <Refresher onRefresh={handleRefresh} />
 
         <div className="p-4 space-y-4">
-          {/* Receipt Information */}
-          <div className="bg-white rounded-lg shadow-sm p-4 space-y-3">
-            <div className="flex justify-between items-start">
-              <span className="text-gray-600 text-base">Mã phiếu:</span>
-              <span className="text-gray-900 font-semibold text-base">{receipt?.code}</span>
+          {/* Main Info Card */}
+          <AppCard className="!mb-0">
+            {/* Header: Code & Status */}
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <div>
+                <span className="text-xs text-gray-500 font-medium block">Mã phiếu</span>
+                <span className="text-base font-bold text-gray-900">{receipt?.code}</span>
+              </div>
+              {receipt?.status && (
+                <AppBadge
+                  color={getStatusColor(receipt?.status as TReceiptDebtStatus)}
+                  variant="soft"
+                  className="font-semibold text-xs px-3 py-1"
+                >
+                  {getStatusLabel(receipt?.status as TReceiptDebtStatus)}
+                </AppBadge>
+              )}
             </div>
-            <div className="flex justify-between items-start">
-              <span className="text-gray-600 text-base">Ngày Tạo:</span>
-              <span className="text-gray-900 font-medium text-base">
-                {dayjsFormat(receipt?.createdAt)}
-              </span>
-            </div>
-            <div className="flex justify-between items-start">
-              <span className="text-gray-600 text-base">Ngày Thu Dự Kiến:</span>
-              <span className="text-gray-900 font-medium text-base">
-                {dayjsFormat(receipt?.dueDate)}
-              </span>
-            </div>
-            <div className="flex justify-between items-start">
-              <span className="text-gray-600 text-base">
+
+            {/* Target Partner Info */}
+            <div className="py-3 border-b border-gray-100">
+              <span className="text-xs text-gray-500 font-medium block">
                 {receipt?.type === RECEIPT_DEBT_TYPE.CUSTOMER_DEBT
-                  ? "Khách Hàng:"
-                  : "Nhà Cung Cấp:"}
+                  ? "Khách hàng"
+                  : "Nhà cung cấp"}
               </span>
-              <span className="text-gray-900 font-semibold text-base">
+              <span className="text-base font-semibold text-gray-900 mt-0.5 block leading-snug">
                 {receipt?.type === RECEIPT_DEBT_TYPE.CUSTOMER_DEBT
                   ? receipt?.customerName
                   : receipt?.supplierName}
               </span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600 text-base">Trạng Thái:</span>
-              {receipt?.status && (
-                <IonChip
-                  color={getStatusColor(receipt?.status as TReceiptDebtStatus)}
-                  className="text-sm font-medium px-3 py-1 m-0 rounded-full"
-                >
-                  {getStatusLabel(receipt?.status as TReceiptDebtStatus)}
-                </IonChip>
-              )}
-            </div>
-            {receipt?.note && (
-              <div className="flex justify-between items-start">
-                <span className="text-gray-600 text-base">Ghi Chú:</span>
-                <span className="text-gray-900 font-medium text-base text-right max-w-[60%]">
-                  {receipt?.note}
+
+            {/* Date Information Grid */}
+            <div className="grid grid-cols-2 gap-3 py-3 border-b border-gray-100">
+              <div>
+                <span className="text-xs text-gray-500 font-medium block">Ngày tạo</span>
+                <span className="text-sm font-semibold text-gray-800 mt-0.5 block">
+                  {dayjsFormat(receipt?.createdAt, "DD/MM/YYYY")}
                 </span>
               </div>
+              <div>
+                <span className="text-xs text-gray-500 font-medium block">Hạn thu dự kiến</span>
+                <span className="text-sm font-semibold text-gray-800 mt-0.5 block">
+                  {dayjsFormat(receipt?.dueDate, "DD/MM/YYYY")}
+                </span>
+              </div>
+            </div>
+
+            {/* Note if available */}
+            {receipt?.note && (
+              <div className="pt-3">
+                <span className="text-xs text-gray-500 font-medium block">Ghi chú</span>
+                <p className="text-sm text-gray-700 mt-1 leading-relaxed bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+                  {receipt?.note}
+                </p>
+              </div>
             )}
-          </div>
+          </AppCard>
 
           {/* Product List by Period */}
-          <div className="bg-white rounded-lg shadow-sm">
-            <div className="flex justify-between items-center p-4 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-800">
-                Danh Sách Sản Phẩm Theo Đợt Thu
+          <AppCard className="!mb-0 !p-0 overflow-hidden">
+            <div className="p-4 border-b border-gray-100 bg-white">
+              <h3 className="text-base font-bold text-gray-900">
+                Danh sách sản phẩm theo đợt
               </h3>
             </div>
 
             {/* Display items grouped by period, sorted with newest dates first */}
             {Object.entries(items)
               .sort(([periodA], [periodB]) => {
-                // Sort periods in descending order (newest first)
                 return new Date(periodB).getTime() - new Date(periodA).getTime();
               })
               .map(([period, periodItems]) => (
@@ -480,204 +490,164 @@ const ReceiptDebtDetail: React.FC = () => {
                   className="border-b border-gray-100 last:border-b-0"
                 >
                   {/* Period Header */}
-                  <div className="bg-blue-50 px-4 py-2.5">
-                    <div className="flex justify-between items-center gap-2">
-                      <h4 className="text-base font-semibold text-blue-800">
-                        Đợt: {getDate(period).format("DD/MM/YYYY")}
-                      </h4>
-                      {periods[period] && (
-                        <span className="text-sm font-semibold text-blue-800 whitespace-nowrap">
-                          VAT: {formatCurrency(periods[period].vatAmount || 0)}
-                        </span>
-                      )}
+                  <div className="bg-blue-50/90 px-4 py-2.5 border-y border-blue-100/80 flex justify-between items-center gap-2">
+                    <div className="flex items-center gap-1.5 text-blue-900">
+                      <IonIcon icon={calendarOutline} className="text-base text-blue-600" />
+                      <span className="text-xs font-bold uppercase tracking-wider">
+                        Đợt thu: {getDate(period).format("DD/MM/YYYY")}
+                      </span>
                     </div>
+                    {periods[period] && (
+                      <span className="text-xs font-bold text-blue-700 bg-white/90 px-2.5 py-0.5 rounded-full shadow-xs border border-blue-200/60 whitespace-nowrap">
+                        VAT: {formatCurrency(periods[period].vatAmount || 0)}
+                      </span>
+                    )}
                   </div>
 
-                  {/* Table Header */}
-                  <div className="bg-green-50 px-4 py-3">
-                    <IonGrid className="p-0">
-                      <IonRow className="text-sm font-semibold text-green-800">
-                        <IonCol size="3" className="p-0 text-left">
-                          Mã SP
-                        </IonCol>
-                        <IonCol size="4" className="p-0 text-left">
-                          Tên SP
-                        </IonCol>
-                        <IonCol size="1" className="p-0 text-center">
-                          SL
-                        </IonCol>
-                        <IonCol size="4" className="p-0 text-right">
-                          Đơn Giá
-                        </IonCol>
-                      </IonRow>
-                    </IonGrid>
+                  {/* Period Items */}
+                  <div className="divide-y divide-gray-100">
+                    {periodItems.map((item) => (
+                      <div
+                        key={item.id}
+                        className={`p-4 ${item.metadata?.shipNow ? 'bg-orange-50/40' : 'bg-white'}`}
+                      >
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-sm text-gray-900 leading-snug">
+                              {item.productName}
+                            </h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-xs text-gray-500 font-medium">
+                                Mã: {item.code}
+                              </span>
+                              <span className="text-gray-300">•</span>
+                              <span className="text-xs text-gray-600 font-medium">
+                                SL: <strong className="text-gray-900 font-bold">{item.quantity}</strong>
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                              {item.metadata?.shipNow && (
+                                <AppBadge color="warning" variant="soft" className="text-[10px] px-2 py-0.5">
+                                  Giao ngay
+                                </AppBadge>
+                              )}
+                              {item.returnedQuantity && item.returnedQuantity > 0 ? (
+                                <AppBadge color="warning" variant="outline" className="text-[10px] px-2 py-0.5">
+                                  Đã trả: {item.returnedQuantity}
+                                </AppBadge>
+                              ) : null}
+                            </div>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <div className="text-sm font-bold text-gray-900">
+                              {formatCurrencyWithoutSymbol(item.costPrice)}đ
+                            </div>
+                            {item.quantity > 1 && (
+                              <div className="text-xs text-gray-500 mt-0.5">
+                                Tổng: {formatCurrencyWithoutSymbol(item.costPrice * item.quantity)}đ
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-
-                  {/* Table Content for this period */}
-                  {periodItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className={`px-4 py-3 border-b border-gray-100 last:border-b-0 ${item.metadata?.shipNow ? 'bg-orange-50' : ''}`}
-                    >
-                      <IonGrid className="p-0">
-                        <IonRow className="text-sm items-start">
-                          <IonCol size="3" className="p-0 text-left text-gray-600 font-medium">
-                            {item.code}
-                          </IonCol>
-                          <IonCol size="4" className="p-0 text-left text-gray-900 pr-1">
-                            {item.productName}
-                          </IonCol>
-                          <IonCol size="1" className="p-0 text-center text-gray-900 font-medium">
-                            {item.quantity}
-                          </IonCol>
-                          <IonCol size="4" className="p-0 text-right text-gray-900 font-semibold">
-                            {formatCurrencyWithoutSymbol(item.costPrice)}đ
-                          </IonCol>
-                        </IonRow>
-                        {/* Show ship now badge */}
-                        {item.metadata?.shipNow && (
-                          <IonRow className="text-xs mt-1">
-                            <IonCol className="p-0">
-                              <IonChip color="warning" className="text-xs h-6 px-2.5 border-0 m-0 rounded-md font-semibold bg-orange-100 text-orange-700">
-                                Giao ngay
-                              </IonChip>
-                            </IonCol>
-                          </IonRow>
-                        )}
-                        {(item.returnedQuantity && item.returnedQuantity > 0) ? (
-                          <IonRow className="text-xs mt-1">
-                            <IonCol className="p-0">
-                              <IonChip color="warning" className="text-xs h-6 px-2.5">
-                                Đã trả: {item.returnedQuantity}
-                              </IonChip>
-                            </IonCol>
-                          </IonRow>
-                        ) : null}
-                      </IonGrid>
-                    </div>
-                  ))}
                 </div>
               ))}
 
             {/* Show message if no items */}
             {Object.keys(items).length === 0 && (
-              <div className="p-4 text-center text-gray-500">
+              <div className="p-6 text-center text-gray-500 text-sm">
                 Chưa có sản phẩm nào
               </div>
             )}
-          </div>
+          </AppCard>
 
           {/* Payment Details */}
-          <div className="bg-white rounded-lg shadow-sm">
-            <div className="p-4 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-800">
-                Chi Tiết Thu Tiền
+          <AppCard className="!mb-0 !p-0 overflow-hidden">
+            <div className="p-4 border-b border-gray-100 bg-white">
+              <h3 className="text-base font-bold text-gray-900">
+                Lịch sử thu tiền
               </h3>
             </div>
 
             {transactions.length > 0 ? (
-              <>
-                {/* Payment Header */}
-                <div className="bg-green-50 px-4 py-3">
-                  <IonGrid className="p-0">
-                    <IonRow className="text-sm font-semibold text-green-800">
-                      <IonCol size="3" className="p-0 text-left">
-                        Ngày Thu
-                      </IonCol>
-                      <IonCol size="3" className="p-0 text-left">
-                        Số Tiền
-                      </IonCol>
-                      <IonCol size="3" className="p-0 text-center">
-                        Hình Thức
-                      </IonCol>
-                      <IonCol size="3" className="p-0 text-right">
-                        Trạng Thái
-                      </IonCol>
-                    </IonRow>
-                  </IonGrid>
-                </div>
-
-                {/* Payment Content */}
+              <div className="divide-y divide-gray-100 bg-white">
                 {transactions.map((transaction) => (
-                  <div
-                    key={transaction.id}
-                    className="px-4 py-3 border-b border-gray-100 last:border-b-0"
-                  >
-                    <IonGrid className="p-0">
-                      <IonRow className="text-sm items-center">
-                        <IonCol size="3" className="p-0 text-gray-800 text-left font-medium">
-                          {dayjsFormat(transaction.processedAt, "DD/MM/YYYY")}
-                        </IonCol>
-                        <IonCol size="3" className="p-0 text-gray-900 font-semibold text-left">
-                          {formatCurrency(transaction.amount)}
-                        </IonCol>
-                        <IonCol size="3" className="p-0 text-gray-700 text-center">
-                          {getPaymentMethodLabel(transaction.paymentMethod)}
-                        </IonCol>
-                        <IonCol size="3" className="p-0 flex justify-end">
-                          <IonChip
-                            color={getTransactionStatusColor(
-                              transaction.status
-                            )}
-                            className="text-xs font-semibold rounded-lg h-auto py-1 px-2 m-0 flex text-center justify-center w-full"
-                          >
-                            {getTransactionStatusLabel(transaction.status)}
-                          </IonChip>
-                        </IonCol>
-                      </IonRow>
-                      {transaction.description && (
-                        <IonRow className="text-xs text-gray-500 mt-1">
-                          <IonCol className="p-0">
-                            <span className="text-gray-400">Mô tả: </span>
+                  <div key={transaction.id} className="p-4">
+                    <div className="flex justify-between items-start gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-emerald-600">
+                            +{formatCurrency(transaction.amount)}
+                          </span>
+                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded font-medium">
+                            {getPaymentMethodLabel(transaction.paymentMethod)}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {dayjsFormat(transaction.processedAt, "DD/MM/YYYY HH:mm")}
+                        </div>
+                        {transaction.description && (
+                          <div className="text-xs text-gray-600 mt-1 italic">
                             {transaction.description}
-                          </IonCol>
-                        </IonRow>
-                      )}
-                    </IonGrid>
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <AppBadge
+                          color={getTransactionStatusColor(transaction.status)}
+                          variant="soft"
+                          className="text-[11px] px-2.5 py-0.5 font-semibold"
+                        >
+                          {getTransactionStatusLabel(transaction.status)}
+                        </AppBadge>
+                      </div>
+                    </div>
                   </div>
                 ))}
-              </>
+              </div>
             ) : (
-              <div className="p-4 text-center text-gray-500">
+              <div className="p-6 text-center text-gray-500 text-sm">
                 Chưa có lịch sử thanh toán
               </div>
             )}
-          </div>
+          </AppCard>
 
-          {/* Summary */}
-          <div className="bg-white rounded-lg shadow-sm p-4 space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-lg font-bold text-gray-900">
+          {/* Financial Summary */}
+          <AppCard className="!mb-0 space-y-2.5">
+            <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+              <span className="text-sm font-semibold text-gray-600">
                 Tổng công nợ
               </span>
-              <span className="text-2xl font-extrabold text-red-600">
+              <span className="text-xl font-black text-red-600">
                 {receipt?.totalAmount != null &&
                   formatCurrency(receipt.totalAmount)}
               </span>
             </div>
             {totalVatAmount > 0 && (
-              <div className="flex justify-between items-center">
-                <span className="text-base text-gray-700 font-medium">Tổng VAT:</span>
-                <span className="text-lg text-orange-600 font-bold">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-500 font-medium">Tổng thuế VAT</span>
+                <span className="font-semibold text-gray-800">
                   {formatCurrency(totalVatAmount)}
                 </span>
               </div>
             )}
-            <div className="flex justify-between items-center">
-              <span className="text-base text-gray-700 font-medium">Đã Thu:</span>
-              <span className="text-lg text-green-600 font-bold">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-500 font-medium">Đã thu</span>
+              <span className="font-bold text-emerald-600">
                 {receipt?.paidAmount != null &&
                   formatCurrency(receipt.paidAmount)}
               </span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-base text-gray-700 font-medium">Còn Lại:</span>
-              <span className="text-lg text-blue-600 font-bold">
+            <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+              <span className="text-base font-bold text-gray-800">Còn lại</span>
+              <span className="text-xl font-black text-blue-600">
                 {receipt?.remainingAmount != null &&
                   formatCurrency(receipt.remainingAmount)}
               </span>
             </div>
-          </div>
+          </AppCard>
 
           {/* Cancel debt receipt section */}
           {receipt?.status === RECEIPT_DEBT_STATUS.CANCELLED ? (

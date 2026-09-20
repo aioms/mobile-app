@@ -1,5 +1,6 @@
 import { DiscountType } from "@/common/enums";
 import { OrderType } from "@/common/enums/order";
+import { OrderPaymentDetails } from "@/types/payment.type";
 
 export interface IOrderItem {
   productId: string;
@@ -38,4 +39,15 @@ export interface IOrder {
   vatInfo: IVatInfo;
   items: IOrderItem[];
   createdAt: string;
+  paymentDetails?: OrderPaymentDetails | null;
+  returnHistory?: Array<{
+    id: string;
+    receiptNumber: string;
+    operationType: "return" | "exchange";
+    originalReturnAmount: number;
+    replacementAmount: number;
+    differenceAmount: number;
+    exchangeItems?: Array<{ productName: string; quantity: number; unitPrice: number }>;
+    returnDate?: string;
+  }>;
 }

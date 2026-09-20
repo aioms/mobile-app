@@ -11,6 +11,7 @@ import {
   IonPage,
   IonIcon,
   IonTextarea,
+  IonCheckbox,
   useIonModal,
   IonRippleEffect,
   IonText,
@@ -52,6 +53,7 @@ const initialFormData = {
   customer: "",
   estimatedDate: getDate(new Date()).format(),
   note: "",
+  isOrderRevenue: false,
 };
 
 const ReceiptDebtCreate: React.FC = () => {
@@ -162,6 +164,7 @@ const ReceiptDebtCreate: React.FC = () => {
         type: RECEIPT_DEBT_TYPE.CUSTOMER_DEBT,
         customerId: formData.customer,
         dueDate: formData.estimatedDate,
+        isOrderRevenue: formData.isOrderRevenue,
         totalAmount,
         note: formData.note,
         items: productItems.map((item) => ({
@@ -324,6 +327,27 @@ const ReceiptDebtCreate: React.FC = () => {
                 extraClassName="w-full flex items-center justify-start py-2.5 text-base"
               />
             </div>
+          </div>
+
+          {/* Ghi chú */}
+          <div className="px-4 pt-4">
+            <IonCheckbox
+              checked={formData.isOrderRevenue}
+              onIonChange={(event) =>
+                handleFormChange("isOrderRevenue", event.detail.checked)
+              }
+              labelPlacement="end"
+              justify="start"
+              className="w-full"
+              style={{ "--label-gap": "4px" }}
+            >
+              <span className="whitespace-normal text-sm font-medium leading-tight text-gray-800">
+                Doanh thu của Đơn hàng
+              </span>
+            </IonCheckbox>
+            <p className="mt-1 text-xs text-gray-500">
+              Khoản thanh toán sẽ được xếp vào mục Đơn hàng trong Sổ Thu Chi.
+            </p>
           </div>
 
           {/* Ghi chú */}

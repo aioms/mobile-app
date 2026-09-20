@@ -37,4 +37,5 @@ export interface IOrderSubmissionData {
     email: string;
     remark: string;
   } | null;
+  transactions?: import("@/types/payment.type").PaymentTransactionDto[];
 }

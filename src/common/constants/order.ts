@@ -39,6 +39,8 @@ export const getPaymentMethodLabel = (method: string): string => {
       return "Chuyển khoản";
     case PaymentMethod.CREDIT_CARD:
       return "Thẻ tín dụng";
+    case PaymentMethod.MIXED:
+      return "Tiền mặt + Chuyển khoản";
     default:
       return "Không xác định";
   }

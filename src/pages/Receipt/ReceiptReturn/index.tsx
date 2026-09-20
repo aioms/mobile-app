@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   IonPage,
   IonHeader,
@@ -16,6 +16,7 @@ import {
   IonRadioGroup,
   IonRadio,
   IonItem,
+  IonInput,
 } from "@ionic/react";
 import { OverlayEventDetail } from "@ionic/core";
 import { useLocation, useHistory } from "react-router-dom";
@@ -23,6 +24,7 @@ import {
   checkmarkCircleOutline,
   saveOutline,
   addCircleOutline,
+  trashOutline,
 } from "ionicons/icons";
 
 import { useLoading } from "@/hooks";
@@ -40,11 +42,19 @@ import {
 import { PaymentMethod } from "@/common/enums/payment";
 import { getDate } from "@/helpers/date";
 import { cn } from "@/lib/utils";
+import {
+  formatCurrency,
+  formatCurrencyWithoutSymbol,
+  parseCurrencyInput,
+} from "@/helpers/formatters";
 
 import ReturnReasonSelect from "./components/ReturnReasonSelect";
 import RefundSummarySection from "./components/RefundSummarySection";
 import ProductReturnItem from "./components/ProductReturnItem";
 import ModalSelectReturnProduct from "./components/ModalSelectReturnProduct";
+import ModalSelectExchangeProduct, {
+  ExchangeProductSelection,
+} from "./components/ModalSelectExchangeProduct";
 import { getNumberFromStringOrThrow } from "@/helpers/common";
 
 interface LocationState {
@@ -52,6 +62,7 @@ interface LocationState {
   refType: "order" | "debt";
   customerId?: string;
   customerName?: string;
+  orderTotal?: number;
   orderProducts?: Array<{
     id: string;
     productId: string;
@@ -59,6 +70,7 @@ interface LocationState {
     productName: string;
     quantity: number;
     price: number;
+    vatRate?: number;
   }>;
 }
 
@@ -89,6 +101,9 @@ const ReceiptReturn: React.FC = () => {
     []
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [exchangeProducts, setExchangeProducts] = useState<ExchangeProductSelection[]>([]);
+  const exchangeProductsRef = useRef<ExchangeProductSelection[]>([]);
+  exchangeProductsRef.current = exchangeProducts;
 
   // Modal for product selection
   const [presentModalProduct, dismissModalProduct] = useIonModal(
@@ -98,6 +113,14 @@ const ReceiptReturn: React.FC = () => {
       orderProducts: location.state?.orderProducts || [],
       refType: location.state?.refType || "order",
     }
+  );
+
+  const [presentModalExchangeProduct, dismissModalExchangeProduct] = useIonModal(
+    ModalSelectExchangeProduct,
+    {
+      dismiss: (data: unknown, role: string) => dismissModalExchangeProduct(data, role),
+      getSelectedProducts: () => exchangeProductsRef.current,
+    },
   );
 
   const openModalSelectProduct = () => {
@@ -128,6 +151,25 @@ const ReceiptReturn: React.FC = () => {
     });
   };
 
+  const openModalSelectExchangeProduct = () => {
+    presentModalExchangeProduct({
+      onWillDismiss: (event: CustomEvent<OverlayEventDetail<ExchangeProductSelection[]>>) => {
+        const { role, data } = event.detail;
+        if (role !== "confirm" || !data) return;
+
+        setExchangeProducts((current) => {
+          const currentById = new Map(current.map((item) => [item.id, item]));
+          return data.map((item) => currentById.get(item.id) || item);
+        });
+        setErrors((current) => {
+          const next = { ...current };
+          delete next.exchangeProducts;
+          return next;
+        });
+      },
+    });
+  };
+
   const handleProductQuantityChange = (id: string, quantity: number) => {
     setSelectedProducts((prev) =>
       prev.map((item) => (item.id === id ? { ...item, quantity } : item))
@@ -136,6 +178,25 @@ const ReceiptReturn: React.FC = () => {
 
   const handleRemoveProduct = (id: string) => {
     setSelectedProducts((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const updateExchangeProduct = (id: string, field: "quantity" | "unitPrice", value: number) => {
+    setExchangeProducts((prev) => prev.map((item) => {
+      if (item.id !== id) return item;
+      const numericValue = Number.isFinite(value) ? value : 0;
+      if (field === "quantity") {
+        const maxQuantity = Math.max(1, Number(item.inventory || 0));
+        return {
+          ...item,
+          quantity: Math.min(maxQuantity, Math.max(1, numericValue)),
+        };
+      }
+      return { ...item, unitPrice: Math.max(0, numericValue) };
+    }));
+  };
+
+  const removeExchangeProduct = (id: string) => {
+    setExchangeProducts((prev) => prev.filter((item) => item.id !== id));
   };
 
   const handleFormChange = (field: string, value: any) => {
@@ -162,12 +223,29 @@ const ReceiptReturn: React.FC = () => {
         (sum, item) => sum + item.quantity,
         0
       ),
-      totalAmount: selectedProducts.reduce(
-        (sum, item) => sum + item.costPrice * item.quantity,
-        0
-      ),
+      totalAmount: (() => {
+        const originalGross = (location.state?.orderProducts || []).reduce(
+          (sum, item) => sum + item.price * item.quantity * (1 + (item.vatRate || 0) / 100),
+          0,
+        );
+        const selectedGross = selectedProducts.reduce(
+          (sum, item) => sum + item.costPrice * item.quantity * (1 + (item.vatRate || 0) / 100),
+          0,
+        );
+        const factor = originalGross > 0 && location.state?.orderTotal !== undefined
+          ? location.state.orderTotal / originalGross
+          : 1;
+        return Math.round(selectedGross * factor);
+      })(),
     };
   }, [selectedProducts]);
+
+  const exchangeAmount = useMemo(
+    () => exchangeProducts.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0),
+    [exchangeProducts],
+  );
+  const exchangeDifference = exchangeAmount - totalAmount;
+  const isExchange = formData.reason === "doi-san-pham";
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -178,6 +256,17 @@ const ReceiptReturn: React.FC = () => {
 
     if (selectedProducts.length === 0) {
       newErrors.products = "Vui lòng chọn ít nhất 1 sản phẩm";
+    }
+
+    if (formData.reason === "doi-san-pham" && exchangeProducts.length === 0) {
+      newErrors.exchangeProducts = "Vui lòng chọn sản phẩm đổi";
+    }
+
+    if (
+      formData.reason === "doi-san-pham" &&
+      exchangeProducts.some((item) => item.quantity > Number(item.inventory || 0))
+    ) {
+      newErrors.exchangeProducts = "Số lượng sản phẩm đổi vượt quá tồn kho";
     }
 
     if (!formData.reason) {
@@ -231,8 +320,17 @@ const ReceiptReturn: React.FC = () => {
           },
         })),
         paymentMethod: formData.paymentMethod,
+        operationType: formData.reason === "doi-san-pham" ? "exchange" : "return",
+        exchangeItems: exchangeProducts.map((item) => ({
+          productId: item.id,
+          productCode: item.productCode,
+          productName: item.productName,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          costPrice: item.costPrice,
+        })),
+        requestId: crypto.randomUUID(),
       };
-      console.log({ submissionData });
 
       await createReceiptReturn(submissionData)
 
@@ -341,11 +439,88 @@ const ReceiptReturn: React.FC = () => {
           </div>
         )}
 
+        {isExchange && (
+          <div className="bg-card rounded-lg shadow-sm mb-4 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-md font-medium text-foreground">Sản phẩm đổi</h2>
+              <IonButton fill="clear" size="small" onClick={openModalSelectExchangeProduct}>
+                <IonIcon icon={addCircleOutline} slot="start" />
+                Chọn sản phẩm
+              </IonButton>
+            </div>
+            {exchangeProducts.length ? (
+              exchangeProducts.map((product) => (
+                <div key={product.id} className="border-t mt-3 pt-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="font-medium">{product.productName}</div>
+                    <IonButton
+                      fill="clear"
+                      color="danger"
+                      size="small"
+                      className="-mt-2"
+                      aria-label={`Xóa ${product.productName}`}
+                      onClick={() => removeExchangeProduct(product.id)}
+                    >
+                      <IonIcon icon={trashOutline} />
+                    </IonButton>
+                  </div>
+                  <div className="text-xs text-gray-500">Mã SP: {product.code}</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Tồn có thể đổi: {product.inventory}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <IonInput
+                      type="number"
+                      label="Số lượng"
+                      labelPlacement="stacked"
+                      value={product.quantity}
+                      min={1}
+                      max={Math.max(1, product.inventory)}
+                      onIonInput={(event) => updateExchangeProduct(
+                        product.id,
+                        "quantity",
+                        Number(event.detail.value || 0),
+                      )}
+                      className="border rounded px-2"
+                    />
+                    <IonInput
+                      type="text"
+                      inputMode="numeric"
+                      label="Đơn giá"
+                      labelPlacement="stacked"
+                      value={formatCurrencyWithoutSymbol(product.unitPrice)}
+                      onIonInput={(event) => updateExchangeProduct(
+                        product.id,
+                        "unitPrice",
+                        parseCurrencyInput(event.detail.value || ""),
+                      )}
+                      className="border rounded px-2"
+                    />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-gray-500 py-4 text-sm">
+                Chưa chọn sản phẩm đổi
+              </div>
+            )}
+            <ErrorMessage message={errors.exchangeProducts} />
+            <div className="border-t mt-4 pt-3 space-y-1 text-sm">
+              <div className="flex justify-between"><span>Giá trị trả</span><span>{formatCurrency(totalAmount)}</span></div>
+              <div className="flex justify-between"><span>Giá trị đổi</span><span>{formatCurrency(exchangeAmount)}</span></div>
+              <div className="flex justify-between font-semibold">
+                <span>{exchangeDifference > 0 ? "Khách bù thêm" : exchangeDifference < 0 ? "Hoàn lại khách" : "Không phát sinh tiền"}</span>
+                <span className={exchangeDifference < 0 ? "text-red-600" : "text-green-600"}>{formatCurrency(Math.abs(exchangeDifference))}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Return Details Section */}
         <div className="bg-card rounded-lg shadow-sm mb-4">
 
           {/* Payment Method */}
-          <div className="p-4">
+          {(!isExchange || exchangeDifference !== 0) && <div className="p-4">
             <h2 className="text-md font-medium text-foreground mb-3">
               Phương thức thanh toán
             </h2>
@@ -376,7 +551,7 @@ const ReceiptReturn: React.FC = () => {
                 </IonItem>
               </div>
             </IonRadioGroup>
-          </div>
+          </div>}
 
           {/* Return Reason */}
           <div className="p-4">
