@@ -576,7 +576,7 @@ const ReceiptDebtDetail: React.FC = () => {
                 {transactions.map((transaction) => (
                   <div key={transaction.id} className="p-4">
                     <div className="flex justify-between items-start gap-2">
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-bold text-emerald-600">
                             +{formatCurrency(transaction.amount)}
@@ -589,16 +589,16 @@ const ReceiptDebtDetail: React.FC = () => {
                           {dayjsFormat(transaction.processedAt, "DD/MM/YYYY HH:mm")}
                         </div>
                         {transaction.description && (
-                          <div className="text-xs text-gray-600 mt-1 italic">
+                          <div className="text-xs text-gray-600 mt-1 italic break-words">
                             {transaction.description}
                           </div>
                         )}
                       </div>
-                      <div>
+                      <div className="shrink-0">
                         <AppBadge
                           color={getTransactionStatusColor(transaction.status)}
                           variant="soft"
-                          className="text-[11px] px-2.5 py-0.5 font-semibold"
+                          className="text-[11px] px-2.5 py-0.5 font-semibold whitespace-nowrap shrink-0"
                         >
                           {getTransactionStatusLabel(transaction.status)}
                         </AppBadge>
