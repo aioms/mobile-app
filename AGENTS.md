@@ -2395,3 +2395,47 @@ For questions or issues, refer to:
 **Last Updated**: 2025-12-11
 **Codebase Version**: develop branch
 **Total Codebase Size**: ~32,249 lines of TypeScript/TSX
+
+---
+
+## Cursor Cloud specific instructions
+
+### `.env` (not committed)
+
+No root `.env.example` exists. Create `/agent/repos/mobile-app/.env` with at least:
+
+- `VITE_ENV=development`
+- `VITE_API_VERSION=v1`
+- `VITE_API_URL_DEV=http://localhost:3005/api`
+- `VITE_SERVER_URL_DEV=http://localhost:3005`
+
+Optional: `VITE_S3_URL`, `VITE_S3_BUCKET` for product images.
+
+### Dev server
+
+`npm run dev` calls `ionic serve`, but **`@ionic/cli` is not a project dependency** — the global `ionic` binary is often missing in cloud VMs. Use:
+
+```bash
+cd /agent/repos/mobile-app
+npx --yes @ionic/cli serve --external --port=8100 --no-open
+```
+
+App URL: **http://localhost:8100**. Login: **admin / admin** (seeded backend user).
+
+### Rollup / Vite native binary
+
+If Vite fails with `Cannot find module @rollup/rollup-linux-x64-gnu`, reinstall deps:
+
+```bash
+rm -rf node_modules package-lock.json && npm install
+```
+
+### Lint / tests
+
+- Lint: `npm run lint`
+- Unit tests: `npm run test.unit -- --run` (no test files in repo at time of writing — expect exit code 1)
+- E2E: `npm run test.e2e` (requires Cypress + running dev server)
+
+### Backend dependency
+
+The mobile app needs the **be-service** API and PostgreSQL running. See `be-service/AGENTS.md` § Cursor Cloud specific instructions.
