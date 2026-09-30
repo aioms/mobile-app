@@ -15,10 +15,17 @@ export const useReceiptCalculations = (
   return useMemo(() => {
     const periodTotals: Record<
       string,
-      { quantity: number; amount: number; vatAmount: number; totalWithVat: number }
+      {
+        quantity: number;
+        amount: number;
+        discountAmount: number;
+        vatAmount: number;
+        totalWithVat: number;
+      }
     > = {};
     let totalQuantity = 0;
-    let totalAmount = 0;
+    let grandTotal = 0;
+    let totalDiscountAmount = 0;
     let totalVatAmount = 0;
 
     // Calculate totals for each period
@@ -40,23 +47,27 @@ export const useReceiptCalculations = (
         periodAmount += itemTotal;
       });
 
+      const discountAmount = periods[periodDate]?.discountAmount || 0;
       const vatAmount = periods[periodDate]?.vatAmount || 0;
 
       periodTotals[periodDate] = {
         quantity: periodQuantity,
         amount: periodAmount,
+        discountAmount,
         vatAmount,
-        totalWithVat: periodAmount + vatAmount,
+        totalWithVat: Math.max(0, periodAmount - discountAmount) + vatAmount,
       };
 
       totalQuantity += periodQuantity;
-      totalAmount += periodAmount;
+      totalDiscountAmount += discountAmount;
       totalVatAmount += vatAmount;
+      grandTotal += Math.max(0, periodAmount - discountAmount) + vatAmount;
     });
 
     return {
       totalQuantity,
-      totalAmount: totalAmount + totalVatAmount,
+      totalAmount: grandTotal,
+      totalDiscountAmount,
       totalVatAmount,
       periodTotals,
     };

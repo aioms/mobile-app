@@ -179,6 +179,9 @@ async function exportAsExcel({
       rows.push([item.productName, item.quantity, item.unitPrice, item.lineTotal]);
     }
     rows.push(["", "", "Tổng ngày", group.periodTotal]);
+    if (group.discountAmount > 0) {
+      rows.push(["", "", "Chiết khấu đợt", -group.discountAmount]);
+    }
     if (group.vatAmount > 0) {
       rows.push(["", "", "VAT đợt", group.vatAmount]);
     }
@@ -186,6 +189,7 @@ async function exportAsExcel({
 
   rows.push([]);
   rows.push(["", "", "Tổng:", billData.subtotal]);
+  rows.push(["", "", "Chiết khấu:", -billData.totalDiscount]);
   rows.push(["", "", "Thuế (VAT):", billData.totalVat]);
   rows.push(["", "", "Tổng phải trả:", billData.grandTotal]);
   rows.push(["", "", "Đã Thanh toán:", paidAmount]);

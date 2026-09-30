@@ -69,6 +69,7 @@ const useReceiptDebt = () => {
     }>;
     dueDate?: string;
     note?: string;
+    discountAmount?: number;
     vatAmount?: number;
   }) => {
     const response: IHttpResponse = await request.patch(
@@ -119,6 +120,7 @@ const useReceiptDebt = () => {
     debtId: string,
     periodId: string,
     payload: {
+      discountAmount?: number;
       vatAmount?: number;
       items?: Array<{
         receiptItemId: string;

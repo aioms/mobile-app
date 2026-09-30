@@ -9,7 +9,8 @@ Allow users to export a Phieu Thu (collection receipt) as a downloadable/shareab
 All data comes from the existing `GET /receipt-debt/:id` API which returns:
 - `receipt` — header info (code, customer, amounts, status)
 - `items` — product line items grouped by period date (`Record<string, IProductItem[]>`)
-- `periods` — VAT amounts per period (`Record<string, { id, vatAmount }>`)
+- `periods` — discount and VAT amounts per period
+  (`Record<string, { id, discountAmount, vatAmount }>`)
 
 No new backend API is required.
 
@@ -54,8 +55,9 @@ Ngay 01/01/2025                        Tong ngay: xxx d
 - **Unit price** = `item.costPrice`
 - **Period total** = sum of (qty * unitPrice) for all items in period
 - **Subtotal** = sum of all period totals
+- **Total discount** = sum of `discountAmount` for selected periods
 - **Total VAT** = sum of `vatAmount` for selected periods
-- **Grand total** = Subtotal + Total VAT
+- **Grand total** = sum of `max(0, period total - period discount) + period VAT`
 - **Paid / Remaining** = from receipt header (not per-period)
 
 ## Architecture

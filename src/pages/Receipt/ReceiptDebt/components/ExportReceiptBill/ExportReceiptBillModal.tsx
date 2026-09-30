@@ -23,6 +23,7 @@ import { useExportReceiptBill, ExportFormat } from "@/hooks/useExportReceiptBill
 
 interface PeriodSummary {
   id: string;
+  discountAmount: number;
   vatAmount: number;
 }
 
@@ -220,6 +221,14 @@ const ExportReceiptBillModal: React.FC<ExportReceiptBillModalProps> = ({
               <span className="text-gray-600">VAT:</span>
               <span className="font-medium">
                 {formatCurrency(billData.totalVat)}
+              </span>
+            </div>
+          )}
+          {billData.totalDiscount > 0 && (
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-gray-600">Chiết khấu:</span>
+              <span className="font-medium">
+                -{formatCurrency(billData.totalDiscount)}
               </span>
             </div>
           )}

@@ -76,7 +76,7 @@ const ReceiptDebtUpdate: React.FC = () => {
   // Export modal state
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [exportItems, setExportItems] = useState<Record<string, IProductItem[]>>({});
-  const [exportPeriods, setExportPeriods] = useState<Record<string, { id: string; vatAmount: number }>>({});
+  const [exportPeriods, setExportPeriods] = useState<Record<string, ReceiptPeriodSummary>>({});
 
   const { getDetail, update } = useReceiptDebt();
 
@@ -161,6 +161,22 @@ const ReceiptDebtUpdate: React.FC = () => {
         [periodDate]: {
           ...prev[periodDate],
           vatAmount,
+        },
+      };
+    });
+  };
+
+  const handleDiscountChange = (
+    periodDate: string,
+    discountAmount: number,
+  ) => {
+    setPeriods((prev) => {
+      if (!prev[periodDate]) return prev;
+      return {
+        ...prev,
+        [periodDate]: {
+          ...prev[periodDate],
+          discountAmount,
         },
       };
     });
@@ -346,7 +362,8 @@ const ReceiptDebtUpdate: React.FC = () => {
               debtId={id!}
               receiptStatus={receiptDebt?.status as TReceiptDebtStatus}
               onItemsChange={handleItemsChange}
-              onVatChange={handleVatChange}
+          onDiscountChange={handleDiscountChange}
+          onVatChange={handleVatChange}
               calculations={calculations}
             />
 

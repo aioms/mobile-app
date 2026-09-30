@@ -15,6 +15,7 @@ export interface BillPeriodGroup {
   formattedDate: string;
   items: BillLineItem[];
   periodTotal: number;
+  discountAmount: number;
   vatAmount: number;
 }
 
@@ -22,12 +23,14 @@ export interface BillPeriodGroup {
 export interface ReceiptBillData {
   periodGroups: BillPeriodGroup[];
   subtotal: number;
+  totalDiscount: number;
   totalVat: number;
   grandTotal: number;
 }
 
 interface PeriodSummary {
   id: string;
+  discountAmount: number;
   vatAmount: number;
 }
 
@@ -42,7 +45,9 @@ export function buildReceiptBill(
 ): ReceiptBillData {
   const periodGroups: BillPeriodGroup[] = [];
   let subtotal = 0;
+  let totalDiscount = 0;
   let totalVat = 0;
+  let grandTotal = 0;
 
   // Sort selected dates chronologically (ascending = oldest first on bill)
   const sortedDates = [...selectedPeriodDates].sort(
@@ -73,17 +78,25 @@ export function buildReceiptBill(
       });
     }
 
-    if (lineItems.length === 0) continue;
-
+    const discountAmount = periods[date]?.discountAmount ?? 0;
     const vatAmount = periods[date]?.vatAmount ?? 0;
+    if (
+      lineItems.length === 0 &&
+      discountAmount === 0 &&
+      vatAmount === 0
+    ) continue;
+
+    totalDiscount += discountAmount;
     totalVat += vatAmount;
     subtotal += periodTotal;
+    grandTotal += Math.max(0, periodTotal - discountAmount) + vatAmount;
 
     periodGroups.push({
       date,
       formattedDate: dayjs(date).format("DD/MM/YYYY"),
       items: lineItems,
       periodTotal,
+      discountAmount,
       vatAmount,
     });
   }
@@ -91,7 +104,8 @@ export function buildReceiptBill(
   return {
     periodGroups,
     subtotal,
+    totalDiscount,
     totalVat,
-    grandTotal: subtotal + totalVat,
+    grandTotal,
   };
 }
