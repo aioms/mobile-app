@@ -169,6 +169,12 @@ const ReceiptBillDocument = forwardRef<HTMLDivElement, ReceiptBillDocumentProps>
               bold
               valueColor="#d00"
             />
+            {billData.totalDiscount > 0 && (
+              <SummaryRow
+                label="Chiết khấu"
+                value={`-${fmt(billData.totalDiscount)} đ`}
+              />
+            )}
             <SummaryRow
               label="Thuế"
               value={`${fmt(billData.totalVat)} đ`}

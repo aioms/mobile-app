@@ -50,7 +50,10 @@ const ReceiptDebtItem: React.FC<ReceiptDebtItemProps> = ({ receiptDebt }) => {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [exportData, setExportData] = useState<{
     items: Record<string, IProductItem[]>;
-    periods: Record<string, { id: string; vatAmount: number }>;
+    periods: Record<
+      string,
+      { id: string; discountAmount: number; vatAmount: number }
+    >;
     paidAmount: number;
     remainingAmount: number;
   } | null>(null);

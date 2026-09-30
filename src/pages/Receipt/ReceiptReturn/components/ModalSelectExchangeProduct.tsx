@@ -11,6 +11,7 @@ import { IProduct } from "@/types/product.type";
 export type ExchangeProductSelection = IProduct & {
   quantity: number;
   unitPrice: number;
+  vatRate: number;
 };
 
 interface Props {
@@ -66,6 +67,7 @@ const ModalSelectExchangeProduct: FC<Props> = ({
           ...product,
           quantity: 1,
           unitPrice: product.sellingPrice,
+          vatRate: 0,
         });
       }
       return next;

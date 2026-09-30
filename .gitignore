@@ -18,6 +18,7 @@
 /dist
 /build
 /temp
+/.ua
 
 # misc
 .DS_Store

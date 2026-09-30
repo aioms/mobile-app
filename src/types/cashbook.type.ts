@@ -23,6 +23,11 @@ export interface CashbookOverviewResponseDto {
   revenue: number;
   expense: number;
   profit: number;
+  operatingExpense: number;
+  dailyProfit: number;
+  grossProfit: number;
+  totalCost: number;
+  warnings: string[];
   growthRate: number;
   orders: CashbookRevenueSummaryDto;
   receipts: CashbookRevenueSummaryDto;

@@ -49,6 +49,7 @@ export interface CreateReceiptReturnRequestDto {
     quantity: number;
     unitPrice: number;
     costPrice?: number;
+    /** VAT percentage on the replacement product, applied to unitPrice. */
     vatRate?: number;
   }>;
   requestId?: string;

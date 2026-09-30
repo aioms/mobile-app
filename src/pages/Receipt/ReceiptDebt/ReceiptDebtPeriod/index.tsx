@@ -14,8 +14,6 @@ import {
   IonPage,
   IonIcon,
   IonTextarea,
-  IonText,
-  IonInput,
   useIonToast,
   IonRefresher,
   IonRefresherContent,
@@ -40,6 +38,7 @@ import DatePicker from "@/components/DatePicker";
 import ContentSkeleton from "@/components/Loading/ContentSkeleton";
 import ModalSelectProduct from "@/components/ModalSelectProduct";
 import PurchasePeriodList from "./components/PurchasePeriodList";
+import ReceiptPeriodTotals from "./components/ReceiptPeriodTotals";
 
 import "./ReceiptDebtPeriod.css";
 
@@ -70,6 +69,7 @@ interface IReceiptDebtDetail {
 
 interface ReceiptPeriodSummary {
   id: string;
+  discountAmount: number;
   vatAmount: number;
 }
 
@@ -86,6 +86,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
   const [presentToast] = useIonToast();
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [discountAmountDisplay, setDiscountAmountDisplay] = useState("");
   const [vatAmountDisplay, setVatAmountDisplay] = useState("");
   const [receiptDebt, setReceiptDebt] = useState<IReceiptDebtDetail | null>(
     null
@@ -100,7 +101,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
   // Export modal state
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [exportItems, setExportItems] = useState<Record<string, IProductItem[]>>({});
-  const [exportPeriods, setExportPeriods] = useState<Record<string, { id: string; vatAmount: number }>>({});
+  const [exportPeriods, setExportPeriods] = useState<Record<string, ReceiptPeriodSummary>>({});
 
   const { getDetail, updateInventoryForNewPeriod } = useReceiptDebt();
   const { getDetail: getProductDetail } = useProduct();
@@ -174,7 +175,13 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
       });
 
       const currentDateKey = getDate(new Date()).format("YYYY-MM-DD");
+      const existingDiscount = response.periods?.[currentDateKey]?.discountAmount || 0;
       const existingVat = response.periods?.[currentDateKey]?.vatAmount || 0;
+      setDiscountAmountDisplay(
+        existingDiscount > 0
+          ? formatCurrencyInput(String(existingDiscount))
+          : ""
+      );
       setVatAmountDisplay(
         existingVat > 0 ? formatCurrencyInput(String(existingVat)) : ""
       );
@@ -649,10 +656,24 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
     [vatAmountDisplay]
   );
 
-  const totalAmountWithVat = useMemo(
-    () => totalAmount + vatAmount,
-    [totalAmount, vatAmount]
+  const discountAmount = useMemo(
+    () => parseCurrencyInput(discountAmountDisplay),
+    [discountAmountDisplay]
   );
+
+  const totalAmountWithVat = useMemo(
+    () => Math.max(0, totalAmount - discountAmount) + vatAmount,
+    [totalAmount, discountAmount, vatAmount]
+  );
+
+  const handleDiscountAmountChange = (value: string | null | undefined) => {
+    const stringValue = String(value || "");
+    const parsed = parseCurrencyInput(stringValue);
+    setDiscountAmountDisplay(
+      parsed === 0 ? "" : formatCurrencyInput(stringValue)
+    );
+    setErrors((prev) => ({ ...prev, discountAmount: "" }));
+  };
 
   const handleVatAmountChange = (value: string | null | undefined) => {
     const stringValue = String(value || "");
@@ -692,6 +713,11 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
 
     if (editedOrAddedItems.length === 0) {
       newErrors.products = "Vui lòng thêm ít nhất một sản phẩm cho đợt thu mới";
+    }
+
+    if (discountAmount > totalAmount) {
+      newErrors.discountAmount =
+        "Chiết khấu không được lớn hơn tổng tiền đợt thu";
     }
 
     setErrors(newErrors);
@@ -766,6 +792,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
         const payload = {
           dueDate: formData.dueDate,
           note: formData.note,
+          discountAmount,
           vatAmount,
           items: editedOrAddedItems.map((item) => ({
             productId: item.productId,
@@ -907,37 +934,15 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
               onShipNowChange={handleShipNowChange}
             />
 
-            <div className="bg-white rounded-lg shadow-sm p-4 mt-3 space-y-4">
-              <div className="flex justify-between items-center border-b border-gray-100 pb-3">
-                <IonText className="text-base font-medium text-gray-800">Tổng Tiền Đợt Thu Mới: </IonText>
-                <IonText className="text-lg font-bold text-blue-600">
-                  {formatCurrency(totalAmount)}
-                </IonText>
-              </div>
-
-              <div>
-                <h2 className="text-base font-semibold text-gray-800 mb-1">
-                  VAT đợt thu
-                </h2>
-                <div className="border border-gray-300 rounded-lg px-3 py-2 bg-white">
-                  <IonInput
-                    type="text"
-                    inputMode="numeric"
-                    value={vatAmountDisplay}
-                    placeholder="Nhập số tiền VAT"
-                    className="text-base"
-                    onIonInput={(e) => handleVatAmountChange(e.detail.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center pt-2">
-                <IonText className="text-base font-medium text-gray-800">Tổng cộng (gồm VAT): </IonText>
-                <IonText className="text-xl font-bold text-red-600">
-                  {formatCurrency(totalAmountWithVat)}
-                </IonText>
-              </div>
-            </div>
+            <ReceiptPeriodTotals
+              subtotal={totalAmount}
+              discountAmountDisplay={discountAmountDisplay}
+              vatAmountDisplay={vatAmountDisplay}
+              total={totalAmountWithVat}
+              discountError={errors.discountAmount}
+              onDiscountAmountChange={handleDiscountAmountChange}
+              onVatAmountChange={handleVatAmountChange}
+            />
 
             <div className="bg-white rounded-lg shadow-sm mt-3">
               {/* Dự kiến thu */}

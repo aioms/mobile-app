@@ -79,6 +79,7 @@ export interface ReceiptDebt {
 
 interface ReceiptPeriodSummary {
   id: string;
+  discountAmount: number;
   vatAmount: number;
 }
 
@@ -378,6 +379,10 @@ const ReceiptDebtDetail: React.FC = () => {
     (sum, period) => sum + (period?.vatAmount || 0),
     0
   );
+  const totalDiscountAmount = Object.values(periods).reduce(
+    (sum, period) => sum + (period?.discountAmount || 0),
+    0
+  );
 
   return (
     <IonPage>
@@ -498,9 +503,14 @@ const ReceiptDebtDetail: React.FC = () => {
                       </span>
                     </div>
                     {periods[period] && (
-                      <span className="text-xs font-bold text-blue-700 bg-white/90 px-2.5 py-0.5 rounded-full shadow-xs border border-blue-200/60 whitespace-nowrap">
-                        VAT: {formatCurrency(periods[period].vatAmount || 0)}
-                      </span>
+                      <div className="flex flex-wrap justify-end gap-1">
+                        <span className="text-xs font-bold text-blue-700 bg-white/90 px-2.5 py-0.5 rounded-full shadow-xs border border-blue-200/60 whitespace-nowrap">
+                          CK: {formatCurrency(periods[period].discountAmount || 0)}
+                        </span>
+                        <span className="text-xs font-bold text-blue-700 bg-white/90 px-2.5 py-0.5 rounded-full shadow-xs border border-blue-200/60 whitespace-nowrap">
+                          VAT: {formatCurrency(periods[period].vatAmount || 0)}
+                        </span>
+                      </div>
                     )}
                   </div>
 
@@ -630,6 +640,14 @@ const ReceiptDebtDetail: React.FC = () => {
                 <span className="text-gray-500 font-medium">Tổng thuế VAT</span>
                 <span className="font-semibold text-gray-800">
                   {formatCurrency(totalVatAmount)}
+                </span>
+              </div>
+            )}
+            {totalDiscountAmount > 0 && (
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-500 font-medium">Tổng chiết khấu</span>
+                <span className="font-semibold text-gray-800">
+                  -{formatCurrency(totalDiscountAmount)}
                 </span>
               </div>
             )}
