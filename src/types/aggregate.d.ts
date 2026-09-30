@@ -9,6 +9,10 @@ export interface DailyRevenueData {
   totalCost: number;
   totalRevenue: number;
   grossProfit: number;
+  refundTotal: number;
+  operatingExpense: number;
+  dailyProfit: number;
+  warnings: string[];
   breakdown: RevenueBreakdown;
 }
 

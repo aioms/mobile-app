@@ -27,6 +27,11 @@ export const getEmptyOverview = (
   revenue: 0,
   expense: 0,
   profit: 0,
+  operatingExpense: 0,
+  dailyProfit: 0,
+  grossProfit: 0,
+  totalCost: 0,
+  warnings: [],
   growthRate: 0,
   orders: {
     total: 0,

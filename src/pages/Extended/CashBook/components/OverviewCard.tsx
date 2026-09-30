@@ -158,14 +158,14 @@ const OverviewCard: React.FC<Props> = ({
           </div>
         </div>
 
-        <div className="mt-3 grid gap-3 md:grid-cols-2">
+        <div className="mt-3 grid gap-3 md:grid-cols-3">
           <div className="rounded-[24px] border border-rose-100 bg-rose-50 p-4">
             <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-rose-600">
               <IonIcon icon={receiptOutline} />
               Chi phí {reportRange === "day" ? "ngày" : ""}
             </div>
             <div className="mt-3 text-[28px] font-bold leading-none text-rose-500">
-              {formatCurrencyWithoutSymbol(overview.expense)}
+              {formatCurrencyWithoutSymbol(overview.operatingExpense)}
             </div>
           </div>
 
@@ -175,7 +175,7 @@ const OverviewCard: React.FC<Props> = ({
               Lợi nhuận {reportRange === "day" ? "ngày" : ""}
             </div>
             <div className="mt-3 text-[28px] font-bold leading-none text-blue-600">
-              {formatCurrencyWithoutSymbol(overview.profit)}
+              {formatCurrencyWithoutSymbol(overview.dailyProfit)}
             </div>
             {overview.growthRate > 0 ? (
               <div className="mt-4 border-t border-blue-100 pt-3 text-sm">
@@ -185,7 +185,24 @@ const OverviewCard: React.FC<Props> = ({
               </div>
             ) : null}
           </div>
+          <div className="rounded-[24px] border border-cyan-100 bg-cyan-50 p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-cyan-700">
+              <IonIcon icon={cashOutline} />
+              Lợi nhuận gộp · giá vốn ước tính
+            </div>
+            <div className="mt-3 text-[28px] font-bold leading-none text-cyan-700">
+              {formatCurrencyWithoutSymbol(overview.grossProfit)}
+            </div>
+            <div className="mt-2 text-xs text-cyan-800">
+              Giá vốn: {formatCurrencyWithoutSymbol(overview.totalCost)}
+            </div>
+          </div>
         </div>
+        {overview.warnings.length ? (
+          <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+            {overview.warnings.join(" ")}
+          </div>
+        ) : null}
       </div>
     </div>
   );
