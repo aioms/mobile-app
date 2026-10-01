@@ -48,7 +48,10 @@ export const formatCurrency = (amount: number) => {
 
 export const formatCurrencyWithoutSymbol = (amount: number) => {
   if (!amount) return "0";
-  return amount.toLocaleString("vi-VN", { currency: "VND" });
+  return amount.toLocaleString("vi-VN", {
+    currency: "VND",
+    maximumFractionDigits: 0,
+  });
 };
 
 // Format currency input as user types (for real-time formatting)
