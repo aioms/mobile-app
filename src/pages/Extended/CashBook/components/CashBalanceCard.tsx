@@ -189,6 +189,10 @@ const CashBalanceCard: React.FC<Props> = ({
               <div className="mt-3 text-2xl font-bold text-slate-900">
                 {formatCurrencyWithoutSymbol(cashRevenue)}
               </div>
+              <p className="mt-2 text-xs leading-5 text-slate-400">
+                = Đơn hàng TM + phiếu thu TM (đã trừ giao dịch hoàn tiền;
+                hoàn tiền cũ nằm ở phần chi)
+              </p>
             </div>
 
             <div className="rounded-2xl bg-white p-4 shadow-[0_0_0_1px_rgba(148,163,184,0.12)]">
@@ -199,7 +203,7 @@ const CashBalanceCard: React.FC<Props> = ({
                 {formatCurrencyWithoutSymbol(previousActualCash)}
               </div>
               <p className="mt-2 text-xs text-slate-400">
-                Lấy theo thực tế tiền mặt của ngày trước đó.
+                = Thực tế tiền mặt đã chốt gần nhất trước ngày chọn
               </p>
             </div>
 

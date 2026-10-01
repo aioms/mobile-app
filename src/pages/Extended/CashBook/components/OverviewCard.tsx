@@ -7,6 +7,7 @@ import {
   receiptOutline,
   swapHorizontalOutline,
 } from "ionicons/icons";
+import { ChevronDown } from "lucide-react";
 
 import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
 
@@ -162,11 +163,14 @@ const OverviewCard: React.FC<Props> = ({
           <div className="rounded-[24px] border border-rose-100 bg-rose-50 p-4">
             <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-rose-600">
               <IonIcon icon={receiptOutline} />
-              Chi phí {reportRange === "day" ? "ngày" : ""}
+              Chi phí TM {reportRange === "day" ? "ngày" : "trong kỳ"}
             </div>
             <div className="mt-3 text-[28px] font-bold leading-none text-rose-500">
-              {formatCurrencyWithoutSymbol(overview.operatingExpense)}
+              {formatCurrencyWithoutSymbol(overview.expense)}
             </div>
+            <p className="mt-2 text-xs leading-5 text-rose-400">
+              = Tổng phiếu chi đã thanh toán bằng tiền mặt trong kỳ
+            </p>
           </div>
 
           <div className="rounded-[24px] border border-blue-100 bg-blue-50 p-4">
@@ -177,6 +181,9 @@ const OverviewCard: React.FC<Props> = ({
             <div className="mt-3 text-[28px] font-bold leading-none text-blue-600">
               {formatCurrencyWithoutSymbol(overview.dailyProfit)}
             </div>
+            <p className="mt-2 text-xs leading-5 text-blue-500">
+              = Lợi nhuận gộp − chi phí hoạt động đã thanh toán (TM + CK)
+            </p>
             {overview.growthRate > 0 ? (
               <div className="mt-4 border-t border-blue-100 pt-3 text-sm">
                 <span className="text-emerald-600">
@@ -193,15 +200,34 @@ const OverviewCard: React.FC<Props> = ({
             <div className="mt-3 text-[28px] font-bold leading-none text-cyan-700">
               {formatCurrencyWithoutSymbol(overview.grossProfit)}
             </div>
+            <p className="mt-2 text-xs leading-5 text-cyan-600">
+              = Doanh thu − giá vốn ước tính
+            </p>
             <div className="mt-2 text-xs text-cyan-800">
               Giá vốn: {formatCurrencyWithoutSymbol(overview.totalCost)}
             </div>
           </div>
         </div>
         {overview.warnings.length ? (
-          <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-            {overview.warnings.join(" ")}
-          </div>
+          <details className="group mt-3 overflow-hidden rounded-xl border border-amber-200 bg-amber-50 text-sm text-amber-800">
+            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5">
+              <span className="font-semibold">
+                Cảnh báo cần đối soát ({overview.warnings.length})
+              </span>
+              <ChevronDown
+                aria-hidden="true"
+                className="shrink-0 transition-transform group-open:rotate-180"
+                size={18}
+              />
+            </summary>
+            <ul className="max-h-56 space-y-2 overflow-y-auto border-t border-amber-200 px-3 py-3">
+              {overview.warnings.map((warning, index) => (
+                <li className="break-words leading-5" key={`${index}-${warning}`}>
+                  {warning}
+                </li>
+              ))}
+            </ul>
+          </details>
         ) : null}
       </div>
     </div>
