@@ -182,6 +182,9 @@ async function exportAsExcel({
     if (group.discountAmount > 0) {
       rows.push(["", "", "Chiết khấu đợt", -group.discountAmount]);
     }
+    if (group.adjustmentAmount) {
+      rows.push(["", "", "Điều chỉnh đổi/trả", group.adjustmentAmount]);
+    }
     if (group.vatAmount > 0) {
       rows.push(["", "", "VAT đợt", group.vatAmount]);
     }

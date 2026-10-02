@@ -6,12 +6,14 @@ interface Props {
   totalProduct: number;
   totalQuantity: number;
   totalAmount: number;
+  isDebt?: boolean;
 }
 
 const RefundSummarySection: FC<Props> = ({
   totalProduct,
   totalQuantity,
   totalAmount,
+  isDebt = false,
 }) => {
   return (
     <div className="bg-card rounded-lg shadow-sm p-4">
@@ -33,7 +35,7 @@ const RefundSummarySection: FC<Props> = ({
         <div className="border-t border-gray-200 pt-2 mt-2">
           <div className="flex justify-between items-center">
             <IonText className="text-md font-medium">
-              Tổng Tiền Hoàn Trả:
+              {isDebt ? "Giá trị hàng trả:" : "Tổng Tiền Hoàn Trả:"}
             </IonText>
             <IonText className="text-lg font-bold" color="danger">
               {formatCurrency(totalAmount)}

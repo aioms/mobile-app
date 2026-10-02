@@ -102,7 +102,7 @@ const OverviewCard: React.FC<Props> = ({
               <div className="text-xs font-semibold text-slate-500">
                 Đơn hàng ({overview.orders.count})
               </div>
-              <div className="mt-2 text-xl font-bold text-slate-900">
+              <div className="mt-2 whitespace-nowrap text-base font-bold tracking-tight text-slate-900">
                 {formatCurrencyWithoutSymbol(overview.orders.total)}
               </div>
               <div className="mt-1 text-xs font-medium text-blue-600">
@@ -122,7 +122,7 @@ const OverviewCard: React.FC<Props> = ({
               <div className="text-xs font-semibold text-slate-500">
                 Phiếu thu ({overview.receipts.count})
               </div>
-              <div className="mt-2 text-xl font-bold text-slate-900">
+              <div className="mt-2 whitespace-nowrap text-base font-bold tracking-tight text-slate-900">
                 {formatCurrencyWithoutSymbol(overview.receipts.total)}
               </div>
               <div className="mt-1 text-xs font-medium text-blue-600">
@@ -143,7 +143,7 @@ const OverviewCard: React.FC<Props> = ({
                 <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                   Chuyển khoản
                 </div>
-                <div className="mt-2 text-lg font-bold text-slate-900">
+                <div className="mt-2 whitespace-nowrap text-base font-bold tracking-tight text-slate-900">
                   {formatCurrencyWithoutSymbol(activeBreakdown.bank)}
                 </div>
               </div>
@@ -151,7 +151,7 @@ const OverviewCard: React.FC<Props> = ({
                 <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                   Tiền mặt
                 </div>
-                <div className="mt-2 text-lg font-bold text-slate-900">
+                <div className="mt-2 whitespace-nowrap text-base font-bold tracking-tight text-slate-900">
                   {formatCurrencyWithoutSymbol(activeBreakdown.cash)}
                 </div>
               </div>
@@ -182,7 +182,7 @@ const OverviewCard: React.FC<Props> = ({
               {formatCurrencyWithoutSymbol(overview.dailyProfit)}
             </div>
             <p className="mt-2 text-xs leading-5 text-blue-500">
-              = Lợi nhuận gộp − chi phí hoạt động đã thanh toán (TM + CK)
+              = Doanh thu tổng ngày − phiếu chi đã thanh toán (TM + CK)
             </p>
             {overview.growthRate > 0 ? (
               <div className="mt-4 border-t border-blue-100 pt-3 text-sm">

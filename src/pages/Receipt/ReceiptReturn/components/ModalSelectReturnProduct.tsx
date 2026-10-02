@@ -56,12 +56,12 @@ const ModalSelectReturnProduct: FC<Props> = ({ dismiss, orderProducts, refType }
         quantity: Math.max(0, product.quantity - (product.returnedQuantity || 0)),
         costPrice: product.price,
         vatRate: product.vatRate,
-        originalQuantity: product.quantity,
+        originalQuantity: Math.max(0, product.quantity - (product.returnedQuantity || 0)),
         metadata: {
           returnedQuantity: Math.max(0, product.quantity - (product.returnedQuantity || 0)),
           periodId: product.periodId,
         },
-      } as any; // Cast as any to allow periodId in metadata if needed or handle it in parent
+      };
       newSelected.set(uniqueId, returnItem);
     } else {
       newSelected.delete(uniqueId);

@@ -5,6 +5,7 @@ interface Props {
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  canExchange?: boolean;
 }
 
 const RETURN_REASONS = [
@@ -14,7 +15,7 @@ const RETURN_REASONS = [
   { value: "khac", label: "Khác" },
 ];
 
-const ReturnReasonSelect: FC<Props> = ({ value, onChange, error }) => {
+const ReturnReasonSelect: FC<Props> = ({ value, onChange, error, canExchange = true }) => {
   return (
     <div className="w-full">
       <IonSelect
@@ -24,7 +25,7 @@ const ReturnReasonSelect: FC<Props> = ({ value, onChange, error }) => {
         placeholder="Chọn lý do trả hàng"
         className={`pl-2 border rounded-lg w-full ${error ? "border-red-500" : "border-gray-300"}`}
       >
-        {RETURN_REASONS.map((reason) => (
+        {RETURN_REASONS.filter((reason) => canExchange || reason.value !== "doi-san-pham").map((reason) => (
           <IonSelectOption key={reason.value} value={reason.value}>
             {reason.label}
           </IonSelectOption>
