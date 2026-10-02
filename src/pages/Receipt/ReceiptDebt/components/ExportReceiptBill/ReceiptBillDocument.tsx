@@ -157,6 +157,9 @@ const ReceiptBillDocument = forwardRef<HTMLDivElement, ReceiptBillDocumentProps>
           </tbody>
         </table>
 
+        {paidAmount > billData.grandTotal && <p style={{ fontSize: 12, color: "#555" }}>
+          Đã thu dư {fmt(paidAmount - billData.grandTotal)} đ so với tổng phiếu sau đổi/trả. Bạn có thể lập phiếu chi để hoàn khách.
+        </p>}
         {/* Separator */}
         <hr style={{ border: "none", borderTop: "2px solid #333", margin: "8px 0" }} />
 
@@ -180,6 +183,7 @@ const ReceiptBillDocument = forwardRef<HTMLDivElement, ReceiptBillDocumentProps>
               value={`${fmt(billData.totalVat)} đ`}
               italic
             />
+            {!!billData.totalAdjustment && <SummaryRow label="Điều chỉnh đổi/trả" value={`${fmt(billData.totalAdjustment)} đ`} />}
             <SummaryRow
               label="Tổng phải trả"
               value={`${fmt(billData.grandTotal)} đ`}

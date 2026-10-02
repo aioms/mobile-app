@@ -20,6 +20,7 @@ export const useReceiptCalculations = (
         amount: number;
         discountAmount: number;
         vatAmount: number;
+        adjustmentAmount?: number;
         totalWithVat: number;
       }
     > = {};
@@ -49,24 +50,26 @@ export const useReceiptCalculations = (
 
       const discountAmount = periods[periodDate]?.discountAmount || 0;
       const vatAmount = periods[periodDate]?.vatAmount || 0;
+      const adjustmentAmount = periods[periodDate]?.adjustmentAmount || 0;
 
       periodTotals[periodDate] = {
         quantity: periodQuantity,
         amount: periodAmount,
         discountAmount,
         vatAmount,
-        totalWithVat: Math.max(0, periodAmount - discountAmount) + vatAmount,
+        adjustmentAmount,
+        totalWithVat: Math.max(0, periodAmount - discountAmount) + vatAmount + adjustmentAmount,
       };
 
       totalQuantity += periodQuantity;
       totalDiscountAmount += discountAmount;
       totalVatAmount += vatAmount;
-      grandTotal += Math.max(0, periodAmount - discountAmount) + vatAmount;
+      grandTotal += Math.max(0, periodAmount - discountAmount) + vatAmount + adjustmentAmount;
     });
 
     return {
       totalQuantity,
-      totalAmount: grandTotal,
+      totalAmount: Math.max(0, grandTotal),
       totalDiscountAmount,
       totalVatAmount,
       periodTotals,

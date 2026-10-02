@@ -16,6 +16,7 @@ export enum ReceiptReturnType {
 // Request DTOs
 export interface CreateReceiptItemRequestDto {
   id: string;
+  receiptItemId?: string;
   productId: string;
   productCode: number;
   productName: string;
@@ -23,6 +24,8 @@ export interface CreateReceiptItemRequestDto {
   costPrice: number;
   metadata?: {
     returnedQuantity: number;
+    periodId?: string;
+    sourceReceiptItemId?: string;
   };
 }
 
@@ -75,4 +78,17 @@ export interface IReceiptReturnFormData {
   returnDate: string;
   items: IReceiptReturnItem[];
   paymentMethod: PaymentMethod;
+}
+
+export interface ReceiptReturnHistoryEntry {
+  id: string;
+  receiptNumber: string;
+  operationType: "return" | "exchange";
+  status?: ReceiptReturnStatus;
+  accountingVersion?: number;
+  originalReturnAmount: number;
+  replacementAmount: number;
+  differenceAmount: number;
+  exchangeItems?: Array<{ productName: string; quantity: number; unitPrice: number; vatRate?: number }>;
+  returnDate?: string;
 }

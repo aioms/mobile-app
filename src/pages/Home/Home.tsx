@@ -92,10 +92,10 @@ const HomeScreen: React.FC = () => {
         }
 
         if (dailyRevenue.status === "fulfilled") {
-          const { totalRevenue, dailyProfit } = dailyRevenue.value
+          const { totalRevenue, grossProfit } = dailyRevenue.value
 
           statsData.revenue = totalRevenue;
-          statsData.profit = dailyProfit;
+          statsData.profit = grossProfit;
         }
 
         if (isHasProperty(statsData)) {

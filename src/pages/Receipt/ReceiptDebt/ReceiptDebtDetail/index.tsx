@@ -1,94 +1,28 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useHistory, useParams } from "react-router";
-import {
-  IonButton,
-  IonButtons,
-  IonChip,
-  IonContent,
-  IonHeader,
-  IonIcon,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-  IonCard,
-  IonCardContent,
-  IonGrid,
-  IonRow,
-  IonCol,
-  useIonToast,
-  useIonActionSheet,
-} from "@ionic/react";
-import { chevronBack, ellipsisVertical, removeCircleOutline, calendarOutline } from "ionicons/icons";
-import { AppBadge, AppCard } from "@/components/UI";
+import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar, useIonToast, useIonActionSheet, useIonViewWillEnter } from "@ionic/react";
+import { chevronBack, ellipsisVertical } from "ionicons/icons";
+
 import ExportReceiptBillModal from "../components/ExportReceiptBill/ExportReceiptBillModal";
 import { useAuth } from "@/hooks";
 import CancelConfirmationModal from "./components/CancelConfirmationModal";
-import {
-  dayjsFormat,
-  formatCurrency,
-  formatCurrencyWithoutSymbol,
-} from "@/helpers/formatters";
+import { formatCurrency } from "@/helpers/formatters";
 import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
 import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
 import { useLoading } from "@/hooks";
-import {
-  getStatusColor,
-  getStatusLabel,
-  RECEIPT_DEBT_STATUS,
-  RECEIPT_DEBT_TYPE,
-  TReceiptDebtStatus,
-  TReceiptDebtType,
-} from "@/common/constants/receipt-debt.constant";
-import { IProductItem } from "@/types/product.type";
-import { getDate } from "@/helpers/date";
-import {
-  getPaymentMethodLabel,
-  getTransactionStatusLabel,
-  getTransactionStatusColor,
-} from "@/helpers/paymentHelpers";
+import { RECEIPT_DEBT_STATUS, RECEIPT_DEBT_TYPE } from "@/common/constants/receipt-debt.constant";
+
 import PaymentModal, { PaymentMethod } from "./components/PaymentModal";
 import { PayDebtRequestDto, PaymentTransactionDto } from "@/types/payment.type";
 import { Transaction } from "@/types/transaction.type";
 import { PaymentMethod as PaymentMethodEnum } from "@/common/enums/payment";
 import { TransactionType } from "@/common/enums/transaction";
 import LoadingScreen from "@/components/Loading/LoadingScreen";
-import EmptyPage from "@/components/EmptyPage";
 import { Refresher } from "@/components/Refresher/Refresher";
 
-// Updated interfaces to match API response
-export interface ReceiptDebt {
-  id: string;
-  code: string;
-  type: TReceiptDebtType;
-  totalAmount: number;
-  paidAmount: number;
-  remainingAmount: number;
-  isOrderRevenue: boolean;
-  status: TReceiptDebtStatus;
-  dueDate: Date;
-  paymentDate: Date | null;
-  note?: string | null;
-  createdAt: Date;
-  supplierName: string;
-  customerName: string;
-  customer?: {
-    id: string;
-    name: string;
-  };
-}
-
-interface ReceiptPeriodSummary {
-  id: string;
-  discountAmount: number;
-  vatAmount: number;
-}
-
-interface ResponseData {
-  receipt: ReceiptDebt | null;
-  items: Record<string, IProductItem[]>;
-  periods?: Record<string, ReceiptPeriodSummary>;
-}
-
+import { ResponseData } from "./receiptDebtDetail.types";
+import useDebtReturnActions from "./hooks/useDebtReturnActions";
+import ReceiptDebtContent from "./components/ReceiptDebtContent";
 const ReceiptDebtDetail: React.FC = () => {
   const history = useHistory();
   const { id } = useParams<{ id: string }>();
@@ -104,6 +38,8 @@ const ReceiptDebtDetail: React.FC = () => {
     items: {}, // Fix: Initialize as empty object instead of array
     periods: {},
   });
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   const { isLoading, withLoading } = useLoading();
@@ -132,7 +68,9 @@ const ReceiptDebtDetail: React.FC = () => {
   const fetchReceiptDetail = useCallback(async () => {
     await withLoading(async () => {
       try {
+        setLoadError(null);
         const result = await getDetail(id);
+        setHasLoaded(true);
 
         if (!result) {
           presentToast({
@@ -147,6 +85,7 @@ const ReceiptDebtDetail: React.FC = () => {
         // Also fetch payment transactions
         await fetchPaymentTransactions();
       } catch (err) {
+        setLoadError(err instanceof Error ? err.message : "Không thể tải phiếu thu");
         captureException(err as Error, createExceptionContext(
           'ReceiptDebtDetail',
           'ReceiptDebtDetail',
@@ -161,9 +100,11 @@ const ReceiptDebtDetail: React.FC = () => {
     });
   }, [id]);
 
-  useEffect(() => {
-    id && fetchReceiptDetail();
-  }, [id]);
+  const returnActions = useDebtReturnActions(fetchReceiptDetail);
+
+  useIonViewWillEnter(() => {
+    if (id) void fetchReceiptDetail();
+  }, [id, fetchReceiptDetail]);
 
   const handleRefresh = async (event: CustomEvent) => {
     await fetchReceiptDetail();
@@ -306,7 +247,7 @@ const ReceiptDebtDetail: React.FC = () => {
             productId: item.productId,
             code: item.code,
             productName: item.productName,
-            quantity: returnableQty, // Use returnable quantity
+            quantity: item.quantity,
             price: item.costPrice,
             returnedQuantity: returnedQty, // Pass along for display
             periodId: item.receiptPeriodId,
@@ -314,39 +255,42 @@ const ReceiptDebtDetail: React.FC = () => {
           };
         })
       )
-      .filter(item => item.quantity > 0); // Only include items with returnable quantity
+      .filter(item => item.quantity > (item.returnedQuantity || 0));
 
     presentActionSheet({
       header: "Tùy chọn",
       buttons: [
-        {
+        ...(receipt && receipt.remainingAmount > 0 ? [{
           text: "Thanh toán",
           role: "selected",
           handler: () => {
             setIsPaymentModalOpen(true);
           },
-        },
+        }] : []),
         {
           text: "Chỉnh sửa",
           handler: () => {
             history.push(`/tabs/debt/update/${id}`);
           },
         },
-        {
-          text: "Trả hàng",
+        ...(receipt?.type === RECEIPT_DEBT_TYPE.CUSTOMER_DEBT && flattenedProducts.length ? [{
+          text: "Đổi/trả hàng",
           handler: () => {
             history.push({
               pathname: `/tabs/receipt/return`,
               state: {
                 refId: id,
                 refType: 'debt',
+                debtTotal: receipt?.totalAmount,
+                debtPaidAmount: receipt?.paidAmount,
+                debtStatus: receipt?.status,
                 customerId: receipt?.customer?.id,
                 customerName: receipt?.customer?.name || receipt?.customerName || "Khách lẻ",
                 orderProducts: flattenedProducts,
               },
             });
           },
-        },
+        }] : []),
         {
           text: "In phiếu",
           handler: () => {
@@ -368,10 +312,6 @@ const ReceiptDebtDetail: React.FC = () => {
       ],
     });
   };
-
-  if (!receiptData) {
-    return <EmptyPage />
-  }
 
   const { receipt, items, periods = {} } = receiptData;
 
@@ -401,7 +341,7 @@ const ReceiptDebtDetail: React.FC = () => {
           <IonTitle className="text-lg font-semibold text-gray-800">
             Chi tiết phiếu thu
           </IonTitle>
-          {receipt?.status !== RECEIPT_DEBT_STATUS.CANCELLED && (
+          {receipt && receipt.status !== RECEIPT_DEBT_STATUS.CANCELLED && (
             <IonButtons slot="end">
               <IonButton onClick={handleActionSheet}>
                 <IonIcon icon={ellipsisVertical} />
@@ -415,282 +355,17 @@ const ReceiptDebtDetail: React.FC = () => {
         {isLoading && <LoadingScreen message="Đang tải dữ liệu..." />}
         <Refresher onRefresh={handleRefresh} />
 
-        <div className="p-4 space-y-4">
-          {/* Main Info Card */}
-          <AppCard className="!mb-0">
-            {/* Header: Code & Status */}
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-              <div>
-                <span className="text-xs text-gray-500 font-medium block">Mã phiếu</span>
-                <span className="text-base font-bold text-gray-900">{receipt?.code}</span>
-              </div>
-              {receipt?.status && (
-                <AppBadge
-                  color={getStatusColor(receipt?.status as TReceiptDebtStatus)}
-                  variant="soft"
-                  className="font-semibold text-xs px-3 py-1"
-                >
-                  {getStatusLabel(receipt?.status as TReceiptDebtStatus)}
-                </AppBadge>
-              )}
-            </div>
-
-            {/* Target Partner Info */}
-            <div className="py-3 border-b border-gray-100">
-              <span className="text-xs text-gray-500 font-medium block">
-                {receipt?.type === RECEIPT_DEBT_TYPE.CUSTOMER_DEBT
-                  ? "Khách hàng"
-                  : "Nhà cung cấp"}
-              </span>
-              <span className="text-base font-semibold text-gray-900 mt-0.5 block leading-snug">
-                {receipt?.type === RECEIPT_DEBT_TYPE.CUSTOMER_DEBT
-                  ? receipt?.customerName
-                  : receipt?.supplierName}
-              </span>
-            </div>
-
-            {/* Date Information Grid */}
-            <div className="grid grid-cols-2 gap-3 py-3 border-b border-gray-100">
-              <div>
-                <span className="text-xs text-gray-500 font-medium block">Ngày tạo</span>
-                <span className="text-sm font-semibold text-gray-800 mt-0.5 block">
-                  {dayjsFormat(receipt?.createdAt, "DD/MM/YYYY")}
-                </span>
-              </div>
-              <div>
-                <span className="text-xs text-gray-500 font-medium block">Hạn thu dự kiến</span>
-                <span className="text-sm font-semibold text-gray-800 mt-0.5 block">
-                  {dayjsFormat(receipt?.dueDate, "DD/MM/YYYY")}
-                </span>
-              </div>
-            </div>
-
-            {/* Note if available */}
-            {receipt?.note && (
-              <div className="pt-3">
-                <span className="text-xs text-gray-500 font-medium block">Ghi chú</span>
-                <p className="text-sm text-gray-700 mt-1 leading-relaxed bg-gray-50 p-2.5 rounded-lg border border-gray-100">
-                  {receipt?.note}
-                </p>
-              </div>
-            )}
-          </AppCard>
-
-          {/* Product List by Period */}
-          <AppCard className="!mb-0 !p-0 overflow-hidden">
-            <div className="p-4 border-b border-gray-100 bg-white">
-              <h3 className="text-base font-bold text-gray-900">
-                Danh sách sản phẩm theo đợt
-              </h3>
-            </div>
-
-            {/* Display items grouped by period, sorted with newest dates first */}
-            {Object.entries(items)
-              .sort(([periodA], [periodB]) => {
-                return new Date(periodB).getTime() - new Date(periodA).getTime();
-              })
-              .map(([period, periodItems]) => (
-                <div
-                  key={period}
-                  className="border-b border-gray-100 last:border-b-0"
-                >
-                  {/* Period Header */}
-                  <div className="bg-blue-50/90 px-4 py-2.5 border-y border-blue-100/80 flex justify-between items-center gap-2">
-                    <div className="flex items-center gap-1.5 text-blue-900">
-                      <IonIcon icon={calendarOutline} className="text-base text-blue-600" />
-                      <span className="text-xs font-bold uppercase tracking-wider">
-                        Đợt thu: {getDate(period).format("DD/MM/YYYY")}
-                      </span>
-                    </div>
-                    {periods[period] && (
-                      <div className="flex flex-wrap justify-end gap-1">
-                        <span className="text-xs font-bold text-blue-700 bg-white/90 px-2.5 py-0.5 rounded-full shadow-xs border border-blue-200/60 whitespace-nowrap">
-                          CK: {formatCurrency(periods[period].discountAmount || 0)}
-                        </span>
-                        <span className="text-xs font-bold text-blue-700 bg-white/90 px-2.5 py-0.5 rounded-full shadow-xs border border-blue-200/60 whitespace-nowrap">
-                          VAT: {formatCurrency(periods[period].vatAmount || 0)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Period Items */}
-                  <div className="divide-y divide-gray-100">
-                    {periodItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className={`p-4 ${item.metadata?.shipNow ? 'bg-orange-50/40' : 'bg-white'}`}
-                      >
-                        <div className="flex justify-between items-start gap-2">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-sm text-gray-900 leading-snug">
-                              {item.productName}
-                            </h4>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-xs text-gray-500 font-medium">
-                                Mã: {item.code}
-                              </span>
-                              <span className="text-gray-300">•</span>
-                              <span className="text-xs text-gray-600 font-medium">
-                                SL: <strong className="text-gray-900 font-bold">{item.quantity}</strong>
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                              {item.metadata?.shipNow && (
-                                <AppBadge color="warning" variant="soft" className="text-[10px] px-2 py-0.5">
-                                  Giao ngay
-                                </AppBadge>
-                              )}
-                              {item.returnedQuantity && item.returnedQuantity > 0 ? (
-                                <AppBadge color="warning" variant="outline" className="text-[10px] px-2 py-0.5">
-                                  Đã trả: {item.returnedQuantity}
-                                </AppBadge>
-                              ) : null}
-                            </div>
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <div className="text-sm font-bold text-gray-900">
-                              {formatCurrencyWithoutSymbol(item.costPrice)}đ
-                            </div>
-                            {item.quantity > 1 && (
-                              <div className="text-xs text-gray-500 mt-0.5">
-                                Tổng: {formatCurrencyWithoutSymbol(item.costPrice * item.quantity)}đ
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-            {/* Show message if no items */}
-            {Object.keys(items).length === 0 && (
-              <div className="p-6 text-center text-gray-500 text-sm">
-                Chưa có sản phẩm nào
-              </div>
-            )}
-          </AppCard>
-
-          {/* Payment Details */}
-          <AppCard className="!mb-0 !p-0 overflow-hidden">
-            <div className="p-4 border-b border-gray-100 bg-white">
-              <h3 className="text-base font-bold text-gray-900">
-                Lịch sử thu tiền
-              </h3>
-            </div>
-
-            {transactions.length > 0 ? (
-              <div className="divide-y divide-gray-100 bg-white">
-                {transactions.map((transaction) => (
-                  <div key={transaction.id} className="p-4">
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-emerald-600">
-                            +{formatCurrency(transaction.amount)}
-                          </span>
-                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded font-medium">
-                            {getPaymentMethodLabel(transaction.paymentMethod)}
-                          </span>
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {dayjsFormat(transaction.processedAt, "DD/MM/YYYY HH:mm")}
-                        </div>
-                        {transaction.description && (
-                          <div className="text-xs text-gray-600 mt-1 italic break-words">
-                            {transaction.description}
-                          </div>
-                        )}
-                      </div>
-                      <div className="shrink-0">
-                        <AppBadge
-                          color={getTransactionStatusColor(transaction.status)}
-                          variant="soft"
-                          className="text-[11px] px-2.5 py-0.5 font-semibold whitespace-nowrap shrink-0"
-                        >
-                          {getTransactionStatusLabel(transaction.status)}
-                        </AppBadge>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-6 text-center text-gray-500 text-sm">
-                Chưa có lịch sử thanh toán
-              </div>
-            )}
-          </AppCard>
-
-          {/* Financial Summary */}
-          <AppCard className="!mb-0 space-y-2.5">
-            <div className="flex justify-between items-center pb-3 border-b border-gray-100">
-              <span className="text-sm font-semibold text-gray-600">
-                Tổng công nợ
-              </span>
-              <span className="text-xl font-black text-red-600">
-                {receipt?.totalAmount != null &&
-                  formatCurrency(receipt.totalAmount)}
-              </span>
-            </div>
-            {totalVatAmount > 0 && (
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-500 font-medium">Tổng thuế VAT</span>
-                <span className="font-semibold text-gray-800">
-                  {formatCurrency(totalVatAmount)}
-                </span>
-              </div>
-            )}
-            {totalDiscountAmount > 0 && (
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-500 font-medium">Tổng chiết khấu</span>
-                <span className="font-semibold text-gray-800">
-                  -{formatCurrency(totalDiscountAmount)}
-                </span>
-              </div>
-            )}
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-500 font-medium">Đã thu</span>
-              <span className="font-bold text-emerald-600">
-                {receipt?.paidAmount != null &&
-                  formatCurrency(receipt.paidAmount)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center pt-2 border-t border-gray-100">
-              <span className="text-base font-bold text-gray-800">Còn lại</span>
-              <span className="text-xl font-black text-blue-600">
-                {receipt?.remainingAmount != null &&
-                  formatCurrency(receipt.remainingAmount)}
-              </span>
-            </div>
-          </AppCard>
-
-          {/* Cancel debt receipt section */}
-          {receipt?.status === RECEIPT_DEBT_STATUS.CANCELLED ? (
-            null
-          ) : (
-            <div>
-              <IonButton
-                expand="block"
-                fill="outline"
-                className="rounded-lg text-red-600"
-                onClick={() => setIsCancelModalOpen(true)}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  "Đang xử lý..."
-                ) : (
-                  <>
-                    <IonIcon icon={removeCircleOutline} slot="start" />
-                    Hủy phiếu
-                  </>
-                )}
-              </IonButton>
-            </div>
-          )}
-        </div>
+        {loadError && <div className="p-4 text-center" role="alert">
+          <p>{loadError}</p><IonButton onClick={() => void fetchReceiptDetail()}>Thử lại</IonButton>
+        </div>}
+        {!isLoading && !loadError && hasLoaded && !receipt && <div className="p-4 text-center">
+          <p>Không tìm thấy phiếu thu</p><IonButton onClick={() => history.goBack()}>Trở lại danh sách</IonButton>
+        </div>}
+        <ReceiptDebtContent receipt={receipt} items={items} periods={periods}
+          totalVatAmount={totalVatAmount} totalDiscountAmount={totalDiscountAmount}
+          transactions={transactions} isLoading={isLoading} setIsCancelModalOpen={setIsCancelModalOpen}
+          returnHistory={receiptData.returnHistory} onReturnStatusChange={returnActions.changeStatus}
+          returnActionLoading={returnActions.isLoading} />
       </IonContent>
 
       {/* Add PaymentModal at the end before closing IonPage */}

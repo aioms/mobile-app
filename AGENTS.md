@@ -1974,6 +1974,10 @@ describe('Product List', () => {
 
 ## Key Components Reference
 
+| Feature | Entry points | Documentation |
+| --- | --- | --- |
+| Phiếu thu đổi/trả | ReceiptDebtDetail, ReceiptReturn, shared ReturnExchangeHistory | docs/receipt-debt-return-exchange.md |
+
 ### Layout Components
 
 **Layout** (`/src/components/Layout/`):

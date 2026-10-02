@@ -25,6 +25,7 @@ interface PeriodSummary {
   id: string;
   discountAmount: number;
   vatAmount: number;
+  adjustmentAmount?: number;
 }
 
 interface ExportReceiptBillModalProps {

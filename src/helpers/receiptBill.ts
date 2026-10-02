@@ -17,6 +17,7 @@ export interface BillPeriodGroup {
   periodTotal: number;
   discountAmount: number;
   vatAmount: number;
+  adjustmentAmount?: number;
 }
 
 /** Full bill data ready for rendering */
@@ -25,6 +26,7 @@ export interface ReceiptBillData {
   subtotal: number;
   totalDiscount: number;
   totalVat: number;
+  totalAdjustment: number;
   grandTotal: number;
 }
 
@@ -32,6 +34,7 @@ interface PeriodSummary {
   id: string;
   discountAmount: number;
   vatAmount: number;
+  adjustmentAmount?: number;
 }
 
 /**
@@ -47,6 +50,7 @@ export function buildReceiptBill(
   let subtotal = 0;
   let totalDiscount = 0;
   let totalVat = 0;
+  let totalAdjustment = 0;
   let grandTotal = 0;
 
   // Sort selected dates chronologically (ascending = oldest first on bill)
@@ -80,24 +84,27 @@ export function buildReceiptBill(
 
     const discountAmount = periods[date]?.discountAmount ?? 0;
     const vatAmount = periods[date]?.vatAmount ?? 0;
+    const adjustmentAmount = periods[date]?.adjustmentAmount ?? 0;
     if (
       lineItems.length === 0 &&
       discountAmount === 0 &&
-      vatAmount === 0
+      vatAmount === 0 && adjustmentAmount === 0
     ) continue;
 
-    totalDiscount += discountAmount;
+    totalDiscount += Math.min(periodTotal, discountAmount);
+    totalAdjustment += adjustmentAmount;
     totalVat += vatAmount;
     subtotal += periodTotal;
-    grandTotal += Math.max(0, periodTotal - discountAmount) + vatAmount;
+    grandTotal += Math.max(0, periodTotal - discountAmount) + vatAmount + adjustmentAmount;
 
     periodGroups.push({
       date,
       formattedDate: dayjs(date).format("DD/MM/YYYY"),
       items: lineItems,
       periodTotal,
-      discountAmount,
+      discountAmount: Math.min(periodTotal, discountAmount),
       vatAmount,
+      adjustmentAmount,
     });
   }
 
@@ -106,6 +113,7 @@ export function buildReceiptBill(
     subtotal,
     totalDiscount,
     totalVat,
-    grandTotal,
+    totalAdjustment,
+    grandTotal: Math.max(0, grandTotal),
   };
 }

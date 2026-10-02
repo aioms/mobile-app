@@ -71,6 +71,7 @@ interface ReceiptPeriodSummary {
   id: string;
   discountAmount: number;
   vatAmount: number;
+  adjustmentAmount?: number;
 }
 
 interface ReceiptDebtDetailResponse {
@@ -86,6 +87,8 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
   const [presentToast] = useIonToast();
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [periodAdjustment, setPeriodAdjustment] = useState(0);
+  const [originalDiscount, setOriginalDiscount] = useState(0);
   const [discountAmountDisplay, setDiscountAmountDisplay] = useState("");
   const [vatAmountDisplay, setVatAmountDisplay] = useState("");
   const [receiptDebt, setReceiptDebt] = useState<IReceiptDebtDetail | null>(
@@ -177,6 +180,8 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
       const currentDateKey = getDate(new Date()).format("YYYY-MM-DD");
       const existingDiscount = response.periods?.[currentDateKey]?.discountAmount || 0;
       const existingVat = response.periods?.[currentDateKey]?.vatAmount || 0;
+      setPeriodAdjustment(response.periods?.[currentDateKey]?.adjustmentAmount || 0);
+      setOriginalDiscount(existingDiscount);
       setDiscountAmountDisplay(
         existingDiscount > 0
           ? formatCurrencyInput(String(existingDiscount))
@@ -662,8 +667,8 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
   );
 
   const totalAmountWithVat = useMemo(
-    () => Math.max(0, totalAmount - discountAmount) + vatAmount,
-    [totalAmount, discountAmount, vatAmount]
+    () => Math.max(0, Math.max(0, totalAmount - discountAmount) + vatAmount + periodAdjustment),
+    [totalAmount, discountAmount, vatAmount, periodAdjustment]
   );
 
   const handleDiscountAmountChange = (value: string | null | undefined) => {
@@ -715,7 +720,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
       newErrors.products = "Vui lòng thêm ít nhất một sản phẩm cho đợt thu mới";
     }
 
-    if (discountAmount > totalAmount) {
+    if (discountAmount > totalAmount && discountAmount !== originalDiscount) {
       newErrors.discountAmount =
         "Chiết khấu không được lớn hơn tổng tiền đợt thu";
     }

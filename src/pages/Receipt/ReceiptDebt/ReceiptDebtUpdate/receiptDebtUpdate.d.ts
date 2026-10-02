@@ -41,6 +41,7 @@ export interface ReceiptPeriodSummary {
   id: string;
   discountAmount: number;
   vatAmount: number;
+  adjustmentAmount?: number;
 }
 
 export interface ReceiptDebtDetailResponse {
@@ -96,6 +97,7 @@ export interface ICalculationResults {
     amount: number;
     discountAmount: number;
     vatAmount: number;
+  adjustmentAmount?: number;
     totalWithVat: number;
   }>;
 }

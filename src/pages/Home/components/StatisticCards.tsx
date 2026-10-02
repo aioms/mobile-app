@@ -40,8 +40,8 @@ const StatisticCards: React.FC<StatisticCardsProps> = ({ user, stats }) => {
             <div className="text-base sm:text-lg font-bold text-gray-900 tracking-tight truncate">
               {formatCurrencyWithoutSymbol(stats.revenue)}
             </div>
-            <div className="text-emerald-600 text-xs font-medium mt-0.5 truncate">
-              Lợi nhuận: {formatCurrencyWithoutSymbol(stats.profit)}
+            <div className="text-emerald-600 text-[11px] leading-tight font-medium mt-0.5">
+              Lợi nhuận gộp: {formatCurrencyWithoutSymbol(stats.profit)}
             </div>
           </div>
         </div>
