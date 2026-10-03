@@ -258,7 +258,7 @@ const ReceiptDebtCreate: React.FC = () => {
             </h2>
             <div
               className={`ion-activatable receipt-debt-ripple-parent break-normal p-3 border rounded-lg flex items-center text-base ${selectedCustomerName ? "border-gray-400 text-gray-900 font-medium" : "border-gray-300 text-gray-500"}`}
-              onClick={() => openModalSelectCustomer()}
+              data-cy="create-select-customer" onClick={() => openModalSelectCustomer()}
             >
               <IonIcon icon={search} className="text-xl mr-2 text-gray-500" />
               {selectedCustomerName || "Chọn khách hàng"}
@@ -371,7 +371,7 @@ const ReceiptDebtCreate: React.FC = () => {
         <IonButton
           expand="block"
           size="default"
-          onClick={handleSubmit}
+          data-cy="create-debt-confirm" onClick={handleSubmit}
           disabled={isSubmitting}
         >
           {isSubmitting ? (

@@ -48,7 +48,7 @@ export default function ExchangeProductSection(
             </div>
             <button
               type="button"
-              onClick={openModalSelectExchangeProduct}
+              data-cy="exchange-select-products" onClick={openModalSelectExchangeProduct}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 active:bg-blue-200 transition-colors"
             >
               <IonIcon icon={addCircleOutline} className="text-base" />
@@ -154,7 +154,7 @@ export default function ExchangeProductSection(
                 </div>
                 <button
                   type="button"
-                  onClick={openModalSelectExchangeProduct}
+                  data-cy="exchange-select-products" onClick={openModalSelectExchangeProduct}
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-sm transition-all"
                 >
                   <IonIcon icon={addCircleOutline} className="text-base" />

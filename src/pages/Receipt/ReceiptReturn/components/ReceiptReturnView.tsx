@@ -89,7 +89,7 @@ export default function ReceiptReturnView({
               <IonButton
                 fill="clear"
                 size="small"
-                onClick={openModalSelectProduct}
+                data-cy="return-select-products" onClick={openModalSelectProduct}
               >
                 <IonIcon icon={addCircleOutline} slot="start" />
                 Chọn sản phẩm
@@ -260,7 +260,7 @@ export default function ReceiptReturnView({
               expand="block"
               fill="outline"
               disabled={isLoading}
-              onClick={() => handleSubmit(ReceiptReturnStatus.DRAFT)}
+              data-cy="return-save-draft" onClick={() => handleSubmit(ReceiptReturnStatus.DRAFT)}
             >
               Lưu nháp
             </IonButton>
@@ -268,7 +268,7 @@ export default function ReceiptReturnView({
           <IonButton
             expand="block"
             size="default"
-            onClick={() => handleSubmit(ReceiptReturnStatus.COMPLETED)}
+            data-cy="return-confirm" onClick={() => handleSubmit(ReceiptReturnStatus.COMPLETED)}
             disabled={isLoading}
             className="flex-1"
           >

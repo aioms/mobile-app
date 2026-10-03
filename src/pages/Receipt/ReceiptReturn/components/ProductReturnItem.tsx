@@ -148,7 +148,7 @@ const ProductReturnItem: FC<Props> = ({
               max={maxQuantity}
               className={`quantity-input w-12 h-8 mx-1 text-center text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent ${quantityError ? 'border-red-400 bg-red-50' : 'border-gray-300'
                 }`}
-              aria-label="Số lượng sản phẩm"
+              data-cy="return-quantity" aria-label="Số lượng sản phẩm"
               autoComplete="off"
             />
             <button
