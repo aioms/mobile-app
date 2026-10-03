@@ -178,7 +178,7 @@ const OrderDetail: React.FC = () => {
           <IonTitle>Mã đơn hàng</IonTitle>
           {order?.status !== OrderStatus.CANCELLED && (
             <IonButtons slot="end">
-              <IonButton onClick={handleActionSheet}>
+              <IonButton data-cy="source-actions" onClick={handleActionSheet}>
                 <IonIcon icon={ellipsisVertical} />
               </IonButton>
             </IonButtons>

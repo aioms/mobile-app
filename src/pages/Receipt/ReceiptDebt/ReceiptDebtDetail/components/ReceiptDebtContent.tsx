@@ -264,7 +264,7 @@ export default function ReceiptDebtContent(
           <span className="text-sm font-semibold text-gray-600">
             Tổng công nợ
           </span>
-          <span className="text-xl font-black text-red-600">
+          <span data-cy="debt-total" className="text-xl font-black text-red-600">
             {receipt?.totalAmount != null &&
               formatCurrency(receipt.totalAmount)}
           </span>
@@ -287,14 +287,14 @@ export default function ReceiptDebtContent(
         )}
         <div className="flex justify-between items-center text-sm">
           <span className="text-gray-500 font-medium">Đã thu</span>
-          <span className="font-bold text-emerald-600">
+          <span data-cy="debt-paid" className="font-bold text-emerald-600">
             {receipt?.paidAmount != null &&
               formatCurrency(receipt.paidAmount)}
           </span>
         </div>
         <div className="flex justify-between items-center pt-2 border-t border-gray-100">
           <span className="text-base font-bold text-gray-800">Còn lại</span>
-          <span className="text-xl font-black text-blue-600">
+          <span data-cy="debt-remaining" className="text-xl font-black text-blue-600">
             {receipt?.remainingAmount != null &&
               formatCurrency(receipt.remainingAmount)}
           </span>

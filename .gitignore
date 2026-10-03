@@ -42,3 +42,8 @@ yarn-error.log*
 .firebase/*.cache
 
 .env
+
+/cypress/screenshots/
+/cypress/videos/
+/cypress/downloads/
+/test-results/

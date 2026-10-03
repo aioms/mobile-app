@@ -114,6 +114,7 @@ const Login: React.FC = () => {
 
               <div className="space-y-5 shrink-0">
                 <IonInput
+                  data-cy="login-username"
                   type="text"
                   fill="outline"
                   label="Tên đăng nhập"
@@ -132,6 +133,7 @@ const Login: React.FC = () => {
                 />
 
                 <IonInput
+                  data-cy="login-password"
                   type="password"
                   fill="outline"
                   label="Mật khẩu"
@@ -164,7 +166,7 @@ const Login: React.FC = () => {
 
               <div className="pt-4 shrink-0">
                 <button
-                  type="submit"
+                  data-cy="login-submit" type="submit"
                   disabled={isSubmitting}
                   className="relative w-full flex justify-center items-center h-[52px] px-4 border border-transparent rounded-2xl shadow-lg shadow-teal-500/30 text-[16px] font-bold text-white bg-teal-500 hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-400 transition-all duration-200 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 overflow-hidden group"
                 >

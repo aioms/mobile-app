@@ -175,7 +175,7 @@ const ExchangeProductItem: FC<Props> = ({ product, onChange, onRemove }) => {
               min={1}
               max={maxQuantity}
               className="w-12 h-8 text-center text-sm font-semibold text-gray-900 bg-transparent focus:outline-none"
-              aria-label="Số lượng"
+              data-cy="exchange-quantity" aria-label="Số lượng"
             />
             <button
               type="button"
@@ -200,6 +200,7 @@ const ExchangeProductItem: FC<Props> = ({ product, onChange, onRemove }) => {
               <input
                 type="text"
                 inputMode="numeric"
+                data-cy="exchange-price"
                 value={formatCurrencyWithoutSymbol(product.unitPrice)}
                 onChange={(e) =>
                   onChange(

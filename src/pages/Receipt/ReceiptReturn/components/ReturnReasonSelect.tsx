@@ -19,6 +19,7 @@ const ReturnReasonSelect: FC<Props> = ({ value, onChange, error, canExchange = t
   return (
     <div className="w-full">
       <IonSelect
+        data-cy="return-reason"
         value={value}
         onIonChange={(e) => onChange(e.detail.value as string)}
         interface="popover"

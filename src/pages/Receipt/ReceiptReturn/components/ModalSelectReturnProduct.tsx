@@ -110,6 +110,7 @@ const ModalSelectReturnProduct: FC<Props> = ({ dismiss, orderProducts, refType }
         className={isDisabled ? "opacity-50" : ""}
       >
         <IonCheckbox
+          data-cy="return-source-checkbox"
           slot="start"
           checked={isSelected}
           disabled={isDisabled}
@@ -153,7 +154,7 @@ const ModalSelectReturnProduct: FC<Props> = ({ dismiss, orderProducts, refType }
           <IonButtons slot="end">
             <IonButton
               strong={true}
-              onClick={handleConfirm}
+              data-cy="return-selection-confirm" onClick={handleConfirm}
               disabled={selectedProducts.size === 0}
             >
               Xác nhận

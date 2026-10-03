@@ -204,7 +204,7 @@ const ProductList: React.FC<Props> = ({
         <div className="flex items-center space-x-2 mb-3">
           <div
             className="flex-1 ion-activatable receipt-debt-ripple-parent p-3 border border-gray-300 rounded-lg flex items-center text-base text-gray-500"
-            onClick={() => openModalSelectProduct()}
+            data-cy="create-select-product" onClick={() => openModalSelectProduct()}
           >
             <IonIcon icon={search} className="text-xl mr-2 text-gray-500" />
             Tìm kiếm hàng hóa

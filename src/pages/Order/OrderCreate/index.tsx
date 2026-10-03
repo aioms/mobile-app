@@ -973,7 +973,7 @@ const OrderCreate: React.FC = () => {
             <div className="flex items-center gap-2 mb-3">
               <div
                 className="ion-activatable common-ripple-parent"
-                onClick={() => openModalSelectProduct()}
+                data-cy="create-select-product" onClick={() => openModalSelectProduct()}
               >
                 <IonIcon icon={search} className="text-2xl" />
                 Tìm kiếm hàng hóa
@@ -1132,7 +1132,7 @@ const OrderCreate: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <div
                     className="ion-activatable common-ripple-parent break-normal p-2 flex-1"
-                    onClick={() => openModalSelectCustomer()}
+                    data-cy="create-select-customer" onClick={() => openModalSelectCustomer()}
                   >
                     <IonIcon icon={search} className="text-2xl mr-2" />
                     {selectedCustomerName}
@@ -1340,7 +1340,7 @@ const OrderCreate: React.FC = () => {
           <IonButton
             expand="block"
             className="rounded-lg grow"
-            onClick={() => handleSubmit()}
+            data-cy="create-order-confirm" onClick={() => handleSubmit()}
             disabled={isLoading}
           >
             {isLoading ? (

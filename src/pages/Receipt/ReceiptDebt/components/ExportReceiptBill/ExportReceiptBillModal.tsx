@@ -191,7 +191,7 @@ const ExportReceiptBillModal: React.FC<ExportReceiptBillModalProps> = ({
           <div className="flex gap-2">
             {FORMAT_OPTIONS.map((opt) => (
               <button
-                key={opt.value}
+                data-cy={`export-format-${opt.value}`} key={opt.value}
                 onClick={() => setFormat(opt.value)}
                 className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   format === opt.value
@@ -242,7 +242,7 @@ const ExportReceiptBillModal: React.FC<ExportReceiptBillModalProps> = ({
         {/* Export button */}
         <IonButton
           expand="block"
-          onClick={handleExport}
+          data-cy="export-submit" onClick={handleExport}
           disabled={selectedDates.length === 0 || isExporting}
           className="mb-4"
         >
