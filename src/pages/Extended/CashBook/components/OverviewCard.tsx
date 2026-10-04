@@ -182,7 +182,8 @@ const OverviewCard: React.FC<Props> = ({
               {formatCurrencyWithoutSymbol(overview.dailyProfit)}
             </div>
             <p className="mt-2 text-xs leading-5 text-blue-500">
-              = Doanh thu tổng ngày − phiếu chi đã thanh toán (TM + CK)
+              = Doanh thu thuần {reportRange === "day" ? "ngày" : "trong kỳ"} −
+              {" "}phiếu chi đã thanh toán (TM + CK)
             </p>
             {overview.growthRate > 0 ? (
               <div className="mt-4 border-t border-blue-100 pt-3 text-sm">
