@@ -343,7 +343,7 @@ const ReceiptDebtDetail: React.FC = () => {
           </IonTitle>
           {receipt && receipt.status !== RECEIPT_DEBT_STATUS.CANCELLED && (
             <IonButtons slot="end">
-              <IonButton onClick={handleActionSheet}>
+              <IonButton data-cy="source-actions" onClick={handleActionSheet}>
                 <IonIcon icon={ellipsisVertical} />
               </IonButton>
             </IonButtons>

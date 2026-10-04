@@ -99,13 +99,6 @@ export default function ReceiptDebtContent(
         )}
       </AppCard>
 
-      {!!returnHistory?.length && (
-        <ReturnExchangeHistory
-          entries={returnHistory}
-          onStatusChange={receipt?.status !== RECEIPT_DEBT_STATUS.CANCELLED ? onReturnStatusChange : undefined}
-          isLoading={returnActionLoading}
-        />
-      )}
       {/* Product List by Period */}
       <AppCard className="!mb-0 !p-0 overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-white">
@@ -258,13 +251,21 @@ export default function ReceiptDebtContent(
           )}
       </AppCard>
 
+      {!!returnHistory?.length && (
+        <ReturnExchangeHistory
+          entries={returnHistory}
+          onStatusChange={receipt?.status !== RECEIPT_DEBT_STATUS.CANCELLED ? onReturnStatusChange : undefined}
+          isLoading={returnActionLoading}
+        />
+      )}
+
       {/* Financial Summary */}
       <AppCard className="!mb-0 space-y-2.5">
         <div className="flex justify-between items-center pb-3 border-b border-gray-100">
           <span className="text-sm font-semibold text-gray-600">
             Tổng công nợ
           </span>
-          <span className="text-xl font-black text-red-600">
+          <span data-cy="debt-total" className="text-xl font-black text-red-600">
             {receipt?.totalAmount != null &&
               formatCurrency(receipt.totalAmount)}
           </span>
@@ -287,14 +288,14 @@ export default function ReceiptDebtContent(
         )}
         <div className="flex justify-between items-center text-sm">
           <span className="text-gray-500 font-medium">Đã thu</span>
-          <span className="font-bold text-emerald-600">
+          <span data-cy="debt-paid" className="font-bold text-emerald-600">
             {receipt?.paidAmount != null &&
               formatCurrency(receipt.paidAmount)}
           </span>
         </div>
         <div className="flex justify-between items-center pt-2 border-t border-gray-100">
           <span className="text-base font-bold text-gray-800">Còn lại</span>
-          <span className="text-xl font-black text-blue-600">
+          <span data-cy="debt-remaining" className="text-xl font-black text-blue-600">
             {receipt?.remainingAmount != null &&
               formatCurrency(receipt.remainingAmount)}
           </span>
