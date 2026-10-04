@@ -1,5 +1,5 @@
 import { Toast } from "@capacitor/toast";
-// import * as Sentry from "@sentry/capacitor";
+import { beginApiRequest, captureApiFailure, finishApiRequest } from "./api-telemetry";
 import axios from "axios";
 import type { IExtraConfig, IHttpRequestConfig } from "../types/index.d";
 import { storage } from "../hooks";
@@ -39,10 +39,6 @@ export const defaultConfig: IHttpRequestConfig = {
     },
   },
 };
-// Sentry.setTag("api", defaultConfig.server.api);
-// Sentry.setTag("baseUrl", defaultConfig.server.baseUrl);
-// Sentry.setTag("version", defaultConfig.server.version);
-// Sentry.captureMessage(JSON.stringify(defaultConfig), "debug");
 
 export class HttpRequest {
   private config: Partial<IExtraConfig> = {};
@@ -91,21 +87,10 @@ export class HttpRequest {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`; // Attach the token to the Authorization header
         }
-        // console.log(
-        //   JSON.stringify({
-        //     "interceptors.request.use": config,
-        //   })
-        // );
-        return config;
+        return beginApiRequest(config);
       },
       function (error) {
-        // console.error(
-        //   JSON.stringify({
-        //     "interceptors.request.error": error,
-        //   })
-        // );
 
-        // Sentry.captureException(error);
 
         if (error.message) {
           Toast.show({
@@ -121,11 +106,7 @@ export class HttpRequest {
 
     instance.interceptors.response.use(
       function (response) {
-        // console.log(
-        //   JSON.stringify({
-        //     "interceptors.response.use": response,
-        //   })
-        // );
+        finishApiRequest(response);
         if (response.status === 204) {
           return {
             statusCode: response.status,
@@ -136,16 +117,11 @@ export class HttpRequest {
         return response.data;
       },
       async function (error) {
+        captureApiFailure(error);
         const resp = error.response;
         const data = resp?.data;
 
-        // Sentry.captureException(error);
 
-        // console.error(
-        //   JSON.stringify({
-        //     "interceptors.response.error": error,
-        //   })
-        // );
 
         if (resp && (resp.status === 401 || resp.statusText === "Unauthorized")) {
           await Promise.allSettled([

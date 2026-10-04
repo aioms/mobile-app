@@ -1,6 +1,8 @@
 import React, { useEffect } from "react";
 import { IonApp, setupIonicReact, useIonToast } from "@ionic/react";
-import { PostHogErrorBoundary, usePostHog } from "posthog-js/react";
+import { usePostHog } from "posthog-js/react";
+import { ErrorBoundary } from "react-error-boundary";
+import { captureClientError } from "./helpers/api-telemetry";
 
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/react/css/core.css";
@@ -65,8 +67,9 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <PostHogErrorBoundary
-      fallback={({ error }) => (
+    <ErrorBoundary
+      onError={(error) => captureClientError(error)}
+      fallbackRender={({ error }) => (
         <FallbackError
           error={error}
           resetErrorBoundary={() => {
@@ -92,7 +95,7 @@ const App: React.FC = () => {
           </AuthProvider>
         </PWAUpdateProvider>
       </IonApp>
-    </PostHogErrorBoundary>
+    </ErrorBoundary>
   );
 };
 

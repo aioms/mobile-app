@@ -3,6 +3,8 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { readdir, rm } from "node:fs/promises";
+import posthog from "@posthog/rollup-plugin";
 import path from "path";
 import legacy from "@vitejs/plugin-legacy";
 import react from "@vitejs/plugin-react";
@@ -82,6 +84,21 @@ const versionManifest = (metadata: BuildMetadata): Plugin => ({
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const metadata = createBuildMetadata(mode);
+  const uploadMaps = Boolean(process.env.POSTHOG_API_KEY && process.env.POSTHOG_PROJECT_ID);
+  const removePrivateMaps: Plugin = {
+    name: "remove-private-source-maps",
+    closeBundle: { order: "post", sequential: true, handler: async () => {
+      const removeMaps = async (directory: string): Promise<void> => {
+        for (const entry of await readdir(directory, { withFileTypes: true })) {
+          const filename = path.join(directory, entry.name);
+          if (entry.isDirectory()) await removeMaps(filename);
+          else if (filename.endsWith(".map")) await rm(filename);
+        }
+      };
+      // Rollup upload completes before packaging PWA/native assets.
+      await removeMaps(path.resolve(__dirname, "dist"));
+    } },
+  };
 
   return {
     define: {
@@ -91,6 +108,14 @@ export default defineConfig(({ mode }) => {
       react(),
       legacy(),
       versionManifest(metadata),
+      ...(uploadMaps ? [posthog({
+        personalApiKey: process.env.POSTHOG_API_KEY!,
+        projectId: process.env.POSTHOG_PROJECT_ID!,
+        host: process.env.POSTHOG_HOST || "https://us.posthog.com",
+        sourcemaps: { enabled: true, releaseName: "aiom-mobile",
+          releaseVersion: metadata.commit, deleteAfterUpload: true },
+      })] : []),
+      removePrivateMaps,
       VitePWA({
         registerType: "prompt",
         injectRegister: false,
@@ -136,8 +161,6 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
-    // build: {
-    //   sourcemap: false,
-    // }
+    build: { sourcemap: "hidden" },
   };
 });
