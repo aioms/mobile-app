@@ -2405,3 +2405,9 @@ For questions or issues, refer to:
 | Feature | Entry point | Documentation |
 | --- | --- | --- |
 | Order quotation / invoice PDF, XLSX, PNG | OrderDetail → Order/components/ExportOrderDocument | docs/order-document-export.md |
+
+## Observability Reference
+
+| Capability | Implementation | Documentation |
+| --- | --- | --- |
+| Safe JS/API errors, per-attempt correlation and private source maps | src/helpers/api-telemetry.ts, vite.config.ts | docs/observability.md |

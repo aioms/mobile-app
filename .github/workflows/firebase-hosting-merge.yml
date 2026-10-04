@@ -18,13 +18,16 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
       - run: npm install --no-save @rollup/rollup-linux-x64-gnu@$(node -p "require('./node_modules/vite/node_modules/rollup/package.json').version")
       - name: Run Linter
         run: npm run lint
       - name: Build Application with Type Checks
         run: npm run vite:build
         env:
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+          POSTHOG_PROJECT_ID: ${{ vars.POSTHOG_PROJECT_ID }}
+          POSTHOG_HOST: https://us.posthog.com
           VITE_ENV: production
           VITE_API_VERSION: v1
           VITE_S3_URL: ${{ vars.VITE_S3_URL }}

@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
       - run: npm install --no-save @rollup/rollup-linux-x64-gnu@$(node -p "require('./node_modules/vite/node_modules/rollup/package.json').version")
       - name: Run Linter
         run: npm run lint
