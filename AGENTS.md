@@ -2399,3 +2399,9 @@ For questions or issues, refer to:
 **Last Updated**: 2025-12-11
 **Codebase Version**: develop branch
 **Total Codebase Size**: ~32,249 lines of TypeScript/TSX
+
+## Order Document Export Reference
+
+| Feature | Entry point | Documentation |
+| --- | --- | --- |
+| Order quotation / invoice PDF, XLSX, PNG | OrderDetail → Order/components/ExportOrderDocument | docs/order-document-export.md |

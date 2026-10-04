@@ -99,13 +99,6 @@ export default function ReceiptDebtContent(
         )}
       </AppCard>
 
-      {!!returnHistory?.length && (
-        <ReturnExchangeHistory
-          entries={returnHistory}
-          onStatusChange={receipt?.status !== RECEIPT_DEBT_STATUS.CANCELLED ? onReturnStatusChange : undefined}
-          isLoading={returnActionLoading}
-        />
-      )}
       {/* Product List by Period */}
       <AppCard className="!mb-0 !p-0 overflow-hidden">
         <div className="p-4 border-b border-gray-100 bg-white">
@@ -257,6 +250,14 @@ export default function ReceiptDebtContent(
             </div>
           )}
       </AppCard>
+
+      {!!returnHistory?.length && (
+        <ReturnExchangeHistory
+          entries={returnHistory}
+          onStatusChange={receipt?.status !== RECEIPT_DEBT_STATUS.CANCELLED ? onReturnStatusChange : undefined}
+          isLoading={returnActionLoading}
+        />
+      )}
 
       {/* Financial Summary */}
       <AppCard className="!mb-0 space-y-2.5">

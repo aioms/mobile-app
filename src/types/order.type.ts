@@ -1,5 +1,5 @@
 import { DiscountType } from "@/common/enums";
-import { OrderType } from "@/common/enums/order";
+import { OrderType, PaymentMethod } from "@/common/enums/order";
 import { OrderPaymentDetails } from "@/types/payment.type";
 
 export interface IOrderItem {
@@ -21,15 +21,17 @@ export interface IVatInfo {
 }
 
 export interface ICustomer {
+  address?: string | null;
   id: string;
   name: string;
 }
 
 export interface IOrder {
+  document?: import("./order-document.type").OrderDocument;
   id: string;
   code: string;
   customer: ICustomer | null;
-  paymentMethod: string;
+  paymentMethod: PaymentMethod;
   totalAmount: number;
   discountAmount: number;
   discountType?: DiscountType;

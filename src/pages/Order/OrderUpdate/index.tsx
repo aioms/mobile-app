@@ -4,10 +4,6 @@ import { IonTextareaCustomEvent, TextareaChangeEventDetail } from "@ionic/core";
 import { Dialog } from "@capacitor/dialog";
 import {
   IonPage,
-  IonHeader,
-  IonToolbar,
-  IonButtons,
-  IonTitle,
   IonContent,
   IonItem,
   IonInput,
@@ -26,7 +22,6 @@ import {
   add,
   checkmarkCircle,
   checkmarkCircleOutline,
-  chevronBack,
   chevronDownOutline,
   removeCircleOutline,
   scanOutline,
@@ -64,6 +59,8 @@ import OrderSummarySection from "./components/OrderSummarySection";
 import VATSection from "./components/VATSection";
 import OrderNotesSection from "./components/OrderNotesSection";
 import { IOrderItem, IOrderItemSubmission } from "./components/orderUpdate.d";
+
+import OrderUpdateHeader from "./components/OrderUpdateHeader";
 
 import "./OrderUpdate.css";
 
@@ -962,22 +959,7 @@ const OrderUpdate: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonButton
-              className="text-gray-600"
-              onClick={() => {
-                history.goBack();
-              }}
-            >
-              <IonIcon slot="icon-only" icon={chevronBack} />
-              Trở lại
-            </IonButton>
-          </IonButtons>
-          <IonTitle>Cập nhật đơn hàng</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+      <OrderUpdateHeader orderId={id} status={formData.status} orderType={formData.orderType} />
 
       <IonContent className="ion-padding bg-background">
         {/* Order Status Header */}

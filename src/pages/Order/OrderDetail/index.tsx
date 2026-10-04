@@ -10,6 +10,7 @@ import {
   IonContent,
   IonIcon,
   IonButton,
+  ActionSheetButton,
   useIonActionSheet,
   RefresherEventDetail,
   useIonViewWillEnter,
@@ -19,6 +20,7 @@ import {
   chevronBack,
   checkmarkCircle,
   cubeOutline,
+  printOutline,
 } from "ionicons/icons";
 
 import useOrder from "@/hooks/apis/useOrder";
@@ -39,12 +41,15 @@ import PaymentInfoSection from "./components/PaymentInfoSection";
 import VatInfoSection from "./components/VatInfoSection";
 import ReturnExchangeHistory from "./components/ReturnExchangeHistory";
 
+import ExportOrderDocumentModal from "../components/ExportOrderDocument/ExportOrderDocumentModal";
+
 import "./OrderDetail.css";
 
 const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
   const [order, setOrder] = useState<IOrder | null>(null);
+  const [isPrintOpen, setIsPrintOpen] = useState(false);
   const [presentActionSheet] = useIonActionSheet();
 
   const { isLoading, withLoading } = useLoading();
@@ -95,12 +100,17 @@ const OrderDetail: React.FC = () => {
     event.detail.complete();
   };
 
+  const canPrint = Boolean(
+    order &&
+    order.status !== OrderStatus.CANCELLED
+  );
+
   const buttons = useMemo(() => {
     if (!order || order?.status === OrderStatus.CANCELLED) {
       return [];
     }
 
-    return [
+    const actionButtons: ActionSheetButton[] = [
       {
         text: "Trả hàng",
         handler: () => {
@@ -126,30 +136,23 @@ const OrderDetail: React.FC = () => {
           });
         },
       },
-      ...order.status !== OrderStatus.COMPLETED ? [
-        {
-          text: "Chỉnh sửa",
-          handler: () => {
-            history.push(`/tabs/orders/update/${id}`);
-          },
+    ];
+
+    if (order.status !== OrderStatus.COMPLETED) {
+      actionButtons.push({
+        text: "Chỉnh sửa",
+        handler: () => {
+          history.push(`/tabs/orders/update/${id}`);
         },
-      ] : [],
-      // {
-      //   text: "Xóa",
-      //   role: "destructive",
-      //   handler: () => {
-      //     Toast.show({
-      //       text: "Tính năng này đang được phát triển",
-      //       duration: "short",
-      //       position: "center",
-      //     });
-      //   },
-      // },
-      {
-        text: "Hủy",
-        role: "cancel",
-      },
-    ]
+      });
+    }
+
+    actionButtons.push({
+      text: "Hủy",
+      role: "cancel",
+    });
+
+    return actionButtons;
   }, [order?.status, order, id, history])
 
   const handleActionSheet = () => {
@@ -178,8 +181,18 @@ const OrderDetail: React.FC = () => {
           <IonTitle>Mã đơn hàng</IonTitle>
           {order?.status !== OrderStatus.CANCELLED && (
             <IonButtons slot="end">
+              {canPrint && (
+                <IonButton
+                  style={{ minHeight: 44 }}
+                  data-cy="order-print"
+                  onClick={() => setIsPrintOpen(true)}
+                  title="In đơn"
+                >
+                  <IonIcon slot="icon-only" icon={printOutline} />
+                </IonButton>
+              )}
               <IonButton data-cy="source-actions" onClick={handleActionSheet}>
-                <IonIcon icon={ellipsisVertical} />
+                <IonIcon slot="icon-only" icon={ellipsisVertical} />
               </IonButton>
             </IonButtons>
           )}
@@ -281,6 +294,11 @@ const OrderDetail: React.FC = () => {
           </>
         )}
       </IonContent>
+      <ExportOrderDocumentModal
+        isOpen={isPrintOpen}
+        orderId={id}
+        onClose={() => setIsPrintOpen(false)}
+      />
     </IonPage>
   );
 };

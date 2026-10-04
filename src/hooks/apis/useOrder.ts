@@ -1,4 +1,5 @@
 import { IHttpResponse } from "@/types/index.d";
+import type { IOrder } from "@/types/order.type";
 import { request } from "../../helpers/axios";
 import { buildQueryString } from "../../helpers/common";
 
@@ -18,7 +19,10 @@ const useOrder = () => {
   };
 
   const getDetail = async (id: string) => {
-    const response = await request.get(`/orders/${id}`);
+    const response = await request.get<IHttpResponse<IOrder>, IHttpResponse<IOrder>>(`/orders/${id}`);
+    if (!response?.success || !response.data) {
+      throw new Error(response?.message || "Không thể tải đơn hàng");
+    }
     return response.data;
   };
 
