@@ -1,7 +1,6 @@
 import { FC, useState, useEffect } from "react";
-import { IonButton, IonIcon } from "@ionic/react";
-import { trashOutline } from "ionicons/icons";
-import { formatCurrency, formatCurrencyWithoutSymbol } from "@/helpers/formatters";
+import { Trash2, Plus, Minus } from "lucide-react";
+import { formatCurrency } from "@/helpers/formatters";
 
 interface Props {
   id: string;
@@ -80,9 +79,10 @@ const ProductReturnItem: FC<Props> = ({
     }
   };
 
-  const handleQuantityChange = (value: number) => {
-    if (value >= minQuantity && value <= maxQuantity) {
-      updateQuantity(value);
+  const handleQuantityStep = (delta: number) => {
+    const next = newQuantity + delta;
+    if (next >= minQuantity && next <= maxQuantity) {
+      updateQuantity(next);
     }
   };
 
@@ -101,90 +101,105 @@ const ProductReturnItem: FC<Props> = ({
   const totalPrice = costPrice * newQuantity;
 
   return (
-    <div className="border-b border-gray-200 py-3 px-1 rounded-md">
-      <div className="flex justify-between items-start mb-2">
-        <div>
-          <div className="font-medium">{productName}</div>
-          <div className="text-xs text-gray-500">Mã SP: {code}</div>
+    <div className="bg-white rounded-xl border border-gray-200/90 shadow-2xs p-3.5 mb-2.5 transition-all space-y-3">
+      {/* Product Header */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h3 className="font-semibold text-sm text-gray-900 leading-snug line-clamp-1">
+            {productName}
+          </h3>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+            <span className="font-mono bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[11px]">
+              Mã SP: {code || "N/A"}
+            </span>
+            {originalQuantity && (
+              <>
+                <span className="text-gray-300">•</span>
+                <span className="text-[11px] font-medium text-gray-500">
+                  Đã mua: {originalQuantity}
+                </span>
+              </>
+            )}
+          </div>
         </div>
-        <IonButton
-          fill="clear"
-          color="danger"
-          size="small"
+
+        <button
+          type="button"
           onClick={() => onRemove(id)}
+          className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors"
+          aria-label={`Xóa ${productName}`}
         >
-          <IonIcon icon={trashOutline} />
-        </IonButton>
+          <Trash2 className="w-4 h-4" />
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 items-center">
-        {/* Quantity Block */}
-        <div className="mb-2">
+      {/* Row: Đơn giá & Số lượng */}
+      <div className="grid grid-cols-2 gap-2.5 items-end">
+        <div>
+          <span className="text-xs font-medium text-gray-600 block mb-1">Đơn giá trả</span>
+          <div className="h-9 px-2.5 flex items-center bg-gray-50 border border-gray-200 rounded-lg text-sm font-semibold text-gray-900">
+            {formatCurrency(costPrice)}
+          </div>
+        </div>
+
+        <div>
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm text-gray-500 min-w-max">Số lượng</span>
+            <span className="text-xs font-medium text-gray-600">Số lượng trả</span>
             {originalQuantity && (
-              <span className="text-xs text-gray-400">
+              <span className="text-[10px] text-gray-400">
                 Tối đa: {originalQuantity}
               </span>
             )}
           </div>
-          <div className="flex items-center">
+
+          <div className="flex items-center bg-gray-50 h-9 p-0.5 rounded-lg border border-gray-200">
             <button
               type="button"
-              className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-lg text-teal-400 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={() => handleQuantityChange(newQuantity - 1)}
-              style={{ border: "none" }}
+              onClick={() => handleQuantityStep(-1)}
               disabled={newQuantity <= minQuantity}
+              className="w-8 h-full rounded-md bg-white shadow-2xs hover:bg-gray-100 active:bg-gray-200 flex items-center justify-center text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               aria-label="Giảm số lượng"
             >
-              –
+              <Minus className="w-3.5 h-3.5" />
             </button>
             <input
               type="number"
+              inputMode="numeric"
               value={quantityInputValue}
               onChange={(e) => handleQuantityInputChange(e.target.value)}
               onBlur={handleQuantityInputBlur}
               min={minQuantity}
               max={maxQuantity}
-              className={`quantity-input w-12 h-8 mx-1 text-center text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent ${quantityError ? 'border-red-400 bg-red-50' : 'border-gray-300'
-                }`}
-              data-cy="return-quantity" aria-label="Số lượng sản phẩm"
+              className="flex-1 w-0 h-full text-center text-sm font-semibold text-gray-900 bg-transparent focus:outline-none"
+              data-cy="return-quantity"
+              aria-label="Số lượng sản phẩm"
               autoComplete="off"
             />
             <button
               type="button"
-              className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-lg text-teal-400 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={() => handleQuantityChange(newQuantity + 1)}
-              style={{ border: "none" }}
+              onClick={() => handleQuantityStep(1)}
               disabled={newQuantity >= maxQuantity}
+              className="w-8 h-full rounded-md bg-white shadow-2xs hover:bg-gray-100 active:bg-gray-200 flex items-center justify-center text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               aria-label="Tăng số lượng"
             >
-              +
+              <Plus className="w-3.5 h-3.5" />
             </button>
           </div>
-          {quantityError && (
-            <div className="mt-1">
-              <span className="text-xs text-red-600">{quantityError}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Price Display */}
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-500">Đơn giá</span>
-          <span className="text-sm font-medium">
-            {formatCurrency(costPrice)}
-          </span>
         </div>
       </div>
 
-      <div className="flex justify-between items-center mt-2">
-        <div className="text-sm text-gray-500">
-          {formatCurrency(costPrice)} × {newQuantity}
-        </div>
-        <div className="font-medium text-green-600">
-          Tổng: {formatCurrency(totalPrice)}
-        </div>
+      {quantityError && (
+        <p className="text-[11px] text-red-500 font-medium">{quantityError}</p>
+      )}
+
+      {/* Item Total */}
+      <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-xs">
+        <span className="text-gray-500">
+          Thành tiền ({newQuantity} × {formatCurrency(costPrice)})
+        </span>
+        <span className="text-sm font-bold text-gray-900">
+          {formatCurrency(totalPrice)}
+        </span>
       </div>
     </div>
   );

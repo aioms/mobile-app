@@ -15,7 +15,7 @@ import { PaymentMethod } from "@/common/enums/payment";
 import { getDate } from "@/helpers/date";
 import ModalSelectReturnProduct from "../components/ModalSelectReturnProduct";
 import ModalSelectExchangeProduct, { ExchangeProductSelection } from "../components/ModalSelectExchangeProduct";
-import { getExchangeProductTotals } from "../components/ExchangeProductItem";
+import { calculateReturnTotals } from "@/helpers/receipt-return-totals";
 import { getNumberFromStringOrThrow } from "@/helpers/common";
 
 interface LocationState {
@@ -24,6 +24,7 @@ interface LocationState {
   customerId?: string;
   customerName?: string;
   orderTotal?: number;
+  orderDiscount?: number;
   debtTotal?: number;
   debtPaidAmount?: number;
   debtStatus?: string;
@@ -71,6 +72,9 @@ export default function useReceiptReturnForm() {
   const [selectedProducts, setSelectedProducts] = useState<IReceiptReturnItem[]>(
     [],
   );
+  const [preserveVat, setPreserveVat] = useState(true);
+  const isExchange = formData.reason === "doi-san-pham";
+  const keepVat = isExchange && !isDebt && preserveVat;
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [exchangeProducts, setExchangeProducts] = useState<ExchangeProductSelection[]>([]);
   const exchangeProductsRef = useRef<ExchangeProductSelection[]>([]);
@@ -193,41 +197,14 @@ export default function useReceiptReturnForm() {
     }
   };
 
-  // Calculate totals
-  const { totalProduct, totalQuantity, totalAmount } = useMemo(() => {
-    return {
-      totalProduct: selectedProducts.length,
-      totalQuantity: selectedProducts.reduce(
-        (sum, item) => sum + item.quantity,
-        0,
-      ),
-      totalAmount: (() => {
-        const originalGross = (location.state?.orderProducts || []).reduce(
-          (sum, item) => sum + item.price * item.quantity * (1 + (item.vatRate || 0) / 100),
-          0,
-        );
-        const selectedGross = selectedProducts.reduce(
-          (sum, item) => sum + item.costPrice * item.quantity * (1 + (isDebt ? 0 : item.vatRate || 0) / 100),
-          0,
-        );
-        const factor = !isDebt && originalGross > 0 && location.state?.orderTotal !== undefined
-          ? location.state.orderTotal / originalGross
-          : 1;
-        return Math.round(selectedGross * factor);
-      })(),
-    };
-  }, [selectedProducts]);
-
-  const exchangeAmount = useMemo(
-    () =>
-      exchangeProducts.reduce(
-        (sum, item) => sum + getExchangeProductTotals(item).total,
-        0,
-      ),
-    [exchangeProducts],
+  const { totalProduct, totalQuantity, totalAmount, exchangeAmount } = useMemo(
+    () => calculateReturnTotals(
+      selectedProducts, exchangeProducts, location.state?.orderProducts || [],
+      isDebt, keepVat, location.state?.orderTotal, location.state?.orderDiscount, isExchange,
+    ),
+    [selectedProducts, exchangeProducts, location.state, isDebt, keepVat, isExchange],
   );
   const exchangeDifference = exchangeAmount - totalAmount;
-  const isExchange = formData.reason === "doi-san-pham";
   const projectedTotal = Math.max(
     0,
     (location.state?.debtTotal || 0) - totalAmount + (isExchange ? exchangeAmount : 0),
@@ -336,6 +313,7 @@ export default function useReceiptReturnForm() {
           })),
           paymentMethod: formData.paymentMethod,
           operationType: formData.reason === "doi-san-pham" ? "exchange" : "return",
+          vatHandling: keepVat ? "preserve" : undefined,
           exchangeItems: exchangeProducts.map((item) => ({
             productId: item.id,
             productCode: item.productCode,
@@ -382,6 +360,7 @@ export default function useReceiptReturnForm() {
     submitting.current = false;
     setSelectedProducts([]);
     setExchangeProducts([]);
+    setPreserveVat(true);
     setErrors({});
     setCustomerName(location.state.customerName || "Khách lẻ");
     setFormData({
@@ -412,6 +391,8 @@ export default function useReceiptReturnForm() {
     totalAmount,
     exchangeAmount,
     exchangeDifference,
+    preserveVat,
+    setPreserveVat,
     projectedTotal,
     projectedRemaining,
     openModalSelectProduct,

@@ -5,4 +5,5 @@ export { default as AppListItem } from './AppListItem';
 export { default as AppBadge } from './AppBadge';
 export { default as AppSegment } from './AppSegment';
 export { default as AppButton } from './AppButton';
-
+export { default as AppRadioGroup } from './AppRadioGroup';
+export type { AppRadioOption, AppRadioGroupProps, AppRadioGroupSize } from './AppRadioGroup';

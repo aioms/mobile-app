@@ -20,6 +20,7 @@ import { getStoreBillHeader } from "@/helpers/storeBillHeader";
 import { formatCurrency } from "@/helpers/formatters";
 import ReceiptBillDocument from "./ReceiptBillDocument";
 import { useExportReceiptBill, ExportFormat } from "@/hooks/useExportReceiptBill";
+import { AppRadioGroup } from "@/components/UI";
 
 interface PeriodSummary {
   id: string;
@@ -188,21 +189,16 @@ const ExportReceiptBillModal: React.FC<ExportReceiptBillModalProps> = ({
           <h3 className="text-base font-semibold text-gray-800 mb-3">
             Định dạng xuất
           </h3>
-          <div className="flex gap-2">
-            {FORMAT_OPTIONS.map((opt) => (
-              <button
-                data-cy={`export-format-${opt.value}`} key={opt.value}
-                onClick={() => setFormat(opt.value)}
-                className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  format === opt.value
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <AppRadioGroup
+            name="Định dạng xuất"
+            value={format}
+            onChange={(val) => setFormat(val as ExportFormat)}
+            options={FORMAT_OPTIONS.map((opt) => ({
+              value: opt.value,
+              label: opt.label,
+              dataCy: `export-format-${opt.value}`,
+            }))}
+          />
         </div>
 
         {/* Preview summary */}

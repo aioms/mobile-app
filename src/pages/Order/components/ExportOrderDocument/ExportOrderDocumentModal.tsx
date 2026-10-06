@@ -9,7 +9,7 @@ import {
   IonTitle,
   IonToolbar,
 } from "@ionic/react";
-import { AppButton, AppCard } from "@/components/UI";
+import { AppButton, AppCard, AppRadioGroup } from "@/components/UI";
 import { useAuth, useLoading } from "@/hooks";
 import useOrder from "@/hooks/apis/useOrder";
 import { useExportOrderDocument } from "@/hooks/useExportOrderDocument";
@@ -215,26 +215,20 @@ function Choice<T extends string>(
 ) {
   return (
     <fieldset disabled={disabled} className="mb-3">
-      <legend className="text-sm font-semibold text-gray-800 mb-1">
+      <legend className="text-sm font-semibold text-gray-800 mb-2">
         {label}
       </legend>
-      <div className="flex flex-wrap gap-2">
-        {options.map(([option, text]) => (
-          <label
-            key={option}
-            className="min-h-[44px] flex items-center gap-2 px-3 border border-gray-200 rounded-lg text-sm"
-          >
-            <input
-              data-cy={`order-export-${option}`}
-              type="radio"
-              name={label}
-              checked={value === option}
-              onChange={() => onChange(option)}
-            />
-            {text}
-          </label>
-        ))}
-      </div>
+      <AppRadioGroup
+        name={label}
+        disabled={disabled}
+        value={value}
+        onChange={onChange}
+        options={options.map(([option, text]) => ({
+          value: option,
+          label: text,
+          dataCy: `order-export-${option}`,
+        }))}
+      />
     </fieldset>
   );
 }
