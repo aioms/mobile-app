@@ -51,6 +51,7 @@ import ModalSelectProduct from "../components/ModalSelectProduct";
 import ModalSelectCustomer from "@/components/ModalSelectCustomer";
 import ModalCreateCustomer from "@/components/ModalCreateCustomer";
 import ErrorMessage from "@/components/ErrorMessage";
+import { AppRadioGroup } from "@/components/UI";
 import PaymentModal, {
   PaymentMethod as PaymentModalMethod,
 } from "@/components/PaymentModal";
@@ -988,43 +989,24 @@ const OrderUpdate: React.FC = () => {
             <h2 className="text-lg font-medium text-foreground mb-3">
               Loại đơn hàng (Order Type) <span className="text-red-500">*</span>
             </h2>
-            <IonRadioGroup
+            <AppRadioGroup
+              name="Loại đơn hàng"
               value={formData.orderType || OrderType.SALES}
-              onIonChange={handleOrderTypeChange}
-            >
-              <div className={cn("flex gap-4", { "opacity-65": !isEditMode })}>
-                <IonItem
-                  lines="none"
-                  className={cn(`rounded-lg transition-colors`, {
-                    "bg-custom-primary border border-custom-primary":
-                      formData.orderType === OrderType.SALES || !formData.orderType,
-                    border: formData.orderType === OrderType.INTERNAL_TRANSFER,
-                  })}
-                >
-                  <IonRadio value={OrderType.SALES} disabled={!isEditMode}>
-                    <div className="flex flex-col">
-                      <span>Bán hàng</span>
-                      <span className="text-sm text-gray-500">(Sales)</span>
-                    </div>
-                  </IonRadio>
-                </IonItem>
-                <IonItem
-                  lines="none"
-                  className={cn(`rounded-lg transition-colors`, {
-                    "bg-custom-primary border border-custom-primary":
-                      formData.orderType === OrderType.INTERNAL_TRANSFER,
-                    border: formData.orderType === OrderType.SALES || !formData.orderType,
-                  })}
-                >
-                  <IonRadio value={OrderType.INTERNAL_TRANSFER} disabled={!isEditMode}>
-                    <div className="flex flex-col">
-                      <span>Chuyển kho nội bộ</span>
-                      <span className="text-sm text-gray-500">(Internal Transfer)</span>
-                    </div>
-                  </IonRadio>
-                </IonItem>
-              </div>
-            </IonRadioGroup>
+              disabled={!isEditMode}
+              onChange={(value) => handleOrderTypeChange({ detail: { value } } as CustomEvent)}
+              options={[
+                {
+                  value: OrderType.SALES,
+                  label: "Bán hàng",
+                  description: "(Sales)",
+                },
+                {
+                  value: OrderType.INTERNAL_TRANSFER,
+                  label: "Chuyển kho nội bộ",
+                  description: "(Internal Transfer)",
+                },
+              ]}
+            />
           </div>
         </div>
 
@@ -1174,40 +1156,17 @@ const OrderUpdate: React.FC = () => {
                 Giảm giá
               </h2>
               <div className="mb-4">
-                <IonRadioGroup
+                <AppRadioGroup
+                  name="Loại giảm giá"
                   value={formData.discountType || DiscountType.PERCENTAGE}
-                  onIonChange={isEditMode ? handleDiscountTypeChange : () => { }}
-                >
-                  <div className={cn("flex gap-4 mb-3", { "opacity-65": !isEditMode })}>
-                    <IonItem
-                      lines="none"
-                      className={cn(`rounded-lg transition-colors`, {
-                        "bg-custom-primary border border-custom-primary":
-                          formData.discountType === DiscountType.PERCENTAGE ||
-                          !formData.discountType,
-                        border: formData.discountType === DiscountType.FIXED,
-                      })}
-                    >
-                      <IonRadio value={DiscountType.PERCENTAGE} disabled={!isEditMode}>
-                        Theo %
-                      </IonRadio>
-                    </IonItem>
-                    <IonItem
-                      lines="none"
-                      className={cn(`rounded-lg transition-colors`, {
-                        "bg-custom-primary border border-custom-primary":
-                          formData.discountType === DiscountType.FIXED,
-                        border:
-                          formData.discountType === DiscountType.PERCENTAGE ||
-                          !formData.discountType,
-                      })}
-                    >
-                      <IonRadio value={DiscountType.FIXED} disabled={!isEditMode}>
-                        Theo VND
-                      </IonRadio>
-                    </IonItem>
-                  </div>
-                </IonRadioGroup>
+                  disabled={!isEditMode}
+                  onChange={(value) => handleDiscountTypeChange({ detail: { value } } as CustomEvent)}
+                  options={[
+                    { value: DiscountType.PERCENTAGE, label: "Theo %" },
+                    { value: DiscountType.FIXED, label: "Theo VND" },
+                  ]}
+                  className="mb-3"
+                />
 
                 {formData.discountType === DiscountType.PERCENTAGE ? (
                   <IonInput
@@ -1288,28 +1247,18 @@ const OrderUpdate: React.FC = () => {
               <h2 className="text-lg font-medium text-foreground mb-3">
                 Phương thức thanh toán
               </h2>
-              <div className="grid grid-cols-3 gap-2 mt-2" role="radiogroup" aria-label="Phương thức thanh toán">
-                {[
-                  [PaymentMethod.CASH, "Tiền mặt"],
-                  [PaymentMethod.BANK_TRANSFER, "Chuyển khoản"],
-                  [PaymentMethod.MIXED, "Cả hai"],
-                ].map(([value, label]) => (
-                  <button
-                    type="button"
-                    key={value}
-                    role="radio"
-                    aria-checked={formData.paymentMethod === value}
-                    disabled={!isEditMode}
-                    className={cn("rounded-lg border p-3 text-sm transition-colors", {
-                      "bg-custom-primary border-custom-primary": formData.paymentMethod === value,
-                      "opacity-50 cursor-not-allowed": !isEditMode,
-                    })}
-                    onClick={() => handlePaymentMethodChange({ detail: { value } } as CustomEvent)}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
+              <AppRadioGroup
+                name="Phương thức thanh toán"
+                options={[
+                  { value: PaymentMethod.CASH, label: "Tiền mặt" },
+                  { value: PaymentMethod.BANK_TRANSFER, label: "Chuyển khoản" },
+                  { value: PaymentMethod.MIXED, label: "Cả hai" },
+                ]}
+                value={formData.paymentMethod}
+                disabled={!isEditMode}
+                onChange={(value) => handlePaymentMethodChange({ detail: { value } } as CustomEvent)}
+                className="mt-2"
+              />
             </div>
           </div>
         </div>

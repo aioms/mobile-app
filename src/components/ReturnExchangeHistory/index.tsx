@@ -155,6 +155,9 @@ const ReturnExchangeHistory: React.FC<Props> = ({
                 </div>
               )}
 
+              {isExchange && exchangeItems.some((item) => item.vatHandling === "preserve") && (
+                <p className="text-xs text-blue-600">Giữ nguyên VAT — chỉ tính chênh lệch tiền hàng</p>
+              )}
               {/* Row 3: Financial Summary */}
               {entry.accountingVersion === 3 && (
                 <div className="pt-2 border-t border-dashed border-gray-100">

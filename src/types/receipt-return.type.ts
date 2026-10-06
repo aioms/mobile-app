@@ -45,6 +45,7 @@ export interface CreateReceiptReturnRequestDto {
   items: CreateReceiptItemRequestDto[];
   paymentMethod?: PaymentMethod;
   operationType?: "return" | "exchange";
+  vatHandling?: "preserve" | "recalculate";
   exchangeItems?: Array<{
     productId: string;
     productCode: string | number;
@@ -89,6 +90,6 @@ export interface ReceiptReturnHistoryEntry {
   originalReturnAmount: number;
   replacementAmount: number;
   differenceAmount: number;
-  exchangeItems?: Array<{ productName: string; quantity: number; unitPrice: number; vatRate?: number }>;
+  exchangeItems?: Array<{ productName: string; quantity: number; unitPrice: number; vatRate?: number; vatHandling?: "preserve" | "recalculate" }>;
   returnDate?: string;
 }

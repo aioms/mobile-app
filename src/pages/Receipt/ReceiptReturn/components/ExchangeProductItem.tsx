@@ -10,6 +10,7 @@ import {
 import type { ExchangeProductSelection } from "./ModalSelectExchangeProduct";
 
 interface Props {
+  preserveVat?: boolean;
   product: ExchangeProductSelection;
   onChange: (
     id: string,
@@ -19,7 +20,7 @@ interface Props {
   onRemove: (id: string) => void;
 }
 
-export const getExchangeProductTotals = (product: ExchangeProductSelection) => {
+const getExchangeProductTotals = (product: ExchangeProductSelection) => {
   const subtotal = product.quantity * product.unitPrice;
   const vatAmount = Math.round((subtotal * (product.vatRate || 0)) / 100);
 
@@ -32,7 +33,7 @@ export const getExchangeProductTotals = (product: ExchangeProductSelection) => {
 
 const VAT_PRESETS = [0, 8, 10];
 
-const ExchangeProductItem: FC<Props> = ({ product, onChange, onRemove }) => {
+const ExchangeProductItem: FC<Props> = ({ product, onChange, onRemove, preserveVat = false }) => {
   const totals = getExchangeProductTotals(product);
 
   const [quantityInput, setQuantityInput] = useState<string>(
@@ -107,14 +108,14 @@ const ExchangeProductItem: FC<Props> = ({ product, onChange, onRemove }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200/90 shadow-xs p-3.5 mb-3 transition-all">
+    <div className="bg-white rounded-xl border border-gray-200/90 shadow-2xs p-3.5 mb-2.5 transition-all space-y-3">
       {/* Product Header: Title, SKU, Inventory limit & Delete */}
-      <div className="flex items-start justify-between gap-2.5 pb-2.5 border-b border-gray-100">
+      <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-sm text-gray-900 leading-snug">
+          <h3 className="font-semibold text-sm text-gray-900 leading-snug line-clamp-1">
             {product.productName}
           </h3>
-          <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
             <span className="font-mono bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[11px]">
               Mã SP: {product.code || "N/A"}
             </span>
@@ -143,25 +144,51 @@ const ExchangeProductItem: FC<Props> = ({ product, onChange, onRemove }) => {
         </button>
       </div>
 
-      {/* Input controls */}
-      <div className="pt-3 space-y-3">
-        {/* Row 1: Quantity Stepper */}
-        <div className="flex items-center justify-between">
-          <div>
+      {/* Row 1: Đơn giá & Số lượng */}
+      <div className="grid grid-cols-2 gap-2.5 items-end">
+        {/* Unit Price */}
+        <div>
+          <label className="text-xs font-medium text-gray-600 block mb-1">
+            Đơn giá (chưa VAT)
+          </label>
+          <div className="relative flex items-center">
+            <input
+              type="text"
+              inputMode="numeric"
+              data-cy="exchange-price"
+              value={formatCurrencyWithoutSymbol(product.unitPrice)}
+              onChange={(e) =>
+                onChange(
+                  product.id,
+                  "unitPrice",
+                  parseCurrencyInput(e.target.value || ""),
+                )
+              }
+              className="w-full h-9 pl-2.5 pr-6 text-sm font-semibold text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            />
+            <span className="absolute right-2 text-xs text-gray-400 font-medium pointer-events-none">
+              đ
+            </span>
+          </div>
+        </div>
+
+        {/* Quantity Stepper */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-medium text-gray-600">Số lượng đổi</span>
             {isExceedingStock && (
-              <span className="block text-[11px] text-red-500 font-medium">
-                Vượt quá tồn kho ({product.inventory})
+              <span className="text-[10px] text-red-500 font-medium">
+                Vượt tồn
               </span>
             )}
           </div>
 
-          <div className="flex items-center bg-gray-50 p-0.5 rounded-lg border border-gray-200">
+          <div className="flex items-center bg-gray-50 h-9 p-0.5 rounded-lg border border-gray-200">
             <button
               type="button"
               onClick={() => handleQuantityStep(-1)}
               disabled={product.quantity <= 1}
-              className="w-8 h-8 rounded-md bg-white shadow-2xs hover:bg-gray-100 active:bg-gray-200 flex items-center justify-center text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="w-8 h-full rounded-md bg-white shadow-2xs hover:bg-gray-100 active:bg-gray-200 flex items-center justify-center text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               aria-label="Giảm số lượng"
             >
               <Minus className="w-3.5 h-3.5" />
@@ -174,105 +201,78 @@ const ExchangeProductItem: FC<Props> = ({ product, onChange, onRemove }) => {
               onBlur={handleQuantityBlur}
               min={1}
               max={maxQuantity}
-              className="w-12 h-8 text-center text-sm font-semibold text-gray-900 bg-transparent focus:outline-none"
-              data-cy="exchange-quantity" aria-label="Số lượng"
+              className="flex-1 w-0 h-full text-center text-sm font-semibold text-gray-900 bg-transparent focus:outline-none"
+              data-cy="exchange-quantity"
+              aria-label="Số lượng"
             />
             <button
               type="button"
               onClick={() => handleQuantityStep(1)}
               disabled={product.quantity >= maxQuantity}
-              className="w-8 h-8 rounded-md bg-white shadow-2xs hover:bg-gray-100 active:bg-gray-200 flex items-center justify-center text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="w-8 h-full rounded-md bg-white shadow-2xs hover:bg-gray-100 active:bg-gray-200 flex items-center justify-center text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               aria-label="Tăng số lượng"
             >
               <Plus className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Row 2: Price & VAT side-by-side in balanced columns */}
-        <div className="grid grid-cols-2 gap-2.5">
-          {/* Unit Price */}
-          <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1">
-              Đơn giá (chưa VAT)
-            </label>
-            <div className="relative flex items-center">
-              <input
-                type="text"
-                inputMode="numeric"
-                data-cy="exchange-price"
-                value={formatCurrencyWithoutSymbol(product.unitPrice)}
-                onChange={(e) =>
-                  onChange(
-                    product.id,
-                    "unitPrice",
-                    parseCurrencyInput(e.target.value || ""),
-                  )
-                }
-                className="w-full h-9 pl-2.5 pr-6 text-sm font-semibold text-gray-900 bg-gray-50/70 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
-              />
-              <span className="absolute right-2 text-xs text-gray-400 font-medium pointer-events-none">
-                đ
-              </span>
-            </div>
+      {/* Row 2: VAT Selector & Custom Rate Input */}
+      <div className="flex items-center justify-between gap-2 pt-0.5">
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+          <span className="text-xs font-medium text-gray-600 shrink-0">Thuế VAT:</span>
+          <div className="flex items-center gap-1">
+            {VAT_PRESETS.map((rate) => (
+              <button
+                key={rate}
+                type="button"
+                onClick={() => handleVatPreset(rate)}
+                className={`text-[11px] px-2 py-0.5 rounded-md transition-colors ${
+                  product.vatRate === rate
+                    ? "bg-blue-600 text-white font-semibold shadow-2xs"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                {rate}%
+              </button>
+            ))}
           </div>
+        </div>
 
-          {/* VAT (%) */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-medium text-gray-600">Thuế VAT</label>
-              <div className="flex items-center gap-1">
-                {VAT_PRESETS.map((rate) => (
-                  <button
-                    key={rate}
-                    type="button"
-                    onClick={() => handleVatPreset(rate)}
-                    className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
-                      product.vatRate === rate
-                        ? "bg-blue-600 text-white font-semibold"
-                        : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                    }`}
-                  >
-                    {rate}%
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="relative flex items-center">
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                max={100}
-                step="0.01"
-                value={vatInput}
-                onChange={handleVatChange}
-                onBlur={handleVatBlur}
-                className="w-full h-9 pl-2.5 pr-6 text-sm font-semibold text-gray-900 bg-gray-50/70 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
-              />
-              <span className="absolute right-2 text-xs text-gray-400 font-medium pointer-events-none">
-                %
-              </span>
-            </div>
-          </div>
+        <div className="relative flex items-center w-20 shrink-0">
+          <input
+            type="number"
+            inputMode="decimal"
+            min={0}
+            max={100}
+            step="0.01"
+            data-cy="exchange-vat"
+            value={vatInput}
+            onChange={handleVatChange}
+            onBlur={handleVatBlur}
+            className="w-full h-7 pl-2 pr-5 text-xs text-right font-semibold text-gray-900 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <span className="absolute right-1.5 text-[11px] text-gray-400 font-medium pointer-events-none">
+            %
+          </span>
         </div>
       </div>
 
-      {/* Calculations Breakdown */}
-      <div className="mt-3 bg-slate-50/90 rounded-lg p-2.5 border border-slate-100 space-y-1.5">
-        <div className="flex justify-between text-xs text-gray-500">
-          <span>Tiền hàng ({product.quantity} × {formatCurrency(product.unitPrice)})</span>
-          <span className="font-medium text-gray-700">{formatCurrency(totals.subtotal)}</span>
+      {/* Item Total (Replaces redundant multi-line calculation box) */}
+      <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-xs">
+        <div className="text-gray-500">
+          <span className="font-medium text-gray-700">Thành tiền đổi</span>
+          {preserveVat ? (
+            <span className="text-[11px] text-gray-400 ml-1.5">(chưa VAT)</span>
+          ) : totals.vatAmount > 0 ? (
+            <span className="text-[11px] text-gray-400 ml-1.5">
+              (gồm +{formatCurrency(totals.vatAmount)} VAT)
+            </span>
+          ) : null}
         </div>
-        {totals.vatAmount > 0 && (
-          <div className="flex justify-between text-xs text-gray-500">
-            <span>Thuế VAT ({product.vatRate || 0}%)</span>
-            <span className="font-medium text-gray-700">+{formatCurrency(totals.vatAmount)}</span>
-          </div>
-        )}
-        <div className="border-t border-slate-200/80 pt-1.5 flex justify-between items-center">
-          <span className="text-xs font-semibold text-gray-700">Thành tiền đổi</span>
-          <span className="text-sm font-bold text-blue-600">{formatCurrency(totals.total)}</span>
+        <div className="text-sm font-bold text-blue-600">
+          {formatCurrency(preserveVat ? totals.subtotal : totals.total)}
         </div>
       </div>
     </div>

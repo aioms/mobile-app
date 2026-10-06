@@ -14,7 +14,7 @@ ion-toggle {
   width: 52px;
   padding: 0;
   --track-background: #ddd;
-  --track-background-checked: rgb(97, 210, 204);
+  --track-background-checked: #2563eb;
   --track-height: 32px;
   --track-border-radius: 16px;
 }
@@ -32,13 +32,13 @@ ion-toggle::part(handle) {
 }
 
 .bg-custom-primary {
-  background-color: rgba(97, 210, 204, 0.1);
+  background-color: rgba(37, 99, 235, 0.08);
 }
 
 .border-custom-primary {
-  border-color: rgb(97, 210, 204);
+  border-color: #2563eb;
 }
 
 .text-custom-primary {
-  color: rgb(97, 210, 204);
+  color: #2563eb;
 }

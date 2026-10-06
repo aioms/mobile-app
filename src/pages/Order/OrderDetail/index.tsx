@@ -122,6 +122,7 @@ const OrderDetail: React.FC = () => {
               customerId: order.customer?.id,
               customerName: order.customer?.name || "Khách lẻ",
               orderTotal: order.totalAmount,
+              orderDiscount: order.discountAmount,
               orderProducts: order.items.map(item => ({
                 id: item.productId,
                 productId: item.productId,

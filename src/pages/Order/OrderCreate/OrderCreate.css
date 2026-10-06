@@ -4,7 +4,7 @@ ion-input.custom-padding {
 }
 
 ion-radio.radio-checked::part(mark) {
-  border-color: rgb(97,210,204);
+  border-color: #2563eb;
 }
 
 /* Quantity input styles for OrderItem component */
