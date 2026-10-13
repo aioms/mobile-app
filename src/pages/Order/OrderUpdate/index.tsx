@@ -39,6 +39,7 @@ import {
   formatCurrencyWithoutSymbol,
   parseCurrencyInput,
 } from "@/helpers/formatters";
+import { calculateOrderTotals } from "@/helpers/orderTotals";
 import {
   getOrderStatusColor,
   getOrderStatusLabel,
@@ -535,30 +536,39 @@ const OrderUpdate: React.FC = () => {
   }, [orderItems]);
 
   const calculateTotalVat = useMemo(() => {
-    return orderItems.reduce((totalVat, item) => {
-      const itemPrice = item.sellingPrice * item.quantity;
-      const vatAmount = (itemPrice * (item.vatRate || 0)) / 100;
-      return totalVat + vatAmount;
-    }, 0);
-  }, [orderItems]);
+    return calculateOrderTotals(
+      orderItems.map((item) => ({
+        price: item.sellingPrice,
+        quantity: item.quantity,
+        vatRate: item.vatRate,
+      })),
+      0,
+      formData.orderType === OrderType.INTERNAL_TRANSFER,
+    ).vatAmount;
+  }, [orderItems, formData.orderType]);
 
   const calculateDiscount = useMemo(() => {
+    if (formData.orderType === OrderType.INTERNAL_TRANSFER) return 0;
     const subtotal = calculateTotal;
     if (formData.discountType === DiscountType.PERCENTAGE && formData.discountPercentage) {
-      return (subtotal * Number(formData.discountPercentage)) / 100;
+      return Math.round((subtotal * Number(formData.discountPercentage)) / 100);
     } else if (formData.discountType === DiscountType.FIXED && formData.discountAmount) {
       return formData.discountAmount;
     }
     return 0;
-  }, [formData.discountType, formData.discountPercentage, formData.discountAmount, calculateTotal]);
+  }, [formData.discountType, formData.discountPercentage, formData.discountAmount, formData.orderType, calculateTotal]);
 
   const calculateFinalTotal = useMemo(() => {
-    const subtotal = calculateTotal;
-    const discount = calculateDiscount;
-    const vat = calculateTotalVat;
-    const finalTotal = subtotal - discount + vat;
-    return finalTotal > 0 ? finalTotal : 0;
-  }, [calculateTotal, calculateDiscount, calculateTotalVat]);
+    return calculateOrderTotals(
+      orderItems.map((item) => ({
+        price: item.sellingPrice,
+        quantity: item.quantity,
+        vatRate: item.vatRate,
+      })),
+      calculateDiscount,
+      formData.orderType === OrderType.INTERNAL_TRANSFER,
+    ).totalAmount;
+  }, [orderItems, calculateDiscount, formData.orderType]);
 
   const isOrderVatActive = useMemo(() => {
     return !!formData.orderVatPercentage && formData.orderVatPercentage > 0;

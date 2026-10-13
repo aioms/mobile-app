@@ -44,6 +44,7 @@ import useProduct from "@/hooks/apis/useProduct";
 import useCustomer from "@/hooks/apis/useCustomer";
 
 import { createRequestId, isHasProperty } from "@/helpers/common";
+import { calculateOrderTotals } from "@/helpers/orderTotals";
 import {
   formatCurrency,
   formatCurrencyWithoutSymbol,
@@ -635,17 +636,22 @@ const OrderCreate: React.FC = () => {
   };
 
   const calculateTotalVat = () => {
-    return orderItems.reduce((totalVat, item) => {
-      const itemPrice = item.sellingPrice * item.quantity;
-      const vatAmount = (itemPrice * (item.vatRate || 0)) / 100;
-      return totalVat + vatAmount;
-    }, 0);
+    return calculateOrderTotals(
+      orderItems.map((item) => ({
+        price: item.sellingPrice,
+        quantity: item.quantity,
+        vatRate: item.vatRate,
+      })),
+      0,
+      formData.orderType === OrderType.INTERNAL_TRANSFER,
+    ).vatAmount;
   };
 
   const calculateDiscount = () => {
+    if (formData.orderType === OrderType.INTERNAL_TRANSFER) return 0;
     const subtotal = calculateTotal();
     if (formData.discountType === DiscountType.PERCENTAGE && formData.discountPercentage) {
-      return (subtotal * Number(formData.discountPercentage)) / 100;
+      return Math.round((subtotal * Number(formData.discountPercentage)) / 100);
     } else if (formData.discountType === DiscountType.FIXED && formData.discountAmount) {
       return formData.discountAmount;
     }
@@ -653,11 +659,15 @@ const OrderCreate: React.FC = () => {
   };
 
   const calculateFinalTotal = () => {
-    const subtotal = calculateTotal();
-    const discount = calculateDiscount();
-    const vat = calculateTotalVat();
-    const finalTotal = subtotal - discount + vat;
-    return finalTotal > 0 ? finalTotal : 0;
+    return calculateOrderTotals(
+      orderItems.map((item) => ({
+        price: item.sellingPrice,
+        quantity: item.quantity,
+        vatRate: item.vatRate,
+      })),
+      calculateDiscount(),
+      formData.orderType === OrderType.INTERNAL_TRANSFER,
+    ).totalAmount;
   };
 
   const isOrderVatActive =
