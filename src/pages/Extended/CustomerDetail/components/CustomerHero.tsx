@@ -13,7 +13,9 @@ const CustomerHero: React.FC<CustomerHeroProps> = ({ customer, onEdit, onDelete 
   return (
     <div className="flex flex-col items-center pt-6 pb-8 bg-white">
       {/* Name */}
-      <h1 className="text-[28px] font-bold text-gray-900 mb-2">{customer.name}</h1>
+      <h1 className="mb-2 w-full break-words px-4 text-center text-[28px] font-bold text-gray-900">
+        {customer.name}
+      </h1>
 
       {/* Email */}
       {customer.email && (

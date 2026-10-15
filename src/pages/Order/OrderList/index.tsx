@@ -22,6 +22,7 @@ import OrderItem from "./components/OrderItem";
 
 import type { IOrder } from "@/types/order.type";
 import { AppCard, AppButton } from "@/components/UI";
+import DailyPaymentSummaryCards from "@/components/DailyPaymentSummaryCards";
 
 import "./OrderList.css";
 
@@ -215,22 +216,26 @@ const OrderList: React.FC = () => {
       <Refresher onRefresh={handleRefresh} />
 
       {/* Order Count */}
-      <AppCard className="flex justify-between items-center mb-2 mx-4 shadow-sm border border-gray-100">
-        <div className="flex flex-col">
-          <h2 className="text-lg font-bold text-gray-900">
-            Tổng số đơn hàng: {totalOrders}
-          </h2>
-          <div className="text-sm text-gray-500 mt-1">
-            {capitalizeFirstLetter(dayjsFormat(new Date(), "dddd, DD MMMM YYYY", "vi"))}
+      <AppCard className="mb-2 mx-4 shadow-sm border border-gray-100">
+        <div className="flex justify-between items-center">
+          <div className="flex flex-col min-w-0 pr-2">
+            <h2 className="text-lg font-bold text-gray-900 truncate">
+              Tổng số đơn hàng: {totalOrders}
+            </h2>
+            <div className="text-xs text-gray-500 mt-1">
+              {capitalizeFirstLetter(dayjsFormat(new Date(), "dddd, DD MMMM YYYY", "vi"))}
+            </div>
+          </div>
+          <div
+            className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center ion-activatable ripple-parent overflow-hidden shrink-0"
+            onClick={() => startScan()}
+          >
+            <IonIcon icon={scanOutline} className="text-2xl text-blue-600" />
+            <IonRippleEffect></IonRippleEffect>
           </div>
         </div>
-        <div
-          className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center ion-activatable ripple-parent overflow-hidden"
-          onClick={() => startScan()}
-        >
-          <IonIcon icon={scanOutline} className="text-2xl text-blue-600" />
-          <IonRippleEffect></IonRippleEffect>
-        </div>
+
+        <DailyPaymentSummaryCards source="orders" embedded />
       </AppCard>
 
       {/* Filter Section */}

@@ -14,6 +14,13 @@ export interface CashbookOverviewQueryDto {
   date: string;
 }
 
+export interface CashbookDailyRevenueSummaryResponseDto {
+  date: string;
+  timezone: string;
+  orders: CashbookRevenueSummaryDto;
+  receipts: CashbookRevenueSummaryDto;
+}
+
 export interface CashbookOverviewResponseDto {
   range: CashbookReportRange;
   date: string;

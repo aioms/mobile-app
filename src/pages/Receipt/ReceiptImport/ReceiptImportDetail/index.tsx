@@ -144,6 +144,7 @@ const ReceiptImportDetail: React.FC = () => {
   const { create: createSupplier } = useSupplier();
 
   const isUserSpecial = useMemo(() => user?.code == '497', [user?.code]);
+  const isUserNV343 = useMemo(() => user?.code === "NV343", [user?.code]);
 
   const [presentModalSupplier, dismissModalSupplier] = useIonModal(
     ModalSelectSupplier,
@@ -352,6 +353,7 @@ const ReceiptImportDetail: React.FC = () => {
       const isAdmin = (
         [UserRole.ADMIN, UserRole.MANAGER, UserRole.DEVELOPER] as string[]
       ).includes(userRole);
+      const canEditReceipt = isAdmin || isUserSpecial || isUserNV343;
 
       const showScanProduct =
         receiptStatus === ReceiptImportStatus.PROCESSING &&
@@ -369,7 +371,7 @@ const ReceiptImportDetail: React.FC = () => {
         );
 
       const showUpdate =
-        (isAdmin || isUserSpecial) &&
+        canEditReceipt &&
         receiptStatus !== ReceiptImportStatus.COMPLETED &&
         receiptStatus !== ReceiptImportStatus.PAID &&
         receiptStatus !== ReceiptImportStatus.CANCELLED;
@@ -380,7 +382,7 @@ const ReceiptImportDetail: React.FC = () => {
         showComplete,
         showUpdate,
       };
-    }, [user, receipt?.userCreated, receipt?.status]);
+    }, [user, receipt?.userCreated, receipt?.status, isUserSpecial, isUserNV343]);
 
   const fetchReceiptImport = async () => {
     await withLoading(async () => {
@@ -645,12 +647,19 @@ const ReceiptImportDetail: React.FC = () => {
   };
 
   const isReceiptItemEditable = useCallback((status?: string) => {
-    return ![
+    const canEditReceipt =
+      user?.role === UserRole.ADMIN ||
+      user?.role === UserRole.MANAGER ||
+      user?.role === UserRole.DEVELOPER ||
+      isUserSpecial ||
+      isUserNV343;
+
+    return canEditReceipt && ![
       RECEIPT_IMPORT_STATUS.COMPLETED,
       RECEIPT_IMPORT_STATUS.PAID,
       RECEIPT_IMPORT_STATUS.CANCELLED,
     ].includes(status as any);
-  }, []);
+  }, [user?.role, isUserSpecial, isUserNV343]);
 
   const handleDeleteReceiptItem = useCallback(
     async (item: ReceiptItem) => {
@@ -739,13 +748,13 @@ const ReceiptImportDetail: React.FC = () => {
       receipt.status === RECEIPT_IMPORT_STATUS.COMPLETED ||
       receipt.status === RECEIPT_IMPORT_STATUS.PAID ||
       receipt.status === RECEIPT_IMPORT_STATUS.CANCELLED ||
-      (isEmployee && !isUserSpecial)
+      (isEmployee && !isUserSpecial && !isUserNV343)
     ) {
       return false;
     }
 
     return true;
-  }, [receipt?.status, user, isUserSpecial]);
+  }, [receipt?.status, user, isUserSpecial, isUserNV343]);
 
   const isNoteChanged = useMemo(() => {
     return noteInput !== (receipt?.note || "");
@@ -1047,7 +1056,7 @@ const ReceiptImportDetail: React.FC = () => {
         <ReceiptItem
           key={item.id}
           isEmployee={isEmployee}
-          isUserSpecial={isUserSpecial}
+          isUserSpecial={isUserSpecial || isUserNV343}
           disabled={!isReceiptEditable}
           {...item}
           onDelete={() => handleDeleteReceiptItem(item)}
@@ -1066,7 +1075,7 @@ const ReceiptImportDetail: React.FC = () => {
         />
       );
     });
-  }, [handleDeleteReceiptItem, isReceiptItemEditable, isUserSpecial, user?.role, receipt]);
+  }, [handleDeleteReceiptItem, isReceiptItemEditable, isUserSpecial, isUserNV343, user?.role, receipt]);
 
   return (
     <IonPage>

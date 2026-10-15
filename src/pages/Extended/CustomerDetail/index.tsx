@@ -451,7 +451,7 @@ const CustomerDetail: React.FC = () => {
                             <ReceiptDebtItem
                               key={receipt.id}
                               receipt={receipt}
-                              onClick={() => history.push(`/tabs/receipts/debt/detail/${receipt.id}`)}
+                              onClick={() => history.push(`/tabs/debt/detail/${receipt.id}`)}
                             />
                           ))}
                         </div>
