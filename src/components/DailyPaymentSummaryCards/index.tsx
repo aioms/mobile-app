@@ -41,11 +41,13 @@ const DailyPaymentSummaryCards: React.FC<Props> = ({ source }) => {
 
   if (isLoading) {
     return (
-      <AppCard className="mx-4 mb-3 animate-pulse">
-        <div className="h-4 w-40 rounded bg-gray-100" />
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          <div className="h-16 rounded-xl bg-gray-100" />
-          <div className="h-16 rounded-xl bg-gray-100" />
+      <AppCard noPadding className="mx-4 mb-3 animate-pulse">
+        <div className="flex items-center justify-between gap-3 px-3 py-2.5">
+          <div className="h-3 w-12 rounded bg-gray-100" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="h-8 w-20 rounded bg-gray-100" />
+            <div className="h-8 w-16 rounded bg-gray-100" />
+          </div>
         </div>
       </AppCard>
     );
@@ -53,9 +55,9 @@ const DailyPaymentSummaryCards: React.FC<Props> = ({ source }) => {
 
   if (error) {
     return (
-      <AppCard className="mx-4 mb-3">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm text-red-600">{error}</p>
+      <AppCard noPadding className="mx-4 mb-3">
+        <div className="flex items-center justify-between gap-3 px-3 py-2.5">
+          <p className="truncate text-xs text-red-600">{error}</p>
           <button type="button" className="text-sm font-semibold text-blue-600" onClick={loadSummary}>
             Thử lại
           </button>
@@ -70,23 +72,23 @@ const DailyPaymentSummaryCards: React.FC<Props> = ({ source }) => {
     cash: 0,
     bank: 0,
   };
-  const title = source === "orders" ? "Đơn hàng" : "Phiếu thu";
-
   return (
-    <AppCard className="mx-4 mb-3">
-      <h3 className="text-sm font-semibold text-slate-700">Thu {title.toLowerCase()} hôm nay</h3>
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        <div className="rounded-xl bg-slate-50 p-3">
-          <p className="text-xs font-medium text-slate-500">Chuyển khoản</p>
-          <p className="mt-1 whitespace-nowrap text-base font-bold tracking-tight text-slate-900">
-            {formatCurrencyWithoutSymbol(data.bank)} đ
-          </p>
-        </div>
-        <div className="rounded-xl bg-slate-50 p-3">
-          <p className="text-xs font-medium text-slate-500">Tiền mặt</p>
-          <p className="mt-1 whitespace-nowrap text-base font-bold tracking-tight text-slate-900">
-            {formatCurrencyWithoutSymbol(data.cash)} đ
-          </p>
+    <AppCard noPadding className="mx-4 mb-3 rounded-xl">
+      <div className="flex items-center justify-between gap-2 px-3 py-2.5">
+        <span className="shrink-0 text-xs font-medium text-gray-500">Hôm nay</span>
+        <div className="grid grid-cols-2 divide-x divide-gray-100">
+          <div className="px-2 text-right">
+            <p className="text-[10px] font-medium text-gray-500">Chuyển khoản</p>
+            <p className="whitespace-nowrap text-sm font-semibold text-gray-900">
+              {formatCurrencyWithoutSymbol(data.bank)} đ
+            </p>
+          </div>
+          <div className="px-2 text-right">
+            <p className="text-[10px] font-medium text-gray-500">Tiền mặt</p>
+            <p className="whitespace-nowrap text-sm font-semibold text-gray-900">
+              {formatCurrencyWithoutSymbol(data.cash)} đ
+            </p>
+          </div>
         </div>
       </div>
     </AppCard>
