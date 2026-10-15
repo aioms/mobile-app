@@ -11,6 +11,7 @@ import {
   IonPage,
   IonIcon,
   IonTextarea,
+  IonInput,
   IonCheckbox,
   useIonModal,
   IonRippleEffect,
@@ -29,7 +30,7 @@ import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
 import { RECEIPT_DEBT_TYPE } from "@/common/constants/receipt-debt.constant";
 import { createRequestId, isHasProperty } from "@/helpers/common";
 import { getDate } from "@/helpers/date";
-import { formatCurrency } from "@/helpers/formatters";
+import { formatCurrency, formatCurrencyInput, parseCurrencyInput } from "@/helpers/formatters";
 
 import DatePicker from "@/components/DatePicker";
 import ModalSelectCustomer from "@/components/ModalSelectCustomer";
@@ -54,6 +55,8 @@ const initialFormData = {
   estimatedDate: getDate(new Date()).format(),
   note: "",
   isOrderRevenue: false,
+  discountAmount: "0",
+  vatAmount: "0",
 };
 
 const ReceiptDebtCreate: React.FC = () => {
@@ -103,10 +106,12 @@ const ReceiptDebtCreate: React.FC = () => {
   };
 
   const totalAmount = useMemo(() => {
-    return productItems.reduce((total, product) => {
+    const subtotal = productItems.reduce((total, product) => {
       return total + product.sellingPrice * product.quantity;
     }, 0);
-  }, [productItems]);
+    return Math.max(0, subtotal - parseCurrencyInput(formData.discountAmount)) +
+      parseCurrencyInput(formData.vatAmount);
+  }, [productItems, formData.discountAmount, formData.vatAmount]);
 
   const handleFormChange = (field: string, value: any) => {
     setFormData((prev) => ({
@@ -135,6 +140,14 @@ const ReceiptDebtCreate: React.FC = () => {
 
     if (productItems.length === 0) {
       newErrors.productItems = "Vui lòng chọn ít nhất 1 sản phẩm";
+    }
+
+    const subtotal = productItems.reduce(
+      (total, product) => total + product.sellingPrice * product.quantity,
+      0,
+    );
+    if (parseCurrencyInput(formData.discountAmount) > subtotal) {
+      newErrors.discountAmount = "Chiết khấu không được lớn hơn tổng tiền hàng";
     }
 
     setErrors(newErrors);
@@ -166,6 +179,8 @@ const ReceiptDebtCreate: React.FC = () => {
         dueDate: formData.estimatedDate,
         isOrderRevenue: formData.isOrderRevenue,
         totalAmount,
+        discountAmount: parseCurrencyInput(formData.discountAmount),
+        vatAmount: parseCurrencyInput(formData.vatAmount),
         note: formData.note,
         items: productItems.map((item) => ({
           productId: item.id,
@@ -211,7 +226,14 @@ const ReceiptDebtCreate: React.FC = () => {
         const { items, ...rest } = draftReceipt;
 
         items && setProductItems(items);
-        isHasProperty(rest) && setFormData(rest);
+        if (isHasProperty(rest)) {
+          setFormData((prev) => ({
+            ...prev,
+            ...rest,
+            discountAmount: String(rest.discountAmount ?? "0"),
+            vatAmount: String(rest.vatAmount ?? "0"),
+          }));
+        }
       }
     };
 
@@ -304,10 +326,14 @@ const ReceiptDebtCreate: React.FC = () => {
         />
 
         <div className="bg-white rounded-lg shadow-sm p-4 mt-3 flex justify-between items-center">
-          <IonText className="text-base font-semibold text-gray-800">Tổng Tiền Phải Thu: </IonText>
-          <IonText className="text-xl font-bold" color="danger">
-            {formatCurrency(totalAmount)}
-          </IonText>
+          <div>
+            <IonText className="text-base font-semibold text-gray-800">Tổng Tiền Phải Thu: </IonText>
+            <p className="mt-1 text-xs text-gray-500">
+              {formatCurrency(Math.max(0, totalAmount - parseCurrencyInput(formData.vatAmount)))} tiền hàng
+              {parseCurrencyInput(formData.vatAmount) > 0 && ` + ${formatCurrency(parseCurrencyInput(formData.vatAmount))} VAT`}
+            </p>
+          </div>
+          <IonText className="text-xl font-bold" color="danger">{formatCurrency(totalAmount)}</IonText>
         </div>
 
         <div className="bg-card rounded-lg shadow-sm mt-3">
@@ -348,6 +374,33 @@ const ReceiptDebtCreate: React.FC = () => {
             <p className="mt-1 text-xs text-gray-500">
               Khoản thanh toán sẽ được xếp vào mục Đơn hàng trong Sổ Thu Chi.
             </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 px-4 pt-4">
+            <div>
+              <label htmlFor="receipt-discount" className="mb-2 block text-sm font-semibold text-gray-800">Chiết khấu (VND)</label>
+              <IonInput
+                id="receipt-discount"
+                inputMode="numeric"
+                value={formData.discountAmount === "0" ? "" : formatCurrencyInput(formData.discountAmount)}
+                onIonInput={(event) => handleFormChange("discountAmount", String(parseCurrencyInput(String(event.detail.value || ""))))}
+                placeholder="Nhập chiết khấu"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base"
+                aria-invalid={Boolean(errors.discountAmount)}
+              />
+              <ErrorMessage message={errors.discountAmount} />
+            </div>
+            <div>
+              <label htmlFor="receipt-vat" className="mb-2 block text-sm font-semibold text-gray-800">VAT (VND)</label>
+              <IonInput
+                id="receipt-vat"
+                inputMode="numeric"
+                value={formData.vatAmount === "0" ? "" : formatCurrencyInput(formData.vatAmount)}
+                onIonInput={(event) => handleFormChange("vatAmount", String(parseCurrencyInput(String(event.detail.value || ""))))}
+                placeholder="Nhập VAT"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base"
+              />
+            </div>
           </div>
 
           {/* Ghi chú */}
