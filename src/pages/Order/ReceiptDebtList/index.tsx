@@ -283,29 +283,29 @@ const ReceiptDebtList: FC = () => {
       <Refresher onRefresh={handleRefresh} />
 
       {/* Debt Count */}
-      <AppCard className="mx-4 mb-3">
+      <AppCard className="mx-4 mb-2">
         <div className="text-xs font-medium text-gray-500 mb-2">
           {capitalizeFirstLetter(
             dayjsFormat(new Date(), "dddd, DD MMMM YYYY", "vi")
           )}
         </div>
         <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100">
-          <div className="flex flex-col">
-            <span className="text-xs text-gray-500 mb-1">Tổng số phiếu thu</span>
-            <span className="text-lg font-bold text-gray-900">
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs text-gray-500 mb-1 truncate">Tổng số phiếu thu</span>
+            <span className="text-lg font-bold text-gray-900 truncate">
               {formatCurrencyWithoutSymbol(totalCount)}
             </span>
           </div>
-          <div className="flex flex-col pl-4 border-l border-gray-100">
-            <span className="text-xs text-gray-500 mb-1">Tổng công nợ</span>
-            <span className="text-lg font-bold text-red-600">
+          <div className="flex flex-col pl-4 border-l border-gray-100 min-w-0">
+            <span className="text-xs text-gray-500 mb-1 truncate">Tổng công nợ</span>
+            <span className="text-lg font-bold text-red-600 truncate">
               {formatCurrency(statistics.totalOutstandingAmount)}
             </span>
           </div>
         </div>
-      </AppCard>
 
-      <DailyPaymentSummaryCards source="receipts" />
+        <DailyPaymentSummaryCards source="receipts" embedded />
+      </AppCard>
 
       {/* Search and Filter */}
       <div className="mb-2">
