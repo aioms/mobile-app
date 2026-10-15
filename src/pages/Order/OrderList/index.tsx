@@ -22,6 +22,7 @@ import OrderItem from "./components/OrderItem";
 
 import type { IOrder } from "@/types/order.type";
 import { AppCard, AppButton } from "@/components/UI";
+import DailyPaymentSummaryCards from "@/components/DailyPaymentSummaryCards";
 
 import "./OrderList.css";
 
@@ -232,6 +233,8 @@ const OrderList: React.FC = () => {
           <IonRippleEffect></IonRippleEffect>
         </div>
       </AppCard>
+
+      <DailyPaymentSummaryCards source="orders" />
 
       {/* Filter Section */}
       <FilterSection onFilterChange={handleFilterChange} />

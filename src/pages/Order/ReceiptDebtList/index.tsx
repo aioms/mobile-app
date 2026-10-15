@@ -8,6 +8,7 @@ import {
   RefresherEventDetail,
 } from "@ionic/react";
 import { AppSearchBar, AppCard, AppButton } from "@/components/UI";
+import DailyPaymentSummaryCards from "@/components/DailyPaymentSummaryCards";
 import { scanOutline } from "ionicons/icons";
 import { useHistory } from "react-router";
 
@@ -303,6 +304,8 @@ const ReceiptDebtList: FC = () => {
           </div>
         </div>
       </AppCard>
+
+      <DailyPaymentSummaryCards source="receipts" />
 
       {/* Search and Filter */}
       <div className="mb-2">

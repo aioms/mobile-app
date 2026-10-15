@@ -6,6 +6,7 @@ import type { IHttpResponse } from "@/types";
 import type {
   CashbookDailyBalanceQueryDto,
   CashbookDailyBalanceResponseDto,
+  CashbookDailyRevenueSummaryResponseDto,
   CashbookOverviewQueryDto,
   CashbookOverviewResponseDto,
   UpdateCashbookActualCashRequestDto,
@@ -15,6 +16,20 @@ import type {
 } from "@/types/cashbook.type";
 
 const useCashbook = () => {
+  const getDailyRevenueSummary = useCallback(async (
+    date: string,
+  ): Promise<CashbookDailyRevenueSummaryResponseDto> => {
+    const query = new URLSearchParams({ date });
+    const response: IHttpResponse<CashbookDailyRevenueSummaryResponseDto> =
+      await request.get(`/cashbook/daily-revenue-summary?${query.toString()}`);
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || "Không thể tải tổng thu trong ngày");
+    }
+
+    return response.data;
+  }, []);
+
   const getOverview = useCallback(async (
     params: CashbookOverviewQueryDto,
   ): Promise<CashbookOverviewResponseDto> => {
@@ -78,6 +93,7 @@ const useCashbook = () => {
   }, []);
 
   return {
+    getDailyRevenueSummary,
     getOverview,
     getDailyBalance,
     updateActualCash,
