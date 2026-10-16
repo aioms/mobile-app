@@ -1,41 +1,48 @@
+import { useCallback } from "react";
 import { IHttpResponse } from "@/types";
-import { CreateReceiptReturnRequestDto } from "@/types/receipt-return.type";
+import {
+  CreateReceiptReturnRequestDto,
+  IReceiptReturn,
+} from "@/types/receipt-return.type";
 import { request } from "../../helpers/axios";
 
 const useReceiptReturn = () => {
-  const getList = async (
-    filters?: Record<string, any>,
-    page: number = 1,
-    limit: number = 10,
-  ) => {
-    const query = new URLSearchParams();
+  const getList = useCallback(
+    async (
+      filters?: Record<string, any>,
+      page: number = 1,
+      limit: number = 10,
+    ) => {
+      const query = new URLSearchParams();
 
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value === null || value === undefined || value === "") return;
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value === null || value === undefined || value === "") return;
 
-        if (Array.isArray(value)) {
-          value.forEach((item) => {
-            query.append(key, item);
-          });
-        } else if (value !== undefined && value !== null && value !== "") {
-          query.append(key, value.toString());
-        }
-      });
-    }
+          if (Array.isArray(value)) {
+            value.forEach((item) => {
+              query.append(key, item);
+            });
+          } else if (value !== undefined && value !== null && value !== "") {
+            query.append(key, value.toString());
+          }
+        });
+      }
 
-    const response = await request.get(
-      `/receipt-return?${query.toString()}&page=${page}&limit=${limit}`,
-    );
-    return response?.data || [];
-  };
+      const response: IHttpResponse<IReceiptReturn[]> = await request.get(
+        `/receipt-return?${query.toString()}&page=${page}&limit=${limit}`,
+      );
+      return response;
+    },
+    [],
+  );
 
-  const getDetail = async (id: string) => {
+  const getDetail = useCallback(async (id: string) => {
     const response = await request.get(`/receipt-return/${id}`);
     return response.data;
-  };
+  }, []);
 
-  const create = async (data: CreateReceiptReturnRequestDto) => {
+  const create = useCallback(async (data: CreateReceiptReturnRequestDto) => {
     const response: IHttpResponse = await request.post(`/receipt-return`, data, {
       headers: data.requestId ? { "X-Request-ID": data.requestId } : undefined,
     });
@@ -45,25 +52,25 @@ const useReceiptReturn = () => {
     }
 
     return response.data;
-  };
+  }, []);
 
-  const update = async (
-    id: string,
-    data: Partial<CreateReceiptReturnRequestDto>,
-  ) => {
-    const response: IHttpResponse = await request.put(
-      `/receipt-return/${id}`,
-      data,
-    );
+  const update = useCallback(
+    async (id: string, data: Partial<CreateReceiptReturnRequestDto>) => {
+      const response: IHttpResponse = await request.put(
+        `/receipt-return/${id}`,
+        data,
+      );
 
-    if (!response.success) {
-      throw new Error(response?.message || "Failed to update receipt return");
-    }
+      if (!response.success) {
+        throw new Error(response?.message || "Failed to update receipt return");
+      }
 
-    return response.data;
-  };
+      return response.data;
+    },
+    [],
+  );
 
-  const remove = async (id: string) => {
+  const remove = useCallback(async (id: string) => {
     const response: IHttpResponse = await request.delete(
       `/receipt-return/${id}`,
     );
@@ -73,9 +80,9 @@ const useReceiptReturn = () => {
     }
 
     return response.data;
-  };
+  }, []);
 
-  const cancel = async (id: string) => {
+  const cancel = useCallback(async (id: string) => {
     const response: IHttpResponse = await request.put(
       `/receipt-return/${id}/cancel`,
     );
@@ -85,7 +92,7 @@ const useReceiptReturn = () => {
     }
 
     return response.data;
-  };
+  }, []);
 
   return {
     getList,

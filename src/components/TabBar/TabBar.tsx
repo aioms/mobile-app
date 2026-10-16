@@ -42,6 +42,8 @@ import ReceiptDebtDetailScreen from "@/pages/Receipt/ReceiptDebt/ReceiptDebtDeta
 import ReceiptDebtUpdateScreen from "@/pages/Receipt/ReceiptDebt/ReceiptDebtUpdate";
 import ReceiptDebtPeriodScreen from "@/pages/Receipt/ReceiptDebt/ReceiptDebtPeriod";
 import ReceiptReturnScreen from "@/pages/Receipt/ReceiptReturn";
+import ReceiptReturnListScreen from "@/pages/Receipt/ReceiptReturnList";
+
 
 import PaymentReceiptListScreen from "@/pages/Receipt/ReceiptPayment/ReceiptPaymentList";
 import ReceiptPaymentCreateScreen from "@/pages/Receipt/ReceiptPayment/ReceiptPaymentCreate";
@@ -130,12 +132,23 @@ const TabBar: React.FC = () => {
           component={ReceiptDebtPeriodScreen}
         />
 
-        {/* Receipt Return Screen */}
+        {/* Receipt Return Screens */}
+        <Route
+          exact
+          path="/tabs/extended/receipt-returns"
+          component={ReceiptReturnListScreen}
+        />
+        <Route
+          exact
+          path="/tabs/receipt-returns"
+          component={ReceiptReturnListScreen}
+        />
         <Route
           exact
           path="/tabs/receipt/return"
           component={ReceiptReturnScreen}
         />
+
 
         {/* Receipt Payment Screens */}
         <Route

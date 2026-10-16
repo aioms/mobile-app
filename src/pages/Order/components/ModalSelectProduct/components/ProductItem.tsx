@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { IonCheckbox, IonCol, IonGrid, IonItem, IonRow } from "@ionic/react";
 import { getS3ImageUrl } from "@/helpers/fileHelper";
-import { formatCurrency } from "@/helpers/formatters";
+import { formatCurrency, formatProductCode } from "@/helpers/formatters";
 
 interface ItemListProps {
   id: string;
@@ -88,7 +88,7 @@ const ProductItem: React.FC<ItemListProps> = ({
             />
             <div className="ml-3 flex-1">
               <p className="text-sm font-medium text-balance">{productName}</p>
-              <p className="text-xs text-gray-500">{code}</p>
+              <p className="text-xs text-gray-500">{formatProductCode(code || productCode)}</p>
               <div className="mt-1">
                 <p className="text-md font-semibold text-blue-600">
                   Giá sỉ: {formatCurrency(sellingPrice)}

@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks";
 import CashBookModule from "./components/CashBookModule";
 import CustomerModule from "./components/CustomerModule";
 import SupplierModule from "./components/SupplierModule";
+import ReturnModule from "./components/ReturnModule";
 
 const ExtendedPage: React.FC = () => {
   const { user } = useAuth();
@@ -34,9 +35,11 @@ const ExtendedPage: React.FC = () => {
         {canViewCashBook && <CashBookModule />}
         <CustomerModule />
         <SupplierModule />
+        <ReturnModule />
       </IonContent>
     </IonPage>
   );
 };
+
 
 export default ExtendedPage;

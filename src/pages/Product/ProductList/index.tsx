@@ -41,7 +41,7 @@ import { Refresher } from "@/components/Refresher/Refresher";
 import { AppSearchBar, AppFAB, AppCard, AppButton } from "@/components/UI";
 import { UserRole } from "@/common/enums/user";
 
-import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
+import { formatCurrencyWithoutSymbol, formatProductCode } from "@/helpers/formatters";
 import useProduct from "@/hooks/apis/useProduct";
 import { useAuth, useBarcodeScanner } from "@/hooks";
 
@@ -582,7 +582,7 @@ const ProductListScreen: React.FC = () => {
                         <div className="low-stock-product-details flex-1 min-w-0">
                           <h4 className="font-medium line-clamp-2 break-words">{product.productName}</h4>
                           <p className="text-sm text-gray-500">
-                            {product.code}
+                            {formatProductCode(product.code || product.productCode)}
                           </p>
                           <div className="flex gap-2 mt-1">
                             <p className="text-sm">

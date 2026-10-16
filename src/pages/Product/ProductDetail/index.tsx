@@ -44,6 +44,7 @@ import { useProductEdit } from "./hooks/useProductEdit";
 import {
   formatCurrencyWithoutSymbol,
   parseCurrencyInput,
+  formatProductCode,
 } from "@/helpers/formatters";
 import type { IProduct } from "@/types/product.type";
 import { useAuth } from "@/hooks";
@@ -1085,7 +1086,7 @@ const ProductDetail: React.FC = () => {
               <div>
                 <IonLabel className="text-lg text-gray-500">Mã sản phẩm:</IonLabel>
                 <IonText>
-                  <h1>{product?.code}</h1>
+                  <h1>{formatProductCode(product?.code || product?.productCode)}</h1>
                 </IonText>
               </div>
 
@@ -1768,7 +1769,7 @@ const ProductDetail: React.FC = () => {
           isOpen={showBarcodeModal}
           onDidDismiss={() => setShowBarcodeModal(false)}
           productName={product?.productName}
-          productCode={product?.code}
+          productCode={formatProductCode(product?.code || product?.productCode)}
         />
 
         {/* Action Sheet */}

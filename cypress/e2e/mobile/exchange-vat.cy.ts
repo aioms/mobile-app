@@ -27,7 +27,7 @@ describe("Order exchange issued VAT", () => {
       if (preserve) {
         cy.contains('p', "Giữ nguyên VAT — chỉ tính chênh lệch tiền hàng").then(async element => {
           const paragraph = element[0];
-          const content = paragraph.closest('ion-content') as HTMLIonContentElement;
+          const content = paragraph.closest('ion-content') as any;
           const scroll = await content.getScrollElement();
           const top = scroll.scrollTop + paragraph.getBoundingClientRect().top - scroll.getBoundingClientRect().top - 100;
           await content.scrollToPoint(0, top, 0);

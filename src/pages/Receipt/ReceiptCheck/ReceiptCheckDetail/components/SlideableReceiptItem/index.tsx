@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { IonChip } from "@ionic/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { formatProductCode } from "@/helpers/formatters";
 
 interface ReceiptItemData {
   id: string;
@@ -82,7 +83,7 @@ const SlideableReceiptItem: React.FC<SlideableReceiptItemProps> = ({
           <h3 className="font-medium text-gray-900">
             {currentItem.productName}
           </h3>
-          <p className="text-sm text-gray-500">{currentItem.productCode}</p>
+          <p className="text-sm text-gray-500">{formatProductCode(currentItem.productCode)}</p>
         </div>
 
         <button

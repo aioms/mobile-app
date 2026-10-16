@@ -1,6 +1,7 @@
 import { FC } from "react";
 import { IonIcon } from "@ionic/react";
 import { trashOutline } from "ionicons/icons";
+import { formatProductCode } from "@/helpers/formatters";
 
 type Props = {
     id: string;
@@ -14,6 +15,7 @@ type Props = {
 const ReceiptCheckItem: FC<Props> = ({
     id,
     productName,
+    productCode,
     code,
     inventory,
     onRemoveItem,
@@ -22,7 +24,7 @@ const ReceiptCheckItem: FC<Props> = ({
         <div className="flex items-center justify-between p-4 bg-white border-b border-gray-100 last:border-b-0">
             <div className="flex-1 min-w-0 pr-4">
                 <h3 className="font-medium text-gray-900 text-sm truncate">{productName}</h3>
-                <p className="text-gray-500 text-xs mt-1">{code}</p>
+                <p className="text-gray-500 text-xs mt-1">{formatProductCode(code || productCode)}</p>
             </div>
             
             <div className="flex items-center gap-3">

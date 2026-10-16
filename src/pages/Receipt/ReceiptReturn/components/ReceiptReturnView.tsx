@@ -16,14 +16,14 @@ import { addCircleOutline, checkmarkCircleOutline } from "ionicons/icons";
 
 import DatePicker from "@/components/DatePicker";
 import ErrorMessage from "@/components/ErrorMessage";
-import { ReceiptReturnStatus } from "@/types/receipt-return.type";
+import { ReceiptReturnStatus, ReceiptReturnType } from "@/types/receipt-return.type";
 import { PaymentMethod } from "@/common/enums/payment";
 import { AppRadioGroup } from "@/components/UI";
-import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/helpers/formatters";
 import ReturnReasonSelect from "./ReturnReasonSelect";
 import RefundSummarySection from "./RefundSummarySection";
 import ProductReturnItem from "./ProductReturnItem";
+import ReturnPartnerSection from "./ReturnPartnerSection";
 
 import type useReceiptReturnForm from "../hooks/useReceiptReturnForm";
 
@@ -31,6 +31,9 @@ export default function ReceiptReturnView({
   isLoading,
   formData,
   customerName,
+  supplierName,
+  selectedOrderCode,
+  isFixedRoute,
   selectedProducts,
   errors,
   exchangeProducts,
@@ -46,6 +49,11 @@ export default function ReceiptReturnView({
   exchangeDifference,
   projectedTotal,
   projectedRemaining,
+  handleTypeChange,
+  openModalSelectOrder,
+  handleClearOrder,
+  openModalSelectCustomer,
+  openModalSelectSupplier,
   openModalSelectProduct,
   handleProductQuantityChange,
   handleRemoveProduct,
@@ -55,33 +63,40 @@ export default function ReceiptReturnView({
   handleFormChange,
   handleSubmit,
 }: ReturnType<typeof useReceiptReturnForm>) {
+  const isSupplier = formData.type === ReceiptReturnType.SUPPLIER;
+
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/tabs/orders" />
+            <IonBackButton defaultHref="/tabs/extended/receipt-returns" />
           </IonButtons>
-          <IonTitle>Tạo phiếu đổi/trả hàng</IonTitle>
+          <IonTitle>
+            {isSupplier ? "Tạo phiếu trả hàng NCC" : "Tạo phiếu đổi/trả hàng"}
+          </IonTitle>
         </IonToolbar>
       </IonHeader>
 
       <IonContent className="bg-gray-50">
         <div className="px-4 py-3 space-y-3">
-          {/* Customer Information Card */}
-          <div className="bg-white rounded-xl border border-gray-200/90 shadow-2xs p-3.5">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-[11px] font-medium text-gray-500 block">Khách hàng</span>
-                <span className="text-sm font-semibold text-gray-900 truncate block">{customerName}</span>
-              </div>
-              {formData.refId && (
-                <span className="text-[11px] font-mono bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
-                  {formData.refType === "debt" ? "Công nợ" : "Đơn hàng"}
-                </span>
-              )}
-            </div>
-          </div>
+          {/* Partner & Order Reference Section */}
+          <ReturnPartnerSection
+            type={formData.type}
+            isFixedRoute={isFixedRoute}
+            isDebt={isDebt}
+            customerName={customerName}
+            supplierName={supplierName}
+            selectedOrderCode={selectedOrderCode}
+            refId={formData.refId}
+            refType={formData.refType}
+            errorSupplier={errors.supplier}
+            onTypeChange={handleTypeChange}
+            onSelectOrder={openModalSelectOrder}
+            onClearOrder={handleClearOrder}
+            onSelectCustomer={openModalSelectCustomer}
+            onSelectSupplier={openModalSelectSupplier}
+          />
 
           {/* Product Selection Section */}
           <div className="bg-white rounded-xl border border-gray-200/90 shadow-2xs p-3.5">
@@ -193,7 +208,7 @@ export default function ReceiptReturnView({
             {!isDebt && (!isExchange || exchangeDifference !== 0) && (
               <div>
                 <label className="text-xs font-semibold text-gray-700 block mb-1.5">
-                  Phương thức thanh toán
+                  Phương thức hoàn tiền
                 </label>
                 <AppRadioGroup
                   name="Phương thức thanh toán"
@@ -214,9 +229,12 @@ export default function ReceiptReturnView({
                 Lý do trả hàng
               </label>
               <ReturnReasonSelect
+                type={formData.type}
                 canExchange={canExchange}
                 value={formData.reason}
                 onChange={(value) => handleFormChange("reason", value)}
+                customReason={formData.customReason}
+                onCustomReasonChange={(value) => handleFormChange("customReason", value)}
                 error={errors.reason}
               />
             </div>
@@ -267,7 +285,8 @@ export default function ReceiptReturnView({
               expand="block"
               fill="outline"
               disabled={isLoading}
-              data-cy="return-save-draft" onClick={() => handleSubmit(ReceiptReturnStatus.DRAFT)}
+              data-cy="return-save-draft"
+              onClick={() => handleSubmit(ReceiptReturnStatus.DRAFT)}
             >
               Lưu nháp
             </IonButton>
@@ -275,7 +294,8 @@ export default function ReceiptReturnView({
           <IonButton
             expand="block"
             size="default"
-            data-cy="return-confirm" onClick={() => handleSubmit(ReceiptReturnStatus.COMPLETED)}
+            data-cy="return-confirm"
+            onClick={() => handleSubmit(ReceiptReturnStatus.COMPLETED)}
             disabled={isLoading}
             className="flex-1"
           >

@@ -1,6 +1,6 @@
 import { FC, useMemo } from "react";
 import { useHistory } from "react-router";
-import { formatCurrencyWithoutSymbol } from "@/helpers/formatters";
+import { formatCurrencyWithoutSymbol, formatProductCode } from "@/helpers/formatters";
 import { getS3ImageUrl } from "@/helpers/fileHelper";
 import { AppCard } from "@/components/UI";
 import { IProduct } from "@/types";
@@ -91,7 +91,7 @@ const ProductCard: FC<ProductCardProps> = ({ product, isShowCostPrice, onQuickBa
           </div>
         </div>
         {/* Product code */}
-        <p className="text-gray-500 text-sm mt-1">{product.code}</p>
+        <p className="text-gray-500 text-sm mt-1">{formatProductCode(product.code || product.productCode)}</p>
         {/* Prices */}
         <div className="flex gap-4 mt-2">
           {isShowCostPrice ? (
