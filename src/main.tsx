@@ -26,7 +26,7 @@ if (!container) {
 const root = createRoot(container!);
 const environment = getEnvironment();
 
-if ([Environment.PRODUCTION, Environment.STAGING].includes(environment)) {
+if (environment === Environment.PRODUCTION) {
   root.render(
     <React.StrictMode>
       <PostHogProvider

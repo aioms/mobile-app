@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { IonInput, IonButton, IonIcon, IonChip, useIonToast } from "@ionic/react";
 import { createOutline, checkmarkOutline, closeOutline } from "ionicons/icons";
 
-import { formatCurrency, formatCurrencyInput, parseCurrencyInput } from "@/helpers/formatters";
+import { formatCurrency, formatCurrencyInput, parseCurrencyInput, formatProductCode } from "@/helpers/formatters";
 import { useLoading } from "@/hooks/useLoading";
 import useReceiptDebt from "@/hooks/apis/useReceiptDebt";
 import { IEditableProductItemProps } from "../receiptDebtUpdate.d";
@@ -173,7 +173,7 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
           {truncateProductName(item.productName)}
         </h4>
         <div className="flex flex-col items-start space-y-2">
-          <span className="text-base text-gray-600">Mã: {item.code}</span>
+          <span className="text-base text-gray-600">Mã: {formatProductCode(item.code)}</span>
           {/* Show ship now badge */}
           {item.metadata?.shipNow && (
             <span className="inline-flex items-center px-3 py-1 bg-yellow-50 text-yellow-600 text-sm font-medium rounded-full">

@@ -1,6 +1,6 @@
 import { FC, useState, useEffect } from "react";
 import { Trash2, Plus, Minus } from "lucide-react";
-import { formatCurrency } from "@/helpers/formatters";
+import { formatCurrency, formatProductCode } from "@/helpers/formatters";
 
 interface Props {
   id: string;
@@ -110,7 +110,7 @@ const ProductReturnItem: FC<Props> = ({
           </h3>
           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
             <span className="font-mono bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[11px]">
-              Mã SP: {code || "N/A"}
+              Mã SP: {formatProductCode(code) || "N/A"}
             </span>
             {originalQuantity && (
               <>

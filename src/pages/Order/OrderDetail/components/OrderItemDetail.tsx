@@ -1,5 +1,5 @@
 import React from "react";
-import { formatCurrency } from "@/helpers/formatters";
+import { formatCurrency, formatProductCode } from "@/helpers/formatters";
 
 interface OrderItemDetailProps {
   name: string;
@@ -24,7 +24,7 @@ const OrderItemDetail: React.FC<OrderItemDetailProps> = ({
         <div>
           <div className="font-medium">{name}</div>
           <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
-            Mã SP: {code}
+            Mã SP: {formatProductCode(code)}
           </div>
           <div className="flex items-center gap-2 mt-1">
             {returnedQuantity > 0 && (

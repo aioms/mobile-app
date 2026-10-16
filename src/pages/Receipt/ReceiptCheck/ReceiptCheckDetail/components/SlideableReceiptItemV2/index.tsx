@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { IonChip } from "@ionic/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { formatProductCode } from "@/helpers/formatters";
 
 interface ReceiptItemData {
   id: string;
@@ -189,7 +190,7 @@ const SlideableReceiptItem: React.FC<SlideableReceiptItemProps> = ({
                     {truncateProductName(currentItem.productName)}
                   </div>
                   <div className="text-[12px] text-gray-500 truncate">
-                    {currentItem.code}
+                    {formatProductCode(currentItem.code || currentItem.productCode)}
                   </div>
                 </div>
               </td>

@@ -17,6 +17,7 @@ import {
   arrowDownOutline,
 } from "ionicons/icons";
 import { OrderItemsSectionProps } from "./orderUpdate.d";
+import { formatProductCode } from "@/helpers/formatters";
 
 /**
  * @deprecated TODO: Remove this in future
@@ -212,7 +213,7 @@ const OrderItemsSection: React.FC<OrderItemsSectionProps> = React.memo(({
                           <h4 className="font-medium">{item.productName}</h4>
                         </IonText>
                         <IonText color="medium">
-                          <p className="text-sm">Mã: {item.code}</p>
+                          <p className="text-sm">Mã: {formatProductCode(item.code)}</p>
                         </IonText>
                       </div>
                       <IonButton

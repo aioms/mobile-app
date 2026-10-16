@@ -1,7 +1,7 @@
 import { FC, useEffect, useMemo, useState } from "react";
 import { IonIcon, IonSpinner, useIonToast } from "@ionic/react";
 
-import { formatCurrencyWithoutSymbol, parseCurrencyInput } from "@/helpers/formatters";
+import { formatCurrencyWithoutSymbol, parseCurrencyInput, formatProductCode } from "@/helpers/formatters";
 import { createOutline, checkmark, closeOutline, trashOutline } from "ionicons/icons";
 import useReceiptItem from "@/hooks/apis/useReceiptItem";
 import { DiscountType } from "@/common/enums";
@@ -242,7 +242,7 @@ const ReceiptItem: FC<Props> = (
         <div className="flex items-start justify-between">
           <div className="flex-1 pr-2">
             <h3 className="font-medium text-gray-900 text-sm leading-tight">{productName}</h3>
-            <p className="text-gray-500 text-xs mt-0.5">{code}</p>
+            <p className="text-gray-500 text-xs mt-0.5">{formatProductCode(code || productCode)}</p>
           </div>
           {!disabled && onDelete && (
             <button

@@ -5,7 +5,7 @@ import { trashOutline, createOutline } from "ionicons/icons";
 
 import { IReceiptItemPeriod } from "@/types/receipt-debt.type";
 import { getDate } from "@/helpers/date";
-import { formatCurrency, formatCurrencyWithoutSymbol, parseCurrencyInput } from "@/helpers/formatters";
+import { formatCurrency, formatCurrencyWithoutSymbol, parseCurrencyInput, formatProductCode } from "@/helpers/formatters";
 
 type Props = {
   items: IReceiptItemPeriod[]; // Changed to accept array of items
@@ -432,7 +432,7 @@ const PurchasePeriod: FC<Props> = ({
         {/* Product Code and Price */}
         <div className="flex items-center justify-between mb-3 mt-1">
           <span className="text-base text-gray-600 mr-2 min-w-max">
-            Mã: {currentItem.code}
+            Mã: {formatProductCode(currentItem.code)}
           </span>
           <div className="flex items-center">
             {editable && editingPrice ? (

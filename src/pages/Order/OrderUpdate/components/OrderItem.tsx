@@ -7,6 +7,7 @@ import {
   formatCurrencyWithoutSymbol,
   formatCurrencyInput,
   parseCurrencyInput,
+  formatProductCode,
 } from "@/helpers/formatters";
 import { OrderStatus } from "@/common/enums/order";
 
@@ -194,7 +195,7 @@ const OrderItem: FC<Props> = memo(
         <div className="flex justify-between items-start mb-2">
           <div>
             <div className="font-medium">{productName}</div>
-            <div className="text-xs text-gray-500">Mã SP: {code}</div>
+            <div className="text-xs text-gray-500">Mã SP: {formatProductCode(code)}</div>
           </div>
           {!isOrderPaid && (
             <IonButton

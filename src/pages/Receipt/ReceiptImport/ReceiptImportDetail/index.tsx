@@ -45,7 +45,7 @@ import {
   RECEIPT_IMPORT_STATUS,
 } from "@/common/constants/receipt-import.constant";
 
-import { dayjsFormat, formatCurrency } from "@/helpers/formatters";
+import { dayjsFormat, formatCurrency, formatProductCode } from "@/helpers/formatters";
 import { toISODateTime } from "@/helpers/date";
 
 import { Refresher } from "@/components/Refresher/Refresher";
@@ -1173,7 +1173,7 @@ const ReceiptImportDetail: React.FC = () => {
                     <p className="text-sm text-blue-600 font-medium">Đã quét:</p>
                     {Array.from(scannedItems.entries()).map(([code, quantity]) => (
                       <div key={code} className="flex justify-between text-sm text-blue-700">
-                        <span>{code}</span>
+                        <span>{formatProductCode(code)}</span>
                         <span>x{quantity}</span>
                       </div>
                     ))}

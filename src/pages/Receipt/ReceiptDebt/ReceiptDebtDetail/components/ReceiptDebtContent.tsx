@@ -2,7 +2,7 @@ import { IonButton, IonIcon } from "@ionic/react";
 import { calendarOutline, removeCircleOutline } from "ionicons/icons";
 import { AppBadge, AppCard } from "@/components/UI";
 import ReturnExchangeHistory from "@/components/ReturnExchangeHistory";
-import { dayjsFormat, formatCurrency, formatCurrencyWithoutSymbol } from "@/helpers/formatters";
+import { dayjsFormat, formatCurrency, formatCurrencyWithoutSymbol, formatProductCode } from "@/helpers/formatters";
 import { getDate } from "@/helpers/date";
 import {
   getStatusColor,
@@ -151,7 +151,7 @@ export default function ReceiptDebtContent(
                         </h4>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-xs text-gray-500 font-medium">
-                            Mã: {item.code}
+                            Mã: {formatProductCode(item.code)}
                           </span>
                           <span className="text-gray-300">•</span>
                           <span className="text-xs text-gray-600 font-medium">

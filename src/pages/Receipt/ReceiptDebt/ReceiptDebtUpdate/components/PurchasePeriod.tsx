@@ -2,7 +2,7 @@ import { FC } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { IProductItem } from "@/types/product.type";
-import { formatCurrency } from "@/helpers/formatters";
+import { formatCurrency, formatProductCode } from "@/helpers/formatters";
 
 type Props = {
   item: IProductItem;
@@ -45,7 +45,7 @@ const PurchasePeriod: FC<Props> = ({
           {truncateProductName(item.productName)}
         </h4>
         <div className="flex items-center space-x-2 text-base text-gray-600">
-          <span>Mã: {item.code}</span>
+          <span>Mã: {formatProductCode(item.code)}</span>
         </div>
       </div>
 

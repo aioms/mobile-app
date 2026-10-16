@@ -1,6 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { useIonModal, useIonToast, useIonViewWillEnter } from "@ionic/react";
-import { OverlayEventDetail } from "@ionic/core";
+import { useIonToast, useIonViewWillEnter } from "@ionic/react";
 import { useHistory, useLocation } from "react-router-dom";
 import { useLoading } from "@/hooks";
 import useReceiptReturn from "@/hooks/apis/useReceiptReturn";
@@ -13,33 +12,28 @@ import {
 } from "@/types/receipt-return.type";
 import { PaymentMethod } from "@/common/enums/payment";
 import { getDate } from "@/helpers/date";
-import ModalSelectReturnProduct from "../components/ModalSelectReturnProduct";
-import ModalSelectExchangeProduct, { ExchangeProductSelection } from "../components/ModalSelectExchangeProduct";
 import { calculateReturnTotals } from "@/helpers/receipt-return-totals";
 import { getNumberFromStringOrThrow } from "@/helpers/common";
+import {
+  useReceiptReturnModals,
+  OrderItem,
+} from "./useReceiptReturnModals";
+import type { ExchangeProductSelection } from "../components/ModalSelectExchangeProduct";
 
 interface LocationState {
-  refId: string;
-  refType: "order" | "debt";
+  refId?: string;
+  refType?: "order" | "debt";
+  type?: ReceiptReturnType;
   customerId?: string;
   customerName?: string;
+  supplierId?: string;
+  supplierName?: string;
   orderTotal?: number;
   orderDiscount?: number;
   debtTotal?: number;
   debtPaidAmount?: number;
   debtStatus?: string;
-  orderProducts?: Array<{
-    id: string;
-    productId: string;
-    code: string;
-    productName: string;
-    quantity: number;
-    price: number;
-    vatRate?: number;
-    returnedQuantity?: number;
-    periodId?: string;
-    periodDate?: string;
-  }>;
+  orderProducts?: OrderItem[];
 }
 
 export default function useReceiptReturnForm() {
@@ -50,18 +44,27 @@ export default function useReceiptReturnForm() {
   const requestId = useRef(crypto.randomUUID());
   const submitting = useRef(false);
   const isDebt = location.state?.refType === "debt";
-  const canExchange = !isDebt || location.state?.debtStatus === "completed";
+  const isFixedRoute = Boolean(location.state?.refId && (isDebt || location.state?.orderProducts?.length));
+
   const { isLoading, withLoading } = useLoading();
   const { create: createReceiptReturn } = useReceiptReturn();
 
+  const initialType =
+    location.state?.type ||
+    (location.state?.supplierId
+      ? ReceiptReturnType.SUPPLIER
+      : ReceiptReturnType.CUSTOMER);
+
   const [formData, setFormData] = useState<IReceiptReturnFormData>({
     note: "",
-    reason: "khac",
-    type: ReceiptReturnType.CUSTOMER,
+    reason: initialType === ReceiptReturnType.SUPPLIER ? "Ngừng bán" : "Sản phẩm lỗi",
+    customReason: "",
+    type: initialType,
     returnDate: getDate(new Date()).format(),
-    refId: location.state?.refId || "",
-    refType: location.state?.refType || "order",
+    refId: location.state?.refId,
+    refType: location.state?.refType,
     customer: location.state?.customerId,
+    supplier: location.state?.supplierId,
     items: [],
     paymentMethod: PaymentMethod.CASH,
   });
@@ -69,80 +72,77 @@ export default function useReceiptReturnForm() {
   const [customerName, setCustomerName] = useState<string>(
     location.state?.customerName || "Khách lẻ",
   );
-  const [selectedProducts, setSelectedProducts] = useState<IReceiptReturnItem[]>(
-    [],
+  const [supplierName, setSupplierName] = useState<string>(
+    location.state?.supplierName || "Chọn nhà cung cấp",
   );
+  const [selectedOrderCode, setSelectedOrderCode] = useState<string>(
+    location.state?.refType === "order" && location.state?.refId ? String(location.state.refId).slice(0, 8) : "",
+  );
+
+  const [orderProducts, setOrderProducts] = useState<OrderItem[]>(
+    location.state?.orderProducts || [],
+  );
+  const orderProductsRef = useRef<OrderItem[]>(orderProducts);
+  orderProductsRef.current = orderProducts;
+
+  const [orderTotal, setOrderTotal] = useState<number | undefined>(location.state?.orderTotal);
+  const [orderDiscount, setOrderDiscount] = useState<number | undefined>(location.state?.orderDiscount);
+
+  const [selectedProducts, setSelectedProducts] = useState<IReceiptReturnItem[]>([]);
   const [preserveVat, setPreserveVat] = useState(true);
-  const isExchange = formData.reason === "doi-san-pham";
+  const isExchange =
+    formData.reason === "doi-san-pham" || formData.reason === "Đổi sản phẩm";
   const keepVat = isExchange && !isDebt && preserveVat;
+  const canExchange = Boolean((!isDebt || location.state?.debtStatus === "completed") && (formData.refType === "order" || formData.refId));
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [exchangeProducts, setExchangeProducts] = useState<ExchangeProductSelection[]>([]);
   const exchangeProductsRef = useRef<ExchangeProductSelection[]>([]);
   exchangeProductsRef.current = exchangeProducts;
 
-  // Modal for product selection
-  const [presentModalProduct, dismissModalProduct] = useIonModal(
-    ModalSelectReturnProduct,
-    {
-      dismiss: (data: any, role: string) => dismissModalProduct(data, role),
-      orderProducts: location.state?.orderProducts || [],
-      refType: location.state?.refType || "order",
-    },
-  );
+  const {
+    openModalSelectOrder,
+    handleClearOrder,
+    openModalSelectCustomer,
+    openModalSelectSupplier,
+    openModalSelectProduct,
+    openModalSelectExchangeProduct,
+  } = useReceiptReturnModals({
+    formData,
+    setFormData,
+    customerName,
+    setCustomerName,
+    setSupplierName,
+    setSelectedOrderCode,
+    orderProductsRef,
+    setOrderProducts,
+    setOrderTotal,
+    setOrderDiscount,
+    setSelectedProducts,
+    errors,
+    setErrors,
+    exchangeProductsRef,
+    setExchangeProducts,
+  });
 
-  const [presentModalExchangeProduct, dismissModalExchangeProduct] = useIonModal(
-    ModalSelectExchangeProduct,
-    {
-      dismiss: (data: unknown, role: string) => dismissModalExchangeProduct(data, role),
-      getSelectedProducts: () => exchangeProductsRef.current,
-    },
-  );
-
-  const openModalSelectProduct = () => {
-    presentModalProduct({
-      onWillDismiss: (event: CustomEvent<OverlayEventDetail>) => {
-        const { role, data } = event.detail;
-
-        if (role === "confirm" && data) {
-          // Merge new products with existing ones
-          setSelectedProducts((prev) => {
-            const existingIds = new Set(prev.map((p) => p.id));
-            const newProducts = data.filter(
-              (p: IReceiptReturnItem) => !existingIds.has(p.id),
-            );
-            return [...prev, ...newProducts];
-          });
-
-          // Clear error if products are selected
-          if (errors.products) {
-            setErrors((prev) => {
-              const newErrors = { ...prev };
-              delete newErrors.products;
-              return newErrors;
-            });
-          }
-        }
-      },
-    });
-  };
-
-  const openModalSelectExchangeProduct = () => {
-    presentModalExchangeProduct({
-      onWillDismiss: (event: CustomEvent<OverlayEventDetail<ExchangeProductSelection[]>>) => {
-        const { role, data } = event.detail;
-        if (role !== "confirm" || !data) return;
-
-        setExchangeProducts((current) => {
-          const currentById = new Map(current.map((item) => [item.id, item]));
-          return data.map((item) => currentById.get(item.id) || item);
-        });
-        setErrors((current) => {
-          const next = { ...current };
-          delete next.exchangeProducts;
-          return next;
-        });
-      },
-    });
+  const handleTypeChange = (type: ReceiptReturnType) => {
+    if (isFixedRoute) return;
+    setFormData((prev) => ({
+      ...prev,
+      type,
+      refId: undefined,
+      refType: undefined,
+      customer: undefined,
+      supplier: undefined,
+      reason:
+        type === ReceiptReturnType.SUPPLIER ? "Ngừng bán" : "Sản phẩm lỗi",
+      customReason: "",
+    }));
+    setSelectedOrderCode("");
+    setOrderProducts([]);
+    setSelectedProducts([]);
+    setExchangeProducts([]);
+    setErrors({});
   };
 
   const handleProductQuantityChange = (id: string, quantity: number) => {
@@ -173,7 +173,7 @@ export default function useReceiptReturnForm() {
           return { ...item, vatRate: Math.min(100, Math.max(0, numericValue)) };
         }
         return { ...item, unitPrice: Math.max(0, numericValue) };
-      })
+      }),
     );
   };
 
@@ -185,25 +185,28 @@ export default function useReceiptReturnForm() {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
+      ...(field === "reason" && value !== "Lý do khác" && value !== "khac"
+        ? { customReason: "" }
+        : {}),
     }));
 
-    // Clear error when user updates field
     if (errors[field]) {
       setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
+        const next = { ...prev };
+        delete next[field];
+        return next;
       });
     }
   };
 
   const { totalProduct, totalQuantity, totalAmount, exchangeAmount } = useMemo(
     () => calculateReturnTotals(
-      selectedProducts, exchangeProducts, location.state?.orderProducts || [],
-      isDebt, keepVat, location.state?.orderTotal, location.state?.orderDiscount, isExchange,
+      selectedProducts, exchangeProducts, orderProducts,
+      isDebt, keepVat, orderTotal, orderDiscount, isExchange,
     ),
-    [selectedProducts, exchangeProducts, location.state, isDebt, keepVat, isExchange],
+    [selectedProducts, exchangeProducts, orderProducts, isDebt, keepVat, orderTotal, orderDiscount, isExchange],
   );
+
   const exchangeDifference = exchangeAmount - totalAmount;
   const projectedTotal = Math.max(
     0,
@@ -214,20 +217,24 @@ export default function useReceiptReturnForm() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.refId) {
-      newErrors.refId = "Thiếu thông tin đơn hàng tham chiếu";
+    if (isExchange && !formData.refId) {
+      newErrors.refId = "Đổi sản phẩm yêu cầu chọn đơn hàng tham chiếu";
     }
 
     if (selectedProducts.length === 0) {
-      newErrors.products = "Vui lòng chọn ít nhất 1 sản phẩm";
+      newErrors.products = "Vui lòng chọn ít nhất 1 sản phẩm trả";
     }
 
-    if (formData.reason === "doi-san-pham" && exchangeProducts.length === 0) {
+    if (formData.type === ReceiptReturnType.SUPPLIER && !formData.supplier) {
+      newErrors.supplier = "Vui lòng chọn nhà cung cấp";
+    }
+
+    if (isExchange && exchangeProducts.length === 0) {
       newErrors.exchangeProducts = "Vui lòng chọn sản phẩm đổi";
     }
 
     if (
-      formData.reason === "doi-san-pham" &&
+      isExchange &&
       exchangeProducts.some((item) =>
         item.quantity >
           Number(item.inventory || 0) +
@@ -243,7 +250,7 @@ export default function useReceiptReturnForm() {
     }
 
     if (
-      formData.reason === "doi-san-pham" &&
+      isExchange &&
       exchangeProducts.some((item) => !Number.isFinite(item.vatRate) || item.vatRate < 0 || item.vatRate > 100)
     ) {
       newErrors.exchangeProducts = "VAT sản phẩm đổi phải từ 0% đến 100%";
@@ -265,7 +272,7 @@ export default function useReceiptReturnForm() {
     if (submitting.current) return;
     if (isExchange && !canExchange) {
       await presentToast({
-        message: "Chỉ được đổi sản phẩm khi phiếu thu đã hoàn thành",
+        message: "Chỉ được đổi sản phẩm khi đơn hàng hoặc phiếu thu đã hoàn thành",
         duration: 3000,
         color: "danger",
       });
@@ -286,33 +293,48 @@ export default function useReceiptReturnForm() {
     submitting.current = true;
     try {
       await withLoading(async () => {
+        const effectiveReason =
+          (formData.reason === "Lý do khác" || formData.reason === "khac") &&
+          formData.customReason?.trim()
+            ? formData.customReason.trim()
+            : formData.reason;
+
         const submissionData: CreateReceiptReturnRequestDto = {
           note: formData.note,
           totalQuantity,
           totalProduct,
           totalAmount,
-          reason: formData.reason,
-          type: ReceiptReturnType.CUSTOMER,
+          reason: effectiveReason,
+          type: formData.type,
           status,
           returnDate: formData.returnDate,
-          refId: formData.refId,
-          refType: formData.refType,
-          customer: formData.customer,
-          items: selectedProducts.map((item) => ({
-            id: item.id,
-            receiptItemId: isDebt ? item.id : undefined,
-            productId: item.productId,
-            productCode: getNumberFromStringOrThrow(item.code),
-            productName: item.productName,
-            quantity: item.quantity,
-            costPrice: item.costPrice,
-            metadata: {
-              returnedQuantity: item.quantity,
-              ...item.metadata,
-            },
-          })),
+          refId: formData.refId || undefined,
+          refType: formData.refType || undefined,
+          customer: formData.type === ReceiptReturnType.CUSTOMER ? formData.customer : undefined,
+          supplier: formData.type === ReceiptReturnType.SUPPLIER ? formData.supplier : undefined,
+          items: selectedProducts.map((item) => {
+            let pCode = 0;
+            try {
+              pCode = getNumberFromStringOrThrow(item.code || String(item.productCode || "0"));
+            } catch {
+              pCode = 0;
+            }
+            return {
+              id: item.id,
+              receiptItemId: isDebt ? item.id : undefined,
+              productId: item.productId,
+              productCode: pCode,
+              productName: item.productName,
+              quantity: item.quantity,
+              costPrice: item.costPrice,
+              metadata: {
+                returnedQuantity: item.quantity,
+                ...item.metadata,
+              },
+            };
+          }),
           paymentMethod: formData.paymentMethod,
-          operationType: formData.reason === "doi-san-pham" ? "exchange" : "return",
+          operationType: isExchange ? "exchange" : "return",
           vatHandling: keepVat ? "preserve" : undefined,
           exchangeItems: exchangeProducts.map((item) => ({
             productId: item.id,
@@ -344,33 +366,44 @@ export default function useReceiptReturnForm() {
     }
   };
 
-  // Validate that we have necessary data from navigation
   useIonViewWillEnter(() => {
-    if (!location.state?.refId) {
-      presentToast({
-        message: "Thiếu thông tin đơn hàng. Vui lòng thử lại.",
-        duration: 2000,
-        position: "top",
-        color: "danger",
-      });
-      history.goBack();
-      return;
-    }
     requestId.current = crypto.randomUUID();
     submitting.current = false;
     setSelectedProducts([]);
     setExchangeProducts([]);
     setPreserveVat(true);
     setErrors({});
-    setCustomerName(location.state.customerName || "Khách lẻ");
+
+    const initialType =
+      location.state?.type ||
+      (location.state?.supplierId
+        ? ReceiptReturnType.SUPPLIER
+        : ReceiptReturnType.CUSTOMER);
+
+    setCustomerName(location.state?.customerName || "Khách lẻ");
+    setSupplierName(location.state?.supplierName || "Chọn nhà cung cấp");
+    setSelectedOrderCode(
+      location.state?.refType === "order" && location.state?.refId
+        ? String(location.state.refId).slice(0, 8)
+        : "",
+    );
+    setOrderProducts(location.state?.orderProducts || []);
+    setOrderTotal(location.state?.orderTotal);
+    setOrderDiscount(location.state?.orderDiscount);
+
     setFormData({
       note: "",
-      reason: "khac",
-      type: ReceiptReturnType.CUSTOMER,
+      reason:
+        initialType === ReceiptReturnType.SUPPLIER
+          ? "Ngừng bán"
+          : "Sản phẩm lỗi",
+      customReason: "",
+      type: initialType,
       returnDate: getDate(new Date()).format(),
-      refId: location.state.refId,
-      refType: location.state.refType,
-      customer: location.state.customerId,
+      refId: location.state?.refId,
+      refType: location.state?.refType,
+      customer: location.state?.customerId,
+      supplier: location.state?.supplierId,
       items: [],
       paymentMethod: PaymentMethod.CASH,
     });
@@ -380,6 +413,9 @@ export default function useReceiptReturnForm() {
     isLoading,
     formData,
     customerName,
+    supplierName,
+    selectedOrderCode,
+    isFixedRoute,
     selectedProducts,
     errors,
     exchangeProducts,
@@ -395,6 +431,11 @@ export default function useReceiptReturnForm() {
     setPreserveVat,
     projectedTotal,
     projectedRemaining,
+    handleTypeChange,
+    openModalSelectOrder,
+    handleClearOrder,
+    openModalSelectCustomer,
+    openModalSelectSupplier,
     openModalSelectProduct,
     handleProductQuantityChange,
     handleRemoveProduct,

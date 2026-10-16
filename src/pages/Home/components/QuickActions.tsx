@@ -174,21 +174,36 @@ const QuickActions: React.FC = () => {
     [canViewCashBook, history, presentToast, startScan]
   );
 
+  const gridColsClass = useMemo(() => {
+    switch (actions.length) {
+      case 1:
+        return "grid-cols-1";
+      case 2:
+        return "grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-4";
+      case 3:
+        return "grid-cols-3 sm:grid-cols-3 gap-2.5 sm:gap-4";
+      case 4:
+        return "grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4";
+      default:
+        return "grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4";
+    }
+  }, [actions.length]);
+
   return (
     <div className="mb-6">
       <h2 className="text-base sm:text-lg font-bold text-gray-800 mb-3">Thao tác nhanh</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+      <div className={`grid ${gridColsClass}`}>
         {actions.map((action, index) => (
           <button
             key={index}
             type="button"
             onClick={action.onAction}
-            className="bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-100 shadow-sm flex flex-col items-center justify-center active:scale-[0.97] hover:shadow-md transition-all group cursor-pointer"
+            className="bg-white rounded-2xl p-3 sm:p-4 border border-gray-100 shadow-sm flex flex-col items-center justify-center active:scale-[0.97] hover:shadow-md transition-all group cursor-pointer min-h-[84px] sm:min-h-[96px]"
           >
-            <div className={`${action.color} p-2.5 rounded-xl mb-2 flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform`}>
-              <IonIcon icon={action.icon} className="text-lg sm:text-xl" />
+            <div className={`${action.color} p-2 sm:p-2.5 rounded-xl mb-1.5 sm:mb-2 flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform`}>
+              <IonIcon icon={action.icon} className="text-base sm:text-xl" />
             </div>
-            <span className="text-xs sm:text-sm font-medium text-gray-700 text-center line-clamp-1">{action.label}</span>
+            <span className="text-[11px] sm:text-sm font-medium text-gray-700 text-center leading-tight line-clamp-1">{action.label}</span>
           </button>
         ))}
       </div>

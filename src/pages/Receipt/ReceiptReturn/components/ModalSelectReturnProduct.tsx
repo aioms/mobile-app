@@ -13,7 +13,7 @@ import {
   IonItemGroup,
 } from "@ionic/react";
 import { IReceiptReturnItem } from "@/types/receipt-return.type";
-import { formatCurrency } from "@/helpers/formatters";
+import { formatCurrency, formatProductCode } from "@/helpers/formatters";
 import { getNumberFromStringOrThrow } from "@/helpers/common";
 import { getDate } from "@/helpers/date";
 
@@ -32,11 +32,18 @@ interface OrderItem {
 
 interface Props {
   dismiss: (data?: any, role?: string) => void;
-  orderProducts: Array<OrderItem>;
-  refType: "order" | "debt";
+  orderProducts?: Array<OrderItem>;
+  getOrderProducts?: () => Array<OrderItem>;
+  refType?: "order" | "debt";
 }
 
-const ModalSelectReturnProduct: FC<Props> = ({ dismiss, orderProducts, refType }) => {
+const ModalSelectReturnProduct: FC<Props> = ({
+  dismiss,
+  orderProducts = [],
+  getOrderProducts,
+  refType = "order",
+}) => {
+  const effectiveOrderProducts = getOrderProducts ? getOrderProducts() : orderProducts;
   const [selectedProducts, setSelectedProducts] = useState<
     Map<string, IReceiptReturnItem>
   >(new Map());
@@ -80,7 +87,7 @@ const ModalSelectReturnProduct: FC<Props> = ({ dismiss, orderProducts, refType }
     if (refType !== "debt") return [];
 
     const groups: Record<string, { date: string; items: OrderItem[] }> = {};
-    orderProducts.forEach((item) => {
+    effectiveOrderProducts.forEach((item) => {
       const pId = item.periodId || "unknown";
       if (!groups[pId]) {
         groups[pId] = {
@@ -94,7 +101,7 @@ const ModalSelectReturnProduct: FC<Props> = ({ dismiss, orderProducts, refType }
     return Object.entries(groups).sort(
       ([, a], [, b]) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-  }, [orderProducts, refType]);
+  }, [effectiveOrderProducts, refType]);
 
   const renderProductItem = (product: OrderItem) => {
     const uniqueId = product.periodId ? `${product.id}_${product.periodId}` : product.id;
@@ -123,7 +130,7 @@ const ModalSelectReturnProduct: FC<Props> = ({ dismiss, orderProducts, refType }
             {product.productName}
           </h2>
           <div className="flex justify-between items-center mt-1">
-            <p className="text-xs text-gray-500">Mã: {product.code}</p>
+            <p className="text-xs text-gray-500">Mã: {formatProductCode(product.code)}</p>
             <p className="text-sm font-semibold text-blue-600">
               {formatCurrency(product.price)}
             </p>
@@ -164,7 +171,7 @@ const ModalSelectReturnProduct: FC<Props> = ({ dismiss, orderProducts, refType }
       </IonHeader>
       <IonContent className="bg-gray-50">
         <div className="p-4">
-          {orderProducts.length === 0 ? (
+          {effectiveOrderProducts.length === 0 ? (
             <div className="text-center text-gray-500 py-8 bg-white rounded-lg border border-dashed border-gray-300">
               Không có sản phẩm để trả
             </div>
@@ -191,7 +198,7 @@ const ModalSelectReturnProduct: FC<Props> = ({ dismiss, orderProducts, refType }
           ) : (
             <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
               <IonList className="ion-no-padding">
-                {orderProducts.map(renderProductItem)}
+                {effectiveOrderProducts.map(renderProductItem)}
               </IonList>
             </div>
           )}

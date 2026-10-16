@@ -1,4 +1,4 @@
-import { formatCurrency, parseCurrencyInput } from "@/helpers/formatters";
+import { formatCurrency, parseCurrencyInput, formatProductCode } from "@/helpers/formatters";
 import {
   IonButton,
   IonFabButton,
@@ -93,7 +93,7 @@ const ReceiptItem: FC<Props> = ({
       <div className="flex items-start justify-between">
         <div className="flex-1 pr-2">
           <h3 className="font-medium text-gray-900 text-sm leading-tight">{productName}</h3>
-          <p className="text-gray-500 text-xs mt-0.5">{code}</p>
+          <p className="text-gray-500 text-xs mt-0.5">{formatProductCode(code || productCode)}</p>
           <div className="text-gray-500 text-xs mt-1">
             Tồn kho: <span className="font-medium">{inventory}</span>
           </div>

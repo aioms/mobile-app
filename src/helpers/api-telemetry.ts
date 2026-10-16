@@ -40,7 +40,7 @@ export function finishApiRequest(response: AxiosResponse) {
 export function captureClientError(error: unknown, properties: Record<string, unknown> = {}) {
   if (axios.isAxiosError(error) && (error.code === 'ERR_CANCELED' ||
     (error.response?.status && error.response.status < 500))) return;
-  if (!['production', 'staging'].includes(import.meta.env.VITE_ENV || '')) return;
+  if (import.meta.env.VITE_ENV !== 'production') return;
   if (error && typeof error === 'object') {
     if (captured.has(error)) return;
     captured.add(error);

@@ -64,3 +64,15 @@ export const parseCurrencyInput = (value: string): number => {
   // Remove all non-digit characters and parse to number
   return parseInt(value.replace(/\D/g, "")) || 0;
 };
+
+/**
+ * Format product code with "NK" prefix if missing.
+ * e.g. 7867 -> "NK7867", "NK7867" -> "NK7867", "NK07867" -> "NK07867"
+ */
+export const formatProductCode = (code?: string | number | null): string => {
+  if (code === undefined || code === null) return "";
+  const str = String(code).trim();
+  if (!str || str === "N/A") return str;
+  return str.startsWith("NK") ? str : `NK${str}`;
+};
+

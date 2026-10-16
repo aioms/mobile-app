@@ -5,6 +5,7 @@ import {
   formatCurrency,
   formatCurrencyWithoutSymbol,
   parseCurrencyInput,
+  formatProductCode,
 } from "@/helpers/formatters";
 
 import type { ExchangeProductSelection } from "./ModalSelectExchangeProduct";
@@ -117,7 +118,7 @@ const ExchangeProductItem: FC<Props> = ({ product, onChange, onRemove, preserveV
           </h3>
           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
             <span className="font-mono bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[11px]">
-              Mã SP: {product.code || "N/A"}
+              Mã SP: {formatProductCode(product.code || (product as any).productCode) || "N/A"}
             </span>
             <span className="text-gray-300">•</span>
             <span

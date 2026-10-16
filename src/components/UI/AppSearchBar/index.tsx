@@ -12,6 +12,7 @@ interface AppSearchBarProps {
   extraAction?: React.ReactNode;
   /** Debounce parent notify only. IonSearchbar always uses debounce={0} to avoid controlled-value race. */
   debounceMs?: number;
+  "data-cy"?: string;
 }
 
 const AppSearchBar: React.FC<AppSearchBarProps> = ({
@@ -23,6 +24,7 @@ const AppSearchBar: React.FC<AppSearchBarProps> = ({
   showFilter = true,
   extraAction,
   debounceMs = 500,
+  'data-cy': dataCy,
 }) => {
   // Local display value updates on every keystroke so controlled `value` never lags behind typing.
   const [localText, setLocalText] = useState(searchText);
@@ -62,9 +64,13 @@ const AppSearchBar: React.FC<AppSearchBarProps> = ({
   };
 
   return (
-    <div className="w-full px-4 py-2 bg-white flex items-center justify-between gap-2 border-b border-gray-100">
+    <div
+      data-cy={dataCy}
+      className="w-full px-4 py-2 bg-white flex items-center justify-between gap-2 border-b border-gray-100"
+    >
       <div className="flex-1 min-w-0 flex items-center">
         <IonSearchbar
+          data-cy={dataCy ? `${dataCy}-input` : undefined}
           value={localText}
           onIonInput={(e) => {
             const next = e.detail.value ?? '';
