@@ -48,7 +48,9 @@ export interface IProductItem {
   periodId?: string;
   receiptPeriodId?: string;
   originalQuantity?: number;
+  recipientName?: string;
   metadata?: {
     shipNow?: boolean;
+    recipientName?: string;
   };
 }

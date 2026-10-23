@@ -98,6 +98,7 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
           ...periodItems[itemIndex],
           quantity: changeData.quantity,
           costPrice: changeData.costPrice,
+          recipientName: changeData.recipientName,
           hasChanges: true,
         };
       }

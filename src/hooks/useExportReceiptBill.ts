@@ -171,38 +171,45 @@ async function exportAsExcel({
   rows.push([]);
 
   // Table header
-  rows.push(["Tên Sản phẩm", "Số lượng", "Đơn giá", "Thành tiền"]);
+  rows.push(["Tên Sản phẩm", "Người nhận", "Số lượng", "Đơn giá", "Thành tiền"]);
 
   for (const group of billData.periodGroups) {
-    rows.push([`Ngày ${group.formattedDate}`, "", "", ""]);
+    rows.push([`Ngày ${group.formattedDate}`, "", "", "", ""]);
     for (const item of group.items) {
-      rows.push([item.productName, item.quantity, item.unitPrice, item.lineTotal]);
+      rows.push([
+        item.productName,
+        item.recipientName || "",
+        item.quantity,
+        item.unitPrice,
+        item.lineTotal,
+      ]);
     }
-    rows.push(["", "", "Tổng ngày", group.periodTotal]);
+    rows.push(["", "", "", "Tổng ngày", group.periodTotal]);
     if (group.discountAmount > 0) {
-      rows.push(["", "", "Chiết khấu đợt", -group.discountAmount]);
+      rows.push(["", "", "", "Chiết khấu đợt", -group.discountAmount]);
     }
     if (group.adjustmentAmount) {
-      rows.push(["", "", "Điều chỉnh đổi/trả", group.adjustmentAmount]);
+      rows.push(["", "", "", "Điều chỉnh đổi/trả", group.adjustmentAmount]);
     }
     if (group.vatAmount > 0) {
-      rows.push(["", "", "VAT đợt", group.vatAmount]);
+      rows.push(["", "", "", "VAT đợt", group.vatAmount]);
     }
   }
 
   rows.push([]);
-  rows.push(["", "", "Tổng:", billData.subtotal]);
-  rows.push(["", "", "Chiết khấu:", -billData.totalDiscount]);
-  rows.push(["", "", "Thuế (VAT):", billData.totalVat]);
-  rows.push(["", "", "Tổng phải trả:", billData.grandTotal]);
-  rows.push(["", "", "Đã Thanh toán:", paidAmount]);
-  rows.push(["", "", "Còn Lại:", remainingAmount]);
+  rows.push(["", "", "", "Tổng:", billData.subtotal]);
+  rows.push(["", "", "", "Chiết khấu:", -billData.totalDiscount]);
+  rows.push(["", "", "", "Thuế (VAT):", billData.totalVat]);
+  rows.push(["", "", "", "Tổng phải trả:", billData.grandTotal]);
+  rows.push(["", "", "", "Đã Thanh toán:", paidAmount]);
+  rows.push(["", "", "", "Còn Lại:", remainingAmount]);
 
   const ws = XLSX.utils.aoa_to_sheet(rows);
 
   // Column widths
   ws["!cols"] = [
     { wch: 30 },
+    { wch: 20 },
     { wch: 10 },
     { wch: 15 },
     { wch: 15 },

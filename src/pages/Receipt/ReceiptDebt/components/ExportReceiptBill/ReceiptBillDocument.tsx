@@ -93,13 +93,16 @@ const ReceiptBillDocument = forwardRef<HTMLDivElement, ReceiptBillDocumentProps>
           <thead>
             <tr style={{ borderBottom: "2px solid #333" }}>
               <th style={{ ...thStyle, textAlign: "left" }}>Tên Sản phẩm</th>
-              <th style={{ ...thStyle, textAlign: "center", width: 80 }}>
+              <th style={{ ...thStyle, textAlign: "left", width: 120 }}>
+                Người nhận
+              </th>
+              <th style={{ ...thStyle, textAlign: "center", width: 70 }}>
                 Số lượng
               </th>
-              <th style={{ ...thStyle, textAlign: "right", width: 110 }}>
+              <th style={{ ...thStyle, textAlign: "right", width: 105 }}>
                 Đơn giá
               </th>
-              <th style={{ ...thStyle, textAlign: "right", width: 120 }}>
+              <th style={{ ...thStyle, textAlign: "right", width: 115 }}>
                 Thành tiền
               </th>
             </tr>
@@ -116,7 +119,7 @@ const ReceiptBillDocument = forwardRef<HTMLDivElement, ReceiptBillDocumentProps>
                     Ngày {group.formattedDate}
                   </td>
                   <td
-                    colSpan={2}
+                    colSpan={3}
                     style={{
                       fontStyle: "italic",
                       textAlign: "right",
@@ -140,6 +143,9 @@ const ReceiptBillDocument = forwardRef<HTMLDivElement, ReceiptBillDocumentProps>
                   >
                     <td style={{ ...tdStyle, paddingLeft: 16 }}>
                       {item.productName}
+                    </td>
+                    <td style={{ ...tdStyle }}>
+                      {item.recipientName || "—"}
                     </td>
                     <td style={{ ...tdStyle, textAlign: "center" }}>
                       {item.quantity}

@@ -23,6 +23,7 @@ type Props = {
   ) => void;
   onRemoveProduct?: (dateKey: string, itemId: string) => void;
   onShipNowChange?: (dateKey: string, itemId: string, shipNow: boolean) => void;
+  onRecipientNameChange?: (dateKey: string, itemId: string, recipientName: string) => void;
 };
 
 const PurchasePeriodList: FC<Props> = ({
@@ -33,6 +34,7 @@ const PurchasePeriodList: FC<Props> = ({
   onPriceChange,
   onRemoveProduct,
   onShipNowChange,
+  onRecipientNameChange,
 }) => {
   const [showDownArrow, setShowDownArrow] = useState(false);
   const productItemsListRef = useRef<HTMLDivElement>(null);
@@ -166,6 +168,9 @@ const PurchasePeriodList: FC<Props> = ({
                     onRemove={(itemId) => onRemoveProduct?.(date, itemId)}
                     onShipNowChange={(itemId, shipNow) =>
                       onShipNowChange?.(date, itemId, shipNow)
+                    }
+                    onRecipientNameChange={(itemId, recipientName) =>
+                      onRecipientNameChange?.(date, itemId, recipientName)
                     }
                   />
                 </div>

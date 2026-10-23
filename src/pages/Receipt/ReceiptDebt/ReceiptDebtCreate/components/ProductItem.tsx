@@ -16,6 +16,7 @@ type Props = {
   sellingPrice: number;
   inventory?: number; // Add inventory prop for max quantity constraint
   shipNow?: boolean;
+  recipientName?: string;
   attrs?: any;
   onRowChange?: (data: any) => void;
   onRemoveItem?: () => void;
@@ -30,6 +31,7 @@ const ProductItem: FC<Props> = memo(
     sellingPrice,
     inventory,
     shipNow = false,
+    recipientName = "",
     onRowChange,
     onRemoveItem,
   }) => {
@@ -41,6 +43,7 @@ const ProductItem: FC<Props> = memo(
     const [quantityInputValue, setQuantityInputValue] = useState<string>(quantity.toString());
     const [quantityError, setQuantityError] = useState<string>("");
     const [isShipNow, setIsShipNow] = useState<boolean>(shipNow);
+    const [recipientNameInput, setRecipientNameInput] = useState<string>(recipientName);
 
     // Maximum quantity constraint based on inventory or reasonable limit
     const maxQuantity = isShipNow ? 9999 : (inventory ?? 9999);
@@ -138,27 +141,41 @@ const ProductItem: FC<Props> = memo(
     }, [quantity]);
 
     useEffect(() => {
+      if (recipientName !== undefined && recipientName !== recipientNameInput) {
+        setRecipientNameInput(recipientName);
+      }
+    }, [recipientName]);
+
+    useEffect(() => {
       if (onRowChange) {
         onRowChange({
           quantity: newQuantity,
           sellingPrice: newPrice,
           shipNow: isShipNow,
+          recipientName: recipientNameInput,
         });
       }
-    }, [newQuantity, newPrice, isShipNow]);
+    }, [newQuantity, newPrice, isShipNow, recipientNameInput]);
 
     const totalPrice = newPrice * newQuantity;
 
     return (
-      <div className={`border-b border-gray-200 py-3 px-1 rounded-md mb-3 ${isShipNow ? 'bg-orange-50 border-orange-200' : ''}`} {...attrs}>
-        <div className="flex justify-between items-start mb-2">
-          <div>
-            <div className="font-medium">{productName}</div>
-            <div className="text-xs text-gray-500">Mã SP: {formatProductCode(code)}</div>
+      <div
+        className={`border p-3.5 sm:p-4 rounded-xl mb-3.5 shadow-sm transition-colors ${
+          isShipNow
+            ? 'bg-orange-50/80 border-orange-200'
+            : 'bg-white border-gray-200'
+        }`}
+        {...attrs}
+      >
+        <div className="flex justify-between items-start mb-3">
+          <div className="pr-2">
+            <div className="font-semibold text-gray-900 text-base leading-snug">{productName}</div>
+            <div className="text-xs text-gray-500 mt-0.5">Mã SP: {formatProductCode(code)}</div>
           </div>
           <button
             type="button"
-            className="text-red-500 p-1"
+            className="text-red-500 hover:text-red-600 p-1.5 -mr-1 rounded-lg hover:bg-red-50 active:bg-red-100 transition-colors"
             onClick={onRemoveItem}
             aria-label="Xóa"
           >
@@ -166,15 +183,15 @@ const ProductItem: FC<Props> = memo(
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-2 items-center">
+        <div className="space-y-3">
           {/* Quantity Block */}
-          <div className="mb-2">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-base text-gray-700 font-medium min-w-max">
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-sm font-medium text-gray-700 min-w-max">
                 Số lượng
               </span>
               {inventory !== undefined && (
-                <span className="text-sm text-gray-500">
+                <span className="text-xs text-gray-500">
                   Tồn kho: {inventory}
                 </span>
               )}
@@ -200,8 +217,9 @@ const ProductItem: FC<Props> = memo(
                 onKeyDown={handleQuantityInputKeyPress}
                 min={minQuantity}
                 max={maxQuantity}
-                className={`quantity-input w-14 h-10 mx-2 text-center text-base font-semibold border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent ${quantityError ? 'border-red-400 bg-red-50' : 'border-gray-300'
-                  } `}
+                className={`quantity-input w-16 h-10 mx-2 text-center text-base font-semibold border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent ${
+                  quantityError ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white'
+                }`}
                 aria-label="Số lượng sản phẩm"
                 autoComplete="off"
               />
@@ -222,18 +240,32 @@ const ProductItem: FC<Props> = memo(
               </div>
             )}
           </div>
+
           {/* Price Block */}
-          <div className="flex items-center justify-between">
-            <span className="text-base text-gray-700 font-medium min-w-max">Đơn giá</span>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-medium text-gray-700 min-w-max">Đơn giá</span>
             <IonInput
               value={formattedPrice}
               onIonInput={(e) => handlePriceChange(e.detail.value)}
-              className="border border-gray-200 rounded-lg text-base font-semibold w-36 custom-padding bg-white text-right"
+              className="border border-gray-300 rounded-lg text-sm font-semibold w-44 custom-padding bg-white text-right h-10"
+            />
+          </div>
+
+          {/* Recipient Block */}
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-medium text-gray-700 min-w-max">Người nhận</span>
+            <IonInput
+              value={recipientNameInput}
+              placeholder="Tên người nhận"
+              onIonInput={(e) => setRecipientNameInput(e.detail.value || "")}
+              className="border border-gray-300 rounded-lg text-sm font-medium w-44 custom-padding bg-white text-right h-10"
             />
           </div>
         </div>
 
-        <div className="flex justify-between items-center mt-3">
+        <div className={`flex justify-between items-center mt-3.5 pt-3 border-t ${
+          isShipNow ? 'border-orange-200' : 'border-gray-100'
+        }`}>
           <div className="flex items-center">
             <IonCheckbox
               checked={isShipNow}
@@ -241,12 +273,12 @@ const ProductItem: FC<Props> = memo(
               className="ship-now-checkbox"
               style={{ "--border-radius": "4px" }}
             />
-            <span className={`ml-2 text-base ${isShipNow ? 'text-orange-600 font-semibold' : 'text-gray-700'} `}>
+            <span className={`ml-2 text-sm ${isShipNow ? 'text-orange-600 font-semibold' : 'text-gray-700 font-medium'} `}>
               Giao ngay
             </span>
           </div>
           <div className="text-right">
-            <div className="text-sm text-gray-500">
+            <div className="text-xs text-gray-500">
               {formatCurrency(newPrice)} × {newQuantity}
             </div>
             <div className="font-bold text-base text-green-600">

@@ -1,3 +1,8 @@
+ion-input.custom-padding {
+  --padding-start: 12px;
+  --padding-end: 12px;
+}
+
 .receipt-debt-ripple-parent {
   display: flex;
   align-items: center;

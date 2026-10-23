@@ -36,10 +36,10 @@ Dia chi: DS-02 - 104 Yersin, Phuong Ben Thanh, TPHCM
 Khach hang   <customer name>
 Ma phieu     <receipt code>
 
-Ten San pham    So luong    Don gia    Thanh tien
-Ngay 01/01/2025                        Tong ngay: xxx d
-  Product A         1      10,000 d      10,000 d
-  Product B         2      20,000 d      40,000 d
+Ten San pham    Nguoi nhan    So luong    Don gia    Thanh tien
+Ngay 01/01/2025                                      Tong ngay: xxx d
+  Product A       Nguyen Van A      1      10,000 d      10,000 d
+  Product B       Tran Van B        2      20,000 d      40,000 d
 ...
 
                              Tong:        635,000 d
