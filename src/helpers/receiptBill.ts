@@ -4,6 +4,7 @@ import { IProductItem } from "@/types/product.type";
 /** A single line item on the exported bill */
 export interface BillLineItem {
   productName: string;
+  recipientName?: string;
   quantity: number;
   unitPrice: number;
   lineTotal: number;
@@ -76,6 +77,7 @@ export function buildReceiptBill(
 
       lineItems.push({
         productName: item.productName,
+        recipientName: item.recipientName || item.metadata?.recipientName || "",
         quantity: qty,
         unitPrice,
         lineTotal,

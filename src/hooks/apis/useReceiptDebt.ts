@@ -66,6 +66,7 @@ const useReceiptDebt = () => {
       costPrice: number;
       receiptPeriodId?: string;
       shipNow?: boolean;
+      recipientName?: string;
     }>;
     dueDate?: string;
     note?: string;
@@ -126,6 +127,7 @@ const useReceiptDebt = () => {
         receiptItemId: string;
         quantity: number;
         costPrice: number;
+        recipientName?: string;
       }>;
     },
   ) => {

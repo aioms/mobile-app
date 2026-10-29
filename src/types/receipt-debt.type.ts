@@ -41,4 +41,5 @@ export interface IReceiptItemPeriod {
   shipNow?: boolean;
   metadata?: Record<string, any>;
   sellingPrice?: number;
+  recipientName?: string;
 }

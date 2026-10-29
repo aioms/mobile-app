@@ -14,6 +14,7 @@ type Props = {
   onPriceChange?: (itemId: string, newPrice: number) => void;
   onRemove?: (itemId: string) => void;
   onShipNowChange?: (itemId: string, shipNow: boolean) => void;
+  onRecipientNameChange?: (itemId: string, recipientName: string) => void;
   editable?: boolean;
 };
 
@@ -26,6 +27,7 @@ const PurchasePeriod: FC<Props> = ({
   onPriceChange,
   onRemove,
   onShipNowChange,
+  onRecipientNameChange,
   editable = true,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -34,6 +36,7 @@ const PurchasePeriod: FC<Props> = ({
   const [quantityInputValue, setQuantityInputValue] = useState("");
   const [quantityError, setQuantityError] = useState("");
   const [shipNowStates, setShipNowStates] = useState<Record<string, boolean>>({});
+  const [recipientNames, setRecipientNames] = useState<Record<string, string>>({});
 
   // Memoize initial quantities calculation
   const initialQuantities = useMemo(() => {
@@ -55,14 +58,20 @@ const PurchasePeriod: FC<Props> = ({
     useState<Record<string, number>>(initialQuantities);
   const [prices, setPrices] = useState<Record<string, number>>(initialPrices);
 
-  // Initialize shipNow states from items
+  // Initialize shipNow and recipientName states from items
   useEffect(() => {
     const initialShipNow = items.reduce((acc, item) => {
       acc[item.id] = item.shipNow || false;
       return acc;
     }, {} as Record<string, boolean>);
 
+    const initialRecipients = items.reduce((acc, item) => {
+      acc[item.id] = item.recipientName || item.metadata?.recipientName || "";
+      return acc;
+    }, {} as Record<string, string>);
+
     setShipNowStates(initialShipNow);
+    setRecipientNames(initialRecipients);
   }, [items]);
 
   // Memoize base current item and total items
@@ -85,8 +94,9 @@ const PurchasePeriod: FC<Props> = ({
       sellingPrice: prices[baseCurrentItem.id] ?? baseCurrentItem.sellingPrice,
       costPrice: prices[baseCurrentItem.id] ?? baseCurrentItem.costPrice,
       shipNow: shipNowStates[baseCurrentItem.id] ?? baseCurrentItem.shipNow ?? false,
+      recipientName: recipientNames[baseCurrentItem.id] ?? baseCurrentItem.recipientName ?? baseCurrentItem.metadata?.recipientName ?? "",
     };
-  }, [baseCurrentItem, quantities, prices, shipNowStates]);
+  }, [baseCurrentItem, quantities, prices, shipNowStates, recipientNames]);
 
   // Get available inventory for current item
   const getAvailableInventory = (item: IReceiptItemPeriod): number => {
@@ -296,6 +306,15 @@ const PurchasePeriod: FC<Props> = ({
     }
   };
 
+  const handleRecipientNameChange = (newRecipientName: string) => {
+    const itemId = currentItem.id;
+    setRecipientNames((prev) => ({
+      ...prev,
+      [itemId]: newRecipientName,
+    }));
+    onRecipientNameChange?.(itemId, newRecipientName);
+  };
+
   const truncateProductName = (name: string, maxLength: number = 35) => {
     if (name.length <= maxLength) return name;
     return `${name.substring(0, maxLength)}...`;
@@ -327,7 +346,7 @@ const PurchasePeriod: FC<Props> = ({
   }, [editable, isNewItem, onRemove]);
 
   return (
-    <div className={`p-4 border-l-4 ${isShipNow ? 'border-orange-500 bg-orange-50' : 'border-blue-500 bg-blue-50'} relative`}>
+    <div className={`p-4 border-l-4 rounded-xl shadow-sm mb-3 ${isShipNow ? 'border-orange-500 bg-orange-50' : 'border-blue-500 bg-blue-50'} relative`}>
       {/* Remove button for editable mode */}
       {isShowButtonRemove && (
         <div className="absolute top-2 right-2">
@@ -510,6 +529,23 @@ const PurchasePeriod: FC<Props> = ({
               {formatCurrency(totalPrice)}
             </span>
           </div>
+        </div>
+
+        {/* Recipient Name Block */}
+        <div className="flex items-center justify-between mt-2 p-2 bg-white rounded-lg border border-gray-100">
+          <span className="text-base text-gray-700 font-medium min-w-max">Người nhận</span>
+          {editable && isNewItem ? (
+            <IonInput
+              value={recipientNames[currentItem.id] ?? currentItem.recipientName ?? ""}
+              placeholder="Tên người nhận"
+              onIonInput={(e) => handleRecipientNameChange(e.detail.value || "")}
+              className="border border-gray-200 rounded-lg text-sm font-medium w-44 custom-padding bg-white text-right"
+            />
+          ) : (
+            <span className="text-base font-semibold text-gray-800">
+              {currentItem.recipientName || currentItem.metadata?.recipientName || "—"}
+            </span>
+          )}
         </div>
 
         {/* Ship Now Checkbox */}

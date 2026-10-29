@@ -18,6 +18,7 @@ import { getOrderStatusLabel } from "@/common/constants/order";
 
 export interface OrderFilterValues {
   status: string;
+  paymentMethod: string;
   startDate: string;
   endDate: string;
   customerId: string;
@@ -31,6 +32,7 @@ interface Props {
 
 export const defaultOrderFilters: OrderFilterValues = {
   status: "",
+  paymentMethod: "",
   startDate: "",
   endDate: "",
   customerId: "",
@@ -107,6 +109,7 @@ const FilterModal: React.FC<Props> = ({ dismiss, initialFilters }) => {
 
   const activeFiltersCount =
     (filters.status ? 1 : 0) +
+    (filters.paymentMethod ? 1 : 0) +
     (filters.customerId ? 1 : 0) +
     (filters.startDate || filters.endDate ? 1 : 0);
 
@@ -155,6 +158,23 @@ const FilterModal: React.FC<Props> = ({ dismiss, initialFilters }) => {
                 </button>
               </div>
             )}
+
+            <div className="space-y-2">
+              <label htmlFor="order-payment-method" className="block text-sm font-semibold text-gray-800">
+                Hình thức thanh toán
+              </label>
+              <select
+                id="order-payment-method"
+                className="w-full min-h-11 p-3 border border-gray-200 rounded-xl bg-gray-50"
+                value={filters.paymentMethod}
+                onChange={(event) => setFilters((prev) => ({ ...prev, paymentMethod: event.target.value }))}
+              >
+                <option value="">Tất cả</option>
+                <option value="cash">Tiền mặt (TM)</option>
+                <option value="bank_transfer">Chuyển khoản (CK)</option>
+                <option value="mixed">Cả hai (TM + CK)</option>
+              </select>
+            </div>
 
             {/* 1. Customer Filter */}
             <div className="space-y-2">

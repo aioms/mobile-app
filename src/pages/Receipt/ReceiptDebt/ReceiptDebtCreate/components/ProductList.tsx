@@ -24,6 +24,7 @@ interface IProductItem {
   sellingPrice: number;
   inventory?: number; // Add inventory field
   shipNow?: boolean; // Add shipNow field
+  recipientName?: string;
 }
 
 type Props = {

@@ -158,6 +158,11 @@ export default function ReceiptDebtContent(
                             SL: <strong className="text-gray-900 font-bold">{item.quantity}</strong>
                           </span>
                         </div>
+                        {(item.recipientName || item.metadata?.recipientName) && (
+                          <div className="text-xs text-gray-600 mt-1">
+                            Người nhận: <span className="font-semibold text-gray-800">{item.recipientName || item.metadata?.recipientName}</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                           {item.metadata?.shipNow && (
                             <AppBadge color="warning" variant="soft" className="text-[10px] px-2 py-0.5">

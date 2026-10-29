@@ -81,6 +81,7 @@ export interface IItemChangeData {
   id: string;
   quantity: number;
   costPrice: number;
+  recipientName?: string;
   periodDate: string;
 }
 

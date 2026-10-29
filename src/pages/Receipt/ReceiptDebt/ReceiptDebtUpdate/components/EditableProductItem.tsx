@@ -21,6 +21,7 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
   const [editValues, setEditValues] = useState({
     quantity: item.quantity.toString(),
     costPrice: formatCurrencyInput(item.costPrice.toString()),
+    recipientName: item.recipientName || item.metadata?.recipientName || "",
   });
   const [errors, setErrors] = useState<{ quantity?: string; costPrice?: string }>({});
 
@@ -30,10 +31,11 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
       setEditValues({
         quantity: item.quantity.toString(),
         costPrice: formatCurrencyInput(item.costPrice.toString()),
+        recipientName: item.recipientName || item.metadata?.recipientName || "",
       });
       setErrors({});
     }
-  }, [item.isEditing, item.quantity, item.costPrice]);
+  }, [item.isEditing, item.quantity, item.costPrice, item.recipientName, item.metadata?.recipientName]);
 
   const truncateProductName = (name: string, maxLength: number = 35) => {
     if (name.length <= maxLength) return name;
@@ -99,6 +101,7 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
               receiptItemId: item.id,
               quantity,
               costPrice,
+              recipientName: editValues.recipientName?.trim() || undefined,
             },
           ],
         });
@@ -108,6 +111,7 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
           id: item.id,
           quantity,
           costPrice,
+          recipientName: editValues.recipientName?.trim() || undefined,
           periodDate,
         });
 
@@ -134,6 +138,7 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
     setEditValues({
       quantity: item.quantity.toString(),
       costPrice: formatCurrencyInput(item.costPrice.toString()),
+      recipientName: item.recipientName || item.metadata?.recipientName || "",
     });
     setErrors({});
     onToggleEdit(item.id);
@@ -236,6 +241,28 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
             </div>
           )}
         </div>
+      </div>
+
+      {/* Recipient Name Info */}
+      <div className="mb-4">
+        <div className="text-base font-bold text-gray-800 mb-1.5">Người nhận:</div>
+        {item.isEditing ? (
+          <div className="border border-gray-300 rounded-lg px-3 py-2 bg-white shadow-sm focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500">
+            <IonInput
+              type="text"
+              value={editValues.recipientName}
+              onIonInput={(e) =>
+                setEditValues((prev) => ({ ...prev, recipientName: e.detail.value || "" }))
+              }
+              className="w-full text-base font-semibold text-gray-900"
+              placeholder="Nhập tên người nhận"
+            />
+          </div>
+        ) : (
+          <div className="text-base font-medium text-gray-900">
+            {item.recipientName || item.metadata?.recipientName || "—"}
+          </div>
+        )}
       </div>
 
       {/* Total Price */}

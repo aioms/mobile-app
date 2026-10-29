@@ -44,6 +44,7 @@ const ReceiptBillDocument = forwardRef<HTMLDivElement, ReceiptBillDocumentProps>
           boxSizing: "border-box",
         }}
       >
+        <div data-document-header>
         {/* Store header */}
         <div style={{ marginBottom: 4 }}>
           <div style={{ fontStyle: "italic", fontWeight: 700, fontSize: 16 }}>
@@ -82,8 +83,11 @@ const ReceiptBillDocument = forwardRef<HTMLDivElement, ReceiptBillDocumentProps>
           </div>
         </div>
 
+        </div>
+
         {/* Table */}
         <table
+          data-document-table
           style={{
             width: "100%",
             borderCollapse: "collapse",
@@ -93,13 +97,16 @@ const ReceiptBillDocument = forwardRef<HTMLDivElement, ReceiptBillDocumentProps>
           <thead>
             <tr style={{ borderBottom: "2px solid #333" }}>
               <th style={{ ...thStyle, textAlign: "left" }}>Tên Sản phẩm</th>
-              <th style={{ ...thStyle, textAlign: "center", width: 80 }}>
+              <th style={{ ...thStyle, textAlign: "left", width: 120 }}>
+                Người nhận
+              </th>
+              <th style={{ ...thStyle, textAlign: "center", width: 70 }}>
                 Số lượng
               </th>
-              <th style={{ ...thStyle, textAlign: "right", width: 110 }}>
+              <th style={{ ...thStyle, textAlign: "right", width: 105 }}>
                 Đơn giá
               </th>
-              <th style={{ ...thStyle, textAlign: "right", width: 120 }}>
+              <th style={{ ...thStyle, textAlign: "right", width: 115 }}>
                 Thành tiền
               </th>
             </tr>
@@ -116,7 +123,7 @@ const ReceiptBillDocument = forwardRef<HTMLDivElement, ReceiptBillDocumentProps>
                     Ngày {group.formattedDate}
                   </td>
                   <td
-                    colSpan={2}
+                    colSpan={3}
                     style={{
                       fontStyle: "italic",
                       textAlign: "right",
@@ -141,6 +148,9 @@ const ReceiptBillDocument = forwardRef<HTMLDivElement, ReceiptBillDocumentProps>
                     <td style={{ ...tdStyle, paddingLeft: 16 }}>
                       {item.productName}
                     </td>
+                    <td style={{ ...tdStyle }}>
+                      {item.recipientName || "—"}
+                    </td>
                     <td style={{ ...tdStyle, textAlign: "center" }}>
                       {item.quantity}
                     </td>
@@ -157,14 +167,12 @@ const ReceiptBillDocument = forwardRef<HTMLDivElement, ReceiptBillDocumentProps>
           </tbody>
         </table>
 
-        {paidAmount > billData.grandTotal && <p style={{ fontSize: 12, color: "#555" }}>
-          Đã thu dư {fmt(paidAmount - billData.grandTotal)} đ so với tổng phiếu sau đổi/trả. Bạn có thể lập phiếu chi để hoàn khách.
-        </p>}
+        <div data-document-footer>
         {/* Separator */}
         <hr style={{ border: "none", borderTop: "2px solid #333", margin: "8px 0" }} />
 
         {/* Summary */}
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <div data-receipt-payment-summary style={{ display: "flex", justifyContent: "flex-end", breakInside: "avoid" }}>
           <div style={{ width: 300 }}>
             <SummaryRow
               label="Tổng:"
@@ -185,20 +193,22 @@ const ReceiptBillDocument = forwardRef<HTMLDivElement, ReceiptBillDocumentProps>
             />
             {!!billData.totalAdjustment && <SummaryRow label="Điều chỉnh đổi/trả" value={`${fmt(billData.totalAdjustment)} đ`} />}
             <SummaryRow
-              label="Tổng phải trả"
+              label="Thành tiền"
               value={`${fmt(billData.grandTotal)} đ`}
               bold
             />
+            <SummaryRow label="Tổng phải trả" value={`${fmt(remainingAmount + paidAmount)} đ`} bold />
             <SummaryRow
-              label="Đã Thanh toán"
+              label="Đã thanh toán"
               value={`${fmt(paidAmount)} đ`}
             />
             <SummaryRow
-              label="Còn Lại"
+              label="Còn lại"
               value={`${fmt(remainingAmount)} đ`}
               bold
             />
           </div>
+        </div>
         </div>
       </div>
     );

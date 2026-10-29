@@ -3,6 +3,7 @@ import { TransactionStatus } from "@/common/enums/transaction";
 
 export interface Transaction {
   id: string;
+  type?: number;
   code: string;
   amount: number;
   description: string;

@@ -48,6 +48,7 @@ interface IProductItem {
   sellingPrice: number;
   inventory?: number; // Add inventory field
   shipNow?: boolean; // Add shipNow field
+  recipientName?: string;
 }
 
 const initialFormData = {
@@ -189,6 +190,7 @@ const ReceiptDebtCreate: React.FC = () => {
           quantity: item.quantity,
           costPrice: item.sellingPrice,
           shipNow: item.shipNow || false, // Include shipNow flag
+          recipientName: item.recipientName?.trim() || undefined,
         })),
       };
 

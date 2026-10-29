@@ -1,3 +1,4 @@
+import { receiptPaymentSummary } from "@/helpers/receiptPaymentSummary";
 import React, { useState, useCallback } from "react";
 import { useHistory, useParams } from "react-router";
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar, useIonToast, useIonActionSheet, useIonViewWillEnter } from "@ionic/react";
@@ -30,6 +31,7 @@ const ReceiptDebtDetail: React.FC = () => {
   const [presentActionSheet] = useIonActionSheet();
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [paymentHistoryReady, setPaymentHistoryReady] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const { user } = useAuth();
 
@@ -47,11 +49,13 @@ const ReceiptDebtDetail: React.FC = () => {
 
   // Fetch payment transactions
   const fetchPaymentTransactions = useCallback(async () => {
+    setPaymentHistoryReady(false);
     try {
       const response = await getPaymentTransactions(id);
 
       if (response.transactions) {
         setTransactions(response.transactions);
+        setPaymentHistoryReady(true);
       }
     } catch (err) {
       console.error("Failed to fetch payment transactions:", err);
@@ -294,6 +298,10 @@ const ReceiptDebtDetail: React.FC = () => {
         {
           text: "In phiếu",
           handler: () => {
+            if (!paymentHistoryReady) {
+              presentToast({ message: "Chưa tải được lịch sử thanh toán. Vui lòng tải lại phiếu trước khi in.", duration: 3000, color: "warning" });
+              return;
+            }
             setIsExportModalOpen(true);
           },
         },
@@ -400,7 +408,7 @@ const ReceiptDebtDetail: React.FC = () => {
           receiptCode={receipt.code}
           customerName={receipt.customerName || receipt.supplierName || ""}
           storeCode={user?.storeCode || "KS"}
-          paidAmount={receipt.paidAmount}
+          paidAmount={receiptPaymentSummary(receipt.remainingAmount, transactions).paidAmount}
           remainingAmount={receipt.remainingAmount}
           items={items}
           periods={periods}

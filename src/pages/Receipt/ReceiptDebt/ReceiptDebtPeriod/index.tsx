@@ -611,6 +611,33 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
     });
   };
 
+  // Handle recipient name change
+  const handleRecipientNameChange = (
+    dateKey: string,
+    itemId: string,
+    recipientName: string
+  ) => {
+    setProductItems((prev) => {
+      const updated = { ...prev };
+
+      if (updated[dateKey]) {
+        const itemIndex = updated[dateKey].findIndex(
+          (item) => item.id === itemId || item.id === `temp_${itemId}`
+        );
+
+        if (itemIndex !== -1) {
+          const currentItem = updated[dateKey][itemIndex];
+          updated[dateKey][itemIndex] = {
+            ...currentItem,
+            recipientName,
+          };
+        }
+      }
+
+      return updated;
+    });
+  };
+
   // Handle manual product selection
   const handleAddProduct = () => {
     presentModalProduct({
@@ -809,6 +836,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
             costPrice: item.sellingPrice ?? 0, // Selling price (customer-facing price, includes any price changes)
             receiptPeriodId: item.receiptPeriodId,
             shipNow: item.shipNow || false, // Include shipNow flag
+            recipientName: item.recipientName?.trim() || undefined,
           })),
         };
 
@@ -937,6 +965,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
               onPriceChange={handlePriceChange}
               onRemoveProduct={handleRemoveProduct}
               onShipNowChange={handleShipNowChange}
+              onRecipientNameChange={handleRecipientNameChange}
             />
 
             <ReceiptPeriodTotals

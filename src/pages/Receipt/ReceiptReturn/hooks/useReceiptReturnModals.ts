@@ -9,6 +9,7 @@ import ModalSelectCustomer from "@/components/ModalSelectCustomer";
 import ModalSelectSupplier from "@/components/ModalSelectSupplier";
 import ModalSelectOrder from "../components/ModalSelectOrder";
 import { getNumberFromStringOrThrow } from "@/helpers/common";
+import { getCatalogReturnPrice } from "@/helpers/receipt-return-price";
 import type { IOrder } from "@/types/order.type";
 import type {
   IReceiptReturnFormData,
@@ -255,7 +256,7 @@ export function useReceiptReturnModals({
                 productCode: pCode,
                 productName: p.name || p.productName || "Sản phẩm",
                 quantity: 1,
-                costPrice: p.sellingPrice || p.costPrice || 0,
+                costPrice: getCatalogReturnPrice(p, formData.type),
                 originalQuantity: p.inventory || 9999,
                 inventory: p.inventory,
                 metadata: {
