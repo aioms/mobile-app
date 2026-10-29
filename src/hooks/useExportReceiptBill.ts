@@ -5,6 +5,7 @@ import { jsPDF } from "jspdf";
 import * as XLSX from "xlsx";
 
 import { ReceiptBillData } from "@/helpers/receiptBill";
+import { paginateDocument, waitForDocumentAssets } from "@/helpers/orderDocumentPages";
 import { shareOrDownload } from "@/helpers/shareFile";
 
 export type ExportFormat = "pdf" | "excel" | "image";
@@ -71,7 +72,10 @@ async function exportAsImage({ billRef, receiptCode }: ExportParams) {
   const el = billRef.current;
   if (!el) throw new Error("Bill element not found");
 
-  const dataUrl = await toPng(el, { pixelRatio: 2, backgroundColor: "#fff" });
+  const dataUrl = await toPng(el, {
+    pixelRatio: 2, backgroundColor: "#fff",
+    width: el.scrollWidth, height: el.scrollHeight,
+  });
   const res = await fetch(dataUrl);
   const blob = await res.blob();
   const fileName = `${receiptCode}_phieu-thu.png`;
@@ -82,68 +86,22 @@ async function exportAsPdf({ billRef, receiptCode }: ExportParams) {
   const el = billRef.current;
   if (!el) throw new Error("Bill element not found");
 
-  const dataUrl = await toPng(el, { pixelRatio: 2, backgroundColor: "#fff" });
-  const img = new Image();
-  img.src = dataUrl;
-  await new Promise<void>((resolve) => {
-    img.onload = () => resolve();
-  });
-
-  // A4 portrait dimensions in mm
-  const pageWidth = 210;
-  const pageHeight = 297;
+  await waitForDocumentAssets(el);
+  const contentWidth = 190;
   const margin = 10;
-  const contentWidth = pageWidth - margin * 2;
-
-  // Scale image to fit page width
-  const imgRatio = img.height / img.width;
-  const contentHeight = contentWidth * imgRatio;
-
-  const pdf = new jsPDF("p", "mm", "a4");
-
-  // Handle multi-page if bill is taller than one page
-  let yOffset = 0;
-  const maxContentHeight = pageHeight - margin * 2;
-
-  while (yOffset < contentHeight) {
-    if (yOffset > 0) pdf.addPage();
-
-    // Calculate source crop for this page
-    const sourceY = (yOffset / contentHeight) * img.height;
-    const sourceHeight = Math.min(
-      (maxContentHeight / contentHeight) * img.height,
-      img.height - sourceY,
-    );
-    const destHeight = Math.min(maxContentHeight, contentHeight - yOffset);
-
-    // Create a canvas to crop the image for this page
-    const canvas = document.createElement("canvas");
-    canvas.width = img.width;
-    canvas.height = sourceHeight;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Canvas context not available");
-    ctx.drawImage(
-      img,
-      0,
-      sourceY,
-      img.width,
-      sourceHeight,
-      0,
-      0,
-      img.width,
-      sourceHeight,
-    );
-
-    pdf.addImage(
-      canvas.toDataURL("image/png"),
-      "PNG",
-      margin,
-      margin,
-      contentWidth,
-      destHeight,
-    );
-
-    yOffset += maxContentHeight;
+  const { host, pages } = paginateDocument(el, el.offsetWidth * 277 / contentWidth);
+  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
+  try {
+    for (const [index, page] of pages.entries()) {
+      const image = await toPng(page, { pixelRatio: 2, backgroundColor: "#fff" });
+      if (index > 0) pdf.addPage();
+      pdf.addImage(
+        image, "PNG", margin, margin, contentWidth,
+        page.offsetHeight * contentWidth / page.offsetWidth, undefined, "FAST",
+      );
+    }
+  } finally {
+    host.remove();
   }
 
   const pdfBlob = pdf.output("blob");
@@ -200,9 +158,10 @@ async function exportAsExcel({
   rows.push(["", "", "", "Tổng:", billData.subtotal]);
   rows.push(["", "", "", "Chiết khấu:", -billData.totalDiscount]);
   rows.push(["", "", "", "Thuế (VAT):", billData.totalVat]);
-  rows.push(["", "", "", "Tổng phải trả:", billData.grandTotal]);
-  rows.push(["", "", "", "Đã Thanh toán:", paidAmount]);
-  rows.push(["", "", "", "Còn Lại:", remainingAmount]);
+  rows.push(["", "", "", "Thành tiền:", billData.grandTotal]);
+  rows.push(["", "", "", "Tổng phải trả:", remainingAmount + paidAmount]);
+  rows.push(["", "", "", "Đã thanh toán:", paidAmount]);
+  rows.push(["", "", "", "Còn lại:", remainingAmount]);
 
   const ws = XLSX.utils.aoa_to_sheet(rows);
 

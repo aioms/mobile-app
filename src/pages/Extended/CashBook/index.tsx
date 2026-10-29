@@ -359,6 +359,7 @@ const CashBookPage: React.FC = () => {
             />
 
             <CashBalanceCard
+              onSourcesSaved={loadDailyBalance}
               selectedDate={selectedDate}
               selectedCashBook={selectedCashBook}
               returnsCash={returnsCash}

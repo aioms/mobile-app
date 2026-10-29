@@ -1,4 +1,6 @@
 import React from "react";
+import CashSourcesEditor from "./CashSourcesEditor";
+const EMPTY_SOURCES: { name: string; amount: number }[] = [];
 import { IonIcon } from "@ionic/react";
 import {
   checkmarkCircle,
@@ -21,6 +23,7 @@ interface Props {
   actualCashInput: string;
   balanceState: BalanceState;
   isInputDisabled?: boolean;
+  onSourcesSaved: () => Promise<void>;
   onDateChange: (date: string) => void;
   onCashForDayChange: (value: string) => void;
   onCashForDayBlur: () => void;
@@ -38,13 +41,11 @@ const CashBalanceCard: React.FC<Props> = ({
   previousActualCash,
   cashRevenue,
   computedCash,
-  cashForDayInput,
   actualCashInput,
   balanceState,
   isInputDisabled = false,
+  onSourcesSaved,
   onDateChange,
-  onCashForDayChange,
-  onCashForDayBlur,
   onActualCashChange,
   onActualCashBlur,
 }) => {
@@ -169,15 +170,7 @@ const CashBalanceCard: React.FC<Props> = ({
             </div>
 
             <div className="mt-3">
-              <input
-                inputMode="numeric"
-                value={cashForDayInput}
-                onChange={(event) => onCashForDayChange(event.target.value)}
-                onBlur={onCashForDayBlur}
-                disabled={isInputDisabled}
-                placeholder="Nhập số tiền"
-                className={`${baseInputStyles} border-slate-200 text-slate-900`}
-              />
+              <CashSourcesEditor date={selectedDate} sources={selectedCashBook.cashSources ?? EMPTY_SOURCES} disabled={isInputDisabled} onSaved={onSourcesSaved} />
             </div>
           </div>
 

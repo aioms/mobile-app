@@ -230,9 +230,15 @@ const ExportReceiptBillModal: React.FC<ExportReceiptBillModalProps> = ({
             </div>
           )}
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Tổng phải trả:</span>
+            <span className="text-gray-600">Thành tiền:</span>
             <span className="font-bold">{formatCurrency(billData.grandTotal)}</span>
           </div>
+        </div>
+
+        <div className="bg-white rounded-lg p-4 mb-4 space-y-2 text-sm">
+          <div className="flex justify-between"><span>Tổng phải trả:</span><strong>{formatCurrency(remainingAmount + paidAmount)}</strong></div>
+          <div className="flex justify-between"><span>Đã thanh toán (lần gần nhất):</span><strong>{formatCurrency(paidAmount)}</strong></div>
+          <div className="flex justify-between"><span>Còn lại:</span><strong>{formatCurrency(remainingAmount)}</strong></div>
         </div>
 
         {/* Export button */}

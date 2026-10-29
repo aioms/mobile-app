@@ -57,6 +57,7 @@ export interface CashbookDailyBalanceResponseDto {
   receiptCash: number;
   cashRevenue: number;
   cashForDay: number;
+  cashSources?: { name: string; amount: number }[];
   hasCashForDay: boolean;
   expenseItems: CashbookExpenseItemDto[];
   totalExpense: number;
@@ -79,6 +80,7 @@ export interface UpdateCashbookActualCashResponseDto {
   date: string;
   timezone: string;
   cashForDay: number;
+  cashSources?: { name: string; amount: number }[];
   hasCashForDay: boolean;
   actualCash: number | null;
   computedCash: number;
@@ -90,12 +92,14 @@ export interface UpdateCashbookActualCashResponseDto {
 export interface UpdateCashbookCashForDayRequestDto {
   date: string;
   cashForDay: number;
+  cashSources?: { name: string; amount: number }[];
 }
 
 export interface UpdateCashbookCashForDayResponseDto {
   date: string;
   timezone: string;
   cashForDay: number;
+  cashSources?: { name: string; amount: number }[];
   hasCashForDay: boolean;
   actualCash: number | null;
   computedCash: number;
