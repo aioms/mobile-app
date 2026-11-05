@@ -49,6 +49,12 @@ const CashBalanceCard: React.FC<Props> = ({
   onActualCashChange,
   onActualCashBlur,
 }) => {
+  const [isEditingSources, setIsEditingSources] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsEditingSources(false);
+  }, [selectedDate]);
+
   const totalCashExpenditure =
     (selectedCashBook.totalExpense || 0) + (returnsCash || 0);
 
@@ -166,11 +172,31 @@ const CashBalanceCard: React.FC<Props> = ({
                   Nhập tay tiền mặt ngày để tính tồn mới.
                 </p>
               </div>
-              <IonIcon icon={createOutline} className="text-lg text-slate-400" />
+              <button
+                type="button"
+                onClick={() => setIsEditingSources((prev) => !prev)}
+                disabled={isInputDisabled}
+                className={`flex h-11 w-11 items-center justify-center rounded-xl transition active:scale-95 ${
+                  isEditingSources
+                    ? "bg-blue-100 text-blue-700"
+                    : "text-slate-500 hover:bg-slate-200 hover:text-slate-800"
+                }`}
+                aria-label={isEditingSources ? "Đóng chỉnh sửa" : "Chỉnh sửa nguồn tiền"}
+                title={isEditingSources ? "Đóng chỉnh sửa" : "Chỉnh sửa nguồn tiền"}
+              >
+                <IonIcon icon={createOutline} className="text-xl" />
+              </button>
             </div>
 
             <div className="mt-3">
-              <CashSourcesEditor date={selectedDate} sources={selectedCashBook.cashSources ?? EMPTY_SOURCES} disabled={isInputDisabled} onSaved={onSourcesSaved} />
+              <CashSourcesEditor
+                date={selectedDate}
+                sources={selectedCashBook.cashSources ?? EMPTY_SOURCES}
+                disabled={isInputDisabled}
+                isEditing={isEditingSources}
+                onToggleEdit={setIsEditingSources}
+                onSaved={onSourcesSaved}
+              />
             </div>
           </div>
 
