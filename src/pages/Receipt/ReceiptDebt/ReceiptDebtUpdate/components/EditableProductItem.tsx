@@ -102,6 +102,7 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
               quantity,
               costPrice,
               recipientName: editValues.recipientName?.trim() || undefined,
+              shipNow: item.metadata?.shipNow,
             },
           ],
         });
