@@ -27,6 +27,12 @@ export interface ICustomer {
 }
 
 export interface IOrder {
+  dmsg?: import("./dmsg.type").DmsgFinancials | null;
+  revision?: number;
+  dmsgCompletedAt?: string | null;
+  dmsgEvents?: import("./dmsg.type").DmsgEvent[];
+  dmsgSettlements?: import("./dmsg.type").DmsgSettlements;
+
   document?: import("./order-document.type").OrderDocument;
   id: string;
   code: string;
