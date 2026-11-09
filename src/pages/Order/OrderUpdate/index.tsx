@@ -815,6 +815,7 @@ const OrderUpdate: React.FC = () => {
     await withLoading(async () => {
       try {
         const orderDetail = await getOrderDetail(id);
+        if (orderDetail?.orderType === "dmsg_bulk") { history.replace(`/tabs/orders/dmsg/detail/${orderDetail.id}`); return; }
 
         if (!orderDetail) {
           presentToast({

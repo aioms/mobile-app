@@ -2411,3 +2411,9 @@ For questions or issues, refer to:
 | Capability | Implementation | Documentation |
 | --- | --- | --- |
 | Safe JS/API errors, per-attempt correlation and private source maps | src/helpers/api-telemetry.ts, vite.config.ts | docs/observability.md |
+
+## Đơn gộp ĐMSG
+
+| Feature | Implementation | Documentation |
+| --- | --- | --- |
+| Đơn gộp ĐMSG | `src/pages/Order/DmsgOrder/`, `src/hooks/apis/useDmsgOrder.ts` | `docs/dmsg-orders.md` |

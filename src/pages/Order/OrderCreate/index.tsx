@@ -1,3 +1,4 @@
+import OrderTypeSection from "./components/OrderTypeSection";
 import React, { useState, useRef, useEffect } from "react";
 import { useHistory } from "react-router";
 import { IonTextareaCustomEvent, TextareaChangeEventDetail } from "@ionic/core";
@@ -903,31 +904,7 @@ const OrderCreate: React.FC = () => {
       </IonHeader>
 
       <IonContent className="ion-padding bg-background">
-        {/* 0. Order Type Section */}
-        <div className="bg-card rounded-lg shadow-sm mb-4">
-          <div className="p-4">
-            <h2 className="text-lg font-medium text-foreground mb-3">
-              Loại đơn hàng (Order Type) <span className="text-red-500">*</span>
-            </h2>
-            <AppRadioGroup
-              name="Loại đơn hàng"
-              value={formData.orderType || OrderType.SALES}
-              onChange={(value) => handleOrderTypeChange({ detail: { value } } as CustomEvent)}
-              options={[
-                {
-                  value: OrderType.SALES,
-                  label: "Bán hàng",
-                  description: "(Sales)",
-                },
-                {
-                  value: OrderType.INTERNAL_TRANSFER,
-                  label: "Chuyển kho nội bộ",
-                  description: "(Internal Transfer)",
-                },
-              ]}
-            />
-          </div>
-        </div>
+        <OrderTypeSection value={formData.orderType || OrderType.SALES} onChange={(value) => handleOrderTypeChange({ detail: { value } } as CustomEvent)} />
 
         {/* 1. Product Selection Section */}
         <div className="bg-card rounded-lg shadow-sm mb-4">

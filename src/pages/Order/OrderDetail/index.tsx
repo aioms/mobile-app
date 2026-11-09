@@ -84,6 +84,7 @@ const OrderDetail: React.FC = () => {
           });
         }
 
+        if (result.orderType === "dmsg_bulk") { history.replace(`/tabs/orders/dmsg/detail/${result.id}`); return; }
         setOrder(result);
       } catch (error) {
         await Toast.show({

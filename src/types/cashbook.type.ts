@@ -22,6 +22,7 @@ export interface CashbookDailyRevenueSummaryResponseDto {
 }
 
 export interface CashbookOverviewResponseDto {
+  dmsg?: import("./dmsg.type").DmsgSummary;
   range: CashbookReportRange;
   date: string;
   startDate: string;

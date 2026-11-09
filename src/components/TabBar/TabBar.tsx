@@ -50,6 +50,7 @@ import ReceiptPaymentCreateScreen from "@/pages/Receipt/ReceiptPayment/ReceiptPa
 import ReceiptPaymentDetailScreen from "@/pages/Receipt/ReceiptPayment/ReceiptPaymentDetail";
 import ReceiptPaymentUpdateScreen from "@/pages/Receipt/ReceiptPayment/ReceiptPaymentUpdate";
 
+import DmsgOrderScreen from "@/pages/Order/DmsgOrder";
 import OrderCreateScreen from "@/pages/Order/OrderCreate";
 import OrderDetailScreen from "@/pages/Order/OrderDetail";
 import OrderUpdateScreen from "@/pages/Order/OrderUpdate";
@@ -187,6 +188,8 @@ const TabBar: React.FC = () => {
 
         {/* Order Screens */}
         <Route exact path="/tabs/orders" component={OrderPage} />
+        <Route exact path="/tabs/orders/dmsg/create" component={DmsgOrderScreen} />
+        <Route exact path="/tabs/orders/dmsg/detail/:id" component={DmsgOrderScreen} />
         <Route exact path="/tabs/orders/create" component={OrderCreateScreen} />
         <Route
           exact
