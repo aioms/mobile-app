@@ -128,6 +128,7 @@ const useReceiptDebt = () => {
         quantity: number;
         costPrice: number;
         recipientName?: string;
+        shipNow?: boolean;
       }>;
     },
   ) => {

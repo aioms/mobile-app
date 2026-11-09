@@ -17,6 +17,7 @@ import { captureException, createExceptionContext } from "@/helpers/posthogHelpe
 
 import { Refresher } from "@/components/Refresher/Refresher";
 import LoadingScreen from "@/components/Loading/LoadingScreen";
+import DmsgReportCard from "./components/DmsgReportCard";
 import FilterSection from "./components/FilterSection";
 import OrderItem from "./components/OrderItem";
 
@@ -235,7 +236,8 @@ const OrderList: React.FC = () => {
           </div>
         </div>
 
-        <DailyPaymentSummaryCards source="orders" embedded />
+        <DmsgReportCard />
+      <DailyPaymentSummaryCards source="orders" embedded />
       </AppCard>
 
       {/* Filter Section */}

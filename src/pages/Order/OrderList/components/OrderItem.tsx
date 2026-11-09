@@ -52,6 +52,7 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onCancelOrder }) => {
 
       const orderUpdated = await updateOrder(order.id, {
         status: OrderStatus.CANCELLED,
+        ...(order.orderType === "dmsg_bulk" && { revision: order.revision, requestId: crypto.randomUUID() }),
       });
 
       if (!orderUpdated?.id) {
@@ -85,7 +86,7 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onCancelOrder }) => {
       <IonItem
         lines="none"
         className="ion-activatable ripple-parent rounded-2xl shadow-sm border border-gray-100 mb-3 mt-1 [&::part(native)]:bg-white [&::part(native)]:px-4"
-        routerLink={`/tabs/orders/detail/${order.id}`}
+        routerLink={order.orderType === "dmsg_bulk" ? `/tabs/orders/dmsg/detail/${order.id}` : `/tabs/orders/detail/${order.id}`}
       >
         <div className="py-4 w-full">
           <div className="flex justify-between items-start mb-2">
@@ -103,7 +104,7 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onCancelOrder }) => {
               className="m-0 font-medium"
             >
               <span className="text-xs italic">
-                {getOrderStatusLabel(order.status)}
+                {order.orderType === "dmsg_bulk" ? "ĐMSG · " : ""}{getOrderStatusLabel(order.status)}
               </span>
             </AppBadge>
           </div>
@@ -116,7 +117,7 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onCancelOrder }) => {
 
           <div className="flex justify-between items-center mt-1">
             <div className="text-green-600 font-bold text-[15px]">
-              {formatCurrency(order.totalAmount)}
+              {formatCurrency(order.dmsg?.revenue ?? order.totalAmount)}
             </div>
             <AppBadge
               color={getCustomerTypeColor(order.customer)}
@@ -133,10 +134,10 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onCancelOrder }) => {
 
       {order.status !== OrderStatus.CANCELLED && (
         <IonItemOptions side="end">
-          {!isOrderPaid && (
+          {(!isOrderPaid || order.orderType === "dmsg_bulk") && (
             <IonItemOption
               color="tertiary"
-              routerLink={`/tabs/orders/update/${order.id}`}
+              routerLink={order.orderType === "dmsg_bulk" ? `/tabs/orders/dmsg/detail/${order.id}` : `/tabs/orders/update/${order.id}`}
             >
               Sửa đơn
               <IonIcon slot="icon-only" icon={createOutline}></IonIcon>

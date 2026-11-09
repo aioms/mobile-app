@@ -31,6 +31,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({ onFilterChange }) => {
   useEffect(() => {
     const filters: Record<string, string> = {};
 
+    if (filterValues.orderType) filters.orderType = filterValues.orderType;
     if (filterValues.paymentMethod) filters.paymentMethod = filterValues.paymentMethod;
     if (keyword) filters.keyword = keyword;
     if (filterValues.status) filters.status = filterValues.status;
@@ -47,6 +48,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({ onFilterChange }) => {
   };
 
   const isFiltered =
+    !!filterValues.orderType ||
     !!filterValues.paymentMethod ||
     !!filterValues.status ||
     !!filterValues.startDate ||

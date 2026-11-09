@@ -68,6 +68,8 @@ export const getCustomerTypeColor = (customer: ICustomer | null): string => {
 
 export const getOrderTypeLabel = (type?: OrderType): string => {
   switch (type) {
+    case OrderType.DMSG_BULK:
+      return "Đơn gộp ĐMSG";
     case OrderType.INTERNAL_TRANSFER:
       return "Chuyển kho nội bộ";
     case OrderType.SALES:

@@ -18,6 +18,7 @@ export enum DiscountType {
   PERCENTAGE = "percentage",
 }
 export enum OrderType {
+  DMSG_BULK = "dmsg_bulk",
   SALES = "sales",
   INTERNAL_TRANSFER = "internal_transfer",
 }
