@@ -15,8 +15,6 @@ import DatePicker from "@/components/DatePicker";
 import ModalSelectCustomer from "@/components/ModalSelectCustomer";
 import { OrderStatus } from "@/common/enums/order";
 import { getOrderStatusLabel } from "@/common/constants/order";
-import { useAuth } from "@/hooks";
-import { UserRole } from "@/common/enums/user";
 
 export interface OrderFilterValues {
   orderType: string;
@@ -31,6 +29,7 @@ export interface OrderFilterValues {
 interface Props {
   dismiss: (data?: OrderFilterValues, role?: string) => void;
   initialFilters: OrderFilterValues;
+  canManageDmsg: boolean;
 }
 
 export const defaultOrderFilters: OrderFilterValues = {
@@ -43,12 +42,7 @@ export const defaultOrderFilters: OrderFilterValues = {
   customerName: "",
 };
 
-const FilterModal: React.FC<Props> = ({ dismiss, initialFilters }) => {
-  const { user } = useAuth();
-  const canManageDmsg = React.useMemo(() => {
-    if (!user?.role) return false;
-    return [UserRole.ADMIN, UserRole.MANAGER, UserRole.DEVELOPER].includes(user.role);
-  }, [user?.role]);
+const FilterModal: React.FC<Props> = ({ dismiss, initialFilters, canManageDmsg }) => {
   const [filters, setFilters] = useState<OrderFilterValues>(initialFilters);
   const [selectedCustomerName, setSelectedCustomerName] = useState<string>(
     initialFilters.customerName || ""

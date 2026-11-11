@@ -6,15 +6,17 @@ import FilterModal, { OrderFilterValues, defaultOrderFilters } from "./FilterMod
 
 interface FilterSectionProps {
   onFilterChange: (filters: Record<string, string>) => void;
+  canManageDmsg: boolean;
 }
 
-const FilterSection: React.FC<FilterSectionProps> = ({ onFilterChange }) => {
+const FilterSection: React.FC<FilterSectionProps> = ({ onFilterChange, canManageDmsg }) => {
   const [keyword, setKeyword] = useState("");
   const [filterValues, setFilterValues] = useState<OrderFilterValues>(defaultOrderFilters);
 
   const [presentFilter, dismissFilter] = useIonModal(FilterModal, {
     dismiss: (data: OrderFilterValues, role: string) => dismissFilter(data, role),
     initialFilters: filterValues,
+    canManageDmsg,
   });
 
   const openFilterModal = () => {
