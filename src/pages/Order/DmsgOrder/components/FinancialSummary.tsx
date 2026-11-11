@@ -9,7 +9,7 @@ export default function FinancialSummary({ value, draft, stateLabel }: { value: 
       {[["Giá trị trước VAT", value.beforeVat, "beforeVat"], ["Tiền VAT", value.vatAmount, "vatAmount"], ["Chênh lệch hoa hồng", value.commissionAmount, "commissionAmount"], ["Tiền chuyển khách", value.customerTransfer, "customerTransfer"], ["Tổng giá vốn", value.totalCost, "cost"], ["Phí hóa đơn", value.invoiceFee, "fee"]].map(([label, amount, key]) => <div key={key} className="flex justify-between gap-3"><span className="text-gray-500">{label}</span><strong className="text-right tabular-nums" data-cy={`dmsg-result-${key}`}>{formatCurrency(Number(amount))}</strong></div>)}
       <div className="border-t pt-3 flex justify-between gap-3"><span className="font-medium">Doanh thu ĐMSG</span><strong className="text-blue-600 text-right" data-cy="dmsg-result-revenue">{formatCurrency(value.revenue)}</strong></div>
       <div className={`rounded-xl p-3 ${value.profit < 0 ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700"}`}><div className="flex justify-between gap-3"><span className="font-medium">Lợi nhuận</span><strong className="text-lg text-right" data-cy="dmsg-result-profit">{formatCurrency(value.profit)}</strong></div>
-        <p className="text-xs mt-1">Đã trừ vốn và phí hóa đơn đúng một lần.</p></div>
+        <p className="text-xs mt-1">Biên lợi nhuận: {value.revenue > 0 ? new Intl.NumberFormat("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value.profit / value.revenue * 100) + "%" : "—"}. Đã trừ vốn và phí hóa đơn.</p></div>
       {value.profit < 0 && <p role="alert" className="text-red-600">Đơn đang lỗ. Kiểm tra tài chính trước khi xác nhận.</p>}
     </div>}
   </AppCard>;

@@ -26,6 +26,7 @@ interface NotificationItemCardProps {
 
 const getCategoryStyle = (referenceType?: string) => {
   switch (referenceType) {
+    case "draft_orders":
     case "order":
     case "dmsg_order":
       return {
@@ -33,6 +34,8 @@ const getCategoryStyle = (referenceType?: string) => {
         bgColor: "bg-blue-50",
         textColor: "text-blue-600",
       };
+    case "pending_imports":
+    case "receipt_import":
     case "product":
     case "inventory":
       return {
@@ -40,6 +43,7 @@ const getCategoryStyle = (referenceType?: string) => {
         bgColor: "bg-amber-50",
         textColor: "text-amber-600",
       };
+    case "customer_debts":
     case "debt":
     case "payment":
       return {

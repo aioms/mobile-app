@@ -14,6 +14,7 @@ export default function useDmsgEditor(id?: string) {
   const { save } = useDmsgOrder();
   const { isLoading, withLoading } = useLoading();
   const [order, setOrder] = useState<IOrder | null>(null);
+  const [attachments, setAttachments] = useState<import("@/types/dmsg.type").DmsgAttachment[]>([]);
   const [items, setItems] = useState<IOrderItem[]>([]);
   const [customerName, setCustomerName] = useState("Khách lẻ");
   const [customer, setCustomer] = useState<string | null>(null);
@@ -39,7 +40,7 @@ export default function useDmsgEditor(id?: string) {
       try {
         const result = await getDetail(id);
         if (!result.dmsg) throw new Error("Đây không phải đơn ĐMSG");
-        setOrder(result); setItems(result.items); setCustomer(result.customer?.id || null); setCustomerName(result.customer?.name || "Khách lẻ");
+        setAttachments(result.attachments || []); setOrder(result); setItems(result.items); setCustomer(result.customer?.id || null); setCustomerName(result.customer?.name || "Khách lẻ");
         const { enteredFields, ...savedFinancials } = result.dmsg;
         const formValues: DmsgForm = { ...savedFinancials, note: result.note || "" };
         if (enteredFields) {
@@ -61,12 +62,11 @@ export default function useDmsgEditor(id?: string) {
       ? ["totalCost", "invoiceTotal", "vatRate", "commissionRate"] as const
       : [];
     if (status !== "cancelled" && !(await form.trigger([...requiredFields]))) return;
-    if (status !== "cancelled" && !items.length) { setError("Chọn ít nhất một sản phẩm để xuất kho"); return; }
     const current = form.getValues();
     const body: Omit<DmsgMutation, "requestId"> = status === "cancelled"
       ? { status, revision: order?.revision }
       : {
-        orderType: "dmsg_bulk", status, revision: order?.revision, receipts,
+        attachments, orderType: "dmsg_bulk", status, revision: order?.revision, receipts,
         ...(!order && { customer }), note: current.note,
         dmsg: {
           totalCost: current.totalCost,
@@ -81,15 +81,14 @@ export default function useDmsgEditor(id?: string) {
     if (pending.current?.fingerprint !== fingerprint) pending.current = { fingerprint, requestId: crypto.randomUUID() };
     const requestId = pending.current.requestId;
     submitting.current = true; setError("");
-    await withLoading(async () => {
+    try { await withLoading(async () => {
       try {
         const saved = await save({ ...body, requestId }, id);
         pending.current = undefined;
         if (!id) history.replace(`/tabs/orders/dmsg/detail/${saved.id}`);
         else await load();
       } catch (cause) { setError((cause as Error).message); throw cause; }
-    });
-    submitting.current = false;
+    }); } finally { submitting.current = false; }
   }
   function addProducts(products: Array<{ id?: string; productId?: string; productName: string; productCode?: string | number; code?: string; quantity?: number }>) {
     setItems((current) => {
@@ -104,5 +103,5 @@ export default function useDmsgEditor(id?: string) {
       return merged.map((item) => ({ ...item }));
     });
   }
-  return { order, items, setItems, customer, setCustomer, customerName, setCustomerName, error, setError, loaded, isLoading, form, financials, cancelled, completed, load, persist, addProducts };
+  return { attachments, setAttachments, order, items, setItems, customer, setCustomer, customerName, setCustomerName, error, setError, loaded, isLoading, form, financials, cancelled, completed, load, persist, addProducts };
 }
