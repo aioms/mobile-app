@@ -2,13 +2,13 @@ import Attachments from "./components/Attachments";
 import { useState, useMemo, useEffect } from "react";
 import { IonBackButton, IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonPage, IonSpinner, IonTitle, IonToolbar, useIonAlert, useIonModal, useIonViewDidEnter, useIonViewWillLeave } from "@ionic/react";
 import { useParams, useHistory } from "react-router";
-import { AppCard } from "@/components/UI";
+import { AppBadge, AppCard } from "@/components/UI";
 import { Refresher } from "@/components/Refresher/Refresher";
 import { useBarcodeScanner, useAuth } from "@/hooks";
 import { UserRole } from "@/common/enums/user";
 import useProduct from "@/hooks/apis/useProduct";
 import { formatCurrency } from "@/helpers/formatters";
-import { getOrderStatusLabel } from "@/common/constants/order";
+import { getOrderStatusColor, getOrderStatusLabel } from "@/common/constants/order";
 import ModalSelectProduct from "../components/ModalSelectProduct";
 import ModalSelectCustomer from "@/components/ModalSelectCustomer";
 import FinancialFields from "./components/FinancialFields";
@@ -71,7 +71,7 @@ export default function DmsgOrder() {
     <IonContent className="bg-gray-50">
       {id && <Refresher onRefresh={async (event) => { await editor.load(); event.detail.complete(); }} />}
       {!editor.loaded ? <div className="p-6 text-center">{editor.isLoading ? <IonSpinner /> : <><p role="alert" className="text-red-600 mb-3">{editor.error || "Không tìm thấy đơn"}</p><IonButton onClick={() => { void editor.load(); }}>Thử lại</IonButton></>}</div> : <div className="px-4 pt-4 pb-8 max-w-2xl mx-auto">
-        <AppCard><div className="flex justify-between gap-2"><h1 className="text-lg font-bold">Đơn gộp ĐMSG</h1><span className="text-xs text-blue-700 bg-blue-50 rounded-full px-3 py-2">{editor.order ? getOrderStatusLabel(editor.order.status) : "Đơn mới"}</span></div>
+        <AppCard><div className="flex justify-between items-center gap-2"><h1 className="text-lg font-bold">Đơn gộp ĐMSG</h1><AppBadge color={editor.order ? getOrderStatusColor(editor.order.status) : "primary"} variant="soft" className="font-semibold text-xs px-3 py-1">{editor.order ? getOrderStatusLabel(editor.order.status) : "Đơn mới"}</AppBadge></div>
           <p className="text-sm text-gray-500 mt-2">Sản phẩm xuất kho tùy chọn · Tài chính theo tổng đơn</p></AppCard>
         <AppCard><h2 className="font-bold mb-2">Khách hàng</h2><IonButton fill="outline" expand="block" disabled={Boolean(id) || editor.isLoading} data-cy="dmsg-select-customer" onClick={() => presentCustomers({ onDidDismiss: (event) => { if (event.detail.role === "confirm") { const [customerId, name] = String(event.detail.data || "").split("__"); editor.setCustomer(customerId && customerId !== "individual" ? customerId : null); editor.setCustomerName(name || "Khách lẻ"); } } })}>{editor.order?.customer?.name || (editor.customer ? editor.customerName : "Chọn khách hàng / Khách lẻ")}</IonButton></AppCard>
         <InventoryItems items={editor.items} disabled={Boolean(editor.cancelled || editor.completed || editor.isLoading)} onChange={editor.setItems} onSearch={chooseProducts} onScan={() => { void scanner.startScan(); }} />
