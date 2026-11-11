@@ -129,11 +129,17 @@ export class HttpRequest {
             storage.remove("user"),
           ]);
           window.location.replace("/login");
+          return data;
         }
 
-        if (error.message) {
+        if (resp?.status === 403) {
+          return data;
+        }
+
+        const message = data?.message || error.message;
+        if (message) {
           Toast.show({
-            text: error.message,
+            text: message,
             duration: "short",
             position: "center",
           });
