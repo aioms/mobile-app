@@ -9,7 +9,7 @@ import path from "path";
 import legacy from "@vitejs/plugin-legacy";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import tailwindcss from "tailwindcss";
 
 interface BuildMetadata {
@@ -84,6 +84,15 @@ const versionManifest = (metadata: BuildMetadata): Plugin => ({
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const metadata = createBuildMetadata(mode);
+  const env = loadEnv(mode, __dirname, "VITE_");
+  // Browser dev runs on http://localhost:8100, so an absolute API URL is a
+  // cross-origin call whose preflight breaks whenever the upstream (Tailscale
+  // funnel / nginx) drops CORS headers on error responses. Proxying /api keeps
+  // dev requests same-origin. Native builds still use the absolute dev URL.
+  const proxyTarget = process.env.VITE_SERVER_URL_DEV || env.VITE_SERVER_URL_DEV;
+  const proxy = proxyTarget
+    ? { "/api": { target: proxyTarget, changeOrigin: true, secure: false } }
+    : undefined;
   const uploadMaps = Boolean(process.env.POSTHOG_API_KEY && process.env.POSTHOG_PROJECT_ID);
   const removePrivateMaps: Plugin = {
     name: "remove-private-source-maps",
@@ -104,6 +113,8 @@ export default defineConfig(({ mode }) => {
     define: {
       __APP_BUILD__: JSON.stringify(metadata),
     },
+    server: { proxy },
+    preview: { proxy },
     plugins: [
       react(),
       legacy(),
@@ -125,6 +136,7 @@ export default defineConfig(({ mode }) => {
           clientsClaim: false,
           skipWaiting: false,
           globIgnores: ["**/version.json"],
+          importScripts: ["push-sw.js"],
         },
         manifest: {
           name: "All-In-One System",

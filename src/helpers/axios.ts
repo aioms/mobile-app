@@ -4,11 +4,14 @@ import axios from "axios";
 import type { IExtraConfig, IHttpRequestConfig } from "../types/index.d";
 import { storage } from "../hooks";
 
+import { isWeb } from "./common";
+
 const {
   VITE_ENV,
   VITE_API_VERSION,
 
   VITE_API_URL_DEV,
+  VITE_API_URL_DEV_WEB,
   VITE_SERVER_URL_DEV,
 
   VITE_API_URL_STG,
@@ -23,8 +26,16 @@ const serverUrl: Record<string, string> = {
   staging: VITE_SERVER_URL_STG!,
   production: VITE_SERVER_URL_PROD!,
 };
+
+// Browser dev is served by the Vite dev server, which proxies /api to
+// VITE_SERVER_URL_DEV (see vite.config.ts). Keeping the base relative makes the
+// call same-origin, so no CORS preflight is involved. Native dev builds keep
+// the absolute URL.
+const devApiUrl =
+  import.meta.env.DEV && isWeb() ? VITE_API_URL_DEV_WEB || "/api" : VITE_API_URL_DEV;
+
 const apiUrl: Record<string, string> = {
-  development: VITE_API_URL_DEV!,
+  development: devApiUrl!,
   staging: VITE_API_URL_STG!,
   production: VITE_API_URL_PROD!,
 };

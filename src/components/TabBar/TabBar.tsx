@@ -25,6 +25,7 @@ import MenuBar from "../MenuBar/MenuBar";
 import NotFound from "@/pages/Error/NotFound";
 
 import HomeScreen from "@/pages/Home/Home";
+import AccountManagementScreen from "@/pages/Account/AccountManagement";
 import ProductListScreen from "@/pages/Product/ProductList";
 import ProductDetailScreen from "@/pages/Product/ProductDetail";
 import ProductCreateScreen from "@/pages/Product/ProductCreate";
@@ -61,6 +62,8 @@ import CustomerListScreen from "@/pages/Extended/CustomerList";
 import CustomerDetailScreen from "@/pages/Extended/CustomerDetail";
 import SupplierListScreen from "@/pages/Extended/SupplierList";
 import SupplierDetailScreen from "@/pages/Extended/SupplierDetail";
+import SettingListScreen from "@/pages/Setting/SettingList";
+import NotificationListPage from "@/pages/Notification/NotificationList";
 
 import "./TabBar.css";
 
@@ -79,6 +82,8 @@ const TabBar: React.FC = () => {
       <MenuBar />
       <IonRouterOutlet id="main-content">
         <Route exact path="/tabs/home" component={HomeScreen} />
+        <Route exact path="/tabs/user" component={AccountManagementScreen} />
+        <Route exact path="/tabs/notification" component={NotificationListPage} />
 
         {/* Inventory Screens */}
         <Route
@@ -230,6 +235,8 @@ const TabBar: React.FC = () => {
           path="/tabs/extended/suppliers/detail/:id"
           component={SupplierDetailScreen}
         />
+
+        <Route exact path="/tabs/setting" component={SettingListScreen} />
 
         <Route exact path="/tabs">
           <Redirect to="/tabs/home" />

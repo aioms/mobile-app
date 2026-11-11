@@ -858,6 +858,12 @@ enum PaymentMethod {
 }
 ```
 
+### 9. Notifications & Web Push
+
+**Location**: `/src/pages/Notification/`, `/src/services/push/`, `/src/hooks/usePushNotifications.ts`, `public/push-sw.js`
+
+In-app inbox (`/tabs/notification`) reads `GET /api/v1/notifications` and deep-links through `meta.referenceType`. Web Push is browser-only: `push-sw.js` is injected into the generated Workbox worker via `workbox.importScripts`, and the toggle in Settings calls `enablePush()`/`disablePush()` which subscribe through `PushManager` and sync the subscription to `POST /api/v1/push/subscriptions`.
+
 ---
 
 ## Design Patterns
@@ -1234,6 +1240,13 @@ export const request = axios.create({
   headers: defaultConfig.server.headers
 });
 ```
+
+**Web dev CORS**: browser dev (`ionic serve`, `http://localhost:8100`) never calls the API
+cross-origin. `vite.config.ts` proxies `/api` to `VITE_SERVER_URL_DEV` (`changeOrigin: true`,
+`secure: false`), and `src/helpers/axios.ts` uses `VITE_API_URL_DEV_WEB` (`/api`) when
+`import.meta.env.DEV && isWeb()`. Native builds keep the absolute `VITE_API_URL_DEV`. Do not
+point browser dev at an absolute API URL: any upstream error page (Tailscale funnel 502, nginx)
+loses `Access-Control-Allow-Origin` and the preflight fails.
 
 ### Request Interceptor
 
@@ -2325,6 +2338,9 @@ npm audit fix                 # Fix security vulnerabilities
 # API Configuration
 VITE_ENV=DEVELOPMENT           # DEVELOPMENT | STAGING | PRODUCTION
 VITE_API_VERSION=v1           # API version
+VITE_API_URL_DEV=https://moment-mpro.tailb1ba01.ts.net/api  # absolute, used by native dev
+VITE_SERVER_URL_DEV=https://moment-mpro.tailb1ba01.ts.net   # Vite /api proxy target
+VITE_API_URL_DEV_WEB=/api     # browser dev goes through the proxy (no CORS)
 
 # PostHog Analytics
 VITE_POSTHOG_KEY=your_key_here

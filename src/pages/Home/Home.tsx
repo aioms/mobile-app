@@ -91,8 +91,8 @@ const HomeScreen: React.FC = () => {
           statsData.totalOrders = totalOrders.value['totalOrders'];
         }
 
-        if (dailyRevenue.status === "fulfilled") {
-          const { totalRevenue, grossProfit } = dailyRevenue.value
+        if (dailyRevenue.status === "fulfilled" && dailyRevenue.value) {
+          const { totalRevenue = 0, grossProfit = 0 } = dailyRevenue.value;
 
           statsData.revenue = totalRevenue;
           statsData.profit = grossProfit;

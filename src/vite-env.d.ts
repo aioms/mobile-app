@@ -21,6 +21,7 @@ interface ImportMetaEnv {
   readonly VITE_PWA_POLL_INTERVAL_MS?: string;
   readonly VITE_PWA_NOTIFICATION_BEHAVIOR?: "prompt" | "disabled";
   readonly VITE_PWA_LOG_LEVEL?: "silent" | "error" | "info" | "debug";
+  readonly VITE_SUPPORT_HOTLINE?: string;
 }
 
 interface ImportMeta {

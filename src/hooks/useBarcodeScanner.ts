@@ -6,6 +6,10 @@ import {
 import { Capacitor } from "@capacitor/core";
 import { Toast } from "@capacitor/toast";
 import { sleep } from "@/helpers/common";
+import {
+  playScanBeep,
+  readScannerFeedbackPreferences,
+} from "@/helpers/deviceSettingsStorage";
 
 interface UseBarcodeScanner {
   onBarcodeScanned: (value: string, data?: Record<string, unknown>) => void;
@@ -437,12 +441,18 @@ export const useBarcodeScanner = ({
     lastScannedTime.current = currentTime;
     scanCount.current++;
 
-    // Provide haptic feedback if available
-    try {
-      const { Haptics, ImpactStyle } = await import("@capacitor/haptics");
-      await Haptics.impact({ style: ImpactStyle.Light });
-    } catch {
-      // Haptics not available, continue silently
+    // Provide haptic/audio feedback according to the Settings screen.
+    const feedback = await readScannerFeedbackPreferences();
+    if (feedback.hapticsEnabled) {
+      try {
+        const { Haptics, ImpactStyle } = await import("@capacitor/haptics");
+        await Haptics.impact({ style: ImpactStyle.Light });
+      } catch {
+        // Haptics not available, continue silently
+      }
+    }
+    if (feedback.soundEnabled) {
+      playScanBeep();
     }
 
     showCustomToast(rawValue, toastTimeout);
