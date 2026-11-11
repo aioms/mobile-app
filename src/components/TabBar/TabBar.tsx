@@ -63,6 +63,7 @@ import CustomerDetailScreen from "@/pages/Extended/CustomerDetail";
 import SupplierListScreen from "@/pages/Extended/SupplierList";
 import SupplierDetailScreen from "@/pages/Extended/SupplierDetail";
 import SettingListScreen from "@/pages/Setting/SettingList";
+import Reminders from "@/pages/Notification/Reminders";
 import NotificationListPage from "@/pages/Notification/NotificationList";
 
 import "./TabBar.css";
@@ -83,6 +84,7 @@ const TabBar: React.FC = () => {
       <IonRouterOutlet id="main-content">
         <Route exact path="/tabs/home" component={HomeScreen} />
         <Route exact path="/tabs/user" component={AccountManagementScreen} />
+        <Route exact path="/tabs/reminders" component={Reminders} />
         <Route exact path="/tabs/notification" component={NotificationListPage} />
 
         {/* Inventory Screens */}

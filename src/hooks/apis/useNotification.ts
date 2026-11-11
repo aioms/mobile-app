@@ -20,6 +20,7 @@ const useNotification = () => {
         limit: String(params.limit ?? DEFAULT_LIMIT),
       });
 
+      if (params.category) query.set("category", params.category);
       if (params.status) {
         query.set("status", params.status);
       }
