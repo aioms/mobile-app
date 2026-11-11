@@ -29,6 +29,7 @@ export interface User {
   code: string;
   username: string;
   fullname: string;
+  phone?: string;
   role: UserRole;
   storeCode: string;
   bankAccountName?: string;
