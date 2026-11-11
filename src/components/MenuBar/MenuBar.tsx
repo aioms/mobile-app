@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import {
   IonMenu,
   IonHeader,
@@ -19,6 +20,8 @@ import {
 import { useAuth } from "../../hooks";
 import { useHistory, useLocation } from "react-router";
 
+import AppBadge from "@/components/UI/AppBadge";
+import useNotification from "@/hooks/apis/useNotification";
 import "./MenuBar.css";
 
 const routes = [
@@ -47,6 +50,21 @@ const MenuBar: React.FC = () => {
   const history = useHistory();
   const location = useLocation();
   const { logout, user } = useAuth();
+
+  const { getUnreadCount } = useNotification();
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  useEffect(() => {
+    let mounted = true;
+    getUnreadCount()
+      .then((count) => {
+        if (mounted) setUnreadCount(count);
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, [getUnreadCount, location.pathname]);
 
   const handleLogout = async () => {
     await logout();
@@ -110,6 +128,17 @@ const MenuBar: React.FC = () => {
               >
                 <IonIcon slot="start" icon={route.icon} />
                 <IonLabel>{route.title}</IonLabel>
+                {route.path === "/tabs/notification" && unreadCount > 0 && (
+                  <div slot="end">
+                    <AppBadge
+                      color="danger"
+                      variant="solid"
+                      className="!px-1.5 !py-0 !text-[11px] font-bold"
+                    >
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </AppBadge>
+                  </div>
+                )}
               </IonItem>
             </IonMenuToggle>
           ))}

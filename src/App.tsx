@@ -42,6 +42,7 @@ import { AuthProvider } from "./hooks";
 import FallbackError from "./components/FallbackError";
 import AppUpdatePrompt from "./components/AppUpdatePrompt/AppUpdatePrompt";
 import { getEnvironment, isNative } from "./helpers/common";
+import { syncPushSubscription } from "./services/push/pushClient";
 import { webNavAnimation } from "./helpers/navAnimation";
 import { PWAUpdateProvider } from "./pwa";
 
@@ -64,6 +65,10 @@ const App: React.FC = () => {
   useEffect(() => {
     const environment = getEnvironment();
     posthog?.capture("init", { environment });
+
+    // Browsers keep their push subscription across sessions while the server
+    // row can be lost; re-register once at startup (best effort).
+    void syncPushSubscription().catch(() => {});
   }, []);
 
   return (
