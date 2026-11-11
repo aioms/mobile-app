@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { IonBackButton, IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonPage, IonSpinner, IonTitle, IonToolbar, useIonAlert, useIonModal, useIonViewDidEnter, useIonViewWillLeave } from "@ionic/react";
-import { useParams } from "react-router";
+import { useParams, useHistory } from "react-router";
 import { AppCard } from "@/components/UI";
 import { Refresher } from "@/components/Refresher/Refresher";
-import { useBarcodeScanner } from "@/hooks";
+import { useBarcodeScanner, useAuth } from "@/hooks";
+import { UserRole } from "@/common/enums/user";
 import useProduct from "@/hooks/apis/useProduct";
 import { formatCurrency } from "@/helpers/formatters";
 import { getOrderStatusLabel } from "@/common/constants/order";
@@ -20,6 +21,19 @@ import type { PaymentTransactionDto } from "@/types/payment.type";
 
 export default function DmsgOrder() {
   const { id } = useParams<{ id?: string }>();
+  const history = useHistory();
+  const { user } = useAuth();
+  const canManageDmsg = useMemo(() => {
+    if (!user?.role) return false;
+    return [UserRole.ADMIN, UserRole.MANAGER, UserRole.DEVELOPER].includes(user.role);
+  }, [user?.role]);
+
+  useEffect(() => {
+    if (user && !canManageDmsg) {
+      history.replace("/tabs/orders");
+    }
+  }, [user, canManageDmsg, history]);
+
   const editor = useDmsgEditor(id);
   const [viewReady, setViewReady] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
@@ -46,6 +60,9 @@ export default function DmsgOrder() {
       buttons: [{ text: "Quay lại", role: "cancel" }, { text: status === "completed" && !editor.completed ? "Tiếp tục thanh toán" : "Xác nhận", role: "confirm", handler: () => { if (status === "completed" && !editor.completed) { setCompletionAttempted(true); void editor.form.trigger(["totalCost", "invoiceTotal", "vatRate", "commissionRate"]).then((valid) => { if (valid) setPaymentOpen(true); }); } else void editor.persist(status); } }],
     });
   };
+
+  if (user && !canManageDmsg) return null;
+
   return <IonPage data-dmsg-ready={viewReady && editor.loaded && !editor.isLoading ? "true" : "false"}>
     <IonHeader className="ion-no-border border-b border-gray-100"><IonToolbar><IonButtons slot="start"><IonBackButton defaultHref="/tabs/orders" /></IonButtons><IonTitle>{id ? editor.order?.code || "Đơn gộp ĐMSG" : "Tạo đơn gộp ĐMSG"}</IonTitle></IonToolbar></IonHeader>
     <IonContent className="bg-gray-50">

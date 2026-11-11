@@ -10,7 +10,8 @@ import { useHistory } from "react-router";
 
 import useOrder from "@/hooks/apis/useOrder";
 import useProduct from "@/hooks/apis/useProduct";
-import { useBarcodeScanner, useLoading, useStorage } from "@/hooks";
+import { useBarcodeScanner, useLoading, useStorage, useAuth } from "@/hooks";
+import { UserRole } from "@/common/enums/user";
 import { dayjsFormat } from "@/helpers/formatters";
 import { capitalizeFirstLetter, parseArrayData } from "@/helpers/common";
 import { captureException, createExceptionContext } from "@/helpers/posthogHelper";
@@ -40,6 +41,11 @@ const OrderList: React.FC = () => {
   const [filters, setFilters] = useState<Record<string, string>>({});
 
   const { addItem, getItem } = useStorage();
+  const { user } = useAuth();
+  const canManageDmsg = React.useMemo(() => {
+    if (!user?.role) return false;
+    return [UserRole.ADMIN, UserRole.MANAGER, UserRole.DEVELOPER].includes(user.role);
+  }, [user?.role]);
   const { isLoading, withLoading } = useLoading();
   const { getList } = useOrder();
   const { getDetail: getProductDetail } = useProduct();
@@ -236,8 +242,8 @@ const OrderList: React.FC = () => {
           </div>
         </div>
 
-        <DmsgReportCard />
-      <DailyPaymentSummaryCards source="orders" embedded />
+        {canManageDmsg && <DmsgReportCard embedded />}
+        <DailyPaymentSummaryCards source="orders" embedded />
       </AppCard>
 
       {/* Filter Section */}
