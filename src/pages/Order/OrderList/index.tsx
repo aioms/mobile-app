@@ -247,7 +247,7 @@ const OrderList: React.FC = () => {
       </AppCard>
 
       {/* Filter Section */}
-      <FilterSection onFilterChange={handleFilterChange} />
+      <FilterSection onFilterChange={handleFilterChange} canManageDmsg={canManageDmsg} />
 
       {/* Order List */}
       <div className="px-4">

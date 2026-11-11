@@ -92,14 +92,14 @@ const App: React.FC = () => {
         />
       )}
     >
-      <IonApp>
+      <AuthProvider>
         <PWAUpdateProvider>
-          <AuthProvider>
+          <IonApp>
             <Routes />
             <AppUpdatePrompt />
-          </AuthProvider>
+          </IonApp>
         </PWAUpdateProvider>
-      </IonApp>
+      </AuthProvider>
     </ErrorBoundary>
   );
 };
