@@ -44,6 +44,7 @@ export const useNotificationList = () => {
         setError(null);
 
         const response = await getNotifications({
+          category: category === "all" || category === "unread" ? undefined : category,
           page: pageToLoad,
           limit: PAGE_SIZE,
           status:
@@ -119,6 +120,10 @@ export const useNotificationList = () => {
         setUnreadCount((prev) => Math.max(0, prev - 1));
       }
 
+      if (item.meta?.reminderKind) {
+        history.push("/tabs/reminders?" + new URLSearchParams({ kind: String(item.meta.reminderKind), date: String(item.meta.date), slot: String(item.meta.slot) }));
+        return;
+      }
       const refType = item.meta?.referenceType;
       const refId = item.meta?.referenceId;
 
@@ -157,33 +162,7 @@ export const useNotificationList = () => {
     [history, markAsRead]
   );
 
-  const displayedNotifications = useMemo(() => {
-    if (category === "all" || category === "unread") {
-      return notifications;
-    }
-    if (category === "order") {
-      return notifications.filter(
-        (it) =>
-          it.meta?.referenceType === "order" ||
-          it.meta?.referenceType === "dmsg_order"
-      );
-    }
-    if (category === "inventory") {
-      return notifications.filter(
-        (it) =>
-          it.meta?.referenceType === "product" ||
-          it.meta?.referenceType === "inventory"
-      );
-    }
-    if (category === "debt") {
-      return notifications.filter(
-        (it) =>
-          it.meta?.referenceType === "debt" ||
-          it.meta?.referenceType === "payment"
-      );
-    }
-    return notifications;
-  }, [category, notifications]);
+  const displayedNotifications = notifications;
 
   const filterOptions: FilterTabOption[] = useMemo(
     () => [

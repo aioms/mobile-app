@@ -27,6 +27,7 @@ export interface ICustomer {
 }
 
 export interface IOrder {
+  attachments?: import("./dmsg.type").DmsgAttachment[];
   dmsg?: import("./dmsg.type").DmsgFinancials | null;
   revision?: number;
   dmsgCompletedAt?: string | null;

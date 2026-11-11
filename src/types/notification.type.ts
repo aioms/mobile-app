@@ -21,6 +21,7 @@ export interface NotificationItemDto {
 }
 
 export interface GetNotificationsQueryDto {
+  category?: "order" | "inventory" | "debt";
   page?: number;
   limit?: number;
   status?: NotificationStatus;

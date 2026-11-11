@@ -26,3 +26,7 @@ kiểm tồn từ DB qua fixture guard. Không dùng mock API cho happy path.
 
 Demo: từ backend chạy `deno task test:system --demo`; runner in URL và tài khoản
 kiểm thử, tạo đơn mẫu 108 triệu và kho test riêng. Dừng runner xóa môi trường tạm.
+
+## Cập nhật 11/11/2026
+
+Sản phẩm xuất kho không bắt buộc; [] ở nháp hoàn tồn đã xuất. Chứng từ ảnh giá vốn/PDF hóa đơn tùy chọn, 10 tệp mỗi nhóm, 10 MB/tệp; sửa ở nháp/hoàn thành, hủy chỉ xem. Biên lợi nhuận = profit/revenue; doanh thu 0 hiện —. Contract và vận hành: be-service/docs/business/reminders-and-dmsg-documents.md.
