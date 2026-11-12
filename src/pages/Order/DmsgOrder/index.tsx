@@ -56,9 +56,10 @@ export default function DmsgOrder() {
     if (uploading) return;
     if (status !== "cancelled" && editor.items.some((item) => !Number.isSafeInteger(item.quantity) || item.quantity < 1)) { editor.setError("Số lượng phải là số nguyên lớn hơn 0"); return; }
     void alert({
-      header: status === "cancelled" ? "Hủy đơn ĐMSG?" : status === "draft" ? "Lưu nháp đơn ĐMSG?" : "Hoàn thành và thanh toán đơn ĐMSG?",
+      header: status === "cancelled" ? "Hủy đơn ĐMSG?" : status === "draft" ? "Lưu nháp đơn ĐMSG?" : editor.completed ? "Lưu tài chính đơn ĐMSG?" : "Hoàn thành và thanh toán đơn ĐMSG?",
       message: status === "cancelled" ? "Hàng sẽ hoàn về kho và đảo doanh thu/lợi nhuận. Các giao dịch tiền đã phát sinh vẫn giữ để đối soát."
         : status === "draft" ? "Nếu có sản phẩm, hệ thống xuất kho ngay theo số lượng. Nháp chưa cộng vào doanh thu và lợi nhuận chính thức."
+        : editor.completed ? "Lưu tài chính, ghi chú và chứng từ. Không ghi thêm giao dịch thanh toán. Nếu đổi tổng hóa đơn, công nợ sẽ được tính lại."
         : "Xác nhận để chọn phương thức thanh toán toàn bộ tổng hóa đơn. Hàng đã xuất ở nháp sẽ không bị trừ thêm.",
       buttons: [{ text: "Quay lại", role: "cancel" }, { text: status === "completed" && !editor.completed ? "Tiếp tục thanh toán" : "Xác nhận", role: "confirm", handler: () => { if (status === "completed" && !editor.completed) { setCompletionAttempted(true); void editor.form.trigger(["totalCost", "invoiceTotal", "vatRate", "commissionRate"]).then((valid) => { if (valid) setPaymentOpen(true); }); } else void editor.persist(status); } }],
     });
@@ -76,7 +77,7 @@ export default function DmsgOrder() {
         <AppCard><h2 className="font-bold mb-2">Khách hàng</h2><IonButton fill="outline" expand="block" disabled={Boolean(id) || editor.isLoading} data-cy="dmsg-select-customer" onClick={() => presentCustomers({ onDidDismiss: (event) => { if (event.detail.role === "confirm") { const [customerId, name] = String(event.detail.data || "").split("__"); editor.setCustomer(customerId && customerId !== "individual" ? customerId : null); editor.setCustomerName(name || "Khách lẻ"); } } })}>{editor.order?.customer?.name || (editor.customer ? editor.customerName : "Chọn khách hàng / Khách lẻ")}</IonButton></AppCard>
         <InventoryItems items={editor.items} disabled={Boolean(editor.cancelled || editor.completed || editor.isLoading)} onChange={editor.setItems} onSearch={chooseProducts} onScan={() => { void scanner.startScan(); }} />
         <FinancialFields control={editor.form.control} errors={editor.form.formState.errors} disabled={Boolean(editor.cancelled || editor.isLoading)} requireCompletionFields={editor.completed || completionAttempted} />
-        <Attachments value={editor.attachments} onChange={editor.setAttachments} orderId={id} disabled={Boolean(editor.cancelled || editor.isLoading)} onBusy={setUploading} />
+        <Attachments savedValue={editor.order?.attachments || []} value={editor.attachments} onChange={editor.setAttachments} orderId={id} disabled={Boolean(editor.cancelled || editor.isLoading)} onBusy={setUploading} />
         <FinancialSummary stateLabel={editor.cancelled ? "Đã hủy" : editor.form.formState.isDirty ? "Chưa lưu" : undefined} value={editor.financials} draft={!editor.completed && !editor.cancelled} />
         {editor.cancelled && <p className="text-sm text-red-600 mb-3">Đơn đã hủy: số liệu được giữ làm lịch sử, không cộng báo cáo.</p>}
         <AppCard><label className="block font-medium mb-2" htmlFor="dmsg-note">Ghi chú</label><textarea id="dmsg-note" {...editor.form.register("note")} disabled={Boolean(editor.cancelled || editor.isLoading)} className="w-full border border-gray-200 rounded-xl p-3 text-sm bg-white text-gray-900" rows={3} /></AppCard>
