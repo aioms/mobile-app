@@ -67,6 +67,7 @@ interface ReceiptItem {
   costPrice: number;
   discount: number;
   discountType?: DiscountType;
+  metadata?: Record<string, unknown>;
 }
 
 interface ReceiptImport {
