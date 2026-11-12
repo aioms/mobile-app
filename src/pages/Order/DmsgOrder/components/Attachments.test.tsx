@@ -63,4 +63,15 @@ describe("DMSG attachment persistence", () => {
     render(<Attachments {...props} value={[saved]} savedValue={[saved]} />);
     expect((await screen.findByRole("alert")).textContent).toBe("Không tải được tệp");
   });
+
+  it("opens image fullscreen preview when clicking cost image thumbnail or button", async () => {
+    render(<Attachments {...props} value={[saved]} savedValue={[saved]} />);
+    const button = await screen.findByRole("button", { name: "saved.jpg" });
+    fireEvent.click(button);
+    await waitFor(() => {
+      expect(screen.getByAltText("Preview 1")).toBeTruthy();
+    });
+    const modal = document.querySelector("ion-modal.image-preview-modal");
+    expect(modal?.getAttribute("is-open")).toBe("true");
+  });
 });
