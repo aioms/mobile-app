@@ -3,29 +3,34 @@ import { AppCard } from "@/components/UI";
 import useDmsgOrder from "@/hooks/apis/useDmsgOrder";
 import type { DmsgAttachment } from "@/types/dmsg.type";
 
-export default function Attachments({ value, onChange, orderId, disabled, onBusy }: {
-  value: DmsgAttachment[]; onChange: (value: DmsgAttachment[]) => void;
+export default function Attachments({ value, savedValue, onChange, orderId, disabled, onBusy }: {
+  value: DmsgAttachment[]; savedValue: DmsgAttachment[]; onChange: (value: DmsgAttachment[]) => void;
   orderId?: string; disabled: boolean; onBusy: (busy: boolean) => void;
 }) {
   const { upload, download } = useDmsgOrder();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [downloadError, setDownloadError] = useState("");
   const [names, setNames] = useState<Record<string, string>>({});
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const fileKey = value.map((file) => file.fileId).join(",");
+  const savedFileKey = savedValue.map((file) => file.fileId).join(",");
+  useEffect(() => { setError(""); }, [orderId, savedFileKey]);
   useEffect(() => {
     let active = true;
-    if (orderId) void Promise.all(value.map(async (item) => {
+    setDownloadError("");
+    const savedIds = new Set(savedValue.map((file) => file.fileId));
+    if (orderId) void Promise.all(value.filter((item) => savedIds.has(item.fileId)).map(async (item) => {
       try {
         const file = await download(orderId, item.fileId);
         if (active) {
           setNames((old) => ({ ...old, [item.fileId]: file.name }));
           if (item.kind === "cost_image") setPreviews((old) => ({ ...old, [item.fileId]: file.url }));
         }
-      } catch (cause) { if (active) setError((cause as Error).message); }
+      } catch (cause) { if (active) setDownloadError((cause as Error).message); }
     }));
     return () => { active = false; };
-  }, [orderId, fileKey]);
+  }, [orderId, fileKey, savedFileKey]);
   async function add(files: FileList | null, kind: DmsgAttachment["kind"]) {
     if (!files?.length) return;
     setError("");
@@ -49,7 +54,7 @@ export default function Attachments({ value, onChange, orderId, disabled, onBusy
     finally { onChange([...value, ...added]); setBusy(false); onBusy(false); }
   }
   async function open(fileId: string) {
-    if (!orderId) { setError("Lưu đơn để xem/tải chứng từ"); return; }
+    if (!orderId || !savedValue.some((file) => file.fileId === fileId)) { setError("Lưu đơn để xem/tải chứng từ vừa thêm"); return; }
     const tab = window.open("about:blank", "_blank");
     try {
       const file = await download(orderId, fileId);
@@ -67,10 +72,11 @@ export default function Attachments({ value, onChange, orderId, disabled, onBusy
       {value.filter((f) => f.kind === kind).map((file, index) => <div key={file.fileId} className="flex gap-2 items-center border-b py-2">
         {previews[file.fileId] && <img src={previews[file.fileId]} alt="Ảnh giá vốn" className="w-12 h-12 object-cover rounded" />}
         <button type="button" className="min-h-11 text-blue-600 text-left break-all flex-1" onClick={() => void open(file.fileId)}>{names[file.fileId] || `${kind === "cost_image" ? "Ảnh" : "Hóa đơn"} ${index + 1}`}</button>
+        {!savedValue.some((saved) => saved.fileId === file.fileId) && <span className="text-xs text-gray-500">Chưa lưu</span>}
         {!disabled && <button type="button" disabled={busy} className="min-h-11 px-3 text-red-600" onClick={() => { if (window.confirm("Gỡ tệp khỏi đơn?")) onChange(value.filter((f) => f.fileId !== file.fileId)); }}>Gỡ</button>}
       </div>)}
     </section>)}
     {busy && <p role="status">Đang tải tệp…</p>}
-    {error && <p role="alert" className="text-red-600">{error}</p>}
+    {(error || downloadError) && <p role="alert" className="text-red-600">{error || downloadError}</p>}
   </AppCard>;
 }
