@@ -133,8 +133,8 @@ const ProductCreate: React.FC = () => {
   };
 
   const handleNumericInputChange = (field: "inventory", value: string) => {
-    // Only allow numeric input
-    const numericValue = value.replace(/\D/g, "");
+    // Keep the decimal separator for products measured by weight or volume.
+    const numericValue = value.replace(/[^\d.,]/g, "").replace(",", ".");
     setFormData((prev) => ({
       ...prev,
       [field]: numericValue,
@@ -175,7 +175,8 @@ const ProductCreate: React.FC = () => {
       newErrors.salePrice = "Giá bán phải lớn hơn 0";
     }
 
-    if (!formData.inventory || parseInt(formData.inventory) < 0) {
+    const inventory = Number(formData.inventory);
+    if (formData.inventory === "" || !Number.isFinite(inventory) || inventory < 0) {
       newErrors.inventory = "Tồn kho không được âm";
     }
 
@@ -203,7 +204,7 @@ const ProductCreate: React.FC = () => {
       suppliers,
       costPrice: parseCurrencyInput(formData.costPrice),
       sellingPrice: parseCurrencyInput(formData.salePrice),
-      inventory: parseInt(formData.inventory),
+      inventory: Number(formData.inventory),
       unit: formData.unit.trim(),
       description: formData.description?.trim() || undefined,
       note: formData.notes?.trim() || undefined,
@@ -379,6 +380,9 @@ const ProductCreate: React.FC = () => {
             <IonItem className={clsx(errors.inventory && "ion-invalid")}>
               <IonLabel position="stacked">Tồn kho *</IonLabel>
               <IonInput
+                type="number"
+                step="any"
+                inputmode="decimal"
                 placeholder="0"
                 value={formData.inventory}
                 onIonInput={(e) =>
