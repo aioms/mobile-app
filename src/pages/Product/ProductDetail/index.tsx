@@ -654,9 +654,6 @@ const ProductDetail: React.FC = () => {
       if (numValue < 0) {
         return "Giá trị không được âm";
       }
-      if (field === "inventory" && !Number.isInteger(numValue)) {
-        return "Tồn kho phải là số nguyên";
-      }
       if ((field === "sellingPrice" || field === "retailPrice" || field === "costPrice") && numValue === 0) {
         return "Giá không được bằng 0";
       }
@@ -715,8 +712,8 @@ const ProductDetail: React.FC = () => {
     if (field === "inventory" || field === "sellingPrice" || field === "retailPrice" || field === "costPrice") {
       // Numeric fields
       if (field === "inventory") {
-        // Inventory: parse as integer, no formatting
-        processedValue = parseInt(value as string) || 0;
+        // Inventory may be fractional for weight or volume units.
+        processedValue = Number(String(value).replace(",", ".")) || 0;
       } else {
         // Price fields: parse formatted currency input
         processedValue = parseCurrencyInput(value as string);
@@ -1376,6 +1373,8 @@ const ProductDetail: React.FC = () => {
                 <>
                   <IonInput
                     type="number"
+                    step="any"
+                    inputmode="decimal"
                     value={editedValues.inventory}
                     onIonInput={(e) =>
                       handleFieldChange("inventory", e.detail.value!)

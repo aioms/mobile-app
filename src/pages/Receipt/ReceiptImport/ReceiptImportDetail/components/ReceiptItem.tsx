@@ -18,6 +18,7 @@ type Props = {
   costPrice: number;
   discount: number;
   discountType?: DiscountType;
+  metadata?: Record<string, unknown>;
   onRowChange?: (data: any) => void;
   onDelete?: () => Promise<void> | void;
   isEmployee: boolean;
@@ -38,6 +39,7 @@ const ReceiptItem: FC<Props> = (
     costPrice,
     discount,
     discountType,
+    metadata,
     onRowChange,
     onDelete,
     isEmployee,
@@ -48,7 +50,10 @@ const ReceiptItem: FC<Props> = (
       formatCurrencyWithoutSymbol(costPrice)
     );
     const [newCostPrice, setNewCostPrice] = useState<number>(costPrice);
+    const [regularCostPrice, setRegularCostPrice] = useState<number>(costPrice);
     const [newDiscount, setNewDiscount] = useState<number>(discount);
+    const [discountPercentInput, setDiscountPercentInput] = useState(String(discount));
+    const [isGift, setIsGift] = useState<boolean>(metadata?.isGift === true);
 
     const [isEditingQty, setIsEditingQty] = useState<boolean>(false);
     const [editQuantity, setEditQuantity] = useState<string>(quantity.toString());
@@ -69,9 +74,22 @@ const ReceiptItem: FC<Props> = (
       if (value !== null && value !== undefined) {
         const numericValue = parseCurrencyInput(value);
         if (numericValue >= 0) {
-          setNewCostPrice(numericValue);
+          setRegularCostPrice(numericValue);
+          if (!isGift) setNewCostPrice(numericValue);
           setformattedCostPrice(formatCurrencyWithoutSymbol(numericValue));
         }
+      }
+    };
+
+    const handleGiftChange = (checked: boolean) => {
+      setIsGift(checked);
+      setNewCostPrice(checked ? 0 : regularCostPrice);
+      setformattedCostPrice(
+        formatCurrencyWithoutSymbol(checked ? 0 : regularCostPrice),
+      );
+      if (checked) {
+        setNewDiscount(0);
+        setDiscountPercentInput("0");
       }
     };
 
@@ -92,18 +110,25 @@ const ReceiptItem: FC<Props> = (
       setNewDiscount(numericValue);
     };
 
-    const handleDiscountPercentChange = (value: number | null) => {
+    const handleDiscountPercentChange = (input: string) => {
+      setDiscountPercentInput(input);
       setDiscountError("");
-      if (value !== null) {
-
-        if (value < 0 || value > 100) {
-          setDiscountError("0-100%");
-          setNewDiscount(0);
-        } else {
-          setNewDiscount(value);
-        }
-
+      const normalizedInput = input.replace(",", ".");
+      if (normalizedInput === "") {
+        setNewDiscount(0);
+        return;
       }
+      const value = Number(normalizedInput);
+      const decimalPlaces = normalizedInput.split(".")[1]?.length || 0;
+      if (!Number.isFinite(value) || value < 0 || value > 100) {
+        setDiscountError("Nhập từ 0 đến 100%");
+        return;
+      }
+      if (decimalPlaces > 3) {
+        setDiscountError("Tối đa 3 chữ số thập phân");
+        return;
+      }
+      setNewDiscount(value);
     };
 
     // Sync formatted amount display when discount mode or values change
@@ -169,7 +194,12 @@ const ReceiptItem: FC<Props> = (
           color: "success",
         });
 
-        const updatedTotalPrice = newQty * newCostPrice * (1 - newDiscount / 100);
+        const discountPerUnit = discountMode === DiscountType.PERCENTAGE
+          ? newCostPrice * newDiscount / 100
+          : newDiscount;
+        const updatedTotalPrice = isGift
+          ? 0
+          : newQty * Math.max(0, newCostPrice - discountPerUnit);
 
         onRowChange?.({
           id,
@@ -182,6 +212,8 @@ const ReceiptItem: FC<Props> = (
           quantity: newQty,
           costPrice: newCostPrice,
           discount: newDiscount,
+          discountType: discountMode,
+          metadata: { ...metadata, isGift },
           totalPrice: updatedTotalPrice,
         });
 
@@ -211,10 +243,10 @@ const ReceiptItem: FC<Props> = (
         }
 
         const priceAfterDiscount = newCostPrice - discountAmount;
-        return Math.round(quantity * priceAfterDiscount * 100) / 100;
+        return isGift ? 0 : Math.round(quantity * priceAfterDiscount * 100) / 100;
       }
       return 0;
-    }, [quantity, newCostPrice, newDiscount, discountMode]);
+    }, [quantity, newCostPrice, newDiscount, discountMode, isGift]);
 
     useEffect(() => {
       if (typeof newCostPrice !== "number" || typeof newDiscount !== "number" || typeof quantity !== "number") {
@@ -233,9 +265,10 @@ const ReceiptItem: FC<Props> = (
         costPrice: newCostPrice,
         discount: newDiscount,
         discountType: discountMode,
+        metadata: { ...metadata, isGift },
         totalPrice,
       });
-    }, [newCostPrice, newDiscount, quantity, discountMode]);
+    }, [newCostPrice, newDiscount, quantity, discountMode, isGift]);
 
     return (
       <div className="p-4 bg-white border-b border-gray-100 last:border-b-0 space-y-3">
@@ -274,6 +307,16 @@ const ReceiptItem: FC<Props> = (
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 mt-2">
+            <label className="col-span-2 flex min-h-11 items-center gap-2 text-sm font-medium text-gray-700">
+              <input
+                type="checkbox"
+                checked={isGift}
+                onChange={(event) => handleGiftChange(event.target.checked)}
+                disabled={disabled}
+                className="h-4 w-4 accent-blue-600"
+              />
+              Sản phẩm tặng/khuyến mãi (giá nhập 0)
+            </label>
             <div>
               <label className="text-xs font-medium text-gray-700 mb-1 block">Giá nhập</label>
               <input
@@ -281,7 +324,7 @@ const ReceiptItem: FC<Props> = (
                 value={formattedCostPrice}
                 onChange={(e) => handleCostPriceChange(e.target.value)}
                 className="w-full bg-gray-50 border border-gray-200 rounded-lg h-9 px-3 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
-                disabled={disabled}
+                disabled={disabled || isGift}
               />
             </div>
             <div>
@@ -290,12 +333,14 @@ const ReceiptItem: FC<Props> = (
                 <div className="flex bg-gray-100 rounded p-0.5">
                   <button
                     onClick={() => setDiscountMode(DiscountType.PERCENTAGE)}
+                    disabled={disabled || isGift}
                     className={`text-[10px] px-2 py-0.5 rounded leading-none ${discountMode === DiscountType.PERCENTAGE ? "bg-white shadow-sm font-medium text-gray-900" : "text-gray-500"}`}
                   >
                     %
                   </button>
                   <button
                     onClick={() => setDiscountMode(DiscountType.FIXED)}
+                    disabled={disabled || isGift}
                     className={`text-[10px] px-2 py-0.5 rounded leading-none ${discountMode === DiscountType.FIXED ? "bg-white shadow-sm font-medium text-gray-900" : "text-gray-500"}`}
                   >
                     $
@@ -305,13 +350,12 @@ const ReceiptItem: FC<Props> = (
               <div className="relative">
                 {discountMode === DiscountType.PERCENTAGE ? (
                   <input
-                    type="number"
-                    value={newDiscount}
-                    onChange={(e) => handleDiscountPercentChange(parseFloat(e.target.value) || 0)}
-                    min={0}
-                    max={100}
+                    type="text"
+                    inputMode="decimal"
+                    value={discountPercentInput}
+                    onChange={(e) => handleDiscountPercentChange(e.target.value)}
                     className={`w-full bg-gray-50 border ${discountError ? 'border-red-500' : 'border-gray-200'} rounded-lg h-9 pl-3 pr-6 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-colors`}
-                    disabled={disabled}
+                    disabled={disabled || isGift}
                   />
                 ) : (
                   <input
@@ -319,7 +363,7 @@ const ReceiptItem: FC<Props> = (
                     value={formattedDiscountAmount}
                     onChange={(e) => handleDiscountAmountChange(e.target.value)}
                     className={`w-full bg-gray-50 border ${discountError ? 'border-red-500' : 'border-gray-200'} rounded-lg h-9 pl-3 pr-6 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-colors`}
-                    disabled={disabled}
+                    disabled={disabled || isGift}
                   />
                 )}
                 <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
