@@ -23,6 +23,22 @@ describe("exchange VAT settlement preview", () => {
     expect(result.totalAmount).toBe(874800);
     expect(result.exchangeAmount - result.totalAmount).toBe(97200);
   });
+  it("does not treat an earlier partial return as a discount (DH261114175215)", () => {
+    const order = [
+      { quantity: 2, price: 2000000, returnedQuantity: 2 },
+      { quantity: 10, price: 20000 },
+      { quantity: 1, price: 17962000 },
+    ];
+    const second = [{ ...selected[0], quantity: 10, costPrice: 20000, vatRate: 0 }];
+    const result = calculateReturnTotals(second, [], order, false, false, 18162000);
+    expect(result.totalAmount).toBe(200000);
+  });
+  it("still applies the real order discount on a later partial return", () => {
+    const order = [{ quantity: 10, price: 100000, returnedQuantity: 2 }];
+    const selectedLine = [{ ...selected[0], quantity: 1, costPrice: 100000, vatRate: 0 }];
+    const result = calculateReturnTotals(selectedLine, [], order, false, false, 720000);
+    expect(result.totalAmount).toBe(90000);
+  });
   it("keeps debt VAT policy: goods returned, replacements include VAT", () => {
     const result = calculateReturnTotals(selected, exchange, original, true, false);
     expect(result.totalAmount).toBe(810000);

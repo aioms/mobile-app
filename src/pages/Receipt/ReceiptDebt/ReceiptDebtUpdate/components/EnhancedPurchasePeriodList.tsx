@@ -375,6 +375,7 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
               {/* Current Item Display */}
               <div className="mb-4">
                 <EditableProductItem
+                  key={currentItem.id}
                   item={currentItem}
                   periodDate={date}
                   debtId={debtId}

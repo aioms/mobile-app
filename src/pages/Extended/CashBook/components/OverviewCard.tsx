@@ -89,6 +89,12 @@ const OverviewCard: React.FC<Props> = ({
             </div>*/}
           </div>
 
+          {overview.returns > 0 && (
+            <p className="mt-2 text-xs font-medium text-rose-500">
+              Đã trừ trả hàng: −{formatCurrencyWithoutSymbol(overview.returns)}
+            </p>
+          )}
+
           {Boolean(overview.dmsg?.count) && <div className="mt-3 p-3 rounded-xl bg-blue-50 text-sm text-blue-800">
             <p className="font-semibold">ĐMSG ({overview.dmsg!.count} đơn): {formatCurrencyWithoutSymbol(overview.dmsg!.revenue)}</p>
             <p className="text-xs mt-1">Lợi nhuận sau vốn và phí: {formatCurrencyWithoutSymbol(overview.dmsg!.profit)}. Ghi nhận theo ngày hoàn thành; tiền thực thu theo dõi riêng.</p>

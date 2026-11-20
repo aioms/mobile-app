@@ -601,7 +601,6 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
             ...currentItem,
             id: newId,
             shipNow,
-            sellingPrice: currentItem.costPrice,
             originalQuantity,
           };
         }
