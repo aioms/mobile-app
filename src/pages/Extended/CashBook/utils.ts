@@ -25,7 +25,6 @@ export const getEmptyOverview = (
   endDate: date,
   timezone: "Asia/Ho_Chi_Minh",
   revenue: 0,
-  returns: 0,
   expense: 0,
   profit: 0,
   operatingExpense: 0,

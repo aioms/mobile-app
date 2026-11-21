@@ -166,6 +166,8 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
       Object.keys(response.items).forEach((key) => {
         items[key] = response.items[key].map((item) => ({
           ...item,
+          // Server only returns the stored unit price as `costPrice`; submit reads `sellingPrice`, so without this an edited saved item is sent as 0.
+          sellingPrice: item.costPrice,
           shipNow: item.metadata?.shipNow || false,
         }));
       });

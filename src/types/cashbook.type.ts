@@ -29,8 +29,6 @@ export interface CashbookOverviewResponseDto {
   endDate: string;
   timezone: string;
   revenue: number;
-  /** Legacy (v1) return slips already subtracted from `revenue`. */
-  returns: number;
   expense: number;
   profit: number;
   operatingExpense: number;
