@@ -37,6 +37,7 @@ import {
 import { useParams } from "react-router";
 
 import useProduct from "@/hooks/apis/useProduct";
+import { parseProductInventoryInput } from "@/helpers/productInventoryInput";
 import BarcodeModal from "./components/BarcodeModal";
 import InventoryHistory from "./components/InventoryHistory";
 import { MediaUpload } from "./components/MediaUpload";
@@ -112,6 +113,7 @@ const ProductDetail: React.FC = () => {
     suppliers: [] as { id: string; name: string }[],
     description: "",
   });
+  const [inventoryInputValue, setInventoryInputValue] = useState("");
   const [validationErrors, setValidationErrors] = useState({
     inventory: "",
     sellingPrice: "",
@@ -618,6 +620,9 @@ const ProductDetail: React.FC = () => {
   }, [user?.role]);
 
   const handleEditFieldClick = (field: string) => {
+    if (field === "inventory") {
+      setInventoryInputValue(String(product?.inventory ?? 0));
+    }
     if (field === "costPrice" && selectedVatCostPriceRate) {
       const baseCostPrice = Math.round(
         (product?.costPrice || 0) / (1 + selectedVatCostPriceRate / 100),
@@ -636,6 +641,9 @@ const ProductDetail: React.FC = () => {
 
   const handleCancelFieldEdit = (field: string) => {
     setEditingField(null);
+    if (field === "inventory") {
+      setInventoryInputValue(String(product?.inventory ?? 0));
+    }
     // Restore original value
     setEditedValues((prev) => ({
       ...prev,
@@ -834,7 +842,20 @@ const ProductDetail: React.FC = () => {
   );
 
   const handleSaveField = async (field: string) => {
-    const value = editedValues[field as keyof typeof editedValues];
+    const value = field === "inventory"
+      ? parseProductInventoryInput(inventoryInputValue)
+      : editedValues[field as keyof typeof editedValues];
+    if (value === null) {
+      const error = "Vui lòng nhập số tồn kho hợp lệ";
+      setValidationErrors((prev) => ({ ...prev, inventory: error }));
+      presentToast({
+        message: error,
+        duration: 2000,
+        position: "top",
+        color: "danger",
+      });
+      return;
+    }
     const error = validateField(field, value);
 
     if (error) {
@@ -1372,13 +1393,13 @@ const ProductDetail: React.FC = () => {
               {editingField === "inventory" ? (
                 <>
                   <IonInput
-                    type="number"
-                    step="any"
+                    type="text"
                     inputmode="decimal"
-                    value={editedValues.inventory}
-                    onIonInput={(e) =>
-                      handleFieldChange("inventory", e.detail.value!)
-                    }
+                    value={inventoryInputValue}
+                    onIonInput={(e) => {
+                      setInventoryInputValue(e.detail.value ?? "");
+                      setValidationErrors((prev) => ({ ...prev, inventory: "" }));
+                    }}
                     className={`border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-200 text-lg ${validationErrors.inventory ? "border-red-500 focus:border-red-500" : "border-blue-300 focus:border-blue-500"}`}
                     placeholder="Nhập số lượng tồn kho"
                     autofocus
