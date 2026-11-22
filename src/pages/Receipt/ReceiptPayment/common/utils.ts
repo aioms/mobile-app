@@ -44,6 +44,10 @@ export const getPaymentReceiptTypeIcon = (type: ReceiptPaymentExpenseType) => {
       return { icon: business, color: "text-indigo-500", bg: "bg-indigo-50", label: "Thuê nhà/mặt bằng" };
     case ReceiptPaymentExpenseType.LABOR:
       return { icon: people, color: "text-pink-600", bg: "bg-pink-50", label: "Nhân công" };
+    case ReceiptPaymentExpenseType.TAX:
+      return { icon: documentText, color: "text-amber-600", bg: "bg-amber-50", label: "Thuế (GTGT/TNDN...)" };
+    case ReceiptPaymentExpenseType.SOCIAL_INSURANCE:
+      return { icon: people, color: "text-cyan-600", bg: "bg-cyan-50", label: "BHXH" };
     case ReceiptPaymentExpenseType.CASH_WITHDRAWAL_SANG:
       return { icon: wallet, color: "text-teal-600", bg: "bg-teal-50", label: "Rút tiền mặt (Cô Sang)" };
     case ReceiptPaymentExpenseType.OTHER:
@@ -60,6 +64,8 @@ export const EXPENSE_TYPE_LABELS: Record<ReceiptPaymentExpenseType, string> = {
   [ReceiptPaymentExpenseType.UTILITIES]: "Điện nước",
   [ReceiptPaymentExpenseType.RENT]: "Thuê nhà/mặt bằng",
   [ReceiptPaymentExpenseType.LABOR]: "Nhân công",
+  [ReceiptPaymentExpenseType.TAX]: "Thuế (GTGT/TNDN...)",
+  [ReceiptPaymentExpenseType.SOCIAL_INSURANCE]: "BHXH",
   [ReceiptPaymentExpenseType.CASH_WITHDRAWAL_SANG]: "Rút tiền Cô Sang",
   [ReceiptPaymentExpenseType.OTHER]: "Khác",
 };
