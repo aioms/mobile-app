@@ -37,6 +37,8 @@ const expenseTypes = [
   { value: ReceiptPaymentExpenseType.UTILITIES, label: "Điện nước" },
   { value: ReceiptPaymentExpenseType.RENT, label: "Thuê mặt bằng" },
   { value: ReceiptPaymentExpenseType.LABOR, label: "Nhân công" },
+  { value: ReceiptPaymentExpenseType.TAX, label: "Thuế (GTGT/TNDN...)" },
+  { value: ReceiptPaymentExpenseType.SOCIAL_INSURANCE, label: "BHXH" },
   { value: ReceiptPaymentExpenseType.CASH_WITHDRAWAL_SANG, label: "Rút tiền Cô Sang" },
   { value: ReceiptPaymentExpenseType.OTHER, label: "Khác" },
 ];
