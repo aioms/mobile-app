@@ -215,7 +215,7 @@ const EditableProductItem: React.FC<IEditableProductItemProps> = ({
               )}
             </div>
           ) : (
-            <div className="text-lg font-bold text-gray-900">{item.quantity}</div>
+            <div className="text-lg font-bold text-gray-900">{Math.max(0, item.quantity - (item.returnedQuantity || 0))}</div>
           )}
         </div>
 
