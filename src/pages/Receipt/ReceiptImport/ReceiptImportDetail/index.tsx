@@ -1,3 +1,4 @@
+import { isValidImportDiscount } from "@/helpers/receipt-import-pricing";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useHistory, useParams } from "react-router";
 
@@ -442,6 +443,12 @@ const ReceiptImportDetail: React.FC = () => {
   };
 
   const handleUpdate = async () => {
+    if (receipt?.items.some((item) => !item.metadata?.isGift && (
+      !isValidImportDiscount(item.discount ?? 0, item.costPrice, item.discountType)
+    ))) {
+      await presentToast({ message: "Kiểm tra chiết khấu: 0–100%, tối đa 3 số thập phân, hoặc số tiền không vượt giá nhập", duration: 2500, color: "danger" });
+      return;
+    }
     try {
       if (!receipt?.id) return;
 
@@ -518,6 +525,12 @@ const ReceiptImportDetail: React.FC = () => {
   };
 
   const handleRequestApproval = async () => {
+    if (receipt?.items.some((item) => !item.metadata?.isGift && (
+      !isValidImportDiscount(item.discount ?? 0, item.costPrice, item.discountType)
+    ))) {
+      await presentToast({ message: "Kiểm tra chiết khấu: 0–100%, tối đa 3 số thập phân, hoặc số tiền không vượt giá nhập", duration: 2500, color: "danger" });
+      return;
+    }
     try {
       if (!receipt?.id) return;
 
@@ -558,6 +571,12 @@ const ReceiptImportDetail: React.FC = () => {
   };
 
   const handleComplete = async () => {
+    if (receipt?.items.some((item) => !item.metadata?.isGift && (
+      !isValidImportDiscount(item.discount ?? 0, item.costPrice, item.discountType)
+    ))) {
+      await presentToast({ message: "Kiểm tra chiết khấu: 0–100%, tối đa 3 số thập phân, hoặc số tiền không vượt giá nhập", duration: 2500, color: "danger" });
+      return;
+    }
     try {
       if (!receipt?.id) return;
 
@@ -995,13 +1014,13 @@ const ReceiptImportDetail: React.FC = () => {
       const subTotal = item.quantity * item.costPrice;
       let itemTotal = 0;
 
-      if (item.discountType === DiscountType.PERCENTAGE) {
+      if (!item.discountType || item.discountType === DiscountType.PERCENTAGE) {
         itemTotal = subTotal * (1 - (item.discount || 0) / 100);
       } else {
-        itemTotal = subTotal - (item.discount || 0);
+        itemTotal = subTotal - (item.discount || 0) * item.quantity;
       }
 
-      return total + itemTotal;
+      return total + (item.metadata?.isGift ? 0 : Math.round(itemTotal));
     }, 0);
   }, [receipt?.items]);
 

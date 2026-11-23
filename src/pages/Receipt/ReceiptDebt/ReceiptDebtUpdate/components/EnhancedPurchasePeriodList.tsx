@@ -1,3 +1,4 @@
+import { activeReceiptItems } from "@/helpers/receipt-remaining-items";
 import React, { useState } from "react";
 import { IonButton, IonIcon, IonInput, useIonToast } from "@ionic/react";
 import {
@@ -63,7 +64,7 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
 
   // Handle navigation for a specific period
   const handleNavigation = (periodDate: string, direction: "prev" | "next") => {
-    const periodItems = items[periodDate];
+    const periodItems = activeReceiptItems(items[periodDate] || []);
     if (!periodItems || periodItems.length <= 1) return;
 
     const currentIndex = currentItemIndexes[periodDate] || 0;
@@ -240,8 +241,8 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
 
       <div className="divide-y divide-gray-100">
         {sortedDates.map((date) => {
-          const dateItems = items[date];
-          const currentIndex = currentItemIndexes[date] || 0;
+          const dateItems = activeReceiptItems(items[date]);
+          const currentIndex = Math.min(currentItemIndexes[date] || 0, Math.max(0, dateItems.length - 1));
           const currentItem = dateItems[currentIndex];
           const formattedDate = getDate(date).format("DD/MM/YYYY");
           const periodTotal = calculations.periodTotals[date];
@@ -374,7 +375,7 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
 
               {/* Current Item Display */}
               <div className="mb-4">
-                <EditableProductItem
+                {currentItem ? <EditableProductItem
                   key={currentItem.id}
                   item={currentItem}
                   periodDate={date}
@@ -382,7 +383,7 @@ const EnhancedPurchasePeriodList: React.FC<IEnhancedPurchasePeriodListProps> = (
                   isDisabled={isEditingDisabled}
                   onItemChange={handleItemChange}
                   onToggleEdit={handleToggleEdit}
-                />
+                /> : <p className="text-gray-500">Đã trả hết sản phẩm trong đợt này.</p>}
               </div>
 
               {/* Navigation Controls */}

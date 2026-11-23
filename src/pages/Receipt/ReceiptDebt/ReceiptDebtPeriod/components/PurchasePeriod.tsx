@@ -49,7 +49,7 @@ const PurchasePeriod: FC<Props> = ({
   // Memoize initial prices calculation
   const initialPrices = useMemo(() => {
     return items.reduce((acc, item) => {
-      acc[item.id] = item.sellingPrice ?? 0;
+      acc[item.id] = item.sellingPrice ?? item.costPrice;
       return acc;
     }, {} as Record<string, number>);
   }, [items]);
@@ -57,6 +57,11 @@ const PurchasePeriod: FC<Props> = ({
   const [quantities, setQuantities] =
     useState<Record<string, number>>(initialQuantities);
   const [prices, setPrices] = useState<Record<string, number>>(initialPrices);
+
+  useEffect(() => {
+    setQuantities(initialQuantities);
+    setPrices(initialPrices);
+  }, [initialQuantities, initialPrices]);
 
   // Initialize shipNow and recipientName states from items
   useEffect(() => {
@@ -75,9 +80,9 @@ const PurchasePeriod: FC<Props> = ({
   }, [items]);
 
   // Memoize base current item and total items
-  const baseCurrentItem = useMemo(() => items[currentIndex], [items, currentIndex]);
+  const baseCurrentItem = useMemo(() => items[Math.min(currentIndex, items.length - 1)], [items, currentIndex]);
   const totalItems = useMemo(() => items.length, [items.length]);
-  const isNewItem = useMemo(() => baseCurrentItem.id.startsWith("temp_"), [baseCurrentItem]);
+  const isNewItem = useMemo(() => baseCurrentItem?.id.startsWith("temp_"), [baseCurrentItem]);
 
   // Create enhanced currentItem that merges base item with local state changes
   const currentItem = useMemo(() => {
@@ -342,7 +347,7 @@ const PurchasePeriod: FC<Props> = ({
   // }, [currentItem]);
 
   const isShowButtonRemove = useMemo(() => {
-    return editable && isNewItem && onRemove && !currentItem.originalQuantity;
+    return editable && isNewItem && onRemove && !currentItem.originalQuantity && !currentItem.returnedQuantity;
   }, [editable, isNewItem, onRemove]);
 
   return (
