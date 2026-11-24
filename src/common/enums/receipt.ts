@@ -48,6 +48,8 @@ export enum ReceiptPaymentExpenseType {
   UTILITIES = "utilities",
   RENT = "rent",
   LABOR = "labor",
+  TAX = "tax",
+  SOCIAL_INSURANCE = "social_insurance",
   OTHER = "other",
   CASH_WITHDRAWAL_SANG = "cash_withdrawal_sang",
 }

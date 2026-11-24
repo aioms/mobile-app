@@ -96,6 +96,7 @@ const ReceiptItem: FC<Props> = (
     const handleDiscountAmountChange = (value: string) => {
       const numericValue = parseCurrencyInput(value);
       setFormattedDiscountAmount(value); // Keep input in sync with typing
+      setNewDiscount(numericValue);
       setDiscountError("");
 
       if (numericValue < 0) {
@@ -119,6 +120,7 @@ const ReceiptItem: FC<Props> = (
         return;
       }
       const value = Number(normalizedInput);
+      setNewDiscount(value);
       const decimalPlaces = normalizedInput.split(".")[1]?.length || 0;
       if (!Number.isFinite(value) || value < 0 || value > 100) {
         setDiscountError("Nhập từ 0 đến 100%");
@@ -243,7 +245,7 @@ const ReceiptItem: FC<Props> = (
         }
 
         const priceAfterDiscount = newCostPrice - discountAmount;
-        return isGift ? 0 : Math.round(quantity * priceAfterDiscount * 100) / 100;
+        return isGift ? 0 : Math.round(quantity * priceAfterDiscount);
       }
       return 0;
     }, [quantity, newCostPrice, newDiscount, discountMode, isGift]);

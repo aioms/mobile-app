@@ -337,7 +337,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
               originalQuantity,
               // Ensure these fields are set (they may be missing from existing items)
               costPrice: item.costPrice ?? product.costPrice,
-              sellingPrice: item.sellingPrice ?? product.sellingPrice,
+              sellingPrice: item.returnedQuantity ? item.costPrice : item.sellingPrice ?? product.sellingPrice,
               inventory: item.inventory ?? product.inventory ?? 0,
               discount: item.discount ?? 0,
               // Update shipNow based on current inventory if not already set
@@ -405,7 +405,7 @@ const ReceiptDebtPeriod: React.FC<{}> = () => {
       (item) => item.id === itemId || item.id === `temp_${itemId}`
     );
 
-    if (currentItem?.returnedQuantity && currentItem.returnedQuantity > 0) {
+    if (currentItem?.returnedQuantity && newQuantity < (currentItem.originalQuantity ?? currentItem.quantity)) {
       presentToast({
         message: "Không thể chỉnh sửa sản phẩm đã trả hàng",
         duration: 2000,

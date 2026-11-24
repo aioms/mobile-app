@@ -1,3 +1,4 @@
+import { activeReceiptItems } from "@/helpers/receipt-remaining-items";
 import { useState, useEffect, useRef } from "react";
 import { FC } from "react";
 import { IonButton, IonIcon, IonRippleEffect } from "@ionic/react";
@@ -155,12 +156,12 @@ const PurchasePeriodList: FC<Props> = ({
               >
                 {/* Render only one PurchasePeriod component per date group */}
                 <div data-product-item="true">
-                  <PurchasePeriod
-                    items={dateItems} // Pass all items for this date
+                  {dateItems.some(item => item.quantity > (item.returnedQuantity || 0)) && <PurchasePeriod
+                    items={activeReceiptItems(dateItems).map(item => ({ ...item, quantity: item.quantity - (item.returnedQuantity || 0), originalQuantity: Math.max(0, (item.originalQuantity || 0) - (item.returnedQuantity || 0)) }))}
                     periodDate={date}
                     editable={isCurrentDatePeriod(date)}
                     onQuantityChange={(itemId, newQuantity) =>
-                      onQuantityChange?.(date, itemId, newQuantity)
+                      onQuantityChange?.(date, itemId, newQuantity + (dateItems.find(item => item.id === itemId)?.returnedQuantity || 0))
                     }
                     onPriceChange={(itemId, newPrice) =>
                       onPriceChange?.(date, itemId, newPrice)
@@ -172,7 +173,7 @@ const PurchasePeriodList: FC<Props> = ({
                     onRecipientNameChange={(itemId, recipientName) =>
                       onRecipientNameChange?.(date, itemId, recipientName)
                     }
-                  />
+                  />}
                 </div>
               </div>
             ))
